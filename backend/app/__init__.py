@@ -85,7 +85,7 @@ def create_app() -> Flask:
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
 
     from app.modules.analytics.routes import analytics_bp
-    app.register_blueprint(analytics_bp, url_prefix="/api/analytics")
+    app.register_blueprint(analytics_bp, url_prefix="/api/v1/analytics")
 
 
 
