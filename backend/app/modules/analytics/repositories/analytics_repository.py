@@ -116,3 +116,18 @@ class AnalyticsRepository:
                     return row[0] if row else 0
         except Exception:
             return 0
+
+    def load_status_counts(self, descendant_ids: List[str], start_date: date, end_date: date) -> Dict[str, int]:
+        """Query count of statuses grouped by status_id in the date range."""
+        query = """
+            SELECT status_id, COUNT(*) FROM workforce.employee_daily_schedule
+            WHERE organization_unit_id = ANY(%s) AND schedule_date BETWEEN %s AND %s
+            GROUP BY status_id;
+        """
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query, (descendant_ids, start_date, end_date))
+                    return {row[0]: row[1] for row in cur.fetchall()}
+        except Exception:
+            return {}
