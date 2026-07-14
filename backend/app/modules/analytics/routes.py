@@ -18,12 +18,18 @@ from app.modules.analytics.schemas import (
     AnalyticsFilterRequest, SnapshotGenerateRequest,
     SummaryResponse, TrendResponse, TrendDataPoint,
     DistributionItem, DistributionResponse, AlertResponse,
-    SnapshotGenerateResponse
+    SnapshotGenerateResponse, JobStatusResponseItem, JobRunResponse
 )
 
 from app.modules.analytics.models import TrendPeriod
+from app.modules.analytics.scheduler import SchedulerEngine, JobAlreadyRunningException
+from app.modules.analytics.repositories import JobRepository
+
 logger = logging.getLogger("pikud360.modules.analytics.routes")
 analytics_bp = Blueprint("analytics", __name__)
+scheduler_engine = SchedulerEngine()
+scheduler_engine.start()  # Start engine state
+job_repo = JobRepository()
 analytics_service = AnalyticsService()
 
 
@@ -300,3 +306,120 @@ def generate_snapshot():
     except Exception as e:
         logger.error(f"Error generating snapshot: {e}", exc_info=True)
         return ApiResponse.error("Internal server error", "INTERNAL_ERROR", status_code=500)
+
+
+# ── SCHEDULER HEALTH & MANAGEMENT ENDPOINTS ───────────────────────────────────
+
+@analytics_bp.route("/jobs/<job_name>/run", methods=["POST"])
+@require_permission("analytics.manage", ScopeType.GLOBAL)
+def trigger_manual_job(job_name):
+    """Trigger manual execution of a structured scheduler job."""
+    claims = get_jwt()
+    tenant_id = claims.get("tenant_id")
+
+    if job_name not in scheduler_engine.registry:
+        return ApiResponse.error(f"Job '{job_name}' is not registered.", "BAD_REQUEST", status_code=400)
+
+    try:
+        res = scheduler_engine.run_job(job_name, tenant_id)
+        serialized = JobRunResponse(
+            job_name=res["job_name"],
+            success=res["success"],
+            duration_ms=res["duration_ms"],
+            records_processed=res["records_processed"],
+            error_message=res["error_message"]
+        )
+        return ApiResponse.success(data=serialized.model_dump(), message=f"Job '{job_name}' executed successfully.")
+    except JobAlreadyRunningException as e:
+        return ApiResponse.error(str(e), "CONFLICT", status_code=409)
+    except Exception as e:
+        logger.error(f"Error executing job '{job_name}' manually: {e}", exc_info=True)
+        return ApiResponse.error("Internal server error during job run", "INTERNAL_ERROR", status_code=500)
+
+
+@analytics_bp.route("/jobs/run-all", methods=["POST"])
+@require_permission("analytics.manage", ScopeType.GLOBAL)
+def trigger_run_all_jobs():
+    """Trigger manual execution of all registered scheduler jobs in sequence."""
+    claims = get_jwt()
+    tenant_id = claims.get("tenant_id")
+    results = []
+
+    for job_name in ["snapshot", "alerts", "cleanup"]:
+        try:
+            res = scheduler_engine.run_job(job_name, tenant_id)
+            results.append(res)
+        except JobAlreadyRunningException:
+            results.append({
+                "job_name": job_name,
+                "success": False,
+                "duration_ms": 0,
+                "records_processed": 0,
+                "error_message": "Skipped: Job already running"
+            })
+        except Exception as e:
+            results.append({
+                "job_name": job_name,
+                "success": False,
+                "duration_ms": 0,
+                "records_processed": 0,
+                "error_message": str(e)
+            })
+
+    serialized = [
+        JobRunResponse(
+            job_name=r["job_name"],
+            success=r["success"],
+            duration_ms=r["duration_ms"],
+            records_processed=r["records_processed"],
+            error_message=r.get("error_message")
+        ).model_dump()
+        for r in results
+    ]
+    return ApiResponse.success(data=serialized, message="All jobs triggered.")
+
+
+@analytics_bp.route("/jobs/status", methods=["GET"])
+@require_permission("analytics.view", ScopeType.GLOBAL)
+def get_jobs_status():
+    """Fetch structured health telemetry metadata for all scheduler tasks."""
+    claims = get_jwt()
+    tenant_id = claims.get("tenant_id")
+    statuses = []
+
+    for name, job in scheduler_engine.registry.items():
+        stats = job_repo.get_job_stats(name, tenant_id)
+        last_run = job_repo.get_last_job_run(name, tenant_id)
+        
+        # Calculate next scheduled run time
+        next_run = None
+        if job.supports_schedule and job.enabled:
+            interval_str = scheduler_engine._get_setting_value(job.interval_setting_key, "60")
+            try:
+                interval_minutes = int(interval_str)
+            except ValueError:
+                interval_minutes = 60
+                
+            last_finished = last_run["finished_at"] if last_run else None
+            if last_finished:
+                next_run = last_finished + timedelta(minutes=interval_minutes)
+            else:
+                next_run = datetime.now()
+
+        statuses.append(
+            JobStatusResponseItem(
+                job_name=name,
+                enabled=job.enabled,
+                running=scheduler_engine.is_running(name),
+                next_run=next_run,
+                last_run=last_run["started_at"] if last_run else None,
+                last_success=stats["last_success"],
+                last_failure=stats["last_failure"],
+                average_duration_ms=stats["average_duration_ms"],
+                last_duration_ms=stats["last_duration_ms"],
+                records_processed=stats["records_processed"],
+                error_count=stats["error_count"]
+            ).model_dump()
+        )
+
+    return ApiResponse.success(data=statuses, meta={"total": len(statuses)})

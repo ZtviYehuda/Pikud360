@@ -856,3 +856,16 @@ CREATE TABLE workforce.generated_reports (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+
+CREATE TABLE audit.job_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID REFERENCES core.tenants(id) ON DELETE CASCADE,
+    job_name VARCHAR(100) NOT NULL,
+    started_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    finished_at TIMESTAMP WITH TIME ZONE,
+    duration_ms INTEGER,
+    success BOOLEAN NOT NULL,
+    error_message TEXT,
+    records_processed INTEGER DEFAULT 0
+);
+

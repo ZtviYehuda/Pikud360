@@ -111,3 +111,31 @@ class SnapshotGenerateResponse(BaseModel):
     records_processed: int
     unit_id: str
     snapshot_date: date
+
+
+# ============================================================================
+# SCHEDULER DTOs
+# ============================================================================
+
+class JobStatusResponseItem(BaseModel):
+    """Telemetry metadata for background scheduler monitoring dashboard."""
+    job_name: str
+    enabled: bool
+    running: bool
+    next_run: Optional[datetime] = None
+    last_run: Optional[datetime] = None
+    last_success: Optional[datetime] = None
+    last_failure: Optional[datetime] = None
+    average_duration_ms: int
+    last_duration_ms: int
+    records_processed: int
+    error_count: int
+
+
+class JobRunResponse(BaseModel):
+    """Response containing telemetry summary metrics for a manually executed job."""
+    job_name: str
+    success: bool
+    duration_ms: int
+    records_processed: int
+    error_message: Optional[str] = None

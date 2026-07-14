@@ -183,6 +183,11 @@ CREATE POLICY alert_rules_tenant_policy ON workforce.alert_rules
 CREATE POLICY generated_reports_tenant_policy ON workforce.generated_reports
     FOR ALL USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
 
+ALTER TABLE audit.job_history ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY job_history_tenant_policy ON audit.job_history
+    FOR ALL USING (tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
+
 
 
 

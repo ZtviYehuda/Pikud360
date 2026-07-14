@@ -874,6 +874,18 @@ CREATE TABLE workforce.generated_reports (
 );
 
 
+CREATE TABLE audit.job_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID REFERENCES core.tenants(id) ON DELETE CASCADE,
+    job_name VARCHAR(100) NOT NULL,
+    started_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    finished_at TIMESTAMP WITH TIME ZONE,
+    duration_ms INTEGER,
+    success BOOLEAN NOT NULL,
+    error_message TEXT,
+    records_processed INTEGER DEFAULT 0
+);
+
 
 -- ----------------------------------------------------------------------------
 -- 5. INDEXES STRATEGY
@@ -1374,6 +1386,7 @@ ALTER TABLE core.notification_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workforce.dashboard_snapshots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workforce.alert_rules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workforce.generated_reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit.job_history ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY business_rules_tenant_policy ON core.business_rules
     FOR ALL USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
@@ -1392,6 +1405,9 @@ CREATE POLICY alert_rules_tenant_policy ON workforce.alert_rules
 
 CREATE POLICY generated_reports_tenant_policy ON workforce.generated_reports
     FOR ALL USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
+
+CREATE POLICY job_history_tenant_policy ON audit.job_history
+    FOR ALL USING (tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
 
 
 
@@ -1625,7 +1641,11 @@ INSERT INTO core.system_settings (key, value, description) VALUES
     ('password_min_length',         '8',               'Minimum password length for user accounts'),
     ('max_failed_login_attempts',   '5',               'Lock account after this many consecutive failures'),
     ('notification_email_enabled',  'false',           'Enable email notification dispatch'),
-    ('notification_sms_enabled',    'false',           'Enable SMS notification dispatch')
+    ('notification_sms_enabled',    'false',           'Enable SMS notification dispatch'),
+    ('scheduler_snapshot_interval', '60',              'Minutes between snapshot generation background runs'),
+    ('scheduler_alert_interval',    '5',               'Minutes between alert evaluation background checks'),
+    ('scheduler_cleanup_interval',  '1440',            'Minutes between expired logs and files pruning runs'),
+    ('scheduler_retention_days',    '90',              'Data retention threshold in days for logs and snapshots')
 ON CONFLICT (key) DO NOTHING;
 
 

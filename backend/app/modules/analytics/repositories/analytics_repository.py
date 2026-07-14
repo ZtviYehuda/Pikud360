@@ -131,3 +131,14 @@ class AnalyticsRepository:
                     return {row[0]: row[1] for row in cur.fetchall()}
         except Exception:
             return {}
+
+    def load_all_active_units(self) -> List[Dict[str, str]]:
+        """Fetch all non-deleted organization units and their corresponding tenants."""
+        query = "SELECT tenant_id, id FROM core.organization_units WHERE deleted_at IS NULL;"
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query)
+                    return [{"tenant_id": str(row[0]), "unit_id": str(row[1])} for row in cur.fetchall()]
+        except Exception:
+            return []

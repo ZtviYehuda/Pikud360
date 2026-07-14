@@ -346,7 +346,11 @@ INSERT INTO core.system_settings (key, value, description) VALUES
     ('password_min_length',         '8',               'Minimum password length for user accounts'),
     ('max_failed_login_attempts',   '5',               'Lock account after this many consecutive failures'),
     ('notification_email_enabled',  'false',           'Enable email notification dispatch'),
-    ('notification_sms_enabled',    'false',           'Enable SMS notification dispatch')
+    ('notification_sms_enabled',    'false',           'Enable SMS notification dispatch'),
+    ('scheduler_snapshot_interval', '60',              'Minutes between snapshot generation background runs'),
+    ('scheduler_alert_interval',    '5',               'Minutes between alert evaluation background checks'),
+    ('scheduler_cleanup_interval',  '1440',            'Minutes between expired logs and files pruning runs'),
+    ('scheduler_retention_days',    '90',              'Data retention threshold in days for logs and snapshots')
 ON CONFLICT (key) DO NOTHING;
 
 
