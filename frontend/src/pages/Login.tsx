@@ -3,6 +3,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useTranslation } from 'react-i18next';
 import { Shield, Lock, Mail } from 'lucide-react';
+import { Card } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -48,7 +51,7 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 transition-colors duration-200 dark:bg-slate-950 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 rounded-2xl border border-slate-200/60 bg-white p-8 shadow-xl dark:border-slate-800/80 dark:bg-slate-900 glassmorphism">
+      <Card className="w-full max-w-md p-8 shadow-xl">
         
         {/* Logo and Header */}
         <div className="flex flex-col items-center text-center">
@@ -67,43 +70,43 @@ export default function Login() {
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="space-y-4 rounded-md">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="email" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 {t('common:email_label')}
               </label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <Mail className="h-5 w-5 text-slate-400" />
                 </div>
-                <input
+                <Input
                   id="email"
                   name="email"
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-slate-950 placeholder-slate-400 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-850 dark:text-white"
                   placeholder={t('common:email_placeholder')}
+                  className="pl-10"
                 />
               </div>
             </div>
             
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="password" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 {t('common:password_label')}
               </label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <Lock className="h-5 w-5 text-slate-400" />
                 </div>
-                <input
+                <Input
                   id="password"
                   name="password"
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-slate-950 placeholder-slate-400 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-850 dark:text-white"
                   placeholder={t('common:password_placeholder')}
+                  className="pl-10"
                 />
               </div>
             </div>
@@ -113,44 +116,46 @@ export default function Login() {
           <div className="flex items-center justify-between text-sm">
             <Link
               to="/forgot-password"
-              className="font-medium text-brand-600 hover:text-brand-500 dark:text-brand-400"
+              className="font-semibold text-brand-600 hover:text-brand-500 dark:text-brand-400"
             >
               {t('common:forgot_password')}
             </Link>
           </div>
 
           <div>
-            <button
+            <Button
               type="submit"
-              className="group relative flex w-full justify-center rounded-lg bg-brand-600 px-4 py-3 text-sm font-medium text-white shadow-md transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+              className="w-full py-3 h-auto"
             >
               {t('common:submit_login')}
-            </button>
+            </Button>
           </div>
         </form>
 
         {/* Demo Fast Login Buttons */}
         <div className="mt-6 border-t border-slate-200/60 pt-6 dark:border-slate-800">
-          <p className="text-center text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4">
+          <p className="text-center text-xs font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500 mb-4">
             {t('common:app_name')}
           </p>
           <div className="grid grid-cols-2 gap-3">
-            <button
+            <Button
+              variant="outline"
               onClick={loginAsAdmin}
-              className="flex items-center justify-center gap-2 rounded-lg border border-slate-300/80 bg-slate-100 py-2 text-xs font-semibold hover:bg-slate-200 dark:border-slate-750 dark:bg-slate-800 dark:hover:bg-slate-750 cursor-pointer text-slate-700 dark:text-slate-200"
+              className="font-semibold"
             >
               {t('common:admin')}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
               onClick={loginAsOperator}
-              className="flex items-center justify-center gap-2 rounded-lg border border-slate-300/80 bg-slate-100 py-2 text-xs font-semibold hover:bg-slate-200 dark:border-slate-750 dark:bg-slate-800 dark:hover:bg-slate-750 cursor-pointer text-slate-700 dark:text-slate-200"
+              className="font-semibold"
             >
               {t('common:profile')}
-            </button>
+            </Button>
           </div>
         </div>
         
-      </div>
+      </Card>
     </div>
   );
 }

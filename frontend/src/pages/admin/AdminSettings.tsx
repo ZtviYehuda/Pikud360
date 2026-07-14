@@ -4,6 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { adminService, SystemSetting } from '../../services/adminService';
 import Unauthorized from '../Unauthorized';
 import { Settings, Save, RefreshCw, Lock, Bell, Clock, Globe, Calendar } from 'lucide-react';
+import { Card } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Badge } from '../../components/ui/badge';
 
 const SETTING_GROUPS: { key: string; icon: any; keys: string[] }[] = [
   {
@@ -82,53 +86,50 @@ export default function AdminSettings() {
     .filter(Boolean) as SystemSetting[];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white" dir="rtl">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-slate-900/60 backdrop-blur-sm px-8 py-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/20 rounded-lg border border-indigo-500/30">
-              <Settings className="h-6 w-6 text-indigo-400" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">{t('title')}</h1>
-              <p className="text-sm text-slate-400">{t('desc')}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {saveMsg && (
-              <span className="text-sm text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">{saveMsg}</span>
-            )}
-            <button onClick={fetchSettings} className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 transition-colors" title="Refresh">
-              <RefreshCw className="h-4 w-4" />
-            </button>
-            {hasPermission('system.settings.manage') && (
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-              >
-                <Save className="h-4 w-4" />
-                {saving ? t('saving') : t('save_settings')}
-              </button>
-            )}
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-105 dark:border-slate-800">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="font-heading text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+            <Settings className="h-8 w-8 text-indigo-500" />
+            {t('title')}
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">{t('desc')}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {saveMsg && (
+            <Badge variant="success" className="px-3 py-1 text-xs">
+              {saveMsg}
+            </Badge>
+          )}
+          <Button variant="ghost" size="icon" onClick={fetchSettings} title="Refresh">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          {hasPermission('system.settings.manage') && (
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {saving ? t('saving') : t('save_settings')}
+            </Button>
+          )}
         </div>
       </div>
 
-      <div className="flex h-[calc(100vh-88px)]">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Group Tabs */}
-        <nav className="w-52 border-r border-slate-800 bg-slate-900/40 p-3 flex flex-col gap-1">
+        <Card className="p-3 flex flex-col gap-1 h-fit md:col-span-1">
           {SETTING_GROUPS.map((g, i) => {
             const Icon = g.icon;
             return (
               <button
                 key={g.key}
                 onClick={() => setActiveGroup(i)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left ${
+                className={`flex items-center gap-3 px-3 py-2 text-sm font-semibold rounded-lg transition-all text-right cursor-pointer ${
                   activeGroup === i
-                    ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                    ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/30'
+                    : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -136,47 +137,46 @@ export default function AdminSettings() {
               </button>
             );
           })}
-        </nav>
+        </Card>
 
         {/* Settings Panel */}
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="md:col-span-3">
           {loading ? (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center py-20">
               <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-500 border-t-transparent" />
             </div>
           ) : (
-            <div>
-              <div className="flex items-center gap-2 mb-6">
-                <GroupIcon className="h-5 w-5 text-indigo-400" />
-                <h2 className="text-lg font-semibold text-white">{t(group.key)}</h2>
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <GroupIcon className="h-5 w-5 text-indigo-500" />
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white">{t(group.key)}</h2>
               </div>
               <div className="grid grid-cols-1 gap-4 max-w-2xl">
                 {groupSettings.length === 0 && (
-                  <p className="text-slate-500 text-sm">{t('no_settings')}</p>
+                  <p className="text-slate-400 italic text-xs">{t('no_settings')}</p>
                 )}
                 {groupSettings.map(setting => (
-                  <div key={setting.key} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5">
+                  <Card key={setting.key} className="p-5">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <label className="block text-sm font-mono text-indigo-300 mb-1">{setting.key}</label>
+                        <label className="block text-xs font-mono text-indigo-600 dark:text-indigo-400 mb-1">{setting.key}</label>
                         {setting.description && (
-                          <p className="text-xs text-slate-500 mb-3">{setting.description}</p>
+                          <p className="text-xs text-slate-450 dark:text-slate-500 mb-3">{setting.description}</p>
                         )}
-                        <input
+                        <Input
                           type="text"
                           value={edits[setting.key] ?? setting.value}
                           onChange={e => setEdits(prev => ({ ...prev, [setting.key]: e.target.value }))}
                           disabled={!hasPermission('system.settings.manage')}
-                          className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         />
                       </div>
                       {edits[setting.key] !== setting.value && (
-                        <span className="mt-7 shrink-0 px-2 py-0.5 text-xs bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-full">
+                        <Badge variant="warning" className="mt-7 text-xs">
                           {t('modified')}
-                        </span>
+                        </Badge>
                       )}
                     </div>
-                  </div>
+                  </Card>
                 ))}
               </div>
             </div>

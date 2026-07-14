@@ -5,6 +5,11 @@ import { Calendar as CalendarIcon, ChevronRight, X } from 'lucide-react';
 import { workforceService, CalendarDayStats, SnapshotData } from '../services/workforceService';
 import { schedulingService } from '../services/schedulingService';
 import Unauthorized from './Unauthorized';
+import { Card } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import { Input } from '../components/ui/input';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '../components/ui/table';
 
 interface OrganizationUnit {
   id: string;
@@ -73,16 +78,14 @@ export default function WorkforceCalendar() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <CalendarIcon className="h-8 w-8 text-indigo-650" />
-            {t('common:calendar')}
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
-            {t('scheduling:desc')}
-          </p>
-        </div>
+      <div className="flex flex-col gap-1.5 pb-2 border-b border-slate-105 dark:border-slate-800">
+        <h1 className="font-heading text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+          <CalendarIcon className="h-8 w-8 text-indigo-650" />
+          {t('common:calendar')}
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
+          {t('scheduling:desc')}
+        </p>
       </div>
 
       {errorMsg && (
@@ -92,27 +95,25 @@ export default function WorkforceCalendar() {
       )}
 
       {/* Control panel */}
-      <div className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 flex flex-wrap gap-4 items-center">
+      <Card className="p-6 flex flex-wrap gap-4 items-center">
         <div className="flex flex-col gap-1.5 min-w-[200px]">
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('analytics:unit')}</span>
           <select value={selectedUnitId} onChange={(e) => setSelectedUnitId(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-350">
+            className="rounded-lg border border-slate-205 bg-white px-3 py-2 text-sm text-slate-700 dark:text-white outline-none focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-950">
             {units.map(unit => <option key={unit.id} value={unit.id}>{unit.name}</option>)}
           </select>
         </div>
 
         <div className="flex flex-col gap-1.5">
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('employees:start_date')}</span>
-          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-350" />
+          <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-auto" />
         </div>
 
         <div className="flex flex-col gap-1.5">
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('employees:end_date')}</span>
-          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-350" />
+          <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-auto" />
         </div>
-      </div>
+      </Card>
 
       {/* Stats Grid */}
       {loading ? (
@@ -125,20 +126,19 @@ export default function WorkforceCalendar() {
               : 0;
 
             return (
-              <div key={day.date} onClick={() => handleOpenSnapshot(day.date)}
-                className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl p-5 hover:shadow-md cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-900/50 transition-all flex flex-col justify-between">
+              <Card 
+                key={day.date} 
+                onClick={() => handleOpenSnapshot(day.date)}
+                className="p-5 hover:shadow-md cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-900/50 transition-all flex flex-col justify-between"
+              >
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-sm text-slate-800 dark:text-white">
                       {new Date(day.date).toLocaleDateString('he-IL', { weekday: 'short', month: 'short', day: 'numeric' })}
                     </span>
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-3xs font-semibold ${
-                      availabilityRate >= 70
-                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400'
-                        : 'bg-rose-50 text-rose-800 dark:bg-rose-950/20 dark:text-rose-400'
-                    }`}>
+                    <Badge variant={availabilityRate >= 70 ? 'success' : 'destructive'} className="text-[10px]">
                       {availabilityRate}% {t('analytics:available')}
-                    </span>
+                    </Badge>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
@@ -157,7 +157,7 @@ export default function WorkforceCalendar() {
                   <span>{t('common:history')}</span>
                   <ChevronRight className="h-4.5 w-4.5" />
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
@@ -166,15 +166,19 @@ export default function WorkforceCalendar() {
       {/* Snapshot Modal */}
       {snapshotDate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl max-w-4xl w-full max-h-[85vh] flex flex-col">
+          <Card className="max-w-4xl w-full max-h-[85vh] flex flex-col p-0 overflow-hidden shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
               <h3 className="font-heading text-xl font-bold text-slate-900 dark:text-white">
                 {t('common:history')} — {snapshotDate}
               </h3>
-              <button onClick={handleCloseSnapshot}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-650 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleCloseSnapshot}
+                className="h-8 w-8 text-slate-450 hover:text-slate-650"
+              >
                 <X className="h-5 w-5" />
-              </button>
+              </Button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -183,15 +187,15 @@ export default function WorkforceCalendar() {
               ) : snapshotData ? (
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
+                    <Card className="p-4 text-center">
                       <span className="text-3xs font-semibold text-slate-450 uppercase tracking-wider block mb-1">{t('dashboard:total_strength')}</span>
                       <strong className="text-2xl text-slate-850 dark:text-white font-bold">{snapshotData.total_personnel}</strong>
-                    </div>
+                    </Card>
                     {Object.entries(snapshotData.statuses).map(([code, count]) => (
-                      <div key={code} className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
+                      <Card key={code} className="p-4 text-center">
                         <span className="text-3xs font-semibold text-slate-450 uppercase tracking-wider block mb-1">{code}</span>
                         <strong className="text-2xl text-slate-850 dark:text-white font-bold">{count}</strong>
-                      </div>
+                      </Card>
                     ))}
                   </div>
 
@@ -209,37 +213,37 @@ export default function WorkforceCalendar() {
 
                   <div>
                     <h4 className="font-bold text-sm text-slate-800 dark:text-white mb-3">{t('employees:title')}</h4>
-                    <div className="overflow-x-auto border border-slate-100 dark:border-slate-800 rounded-lg">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                          <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 text-slate-400 font-semibold uppercase tracking-wider">
-                            <th className="py-2.5 px-4">{t('employees:name')}</th>
-                            <th className="py-2.5 px-4">{t('employees:rank')}</th>
-                            <th className="py-2.5 px-4">{t('analytics:unit')}</th>
-                            <th className="py-2.5 px-4">{t('common:status')}</th>
-                            <th className="py-2.5 px-4">{t('scheduling:shift_name')}</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-850">
+                    <Card className="overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="px-4">{t('employees:name')}</TableHead>
+                            <TableHead className="px-4">{t('employees:rank')}</TableHead>
+                            <TableHead className="px-4">{t('analytics:unit')}</TableHead>
+                            <TableHead className="px-4">{t('common:status')}</TableHead>
+                            <TableHead className="px-4">{t('scheduling:shift_name')}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
                           {snapshotData.assignments.map((asg, idx) => (
-                            <tr key={idx} className="hover:bg-slate-50/30 dark:hover:bg-slate-850/20">
-                              <td className="py-2.5 px-4 font-semibold text-slate-800 dark:text-white">{asg.display_name}</td>
-                              <td className="py-2.5 px-4 text-slate-500">{asg.rank} | {asg.role}</td>
-                              <td className="py-2.5 px-4 text-slate-500">{asg.organization_unit}</td>
-                              <td className="py-2.5 px-4 font-medium text-slate-700 dark:text-slate-350">{asg.status}</td>
-                              <td className="py-2.5 px-4 text-slate-450">{asg.shift || '-'}</td>
-                            </tr>
+                            <TableRow key={idx}>
+                              <TableCell className="px-4 font-semibold text-slate-800 dark:text-white">{asg.display_name}</TableCell>
+                              <TableCell className="px-4 text-slate-500">{asg.rank} | {asg.role}</TableCell>
+                              <TableCell className="px-4 text-slate-500">{asg.organization_unit}</TableCell>
+                              <TableCell className="px-4 font-medium text-slate-700 dark:text-slate-350">{asg.status}</TableCell>
+                              <TableCell className="px-4 text-slate-450">{asg.shift || '-'}</TableCell>
+                            </TableRow>
                           ))}
-                        </tbody>
-                      </table>
-                    </div>
+                        </TableBody>
+                      </Table>
+                    </Card>
                   </div>
                 </>
               ) : (
                 <div className="py-12 text-center text-slate-500">{t('common:error')}</div>
               )}
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>

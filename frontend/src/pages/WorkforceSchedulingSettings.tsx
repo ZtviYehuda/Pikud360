@@ -4,6 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { schedulingService, ScheduleSettings, ShiftType } from '../services/schedulingService';
 import { Settings, Plus, Calendar, Sparkles } from 'lucide-react';
 import Unauthorized from './Unauthorized';
+import { Card } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '../components/ui/table';
+import { Badge } from '../components/ui/badge';
 
 export default function WorkforceSchedulingSettings() {
   const { hasPermission } = useAuthStore();
@@ -78,19 +83,19 @@ export default function WorkforceSchedulingSettings() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-3xl font-bold text-slate-900 dark:text-white">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-105 dark:border-slate-800">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="font-heading text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
             {t('scheduling:shift_settings_title')}
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
             {t('scheduling:shift_settings_desc')}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <label className="text-xs font-bold text-slate-400">{t('analytics:unit')}:</label>
           <select value={selectedUnitId} onChange={(e) => setSelectedUnitId(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white py-1.5 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900">
+            className="rounded-lg border border-slate-205 bg-white py-1.5 px-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-white">
             {unitsList.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
           </select>
         </div>
@@ -101,9 +106,9 @@ export default function WorkforceSchedulingSettings() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Scheduling Mode Panel */}
-          <div className="lg:col-span-1 rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
+          <Card className="lg:col-span-1 p-6 flex flex-col justify-between">
             <div>
-              <h3 className="font-heading text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-4">
+              <h3 className="font-heading text-base font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-4">
                 <Settings className="h-5 w-5 text-brand-600" />
                 {t('scheduling:shift_settings')}
               </h3>
@@ -129,47 +134,47 @@ export default function WorkforceSchedulingSettings() {
               <Sparkles className="h-4 w-4 text-amber-500" />
               <span>{t('common:save')}</span>
             </div>
-          </div>
+          </Card>
 
           {/* Shifts Table Panel */}
-          <div className="lg:col-span-2 rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-6">
+          <Card className="lg:col-span-2 p-6 space-y-6">
             <div>
-              <h3 className="font-heading text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <h3 className="font-heading text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-indigo-650" />
                 {t('scheduling:statuses_management')}
               </h3>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-400">
-                    <th className="py-2.5 px-2">{t('scheduling:shift_name')}</th>
-                    <th className="py-2.5 px-2">{t('scheduling:start_time')}</th>
-                    <th className="py-2.5 px-2">{t('scheduling:end_time')}</th>
-                    <th className="py-2.5 px-2 text-center">{t('common:status')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="px-2">{t('scheduling:shift_name')}</TableHead>
+                    <TableHead className="px-2">{t('scheduling:start_time')}</TableHead>
+                    <TableHead className="px-2">{t('scheduling:end_time')}</TableHead>
+                    <TableHead className="px-2 text-center">{t('common:status')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {shifts.map((shift) => (
-                    <tr key={shift.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20">
-                      <td className="py-3 px-2 font-bold text-slate-800 dark:text-white">{shift.name}</td>
-                      <td className="py-3 px-2 font-mono text-xs font-medium text-slate-500">{shift.start_time}</td>
-                      <td className="py-3 px-2 font-mono text-xs font-medium text-slate-500">{shift.end_time}</td>
-                      <td className="py-3 px-2 text-center">
-                        <span className="px-2 py-0.5 rounded text-3xs font-semibold bg-green-100 text-green-700 dark:bg-green-950/20 dark:text-green-400">
+                    <TableRow key={shift.id}>
+                      <TableCell className="px-2 font-bold text-slate-800 dark:text-white">{shift.name}</TableCell>
+                      <TableCell className="px-2 font-mono text-xs font-medium text-slate-500">{shift.start_time}</TableCell>
+                      <TableCell className="px-2 font-mono text-xs font-medium text-slate-500">{shift.end_time}</TableCell>
+                      <TableCell className="px-2 text-center">
+                        <Badge variant="success" className="text-[10px]">
                           {t('common:status')}
-                        </span>
-                      </td>
-                    </tr>
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
                   ))}
                   {shifts.length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="text-center py-6 text-slate-400 text-xs">{t('scheduling:no_shifts')}</td>
-                    </tr>
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-6 text-slate-400 text-xs">{t('scheduling:no_shifts')}</TableCell>
+                    </TableRow>
                   )}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
 
             {/* Create Shift Form */}
@@ -179,31 +184,27 @@ export default function WorkforceSchedulingSettings() {
               </h4>
               <form onSubmit={handleCreateShift} className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
                 <div className="sm:col-span-2">
-                  <label className="block text-2xs font-semibold text-slate-450 mb-1">{t('scheduling:shift_name')}</label>
-                  <input type="text" value={shiftName} onChange={(e) => setShiftName(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 px-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950" />
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">{t('scheduling:shift_name')}</label>
+                  <Input type="text" value={shiftName} onChange={(e) => setShiftName(e.target.value)} />
                 </div>
                 <div>
-                  <label className="block text-2xs font-semibold text-slate-450 mb-1">{t('scheduling:start_time')}</label>
-                  <input type="text" value={startTime} onChange={(e) => setStartTime(e.target.value)} placeholder="HH:MM"
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 px-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 font-mono text-center" />
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">{t('scheduling:start_time')}</label>
+                  <Input type="text" value={startTime} onChange={(e) => setStartTime(e.target.value)} placeholder="HH:MM" className="font-mono text-center" />
                 </div>
                 <div>
-                  <label className="block text-2xs font-semibold text-slate-450 mb-1">{t('scheduling:end_time')}</label>
-                  <input type="text" value={endTime} onChange={(e) => setEndTime(e.target.value)} placeholder="HH:MM"
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 px-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 font-mono text-center" />
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">{t('scheduling:end_time')}</label>
+                  <Input type="text" value={endTime} onChange={(e) => setEndTime(e.target.value)} placeholder="HH:MM" className="font-mono text-center" />
                 </div>
                 <div className="sm:col-span-4 flex justify-between items-center gap-4">
-                  {shiftError && <span className="text-2xs text-red-500 font-semibold">{shiftError}</span>}
-                  <button type="submit"
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-700 cursor-pointer w-fit ms-auto">
+                  {shiftError && <span className="text-xs text-red-500 font-semibold">{shiftError}</span>}
+                  <Button type="submit" className="w-fit ms-auto">
                     <Plus className="h-4 w-4" />
                     {t('buttons:add')}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>

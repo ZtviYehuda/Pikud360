@@ -15,6 +15,11 @@ import {
 } from 'lucide-react';
 import Unauthorized from './Unauthorized';
 import { useTranslation } from 'react-i18next';
+import { Card } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import { Input } from '../components/ui/input';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '../components/ui/table';
 
 export default function WorkforceScheduling() {
   const navigate = useNavigate();
@@ -443,33 +448,34 @@ export default function WorkforceScheduling() {
 
   return (
     <div className="space-y-6">
-      {/* 1. Top bar filter parameters */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 shadow-sm glassmorphism">
-        <div>
-          <h1 className="font-heading text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-brand-600 animate-pulse" />
-            {t('scheduling:title')}
-          </h1>
-          <p className="text-slate-400 text-xs mt-0.5">
-            {t('scheduling:desc')}
-          </p>
-        </div>
+      {/* 1. Header with Title and Desc */}
+      <div className="flex flex-col gap-1.5 pb-2">
+        <h1 className="font-heading text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+          <Sparkles className="h-6 w-6 text-brand-600" />
+          {t('scheduling:title')}
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
+          {t('scheduling:desc')}
+        </p>
+      </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+      {/* 1.5. Filter bar (inside a Card) */}
+      <Card className="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           {/* Org Tree Selector Dropdown */}
           <div className="relative flex items-center gap-2" ref={treeDropdownRef}>
-            <label className="text-xs font-bold text-slate-455">{t('analytics:unit')}:</label>
+            <label className="text-xs font-bold text-slate-500">{t('analytics:unit')}:</label>
             <button
               type="button"
               onClick={() => setIsTreeDropdownOpen(!isTreeDropdownOpen)}
-              className="rounded-lg border border-slate-200 bg-slate-50 py-1.5 px-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-850 dark:bg-slate-950 text-slate-800 dark:text-white flex items-center gap-2 cursor-pointer font-semibold shadow-sm hover:bg-slate-100/50"
+              className="rounded-lg border border-slate-205 bg-slate-50 py-1.5 px-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 text-slate-800 dark:text-white flex items-center gap-2 cursor-pointer font-semibold shadow-sm hover:bg-slate-100/50"
             >
               <span>{currentUnitName}</span>
               {isTreeDropdownOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             </button>
 
             {isTreeDropdownOpen && (
-              <div className="absolute right-0 top-full mt-1.5 w-64 rounded-xl border border-slate-250 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xl p-2 z-55 max-h-60 overflow-y-auto animate-fade-in">
+              <div className="absolute right-0 top-full mt-1.5 w-64 rounded-xl border border-slate-205 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xl p-2 z-50 max-h-60 overflow-y-auto animate-fade-in">
                 {orgTree.length === 0 ? (
                   <div className="text-center py-4 text-xs text-slate-400">
                     {t('common:no_data')}
@@ -487,59 +493,61 @@ export default function WorkforceScheduling() {
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-slate-50 py-1.5 px-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-850 dark:bg-slate-950 font-mono text-slate-800 dark:text-white"
+              className="rounded-lg border border-slate-205 bg-slate-50 py-1.5 px-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 font-mono text-slate-800 dark:text-white"
             />
           </div>
+        </div>
 
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-brand-50 text-brand-650 dark:bg-brand-950/20 dark:text-brand-400">
+        <div>
+          <Badge variant="info" className="gap-1 text-xs py-1 px-3">
             <Shield className="h-3.5 w-3.5" />
             {settings?.scheduling_mode || 'DIRECT_STATUS'}
-          </span>
+          </Badge>
         </div>
-      </div>
+      </Card>
 
       {/* 2. Dashboard Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-        <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 glassmorphism">
+        <Card className="p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-400">{t('dashboard:total_strength')}</span>
-            <Users className="h-5 w-5 text-brand-655" />
+            <Users className="h-5 w-5 text-brand-600" />
           </div>
           <h4 className="font-heading text-2xl font-bold mt-2 text-slate-800 dark:text-white">{totalPersonnelCount}</h4>
-        </div>
+        </Card>
 
-        <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 glassmorphism">
+        <Card className="p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-400">{t('dashboard:assigned')}</span>
-            <div className="h-2 w-2 rounded-full bg-emerald-500" />
+            <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
           </div>
           <h4 className="font-heading text-2xl font-bold mt-2 text-slate-800 dark:text-white">{assignedCount}</h4>
-        </div>
+        </Card>
 
-        <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 glassmorphism">
+        <Card className="p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-400">{t('scheduling:not_assigned')}</span>
-            <div className="h-2 w-2 rounded-full bg-red-500" />
+            <div className="h-2.5 w-2.5 rounded-full bg-red-500" />
           </div>
           <h4 className="font-heading text-2xl font-bold mt-2 text-slate-800 dark:text-white">{unassignedCount}</h4>
-        </div>
+        </Card>
 
-        <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 glassmorphism">
+        <Card className="p-5 flex flex-col justify-between">
           <span className="text-xs font-bold text-slate-400">{t('analytics:distribution')}</span>
           <div className="mt-2 space-y-1 max-h-16 overflow-y-auto pr-1">
             {Object.entries(statusDistribution).map(([name, val]) => (
               <div key={name} className="flex justify-between text-2xs text-slate-500 font-medium">
                 <span>{name}:</span>
-                <span className="font-bold text-slate-700 dark:text-slate-350">{val}</span>
+                <span className="font-bold text-slate-700 dark:text-slate-300">{val}</span>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* 2.5 Child Units Breakdown */}
       {dashboardSummary?.child_units && dashboardSummary.child_units.length > 0 && (
-        <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 glassmorphism">
+        <Card className="p-5">
           <h3 className="font-heading text-xs font-bold text-slate-400 mb-4 uppercase tracking-wider">
             {t('analytics:unit_breakdown')}
           </h3>
@@ -548,7 +556,7 @@ export default function WorkforceScheduling() {
               <div 
                 key={child.unit_id} 
                 onClick={() => setSelectedUnitId(child.unit_id)}
-                className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-850 hover:border-brand-500 transition-all cursor-pointer flex flex-col justify-between"
+                className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-105 dark:border-slate-850 hover:border-brand-500 transition-all cursor-pointer flex flex-col justify-between"
               >
                 <div>
                   <h4 className="font-bold text-sm text-slate-800 dark:text-white flex items-center gap-1.5 mb-2">
@@ -556,15 +564,15 @@ export default function WorkforceScheduling() {
                     {child.unit_name}
                   </h4>
                   <div className="space-y-1 text-xs">
-                    <div className="flex justify-between text-slate-550">
+                    <div className="flex justify-between text-slate-500">
                       <span>{t('dashboard:total_strength')}:</span>
-                      <span className="font-bold text-slate-700 dark:text-slate-350">{child.total_employees}</span>
+                      <span className="font-bold text-slate-700 dark:text-slate-300">{child.total_employees}</span>
                     </div>
-                    <div className="flex justify-between text-slate-550">
+                    <div className="flex justify-between text-slate-500">
                       <span>{t('dashboard:assigned')}:</span>
                       <span className="font-bold text-emerald-600">{child.assigned_employees}</span>
                     </div>
-                    <div className="flex justify-between text-slate-550">
+                    <div className="flex justify-between text-slate-500">
                       <span>{t('scheduling:not_assigned')}:</span>
                       <span className="font-bold text-rose-500">{child.unassigned_employees}</span>
                     </div>
@@ -573,29 +581,29 @@ export default function WorkforceScheduling() {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* SHIFT_BASED Sub-Dashboard shifts counters */}
       {settings?.scheduling_mode === 'SHIFT_BASED' && (
-        <div className="rounded-xl bg-white p-4 border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 glassmorphism">
+        <Card className="p-4">
           <span className="text-xs font-bold text-slate-400 mb-2.5 block">{t('scheduling:shift_settings')}</span>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {Object.entries(shiftDistribution).map(([name, count]) => (
-              <div key={name} className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-100 dark:border-slate-850 flex items-center justify-between">
+              <div key={name} className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-105 dark:border-slate-850 flex items-center justify-between">
                 <span className="text-2xs font-semibold text-slate-500">{name}</span>
-                <span className="text-sm font-bold text-indigo-650">{count}</span>
+                <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{count}</span>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* 3. Bulk Actions Widget */}
       {hasPermission('schedule.bulk_manage') && selectedEmployeeIds.length > 0 && (
         <div className="bg-brand-50/40 dark:bg-brand-950/10 border border-brand-200/80 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-in">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-brand-655" />
+            <AlertTriangle className="h-5 w-5 text-brand-600" />
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               {`${selectedEmployeeIds.length} ${t('scheduling:employees_selected')}`}
             </span>
@@ -605,7 +613,7 @@ export default function WorkforceScheduling() {
             <select
               value={bulkStatusId}
               onChange={(e) => setBulkStatusId(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white py-1.5 px-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-white"
+              className="rounded-lg border border-slate-205 bg-white dark:border-slate-800 dark:bg-slate-900 py-1.5 px-3 text-xs focus:border-brand-500 focus:outline-none text-slate-800 dark:text-white"
             >
               <option value="">{t('scheduling:choose_status')}</option>
               {statuses.map(st => (
@@ -613,28 +621,28 @@ export default function WorkforceScheduling() {
               ))}
             </select>
 
-            <button
+            <Button
               onClick={() => setShowBulkConfirm(true)}
               disabled={!bulkStatusId}
-              className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              size="sm"
             >
               {t('scheduling:apply_bulk')}
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       {/* 4. Filters & Searching */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 shadow-sm glassmorphism">
+      <Card className="p-4 flex flex-wrap items-center justify-between gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
             <Search className="h-4 w-4 text-slate-400" />
           </div>
-          <input
+          <Input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-10 pr-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 text-slate-800 dark:text-white"
+            className="pl-10"
             placeholder={t('employees:search_placeholder')}
           />
         </div>
@@ -644,7 +652,7 @@ export default function WorkforceScheduling() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white py-1.5 px-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-white"
+            className="rounded-lg border border-slate-205 bg-white dark:border-slate-800 dark:bg-slate-900 py-1.5 px-3 text-xs focus:border-brand-500 focus:outline-none text-slate-800 dark:text-white"
           >
             <option value="ALL">{t('scheduling:all_statuses')}</option>
             <option value="UNASSIGNED">{t('scheduling:not_assigned')}</option>
@@ -653,16 +661,16 @@ export default function WorkforceScheduling() {
             ))}
           </select>
         </div>
-      </div>
+      </Card>
 
       {/* 5. Main Planning Table */}
-      <div className="rounded-xl border border-slate-200/60 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 glassmorphism overflow-hidden">
+      <Card className="overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse font-medium text-xs">
-            <thead>
-              <tr className="border-b border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-400 bg-slate-50/50 dark:bg-slate-950/20">
+          <Table>
+            <TableHeader>
+              <TableRow>
                 {hasPermission('schedule.bulk_manage') && (
-                  <th className="py-3 px-4 w-12 text-center">
+                  <TableHead className="w-12 text-center">
                     <input
                       type="checkbox"
                       checked={selectedEmployeeIds.length === filteredEmployees.length && filteredEmployees.length > 0}
@@ -675,29 +683,29 @@ export default function WorkforceScheduling() {
                       }}
                       className="rounded text-brand-600 focus:ring-brand-500 h-4 w-4"
                     />
-                  </th>
+                  </TableHead>
                 )}
-                <th className="py-3 px-4">{t('employees:employee')}</th>
-                <th className="py-3 px-4">{t('employees:rank_role')}</th>
-                <th className="py-3 px-4">{t('analytics:unit')}</th>
-                <th className="py-3 px-4">{t('scheduling:daily_status')}</th>
+                <TableHead>{t('employees:employee')}</TableHead>
+                <TableHead>{t('employees:rank_role')}</TableHead>
+                <TableHead>{t('analytics:unit')}</TableHead>
+                <TableHead>{t('scheduling:daily_status')}</TableHead>
                 {settings?.scheduling_mode === 'SHIFT_BASED' && (
                   <>
-                    <th className="py-3 px-4">{t('scheduling:shift_name')}</th>
-                    <th className="py-3 px-4">{t('scheduling:hours')}</th>
+                    <TableHead>{t('scheduling:shift_name')}</TableHead>
+                    <TableHead>{t('scheduling:hours')}</TableHead>
                   </>
                 )}
-                <th className="py-3 px-4">{t('scheduling:notes')}</th>
-                <th className="py-3 px-4 text-right">{t('common:actions')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
+                <TableHead>{t('scheduling:notes')}</TableHead>
+                <TableHead className="text-right">{t('common:actions')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filteredEmployees.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="py-10 text-center text-slate-400 font-semibold italic">
+                <TableRow>
+                  <TableCell colSpan={10} className="py-10 text-center text-slate-400 font-semibold italic">
                     {t('employees:no_employees')}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 filteredEmployees.map((emp) => {
                   const sched = emp.daily_assignment;
@@ -705,14 +713,12 @@ export default function WorkforceScheduling() {
                   const isSelected = selectedEmployeeIds.includes(emp.employee_id);
 
                   return (
-                    <tr 
+                    <TableRow 
                       key={emp.employee_id} 
-                      className={`hover:bg-slate-50/50 dark:hover:bg-slate-950/20 ${
-                        isSelected ? 'bg-brand-50/10 dark:bg-brand-950/5' : ''
-                      }`}
+                      className={isSelected ? 'bg-brand-50/10 dark:bg-brand-950/5' : ''}
                     >
                       {hasPermission('schedule.bulk_manage') && (
-                        <td className="py-3.5 px-4 text-center">
+                        <TableCell className="text-center">
                           <input
                             type="checkbox"
                             checked={isSelected}
@@ -725,18 +731,18 @@ export default function WorkforceScheduling() {
                             }}
                             className="rounded text-brand-600 focus:ring-brand-500 h-4 w-4"
                           />
-                        </td>
+                        </TableCell>
                       )}
-                      <td className="py-3.5 px-4 font-bold text-slate-800 dark:text-white">
+                      <TableCell className="font-bold text-slate-800 dark:text-white">
                         {emp.display_name}
-                      </td>
-                      <td className="py-3.5 px-4 text-xs text-slate-450 font-semibold">
+                      </TableCell>
+                      <TableCell className="text-xs text-slate-450 font-semibold">
                         {emp.rank} | {emp.role}
-                      </td>
-                      <td className="py-3.5 px-4 text-xs text-slate-500 font-semibold">
+                      </TableCell>
+                      <TableCell className="text-xs text-slate-500 font-semibold">
                         {emp.organization_unit.name}
-                      </td>
-                      <td className="py-3.5 px-4">
+                      </TableCell>
+                      <TableCell>
                         {sched ? (
                           <span 
                             className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border border-black/5"
@@ -756,76 +762,84 @@ export default function WorkforceScheduling() {
                             {t('scheduling:not_assigned')}
                           </span>
                         )}
-                      </td>
+                      </TableCell>
                       {settings?.scheduling_mode === 'SHIFT_BASED' && (
                         <>
-                          <td className="py-3.5 px-4 text-xs font-medium text-slate-800 dark:text-white">
+                          <TableCell className="text-xs font-medium text-slate-800 dark:text-white">
                             {shiftObj?.name || '-'}
-                          </td>
-                          <td className="py-3.5 px-4 font-mono text-2xs font-semibold text-slate-500">
+                          </TableCell>
+                          <TableCell className="font-mono text-2xs font-semibold text-slate-500">
                             {sched?.start_time && sched?.end_time ? `${sched.start_time}-${sched.end_time}` : '-'}
-                          </td>
+                          </TableCell>
                         </>
                       )}
-                      <td className="py-3.5 px-4 text-xs text-slate-450 truncate max-w-[150px]">
+                      <TableCell className="text-xs text-slate-450 truncate max-w-[150px]">
                         {sched?.notes || '-'}
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
+                      </TableCell>
+                      <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           {hasPermission('schedule.manage') && (
                             <>
-                              <button
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => handleEditOpen({ id: emp.employee_id, name: emp.display_name }, sched)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-slate-200 hover:bg-slate-50 text-slate-655 hover:text-slate-800 dark:border-slate-750 dark:hover:bg-slate-800 dark:text-slate-350 dark:hover:text-white text-xs font-medium cursor-pointer"
+                                className="h-8 py-1 px-2.5 text-xs"
                               >
                                 <Edit2 className="h-3 w-3" />
                                 {sched ? t('buttons:edit') : t('scheduling:assign')}
-                              </button>
+                              </Button>
                               {sched && (
-                                <button
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   onClick={() => handleDeleteAssignment(sched.id)}
-                                  className="p-1 text-slate-400 hover:text-red-500 cursor-pointer"
+                                  className="h-8 w-8 text-slate-400 hover:text-red-500"
                                   title={t('scheduling:remove_assignment')}
                                 >
                                   <Trash2 className="h-4 w-4" />
-                                </button>
+                                </Button>
                               )}
                             </>
                           )}
                           {hasPermission('employees.history.view') && (
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => navigate(`/employees/${emp.employee_id}/history`)}
-                              className="p-1 text-slate-400 hover:text-indigo-650 cursor-pointer"
+                              className="h-8 w-8 text-slate-400 hover:text-indigo-600"
                               title={t('employees:history_title')}
                             >
                               <Users className="h-4 w-4" />
-                            </button>
+                            </Button>
                           )}
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
-      </div>
+      </Card>
 
       {/* 6. Single edit/assign Modal window dialog */}
       {editingEmployee && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4 animate-scale-up">
+          <Card className="w-full max-w-md p-6 shadow-2xl space-y-4 animate-scale-up">
             <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
               <h3 className="font-heading text-lg font-bold text-slate-900 dark:text-white">
                 {`${t('scheduling:daily_assignment')}: ${editingEmployee.name}`}
               </h3>
-              <button 
+              <Button 
+                variant="ghost" 
+                size="icon" 
                 onClick={() => setEditingEmployee(null)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+                className="h-8 w-8"
               >
                 <X className="h-5 w-5" />
-              </button>
+              </Button>
             </div>
 
             <form onSubmit={handleSingleAssignmentSubmit} className="space-y-4 text-xs font-medium text-slate-500">
@@ -837,7 +851,7 @@ export default function WorkforceScheduling() {
                   required
                   value={statusId}
                   onChange={(e) => setStatusId(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 text-slate-800 dark:text-white"
+                  className="w-full rounded-lg border border-slate-205 bg-slate-50 py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 text-slate-800 dark:text-white"
                 >
                   <option value="">{t('scheduling:choose_status')}</option>
                   {statuses.map(st => (
@@ -854,7 +868,7 @@ export default function WorkforceScheduling() {
                      <select
                        value={shiftTypeId}
                        onChange={(e) => setShiftTypeId(e.target.value)}
-                       className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 text-slate-800 dark:text-white"
+                       className="w-full rounded-lg border border-slate-205 bg-slate-50 py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 text-slate-800 dark:text-white"
                      >
                        <option value="">{t('scheduling:no_shift')}</option>
                        {shifts.map(sh => (
@@ -866,22 +880,22 @@ export default function WorkforceScheduling() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-slate-400 font-bold mb-1.5">{t('scheduling:start_time_optional')}</label>
-                      <input
+                      <Input
                         type="text"
                         value={startTime}
                         onChange={(e) => setStartTime(e.target.value)}
                         placeholder="08:00"
-                        className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 font-mono text-center text-slate-800 dark:text-white"
+                        className="font-mono text-center"
                       />
                     </div>
                     <div>
                       <label className="block text-slate-400 font-bold mb-1.5">{t('scheduling:end_time_optional')}</label>
-                      <input
+                      <Input
                         type="text"
                         value={endTime}
                         onChange={(e) => setEndTime(e.target.value)}
                         placeholder="16:00"
-                        className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 font-mono text-center text-slate-800 dark:text-white"
+                        className="font-mono text-center"
                       />
                     </div>
                   </div>
@@ -896,36 +910,35 @@ export default function WorkforceScheduling() {
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder={t('scheduling:notes_placeholder')}
                   rows={3}
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 text-slate-800 dark:text-white"
+                  className="w-full rounded-lg border border-slate-205 bg-slate-50 py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 text-slate-800 dark:text-white"
                 />
               </div>
 
               <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setEditingEmployee(null)}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-750 dark:bg-slate-905 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   {t('buttons:cancel')}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 cursor-pointer"
                 >
                   {t('scheduling:save_assignment')}
-                </button>
+                </Button>
               </div>
 
             </form>
-          </div>
+          </Card>
         </div>
       )}
 
       {/* 7. Bulk Assignment Warning Confirmation dialog popup */}
       {showBulkConfirm && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-2xl text-center space-y-4 animate-scale-up">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-brand-655 dark:bg-brand-950/30 dark:text-brand-400">
+          <Card className="w-full max-w-sm p-6 shadow-2xl text-center space-y-4 animate-scale-up">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-brand-600 dark:bg-brand-950/30 dark:text-brand-400">
               <AlertTriangle className="h-6 w-6" />
             </div>
 
@@ -933,27 +946,28 @@ export default function WorkforceScheduling() {
               {t('scheduling:confirm_bulk')}
             </h3>
 
-            <p className="text-xs text-slate-550 dark:text-slate-400">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               {`${t('scheduling:confirm_bulk_msg')} ${selectedEmployeeIds.length} ${t('scheduling:employees_count')} ${selectedDate}?`}
             </p>
 
             <div className="flex gap-3 pt-2">
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => setShowBulkConfirm(false)}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-750 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
+                className="flex-1"
               >
                 {t('buttons:cancel')}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={handleBulkSubmit}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-700 cursor-pointer"
+                className="flex-1"
               >
                 {t('buttons:confirm')}
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
         </div>
       )}
 

@@ -6,6 +6,9 @@ import { ArrowRight, ArrowLeftRight, Edit, User } from 'lucide-react';
 import { workforceService, TimelineEvent } from '../services/workforceService';
 import { apiClient } from '../api/client';
 import Unauthorized from './Unauthorized';
+import { Card } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
 
 interface EmployeeProfile {
   id: string;
@@ -58,19 +61,21 @@ export default function EmployeeHistory() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <button
+      <div className="flex items-center gap-3 pb-2 border-b border-slate-105 dark:border-slate-800">
+        <Button
+          variant="outline"
+          size="icon"
           onClick={() => navigate('/workforce/scheduling')}
-          className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           title={t('buttons:back')}
+          className="shrink-0"
         >
           <ArrowRight className="h-5 w-5" />
-        </button>
-        <div>
-          <h1 className="font-heading text-3xl font-bold text-slate-900 dark:text-white">
+        </Button>
+        <div className="flex flex-col gap-1">
+          <h1 className="font-heading text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
             {employee ? `${employee.rank} ${employee.first_name} ${employee.last_name}` : t('employees:history_title')}
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
             {t('employees:history_title')}
           </p>
         </div>
@@ -90,7 +95,7 @@ export default function EmployeeHistory() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Sidebar Info Card */}
           {employee && (
-            <div className="lg:col-span-1 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl p-6 shadow-sm glassmorphism self-start">
+            <Card className="lg:col-span-1 p-6 self-start">
               <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-4 flex items-center gap-2 border-b pb-3 border-slate-100 dark:border-slate-800">
                 <User className="h-5 w-5 text-indigo-500" />
                 {t('employees:details')}
@@ -106,16 +111,16 @@ export default function EmployeeHistory() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400 font-medium">{t('employees:status')}:</span>
-                  <span className="px-2 py-0.5 rounded-full text-2xs font-semibold bg-indigo-50 text-indigo-750 dark:bg-indigo-950/20 dark:text-indigo-400">
+                  <Badge variant="info">
                     {employee.status}
-                  </span>
+                  </Badge>
                 </div>
               </div>
-            </div>
+            </Card>
           )}
 
           {/* Timeline Feed */}
-          <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl p-6 shadow-sm glassmorphism">
+          <Card className="lg:col-span-2 p-6">
             <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-6">
               {t('employees:history_title')}
             </h3>
@@ -189,7 +194,7 @@ export default function EmployeeHistory() {
                 ))}
               </div>
             )}
-          </div>
+          </Card>
         </div>
       )}
     </div>

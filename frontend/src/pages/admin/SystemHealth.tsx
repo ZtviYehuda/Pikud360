@@ -4,31 +4,36 @@ import { useTranslation } from 'react-i18next';
 import { adminService, type SystemHealth } from '../../services/adminService';
 import Unauthorized from '../Unauthorized';
 import { Activity, Database, Server, Users, FileText, AlertTriangle, RefreshCw, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Card } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
 
 const STATUS_CONFIG = {
-  healthy:     { color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30', icon: CheckCircle },
-  degraded:    { color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/30',   icon: AlertCircle },
-  unavailable: { color: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/30',       icon: XCircle },
+  healthy:     { color: 'text-emerald-500 dark:text-emerald-400', badgeVariant: 'success' as const, icon: CheckCircle },
+  degraded:    { color: 'text-amber-500 dark:text-amber-400',   badgeVariant: 'warning' as const, icon: AlertCircle },
+  unavailable: { color: 'text-red-500 dark:text-red-400',     badgeVariant: 'destructive' as const, icon: XCircle },
 };
 
 function HealthCard({ title, value, sub, icon: Icon, status }: any) {
   const cfg = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.healthy;
   const StatusIcon = cfg.icon;
   return (
-    <div className={`bg-slate-900/60 border rounded-2xl p-6 ${cfg.bg}`}>
+    <Card className="p-6 flex flex-col justify-between">
       <div className="flex items-center justify-between mb-4">
-        <div className={`p-2.5 rounded-xl ${cfg.bg} border`}>
-          <Icon className={`h-5 w-5 ${cfg.color}`} />
+        <div className="p-2 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800">
+          <Icon className="h-5 w-5 text-slate-500 dark:text-slate-400" />
         </div>
-        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${cfg.bg} border`}>
-          <StatusIcon className={`h-3.5 w-3.5 ${cfg.color}`} />
-          <span className={cfg.color}>{status}</span>
-        </div>
+        <Badge variant={cfg.badgeVariant} className="gap-1 px-2.5 py-0.5">
+          <StatusIcon className="h-3.5 w-3.5" />
+          <span>{status}</span>
+        </Badge>
       </div>
-      <p className="text-2xl font-bold text-white">{value}</p>
-      <p className="text-sm font-medium text-slate-300 mt-0.5">{title}</p>
-      {sub && <p className="text-xs text-slate-500 mt-1">{sub}</p>}
-    </div>
+      <div>
+        <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-0.5">{title}</p>
+        {sub && <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{sub}</p>}
+      </div>
+    </Card>
   );
 }
 
@@ -68,38 +73,41 @@ export default function SystemHealth() {
   const hasErrors = (health?.recent_errors ?? 0) > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white" dir="rtl">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-slate-900/60 backdrop-blur-sm px-8 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-cyan-500/20 rounded-lg border border-cyan-500/30">
-            <Activity className="h-6 w-6 text-cyan-400" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold">{t('health_title')}</h1>
-            <p className="text-sm text-slate-400">
-              {checkedAt
-                ? `${t('updated')}: ${checkedAt.toLocaleTimeString('he-IL')}`
-                : t('loading')}
-            </p>
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-105 dark:border-slate-800">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="font-heading text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+            <Activity className="h-8 w-8 text-cyan-500" />
+            {t('health_title')}
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
+            {checkedAt
+              ? `${t('updated')}: ${checkedAt.toLocaleTimeString('he-IL')}`
+              : t('loading')}
+          </p>
         </div>
-        <button onClick={() => fetchHealth(true)} disabled={refreshing}
-          className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors disabled:opacity-50">
+        <Button 
+          variant="outline"
+          onClick={() => fetchHealth(true)} 
+          disabled={refreshing}
+        >
           <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
           {t('refresh')}
-        </button>
+        </Button>
       </div>
 
       {/* Health Cards */}
-      <div className="p-8">
+      <div>
         {loading ? (
-          <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-10 w-10 border-2 border-cyan-500 border-t-transparent" /></div>
+          <div className="flex justify-center py-20">
+            <div className="animate-spin rounded-full h-10 w-10 border-2 border-cyan-500 border-t-transparent" />
+          </div>
         ) : (
           <>
             {/* Status Banner */}
             {hasErrors && (
-              <div className="mb-6 flex items-center gap-3 px-5 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-300 text-sm">
+              <div className="mb-6 flex items-center gap-3 px-5 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-650 dark:text-red-400 text-sm font-semibold">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 {t('recent_errors_banner', { count: health?.recent_errors })}
               </div>
@@ -139,18 +147,18 @@ export default function SystemHealth() {
             </div>
 
             {/* Health Legend */}
-            <div className="mt-8 flex flex-wrap items-center gap-6 text-xs text-slate-500">
+            <Card className="mt-8 p-4 flex flex-wrap items-center gap-6 text-xs text-slate-500">
               <span className="font-semibold text-slate-400">{t('legend')}</span>
               {Object.entries(STATUS_CONFIG).map(([status, cfg]) => {
                 const SIcon = cfg.icon;
                 return (
-                  <span key={status} className={`flex items-center gap-1.5 ${cfg.color}`}>
+                  <span key={status} className={`flex items-center gap-1.5 ${cfg.color} font-semibold`}>
                     <SIcon className="h-3.5 w-3.5" /> {status}
                   </span>
                 );
               })}
-              <span className="ml-auto">{t('auto_refresh')}</span>
-            </div>
+              <span className="mr-auto text-slate-400 font-medium">{t('auto_refresh')}</span>
+            </Card>
           </>
         )}
       </div>
