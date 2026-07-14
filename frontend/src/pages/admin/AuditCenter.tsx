@@ -20,6 +20,16 @@ export default function AuditCenter() {
   const { hasPermission } = useAuthStore();
   const { t } = useTranslation('admin');
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 767px)');
+    setIsMobile(media.matches);
+    const listener = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  }, []);
+
   const [entries, setEntries] = useState<AuditLogEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -151,48 +161,89 @@ export default function AuditCenter() {
           </div>
         ) : (
           <>
-            <Card className="overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-left">{t('timestamp')}</TableHead>
-                    <TableHead className="text-left">{t('event_type')}</TableHead>
-                    <TableHead className="text-left">{t('action')}</TableHead>
-                    <TableHead className="text-left">{t('table')}</TableHead>
-                    <TableHead className="text-left">{t('user')}</TableHead>
-                    <TableHead className="text-left">{t('ip')}</TableHead>
-                    <TableHead className="text-left">{t('severity')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {entries.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-12 text-slate-500">{t('no_records')}</TableCell>
-                    </TableRow>
-                  ) : entries.map(entry => {
+            {isMobile ? (
+              <div className="space-y-4">
+                {entries.length === 0 ? (
+                  <div className="text-center py-12 text-slate-500 bg-white dark:bg-slate-900 border rounded-xl">{t('no_records')}</div>
+                ) : (
+                  entries.map(entry => {
                     const SIcon = SEVERITY_ICONS[entry.severity] || Info;
                     return (
-                      <TableRow key={entry.id}>
-                        <TableCell className="text-slate-400 whitespace-nowrap text-xs">
-                          {new Date(entry.created_at).toLocaleString('he-IL')}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs text-slate-700 dark:text-slate-350">{entry.event_type}</TableCell>
-                        <TableCell className="text-slate-800 dark:text-white font-medium">{entry.action}</TableCell>
-                        <TableCell className="font-mono text-xs text-slate-500">{entry.table_name}</TableCell>
-                        <TableCell className="text-slate-450 text-xs font-mono">{entry.user_id?.slice(0, 8) ?? '—'}</TableCell>
-                        <TableCell className="text-slate-400 text-xs">{entry.ip_address}</TableCell>
-                        <TableCell>
+                      <div key={entry.id} className="p-4 border border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50/30 dark:bg-slate-900/30 space-y-2 text-xs">
+                        <div className="flex justify-between items-center">
+                          <span className="font-mono font-bold text-slate-700 dark:text-slate-350">{entry.event_type}</span>
                           <Badge variant={getSeverityBadgeVariant(entry.severity)} className="gap-1 px-2.5 py-0.5">
                             <SIcon className="h-3 w-3" />
                             {entry.severity}
                           </Badge>
-                        </TableCell>
-                      </TableRow>
+                        </div>
+                        <div className="text-slate-800 dark:text-white font-medium">{entry.action}</div>
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-105 dark:border-slate-800 text-[10px] text-slate-500">
+                          <div>
+                            <span className="text-slate-400">{t('table')}: </span>
+                            <span className="font-mono text-slate-655 dark:text-slate-350">{entry.table_name}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400">{t('user')}: </span>
+                            <span className="font-mono text-slate-655 dark:text-slate-350">{entry.user_id?.slice(0, 8) ?? '—'}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400">IP: </span>
+                            <span className="text-slate-550 dark:text-slate-350">{entry.ip_address}</span>
+                          </div>
+                          <div className="text-left font-semibold">
+                            <span>{new Date(entry.created_at).toLocaleString('he-IL')}</span>
+                          </div>
+                        </div>
+                      </div>
                     );
-                  })}
-                </TableBody>
-              </Table>
-            </Card>
+                  })
+                )}
+              </div>
+            ) : (
+              <Card className="overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-left">{t('timestamp')}</TableHead>
+                      <TableHead className="text-left">{t('event_type')}</TableHead>
+                      <TableHead className="text-left">{t('action')}</TableHead>
+                      <TableHead className="text-left">{t('table')}</TableHead>
+                      <TableHead className="text-left">{t('user')}</TableHead>
+                      <TableHead className="text-left">{t('ip')}</TableHead>
+                      <TableHead className="text-left">{t('severity')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {entries.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-12 text-slate-500">{t('no_records')}</TableCell>
+                      </TableRow>
+                    ) : entries.map(entry => {
+                      const SIcon = SEVERITY_ICONS[entry.severity] || Info;
+                      return (
+                        <TableRow key={entry.id}>
+                          <TableCell className="text-slate-400 whitespace-nowrap text-xs">
+                            {new Date(entry.created_at).toLocaleString('he-IL')}
+                          </TableCell>
+                          <TableCell className="font-mono text-xs text-slate-700 dark:text-slate-355">{entry.event_type}</TableCell>
+                          <TableCell className="text-slate-800 dark:text-white font-medium">{entry.action}</TableCell>
+                          <TableCell className="font-mono text-xs text-slate-500">{entry.table_name}</TableCell>
+                          <TableCell className="text-slate-450 text-xs font-mono">{entry.user_id?.slice(0, 8) ?? '—'}</TableCell>
+                          <TableCell className="text-slate-400 text-xs">{entry.ip_address}</TableCell>
+                          <TableCell>
+                            <Badge variant={getSeverityBadgeVariant(entry.severity)} className="gap-1 px-2.5 py-0.5">
+                              <SIcon className="h-3 w-3" />
+                              {entry.severity}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </Card>
+            )}
 
             {/* Pagination */}
             <div className="flex items-center justify-between mt-4 text-sm text-slate-450">

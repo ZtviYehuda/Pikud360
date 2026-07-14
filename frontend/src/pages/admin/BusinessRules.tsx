@@ -118,7 +118,7 @@ export default function BusinessRules() {
               </div>
             </div>
             {expandedId === rule.id && (
-              <div className="border-t border-slate-100 dark:border-slate-800 px-5 py-4 grid grid-cols-2 gap-4">
+              <div className="border-t border-slate-100 dark:border-slate-800 px-5 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs font-semibold text-slate-500 mb-1">{t('condition')}</p>
                   <pre className="text-xs text-emerald-600 dark:text-emerald-400 bg-slate-50 dark:bg-slate-950 rounded-lg p-3 overflow-auto max-h-48 border border-slate-100 dark:border-slate-850">{JSON.stringify(rule.condition_json, null, 2)}</pre>
@@ -141,7 +141,7 @@ export default function BusinessRules() {
             <DialogTitle>{editRule ? t('edit_rule') : t('new_rule')}</DialogTitle>
           </DialogHeader>
           <div className="p-6 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1">{t('rule_type')}</label>
                 <select value={form.rule_type} onChange={e => setForm(f => ({ ...f, rule_type: e.target.value }))}

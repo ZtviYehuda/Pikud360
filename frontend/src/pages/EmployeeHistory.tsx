@@ -130,11 +130,11 @@ export default function EmployeeHistory() {
                 {t('employees:no_history')}
               </div>
             ) : (
-              <div className="relative border-r-2 mr-3 pr-6 border-slate-100 dark:border-slate-800 space-y-8">
+              <div className="relative ltr:border-l-2 ltr:ml-3 ltr:pl-6 rtl:border-r-2 rtl:mr-3 rtl:pr-6 border-slate-100 dark:border-slate-800 space-y-8">
                 {timeline.map((event) => (
                   <div key={event.id} className="relative">
                     {/* Event bullet point icon */}
-                    <span className="absolute top-1.5 -right-9.5 flex items-center justify-center w-7 h-7 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm text-slate-500">
+                    <span className="absolute top-1.5 ltr:-left-[38px] rtl:-right-[38px] flex items-center justify-center w-7 h-7 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm text-slate-500">
                       {event.type === 'TRANSFER' ? (
                         <ArrowLeftRight className="h-3.5 w-3.5 text-indigo-500" />
                       ) : (

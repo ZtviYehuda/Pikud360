@@ -155,7 +155,7 @@ export default function NotificationTemplates() {
             <DialogTitle>{editTemplate ? t('edit_template') : t('new_template')}</DialogTitle>
           </DialogHeader>
           <div className="p-6 space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1">{t('name')}</label>
                 <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />

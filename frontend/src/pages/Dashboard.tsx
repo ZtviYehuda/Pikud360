@@ -27,7 +27,7 @@ export default function Dashboard() {
       </div>
 
       {/* Grid: WFM Metrics Placeholder */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           icon={Users}
           title={t('dashboard:total_strength')}

@@ -32,7 +32,7 @@ export default function Reports() {
         <div className="space-y-3">
           {mockReports.map((report) => (
             <div key={report.id}
-              className="flex items-center justify-between p-4 rounded-xl border border-slate-105 hover:border-slate-205 bg-slate-50/50 dark:border-slate-850 dark:bg-slate-950/20 dark:hover:border-slate-800 transition-colors">
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-slate-105 hover:border-slate-205 bg-slate-50/50 dark:border-slate-850 dark:bg-slate-950/20 dark:hover:border-slate-800 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-lg bg-indigo-50 text-indigo-650 dark:bg-indigo-950/30 dark:text-indigo-400">
                   {report.format === 'PDF' ? <FileText className="h-5 w-5" /> : <FileSpreadsheet className="h-5 w-5" />}
@@ -48,7 +48,7 @@ export default function Reports() {
                 </div>
               </div>
               
-              <Button variant="outline" size="sm" className="gap-1.5">
+              <Button variant="outline" size="sm" className="gap-1.5 w-full sm:w-auto justify-center sm:justify-start">
                 <Download className="h-3.5 w-3.5" />
                 <span>{t('buttons:download')}</span>
               </Button>

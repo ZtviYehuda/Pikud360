@@ -21,6 +21,16 @@ export default function WorkforceCalendar() {
   const { hasPermission } = useAuthStore();
   const { t } = useTranslation();
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 767px)');
+    setIsMobile(media.matches);
+    const listener = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  }, []);
+
   if (!hasPermission('schedule.view')) {
     return <Unauthorized />;
   }
@@ -204,30 +214,56 @@ export default function WorkforceCalendar() {
 
                 <div>
                   <h4 className="font-bold text-sm text-slate-800 dark:text-white mb-3">{t('employees:title')}</h4>
-                  <Card className="overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="px-4">{t('employees:name')}</TableHead>
-                          <TableHead className="px-4">{t('employees:rank')}</TableHead>
-                          <TableHead className="px-4">{t('analytics:unit')}</TableHead>
-                          <TableHead className="px-4">{t('common:status')}</TableHead>
-                          <TableHead className="px-4">{t('scheduling:shift_name')}</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {snapshotData.assignments.map((asg, idx) => (
-                          <TableRow key={idx}>
-                            <TableCell className="px-4 font-semibold text-slate-800 dark:text-white">{asg.display_name}</TableCell>
-                            <TableCell className="px-4 text-slate-500">{asg.rank} | {asg.role}</TableCell>
-                            <TableCell className="px-4 text-slate-500">{asg.organization_unit}</TableCell>
-                            <TableCell className="px-4 font-medium text-slate-700 dark:text-slate-350">{asg.status}</TableCell>
-                            <TableCell className="px-4 text-slate-450">{asg.shift || '-'}</TableCell>
+                  {isMobile ? (
+                    <div className="space-y-3">
+                      {snapshotData.assignments.map((asg, idx) => (
+                        <div key={idx} className="p-4 border border-slate-100 dark:border-slate-800 rounded-xl space-y-2 bg-slate-50/30 dark:bg-slate-900/30 text-xs">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h5 className="font-bold text-slate-850 dark:text-white">{asg.display_name}</h5>
+                              <p className="text-[10px] text-slate-400 mt-0.5">{asg.rank} | {asg.role}</p>
+                            </div>
+                            <Badge variant="secondary" className="text-[10px]">{asg.status}</Badge>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-105 dark:border-slate-800 text-[10px] text-slate-500">
+                            <div>
+                              <span className="text-slate-400">{t('analytics:unit')}: </span>
+                              <span className="font-medium text-slate-700 dark:text-slate-350">{asg.organization_unit}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-400">{t('scheduling:shift_name')}: </span>
+                              <span className="font-medium text-slate-700 dark:text-slate-350">{asg.shift || '-'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <Card className="overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="px-4">{t('employees:name')}</TableHead>
+                            <TableHead className="px-4">{t('employees:rank')}</TableHead>
+                            <TableHead className="px-4">{t('analytics:unit')}</TableHead>
+                            <TableHead className="px-4">{t('common:status')}</TableHead>
+                            <TableHead className="px-4">{t('scheduling:shift_name')}</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </Card>
+                        </TableHeader>
+                        <TableBody>
+                          {snapshotData.assignments.map((asg, idx) => (
+                            <TableRow key={idx}>
+                              <TableCell className="px-4 font-semibold text-slate-800 dark:text-white">{asg.display_name}</TableCell>
+                              <TableCell className="px-4 text-slate-505">{asg.rank} | {asg.role}</TableCell>
+                              <TableCell className="px-4 text-slate-505">{asg.organization_unit}</TableCell>
+                              <TableCell className="px-4 font-medium text-slate-700 dark:text-slate-355">{asg.status}</TableCell>
+                              <TableCell className="px-4 text-slate-450">{asg.shift || '-'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </Card>
+                  )}
                 </div>
               </>
             ) : (
