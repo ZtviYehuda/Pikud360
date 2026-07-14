@@ -166,18 +166,21 @@ class ReportService:
             raise AccessDeniedError("Access denied: report belongs to a different tenant.")
         return self._report_repo.delete_report_request(report_id)
 
-    def process_pending_reports(self, processor: ReportProcessor) -> int:
+    def process_pending_reports(self, processor: Optional[Any] = None) -> int:
         """
         Invoked by the SchedulerEngine reports job.
-        Iterates PENDING requests, transitions them via processor,
+        Iterates PENDING requests, transitions them via processor (or resolves via ReportFactory),
         and records results or failures.
         """
+        from app.modules.reports.factory import ReportFactory
+
         pending = self._report_repo.load_pending_reports()
         processed = 0
         for report in pending:
             self._report_repo.update_status(report.id, ReportStatus.GENERATING)
             try:
-                result = processor.process(report)
+                active_processor = processor or ReportFactory.get_processor(report.format)
+                result = active_processor.process(report)
                 self._report_repo.save_report_result(
                     report_id=report.id,
                     file_name=result["file_name"],
@@ -196,3 +199,7 @@ class ReportService:
                 logger.error(f"Report '{report.id}' failed: {e}", exc_info=True)
                 self._report_repo.update_status(report.id, ReportStatus.FAILED, str(e))
         return processed
+
+    def increment_download_count(self, report_id: str) -> None:
+        """Increment the download count for a given report ID."""
+        self._report_repo.increment_download_count(report_id)

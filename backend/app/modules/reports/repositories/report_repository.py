@@ -196,3 +196,17 @@ class ReportRepository:
                     return cur.fetchone() is not None
         except Exception:
             return False
+
+    def increment_download_count(self, report_id: str) -> None:
+        """Increment the download count for a generated report request."""
+        query = """
+            UPDATE workforce.generated_reports
+            SET download_count = download_count + 1
+            WHERE id = %s;
+        """
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query, (report_id,))
+        except Exception:
+            pass

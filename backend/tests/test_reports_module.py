@@ -360,3 +360,196 @@ class TestSchedulerEngineReportsJob:
             engine = SchedulerEngine()
             job = engine.registry["reports"]
             assert "report" in job.description.lower()
+
+
+# ── Phase 7.3B new tests ───────────────────────────────────────────────────────
+
+from app.modules.reports.factory import ReportFactory
+from app.modules.reports.storage import ReportStorage
+from app.modules.reports.utils import safe_join_path, generate_filename
+from app.modules.reports.processors import PDFReportProcessor, ExcelReportProcessor, CSVReportProcessor
+from flask_jwt_extended import create_access_token
+import tempfile
+import shutil
+import os
+
+class TestReportFactory:
+    def test_factory_resolves_correct_processors(self):
+        assert isinstance(ReportFactory.get_processor(ReportFormat.PDF), PDFReportProcessor)
+        assert isinstance(ReportFactory.get_processor("PDF"), PDFReportProcessor)
+        assert isinstance(ReportFactory.get_processor(ReportFormat.EXCEL), ExcelReportProcessor)
+        assert isinstance(ReportFactory.get_processor("EXCEL"), ExcelReportProcessor)
+        assert isinstance(ReportFactory.get_processor(ReportFormat.CSV), CSVReportProcessor)
+        assert isinstance(ReportFactory.get_processor("CSV"), CSVReportProcessor)
+        
+    def test_factory_raises_value_error_for_invalid_format(self):
+        with pytest.raises(ValueError, match="Unsupported format"):
+            ReportFactory.get_processor("WORD")
+
+
+class TestReportStorageAndUtils:
+    def setup_method(self):
+        self.test_dir = tempfile.mkdtemp()
+        self.storage = ReportStorage(base_dir=self.test_dir)
+
+    def teardown_method(self):
+        shutil.rmtree(self.test_dir)
+
+    def test_safe_join_path_prevents_traversal(self):
+        with pytest.raises(ValueError, match="Path traversal attempt"):
+            safe_join_path(self.test_dir, "../../passwd")
+
+    def test_save_report_creates_directories_and_metadata(self):
+        content = b"test report content"
+        filename = generate_filename("manpower_summary", "csv")
+        result = self.storage.save_report("tenant-123", filename, content)
+        
+        assert result["file_name"] == filename
+        assert os.path.exists(result["file_path"])
+        assert result["file_size"] == len(content)
+        assert result["checksum"] is not None
+        assert result["mime_type"] == "text/csv"
+
+
+class TestConcreteProcessors:
+    @patch("app.modules.reports.processors.base.get_db_connection")
+    def test_csv_processor_generate(self, mock_conn):
+        mock_cur = mock_conn.return_value.__enter__.return_value.cursor.return_value.__enter__.return_value
+        mock_cur.fetchall.return_value = [
+            ("E1", "John", "Doe", "Captain", "Commander", "Regular", "ACTIVE")
+        ]
+        
+        report = ReportRequest(
+            id="r1", tenant_id="t1", name="Test CSV",
+            report_type=ReportType.MANPOWER_SUMMARY,
+            format=ReportFormat.CSV, generated_by="u1",
+            parameters_json={"delimiter": ";"}
+        )
+        
+        processor = CSVReportProcessor()
+        data = processor.generate(report)
+        
+        import codecs
+        assert data.startswith(codecs.BOM_UTF8)
+        content_str = data[len(codecs.BOM_UTF8):].decode("utf-8")
+        assert ";" in content_str
+        assert "E1" in content_str
+
+    @patch("app.modules.reports.processors.base.get_db_connection")
+    def test_excel_processor_generate(self, mock_conn):
+        mock_cur = mock_conn.return_value.__enter__.return_value.cursor.return_value.__enter__.return_value
+        mock_cur.fetchall.return_value = [
+            ("E1", "John", "Doe", "Captain", "Commander", "Regular", "ACTIVE")
+        ]
+        
+        report = ReportRequest(
+            id="r1", tenant_id="t1", name="Test Excel",
+            report_type=ReportType.MANPOWER_SUMMARY,
+            format=ReportFormat.EXCEL, generated_by="u1"
+        )
+        
+        processor = ExcelReportProcessor()
+        data = processor.generate(report)
+        assert len(data) > 100
+
+    @patch("app.modules.reports.processors.base.get_db_connection")
+    def test_pdf_processor_generate(self, mock_conn):
+        mock_cur = mock_conn.return_value.__enter__.return_value.cursor.return_value.__enter__.return_value
+        mock_cur.fetchall.return_value = [
+            ("E1", "John", "Doe", "Captain", "Commander", "Regular", "ACTIVE")
+        ]
+        
+        report = ReportRequest(
+            id="r1", tenant_id="t1", name="Test PDF",
+            report_type=ReportType.MANPOWER_SUMMARY,
+            format=ReportFormat.PDF, generated_by="u1"
+        )
+        
+        processor = PDFReportProcessor()
+        data = processor.generate(report)
+        assert data.startswith(b"%PDF")
+
+
+class TestReportDownloadEndpoint:
+    @patch("app.modules.reports.routes.report_service")
+    def test_download_success(self, mock_service, client, app):
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        temp_file.write(b"pdf contents")
+        temp_file.close()
+        
+        mock_service.get_report.return_value = ReportRequest(
+            id="r1", tenant_id="tenant-123", name="PDF Report",
+            report_type=ReportType.MANPOWER_SUMMARY,
+            format=ReportFormat.PDF, generated_by="user-1",
+            status=ReportStatus.COMPLETED, file_path=temp_file.name,
+            file_name="manpower.pdf", mime_type="application/pdf"
+        )
+        
+        with app.app_context():
+            token = create_access_token(identity="user-1", additional_claims={"tenant_id": "tenant-123"})
+            headers = {"Authorization": f"Bearer {token}"}
+            
+            with patch("app.core.authorization.decorators.resolve_access_scope") as mock_resolve, \
+                 patch("app.core.authorization.decorators.check_authorization", return_value=True), \
+                 patch("app.core.authorization.decorators.audit_repo"):
+                response = client.get("/api/v1/reports/r1/download", headers=headers)
+                
+        assert response.status_code == 200
+        assert response.data == b"pdf contents"
+        assert response.headers["Content-Disposition"] == "attachment; filename=manpower.pdf"
+        mock_service.increment_download_count.assert_called_once_with("r1")
+        os.unlink(temp_file.name)
+
+    @patch("app.modules.reports.routes.report_service")
+    def test_download_unauthorized_tenant_isolation(self, mock_service, client, app):
+        from app.core.authorization.exceptions import AccessDeniedError
+        mock_service.get_report.side_effect = AccessDeniedError("Access denied")
+        
+        with app.app_context():
+            token = create_access_token(identity="user-1", additional_claims={"tenant_id": "tenant-999"})
+            headers = {"Authorization": f"Bearer {token}"}
+            
+            with patch("app.core.authorization.decorators.resolve_access_scope") as mock_resolve, \
+                 patch("app.core.authorization.decorators.check_authorization", return_value=True), \
+                 patch("app.core.authorization.decorators.audit_repo"):
+                response = client.get("/api/v1/reports/r1/download", headers=headers)
+                
+        assert response.status_code == 403
+        assert response.json["status"] == "error"
+
+    @patch("app.modules.reports.routes.report_service")
+    def test_download_missing_report(self, mock_service, client, app):
+        mock_service.get_report.return_value = None
+        
+        with app.app_context():
+            token = create_access_token(identity="user-1", additional_claims={"tenant_id": "tenant-123"})
+            headers = {"Authorization": f"Bearer {token}"}
+            
+            with patch("app.core.authorization.decorators.resolve_access_scope") as mock_resolve, \
+                 patch("app.core.authorization.decorators.check_authorization", return_value=True), \
+                 patch("app.core.authorization.decorators.audit_repo"):
+                response = client.get("/api/v1/reports/nonexistent/download", headers=headers)
+                
+        assert response.status_code == 404
+        assert response.json["error"]["code"] == "NOT_FOUND"
+
+    @patch("app.modules.reports.routes.report_service")
+    def test_download_file_missing_on_disk(self, mock_service, client, app):
+        mock_service.get_report.return_value = ReportRequest(
+            id="r1", tenant_id="tenant-123", name="PDF Report",
+            report_type=ReportType.MANPOWER_SUMMARY,
+            format=ReportFormat.PDF, generated_by="user-1",
+            status=ReportStatus.COMPLETED, file_path="/tmp/nonexistent.pdf",
+            file_name="manpower.pdf", mime_type="application/pdf"
+        )
+        
+        with app.app_context():
+            token = create_access_token(identity="user-1", additional_claims={"tenant_id": "tenant-123"})
+            headers = {"Authorization": f"Bearer {token}"}
+            
+            with patch("app.core.authorization.decorators.resolve_access_scope") as mock_resolve, \
+                 patch("app.core.authorization.decorators.check_authorization", return_value=True), \
+                 patch("app.core.authorization.decorators.audit_repo"):
+                response = client.get("/api/v1/reports/r1/download", headers=headers)
+                
+        assert response.status_code == 404

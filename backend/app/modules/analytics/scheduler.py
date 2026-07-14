@@ -249,12 +249,11 @@ class SchedulerEngine:
         return deleted_rows
 
     def _run_reports_job(self) -> int:
-        """Reports Job callback: processes PENDING report requests via the registered processor."""
+        """Reports Job callback: processes PENDING report requests via ReportFactory."""
         # Import lazily to avoid circular dependencies at module load time
-        from app.modules.reports.services import ReportService, NoOpReportProcessor
+        from app.modules.reports.services import ReportService
         service = ReportService()
-        processor = NoOpReportProcessor()
-        return service.process_pending_reports(processor)
+        return service.process_pending_reports()
 
     def _get_setting_value(self, key: Optional[str], default: str) -> str:
         """Helper to fetch setting value from database configuration."""

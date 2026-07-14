@@ -3,7 +3,8 @@ Reports module API routes — all endpoints under /api/v1/reports/*
 All routes require analytics permissions and respect tenant scoping.
 """
 import logging
-from flask import Blueprint, request
+import os
+from flask import Blueprint, request, send_file
 from flask_jwt_extended import get_jwt_identity, get_jwt
 from pydantic import ValidationError
 
@@ -188,4 +189,41 @@ def delete_report(report_id):
         return ApiResponse.error(str(e), "FORBIDDEN", status_code=403)
     except Exception as e:
         logger.error(f"Error deleting report {report_id}: {e}", exc_info=True)
+        return ApiResponse.error("Internal server error", "INTERNAL_ERROR", status_code=500)
+
+
+# ── DOWNLOAD ───────────────────────────────────────────────────────────────────
+
+@reports_bp.route("/<report_id>/download", methods=["GET"])
+@require_permission("analytics.view", ScopeType.ORGANIZATION_UNIT)
+def download_report(report_id):
+    """Securely stream a generated report file."""
+    claims = get_jwt()
+    tenant_id = claims.get("tenant_id")
+
+    try:
+        report = report_service.get_report(report_id, tenant_id)
+        if not report:
+            return ApiResponse.error("Report not found.", "NOT_FOUND", status_code=404)
+
+        if report.status != ReportStatus.COMPLETED:
+            return ApiResponse.error("Report is not completed.", "BAD_REQUEST", status_code=400)
+
+        file_path = report.file_path
+        if not file_path or not os.path.exists(file_path):
+            return ApiResponse.error("Report file does not exist on disk.", "NOT_FOUND", status_code=404)
+
+        # Increment download counter
+        report_service.increment_download_count(report_id)
+
+        return send_file(
+            file_path,
+            mimetype=report.mime_type or "application/octet-stream",
+            as_attachment=True,
+            download_name=report.file_name or f"report_{report_id}.dat"
+        )
+    except AccessDeniedError as e:
+        return ApiResponse.error(str(e), "FORBIDDEN", status_code=403)
+    except Exception as e:
+        logger.error(f"Error downloading report {report_id}: {e}", exc_info=True)
         return ApiResponse.error("Internal server error", "INTERNAL_ERROR", status_code=500)
