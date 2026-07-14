@@ -1,10 +1,9 @@
 import { Link } from 'react-router-dom';
-import { useUIStore } from '../stores/uiStore';
+import { useTranslation } from 'react-i18next';
 import { ShieldAlert, Home } from 'lucide-react';
 
 export default function Unauthorized() {
-  const { direction } = useUIStore();
-  const isRTL = direction === 'rtl';
+  const { t } = useTranslation();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 dark:bg-slate-950">
@@ -15,13 +14,11 @@ export default function Unauthorized() {
         </div>
         
         <h2 className="font-heading text-3xl font-bold text-slate-900 dark:text-white">
-          {isRTL ? 'אין הרשאה מתאימה' : 'Access Denied'}
+          {t('common:access_denied')}
         </h2>
         
         <p className="text-slate-500 dark:text-slate-400">
-          {isRTL 
-            ? 'אין לך את ההרשאות הדרושות לצפייה בדף זה. פנה למנהל המערכת לקבלת גישה.' 
-            : 'You do not have the required permissions to view this page. Please contact your administrator.'}
+          {t('common:access_denied_desc')}
         </p>
 
         <div className="pt-4">
@@ -30,7 +27,7 @@ export default function Unauthorized() {
             className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-brand-700"
           >
             <Home className="h-4 w-4" />
-            {isRTL ? 'חזרה ללוח הבקרה' : 'Back to Dashboard'}
+            {t('common:dashboard')}
           </Link>
         </div>
       </div>

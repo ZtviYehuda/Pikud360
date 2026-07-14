@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { UnitBreakdownItem } from '../../../services/analyticsService';
 import ChartCard from './ChartCard';
 
@@ -6,15 +7,15 @@ interface OrganizationHeatMapProps {
   childUnits: UnitBreakdownItem[] | null;
   loading?: boolean;
   error?: string | null;
-  isRTL?: boolean;
 }
 
 export default function OrganizationHeatMap({
   childUnits,
   loading = false,
-  error = null,
-  isRTL = false
+  error = null
 }: OrganizationHeatMapProps) {
+  const { t } = useTranslation();
+
   const heatMapData = React.useMemo(() => {
     if (!childUnits) return [];
     return childUnits.map((unit) => {
@@ -22,44 +23,33 @@ export default function OrganizationHeatMap({
         (d) => d.status.toUpperCase() === 'AVAILABLE'
       );
       const availableCount = availableDist ? availableDist.count : 0;
-      const rate = unit.total_personnel > 0 
+      const rate = unit.total_personnel > 0
         ? Math.round((availableCount / unit.total_personnel) * 100)
         : 0;
 
-      // Color coding logic
       let colorClass = '';
       let bgClass = '';
       let textClass = '';
-      
+
       if (rate >= 85) {
-        // Green
         colorClass = 'border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400';
         bgClass = 'bg-emerald-500';
         textClass = 'text-emerald-700 dark:text-emerald-450';
       } else if (rate >= 70) {
-        // Yellow
         colorClass = 'border-amber-400 bg-amber-400/10 text-amber-700 dark:text-amber-400';
         bgClass = 'bg-amber-400';
         textClass = 'text-amber-700 dark:text-amber-450';
       } else if (rate >= 50) {
-        // Orange
         colorClass = 'border-orange-500 bg-orange-500/10 text-orange-700 dark:text-orange-400';
         bgClass = 'bg-orange-500';
         textClass = 'text-orange-700 dark:text-orange-450';
       } else {
-        // Red
         colorClass = 'border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-450';
         bgClass = 'bg-rose-500';
         textClass = 'text-rose-700 dark:text-rose-450';
       }
 
-      return {
-        ...unit,
-        rate,
-        colorClass,
-        bgClass,
-        textClass
-      };
+      return { ...unit, rate, colorClass, bgClass, textClass };
     });
   }, [childUnits]);
 
@@ -67,11 +57,10 @@ export default function OrganizationHeatMap({
 
   return (
     <ChartCard
-      title={isRTL ? 'מפת חום - כשירות יחידות כפיפות' : 'Readiness Grid - Sub-units'}
+      title={t('analytics:heatmap')}
       loading={loading}
       error={error}
       empty={empty}
-      isRTL={isRTL}
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full p-1">
         {heatMapData.map((unit) => (
@@ -89,18 +78,18 @@ export default function OrganizationHeatMap({
             <div className="mt-3 flex items-baseline justify-between">
               <div className="flex flex-col">
                 <span className="text-2xs text-slate-450 uppercase font-bold tracking-wider">
-                  {isRTL ? 'כשירות' : 'Availability'}
+                  {t('analytics:available')}
                 </span>
                 <span className={`text-2xl font-extrabold font-heading ${unit.textClass}`}>
                   {unit.rate}%
                 </span>
               </div>
-              <div className="text-right flex flex-col">
+              <div className="text-left flex flex-col">
                 <span className="text-[10px] text-slate-450 font-semibold">
-                  {isRTL ? `מצבה: ${unit.total_personnel}` : `Strength: ${unit.total_personnel}`}
+                  {t('dashboard:total_strength')}: {unit.total_personnel}
                 </span>
                 <span className="text-[10px] text-slate-450 font-semibold mt-0.5">
-                  {isRTL ? `משובץ: ${unit.assigned}` : `Assigned: ${unit.assigned}`}
+                  {t('dashboard:assigned')}: {unit.assigned}
                 </span>
               </div>
             </div>

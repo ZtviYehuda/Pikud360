@@ -1,13 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { useAuthStore } from '../stores/authStore';
-import { useUIStore } from '../stores/uiStore';
 import { adminService } from '../services/adminService';
 
 vi.mock('../stores/authStore', () => ({ useAuthStore: vi.fn() }));
-vi.mock('../stores/uiStore', () => ({ useUIStore: vi.fn() }));
 vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn(), Link: ({ children }: any) => children }));
 vi.mock('../pages/Unauthorized', () => ({ default: () => <div>Unauthorized</div> }));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        'title': 'System Settings',
+        'general': 'General',
+        'security': 'Security',
+        'save_settings': 'Save Settings'
+      };
+      return translations[key] || key;
+    }
+  })
+}));
 
 const mockSettings = [
   { key: 'scheduling_mode_default', value: 'DIRECT_STATUS', description: 'Default mode', updated_at: '2026-01-01' },
@@ -17,7 +29,6 @@ const mockSettings = [
 describe('AdminSettings', () => {
   beforeEach(() => {
     (useAuthStore as any).mockReturnValue({ hasPermission: () => true, user: { name: 'Admin' } });
-    (useUIStore as any).mockReturnValue({ language: 'en' });
     vi.spyOn(adminService, 'getSettings').mockResolvedValue(mockSettings);
     vi.spyOn(adminService, 'updateSettings').mockResolvedValue(mockSettings);
   });

@@ -31,5 +31,15 @@
   "fullscreen_enter": "מסך מלא",
   "fullscreen_exit": "צא ממסך מלא",
   "widget_manage": "ניהול ווידג'טים",
-  "widget_reset": "אפס פריסה"
+  "widget_reset": "אפס פריסה",
+  "month_trend": "החודש",
+  "status_ok": "תקין",
+  "status_warning": "דורש טיפול",
+  "frontend_client": "לקוח פרונטנד",
+  "backend_server": "שרת בקאנד",
+  "database": "בסיס נתונים",
+  "online": "מחובר",
+  "offline": "מנותק",
+  "checking": "בודק...",
+  "connection_info": "לוח הבקרה מאמת את החיבורים לבקאנד באמצעות TanStack Query."
 }

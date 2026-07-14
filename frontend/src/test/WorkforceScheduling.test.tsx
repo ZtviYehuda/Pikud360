@@ -5,6 +5,22 @@ import { useUIStore } from '../stores/uiStore';
 import { schedulingService } from '../services/schedulingService';
 import WorkforceScheduling from '../pages/WorkforceScheduling';
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        'scheduling:title': 'Daily Workforce Scheduling',
+        'scheduling:desc': 'Commander planning control panel for daily status allocation.',
+        'analytics:unit': 'Unit',
+        'scheduling:hours': 'Hours',
+        'employees:employee': 'Employee',
+        'scheduling:not_assigned': 'Not assigned'
+      };
+      return translations[key] || key;
+    }
+  })
+}));
+
 // 1. Mock Zustand Stores
 vi.mock('../stores/authStore', () => ({
   useAuthStore: vi.fn()
@@ -131,7 +147,7 @@ describe('WorkforceScheduling Commander Dashboard Component', () => {
     render(<WorkforceScheduling />);
     
     // Should show the Unauthorized page content
-    expect(screen.getByText('Access Denied')).toBeDefined();
+    expect(screen.getByText('common:access_denied')).toBeDefined();
   });
 
   it('loads and displays daily assignments for authorized commanders', async () => {

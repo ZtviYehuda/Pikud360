@@ -5,6 +5,14 @@ import PersonnelTrendChart from '../components/dashboard/charts/PersonnelTrendCh
 import DailyStatusBarChart from '../components/dashboard/charts/DailyStatusBarChart';
 import OrganizationHeatMap from '../components/dashboard/charts/OrganizationHeatMap';
 
+// Mock i18n to return keys as-is for testing
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: { language: 'he' }
+  })
+}));
+
 // Robust mock for recharts components to avoid SVG measurement and layout constraints in jsdom
 vi.mock('recharts', () => {
   return {
@@ -84,7 +92,8 @@ describe('Dashboard Interactive Charts Tests', () => {
 
   it('renders StatusDistributionPieChart with data items', () => {
     render(<StatusDistributionPieChart data={mockDistribution} />);
-    expect(screen.getByText('Workforce Readiness Ratio')).toBeDefined();
+    // Title uses t() which returns the key in our mock
+    expect(screen.getByText('analytics:distribution')).toBeDefined();
     // Verify mapped data names render
     expect(screen.getByText('AVAILABLE')).toBeDefined();
     expect(screen.getByText('SICK')).toBeDefined();
@@ -98,32 +107,31 @@ describe('Dashboard Interactive Charts Tests', () => {
         data={mockTrends}
         period="daily"
         onPeriodChange={handlePeriodChange}
-        isRTL={false}
       />
     );
-    expect(screen.getByText('Workforce Readiness Trends')).toBeDefined();
-    expect(screen.getByText('Daily')).toBeDefined();
-    expect(screen.getByText('Weekly')).toBeDefined();
+    expect(screen.getByText('analytics:trends')).toBeDefined();
+    // Period buttons use t() keys
+    expect(screen.getByText('analytics:daily')).toBeDefined();
+    expect(screen.getByText('analytics:weekly')).toBeDefined();
   });
 
   it('renders DailyStatusBarChart comparing child units', () => {
     render(<DailyStatusBarChart childUnits={mockChildUnits} />);
-    expect(screen.getByText('Manpower Distribution Across Sub-units')).toBeDefined();
+    expect(screen.getByText('analytics:unit_breakdown')).toBeDefined();
   });
 
   it('renders OrganizationHeatMap and color codes readiness metrics', () => {
     render(<OrganizationHeatMap childUnits={mockChildUnits} />);
-    expect(screen.getByText('Readiness Grid - Sub-units')).toBeDefined();
-    
+    expect(screen.getByText('analytics:heatmap')).toBeDefined();
     expect(screen.getByText('Company A')).toBeDefined();
     expect(screen.getByText('Company B')).toBeDefined();
-    
     expect(screen.getByText('80%')).toBeDefined();
     expect(screen.getByText('33%')).toBeDefined();
   });
 
-  it('renders EmptyState visual if empty list returns', () => {
+  it('renders EmptyState if empty list returns', () => {
     render(<StatusDistributionPieChart data={[]} />);
-    expect(screen.getByText('No Data Available')).toBeDefined();
+    // ChartCard renders EmptyState title via t('common:no_data')
+    expect(screen.getByText('common:no_data')).toBeDefined();
   });
 });

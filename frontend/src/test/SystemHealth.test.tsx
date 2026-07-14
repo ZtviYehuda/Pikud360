@@ -1,12 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { useAuthStore } from '../stores/authStore';
-import { useUIStore } from '../stores/uiStore';
 import { adminService } from '../services/adminService';
 
 vi.mock('../stores/authStore', () => ({ useAuthStore: vi.fn() }));
-vi.mock('../stores/uiStore', () => ({ useUIStore: vi.fn() }));
 vi.mock('../pages/Unauthorized', () => ({ default: () => <div>Unauthorized</div> }));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        'health_title': 'System Health',
+        'database': 'Database'
+      };
+      return translations[key] || key;
+    }
+  })
+}));
 
 const mockHealth = {
   database: 'healthy',
@@ -20,7 +30,6 @@ const mockHealth = {
 describe('SystemHealth', () => {
   beforeEach(() => {
     (useAuthStore as any).mockReturnValue({ hasPermission: () => true, user: { name: 'Admin' } });
-    (useUIStore as any).mockReturnValue({ language: 'en' });
     vi.spyOn(adminService, 'getSystemHealth').mockResolvedValue(mockHealth);
   });
 

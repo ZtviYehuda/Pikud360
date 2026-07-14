@@ -6,6 +6,17 @@ import { schedulingService } from '../services/schedulingService';
 import { analyticsService } from '../services/analyticsService';
 import CommanderDashboard from '../pages/CommanderDashboard';
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        'analytics:title': 'Workforce Intelligence Dashboard'
+      };
+      return translations[key] || key;
+    }
+  })
+}));
+
 // 1. Mock Zustand Stores
 vi.mock('../stores/authStore', () => ({
   useAuthStore: vi.fn()
@@ -128,7 +139,7 @@ describe('CommanderDashboard Component Tests', () => {
     });
 
     render(<CommanderDashboard />);
-    expect(screen.getByText(/Access Denied/i)).toBeDefined();
+    expect(screen.getByText(/^common:access_denied$/)).toBeDefined();
   });
 
   it('displays empty state if no summary metrics return', async () => {
@@ -136,7 +147,7 @@ describe('CommanderDashboard Component Tests', () => {
     render(<CommanderDashboard />);
 
     await waitFor(() => {
-      expect(screen.getByText(/No summary data available/i)).toBeDefined();
+      expect(screen.getByText(/common:no_data/i)).toBeDefined();
     });
   });
 });

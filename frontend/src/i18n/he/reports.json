@@ -19,5 +19,6 @@
   "status_failed": "נכשל",
   "template_manpower": "דוח מצבת כוח אדם יומית",
   "template_readiness": "דוח כשירות וכוננות חטיבתית",
-  "template_sickness": "ריכוז נתוני תחלואה חודשי"
+  "template_sickness": "ריכוז נתוני תחלואה חודשי",
+  "exported_reports": "הורדת דוחות שהופקו"
 }

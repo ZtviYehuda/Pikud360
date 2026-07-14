@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface DistributionItem {
   status: string;
@@ -8,10 +9,11 @@ interface DistributionItem {
 
 interface StatusSummaryGridProps {
   distribution: DistributionItem[] | Record<string, number> | null;
-  isRTL?: boolean;
 }
 
-export default function StatusSummaryGrid({ distribution, isRTL = false }: StatusSummaryGridProps) {
+export default function StatusSummaryGrid({ distribution }: StatusSummaryGridProps) {
+  const { t } = useTranslation();
+
   // Normalize distribution into a standard array
   const items: DistributionItem[] = React.useMemo(() => {
     if (!distribution) return [];
@@ -30,7 +32,7 @@ export default function StatusSummaryGrid({ distribution, isRTL = false }: Statu
   if (items.length === 0) {
     return (
       <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-2xl p-6 text-center text-slate-450 dark:text-slate-400 text-xs">
-        {isRTL ? 'אין נתוני התפלגות זמינים' : 'No status distribution data available.'}
+        {t('common:no_data')}
       </div>
     );
   }
@@ -76,7 +78,7 @@ export default function StatusSummaryGrid({ distribution, isRTL = false }: Statu
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm">
       <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-4">
-        {isRTL ? 'התפלגות סטטוסים' : 'Status Distribution'}
+        {t('analytics:distribution')}
       </h3>
       
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -96,8 +98,8 @@ export default function StatusSummaryGrid({ distribution, isRTL = false }: Statu
                   {item.count}
                 </span>
                 {item.percentage !== undefined && (
-                  <span className="text-[10px] font-semibold text-slate-500 mt-1">
-                    {item.percentage}% {isRTL ? 'מכלל המצבה' : 'of total'}
+                  <span className="text-[10px] font-semibold text-slate-555 mt-1">
+                    {item.percentage}% מכלל המצבה
                   </span>
                 )}
               </div>

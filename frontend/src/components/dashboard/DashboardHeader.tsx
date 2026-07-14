@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { GitFork, Calendar, RefreshCw, ChevronDown, ChevronUp, Activity } from 'lucide-react';
 
 interface DashboardHeaderProps {
@@ -10,7 +11,6 @@ interface DashboardHeaderProps {
   onRefresh: () => void;
   loading?: boolean;
   lastUpdated: string | null;
-  isRTL?: boolean;
 }
 
 export default function DashboardHeader({
@@ -21,11 +21,11 @@ export default function DashboardHeader({
   onDateChange,
   onRefresh,
   loading = false,
-  lastUpdated,
-  isRTL = false
+  lastUpdated
 }: DashboardHeaderProps) {
   const [isTreeDropdownOpen, setIsTreeDropdownOpen] = useState(false);
   const treeDropdownRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   // Close tree dropdown on clicking outside
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function DashboardHeader({
     return null;
   };
 
-  const currentUnitName = findUnitName(orgTree, selectedUnitId) || (isRTL ? 'מפקדת חטיבה' : 'Brigade HQ');
+  const currentUnitName = findUnitName(orgTree, selectedUnitId) || t('common:app_name');
 
   // Breadcrumbs track selection path
   const breadcrumbs = React.useMemo(() => {
@@ -89,8 +89,8 @@ export default function DashboardHeader({
               : 'text-slate-700 dark:text-slate-300'
           }`}
           style={{
-            paddingLeft: isRTL ? '12px' : `${depth * 16 + 12}px`,
-            paddingRight: isRTL ? `${depth * 16 + 12}px` : '12px'
+            paddingLeft: '12px',
+            paddingRight: `${depth * 16 + 12}px`
           }}
         >
           <GitFork className="h-3.5 w-3.5 opacity-60 text-slate-400 shrink-0" />
@@ -107,10 +107,10 @@ export default function DashboardHeader({
 
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/60 dark:border-slate-800/80 pb-5">
-      <div className={`space-y-1 text-${isRTL ? 'right' : 'left'}`}>
+      <div className="space-y-1 text-right">
         {/* Breadcrumbs */}
         <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-semibold tracking-wider uppercase">
-          <span>{isRTL ? 'לוח בקרה מפקד' : 'COMMANDER INTELLIGENCE'}</span>
+          <span>{t('common:commander_dashboard')}</span>
           {breadcrumbs.map((crumb, idx) => (
             <React.Fragment key={crumb.id}>
               <span>/</span>
@@ -128,10 +128,10 @@ export default function DashboardHeader({
 
         <h1 className="font-heading text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
           <Activity className="h-6 w-6 text-brand-555 animate-pulse" />
-          {isRTL ? 'לוח בקרה מודיעיני לכוח אדם' : 'Workforce Intelligence Dashboard'}
+          {t('analytics:title')}
         </h1>
         <p className="text-slate-400 text-xs mt-0.5">
-          {isRTL ? 'תמונה מבצעית של רמות הכשירות, שיעורי התחלואה ומדדי המצבה ביחידות.' : 'Operational picture of workforce readiness, sickness rates, and manpower availability.'}
+          {t('analytics:desc')}
         </p>
       </div>
 
@@ -139,7 +139,7 @@ export default function DashboardHeader({
       <div className="flex flex-wrap items-center gap-3">
         {/* Org Tree Selector Dropdown */}
         <div className="relative flex items-center gap-2" ref={treeDropdownRef}>
-          <label className="text-xs font-bold text-slate-450">{isRTL ? 'יחידה:' : 'Unit:'}</label>
+          <label className="text-xs font-bold text-slate-450">{t('analytics:unit')}:</label>
           <button
             type="button"
             onClick={() => setIsTreeDropdownOpen(!isTreeDropdownOpen)}
@@ -152,8 +152,8 @@ export default function DashboardHeader({
           {isTreeDropdownOpen && (
             <div className="absolute right-0 top-full mt-1.5 w-64 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xl p-2 z-50 max-h-60 overflow-y-auto animate-fade-in">
               {orgTree.length === 0 ? (
-                <div className="text-center py-4 text-xs text-slate-400">
-                  {isRTL ? 'אין יחידות זמינות' : 'No units available'}
+                <div className="text-center py-4 text-xs text-slate-450">
+                  {t('common:no_data')}
                 </div>
               ) : (
                 <div className="space-y-1">
@@ -166,7 +166,7 @@ export default function DashboardHeader({
 
         {/* Date Picker */}
         <div className="flex items-center gap-2">
-          <label className="text-xs font-bold text-slate-450">{isRTL ? 'תאריך:' : 'Date:'}</label>
+          <label className="text-xs font-bold text-slate-450">{t('common:calendar')}:</label>
           <div className="relative">
             <input
               type="date"
@@ -185,13 +185,13 @@ export default function DashboardHeader({
             onClick={onRefresh}
             disabled={loading}
             className="p-2 rounded-lg border border-slate-200 hover:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-900 text-slate-500 dark:text-slate-400 transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
-            title={isRTL ? 'רענן נתונים' : 'Refresh metrics'}
+            title={t('buttons:refresh')}
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
           </button>
           {lastUpdated && (
             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider hidden sm:inline">
-              {isRTL ? `עודכן לאחרונה: ${lastUpdated}` : `Updated: ${lastUpdated}`}
+              {t('dashboard:last_updated')}: {lastUpdated}
             </span>
           )}
         </div>

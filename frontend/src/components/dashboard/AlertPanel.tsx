@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertOctagon, AlertTriangle, Info, BellOff } from 'lucide-react';
 
 export interface AlertData {
@@ -14,11 +15,11 @@ export interface AlertData {
 
 interface AlertPanelProps {
   alerts: AlertData[] | null;
-  isRTL?: boolean;
 }
 
-export default function AlertPanel({ alerts, isRTL = false }: AlertPanelProps) {
-  // Filter only triggered alerts
+export default function AlertPanel({ alerts }: AlertPanelProps) {
+  const { t } = useTranslation();
+
   const activeAlerts = React.useMemo(() => {
     if (!alerts) return [];
     return alerts.filter(a => a.is_triggered);
@@ -31,16 +32,15 @@ export default function AlertPanel({ alerts, isRTL = false }: AlertPanelProps) {
           <BellOff className="h-6 w-6" />
         </div>
         <h4 className="text-xs font-bold text-slate-850 dark:text-white mb-1">
-          {isRTL ? 'הכל תקין' : 'All Clear'}
+          {t('common:success')}
         </h4>
         <p className="text-slate-450 dark:text-slate-400 text-2xs max-w-xs leading-normal">
-          {isRTL ? 'אין התרעות פעילות ברמת הכשירות והמצבה ביחידה זו.' : 'No active alerts or threshold violations for this unit.'}
+          {t('common:no_data')}
         </p>
       </div>
     );
   }
 
-  // Get styles, labels and icons based on severity string
   const getSeverityStyle = (severity: string) => {
     const sev = severity.toUpperCase();
     if (sev === 'CRITICAL' || sev === 'DANGER' || sev === 'ERROR') {
@@ -73,19 +73,11 @@ export default function AlertPanel({ alerts, isRTL = false }: AlertPanelProps) {
     };
   };
 
-  const getAlertDescription = (alert: AlertData) => {
-    const formattedMetric = alert.metric.replace(/_/g, ' ');
-    if (isRTL) {
-      return `חריגה במדד: ${formattedMetric} (ערך נוכחי: ${alert.current_value} לעומת סף של ${alert.operator} ${alert.threshold})`;
-    }
-    return `Threshold violation on ${formattedMetric} (Current: ${alert.current_value} vs threshold ${alert.operator} ${alert.threshold})`;
-  };
-
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm space-y-4">
       <div className="flex items-center justify-between pb-1">
         <h3 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
-          <span>{isRTL ? 'התרעות כשירות ומצבה' : 'System Alerts'}</span>
+          <span>{t('notifications:alerts')}</span>
           <span className="bg-rose-100 dark:bg-rose-950/30 text-rose-800 dark:text-rose-455 text-[10px] font-bold px-2 py-0.5 rounded-full">
             {activeAlerts.length}
           </span>
@@ -97,29 +89,25 @@ export default function AlertPanel({ alerts, isRTL = false }: AlertPanelProps) {
           const style = getSeverityStyle(alert.severity);
           const Icon = style.icon;
           const ruleDisplayName = alert.rule_name.replace(/_/g, ' ');
-          
+          const formattedMetric = alert.metric.replace(/_/g, ' ');
+
           return (
-            <div
-              key={idx}
-              className={`p-3 rounded-xl border ${style.bg} ${style.border} flex gap-3 items-start transition-all`}
-            >
+            <div key={idx} className={`p-3 rounded-xl border ${style.bg} ${style.border} flex gap-3 items-start transition-all`}>
               <div className={`p-1 rounded-lg ${style.iconText}`}>
                 <Icon className="h-5 w-5 shrink-0" />
               </div>
               <div className="space-y-1 w-full text-right">
                 <div className="flex justify-between items-center gap-2 flex-wrap">
-                  <span className={`text-xs font-bold ${style.text}`}>
-                    {ruleDisplayName}
-                  </span>
+                  <span className={`text-xs font-bold ${style.text}`}>{ruleDisplayName}</span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider ${style.badge}`}>
                     {alert.severity}
                   </span>
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 text-[10px] leading-relaxed">
-                  {getAlertDescription(alert)}
+                  {formattedMetric}: {alert.current_value} {alert.operator} {alert.threshold}
                 </p>
                 <div className="text-[9px] text-slate-400 font-semibold mt-1">
-                  <span>{isRTL ? 'יחידה: ' : 'Unit: '}</span>
+                  <span>{t('analytics:unit')}: </span>
                   <span className="text-slate-500 dark:text-slate-350">{alert.organization_unit}</span>
                 </div>
               </div>

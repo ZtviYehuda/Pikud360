@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUIStore } from '../stores/uiStore';
+import { useTranslation } from 'react-i18next';
 import { Lock } from 'lucide-react';
 
 export default function ResetPassword() {
-  const { direction } = useUIStore();
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitted, setSubmitted] = useState(false);
-  const isRTL = direction === 'rtl';
+  const { t } = useTranslation();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,25 +30,23 @@ export default function ResetPassword() {
             <Lock className="h-6 w-6" />
           </div>
           <h2 className="mt-6 font-heading text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            {isRTL ? 'איפוס סיסמה' : 'Reset Password'}
+            {t('common:reset_password')}
           </h2>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            {isRTL ? 'הזן את הסיסמה החדשה עבור חשבונך' : 'Enter your new account password'}
+            {t('common:forgot_password')}
           </p>
         </div>
 
         {submitted ? (
           <div className="rounded-lg bg-green-50 p-4 text-center text-sm text-green-700 dark:bg-green-950/30 dark:text-green-400">
-            {isRTL 
-              ? 'סיסמתך שונתה בהצלחה! מנתב לדף ההתחברות...' 
-              : 'Password reset successfully! Redirecting to login...'}
+            {t('common:success')}
           </div>
         ) : (
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {isRTL ? 'סיסמה חדשה' : 'New Password'}
+                  {t('common:password_label')}
                 </label>
                 <input
                   type="password"
@@ -62,7 +59,7 @@ export default function ResetPassword() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {isRTL ? 'אימות סיסמה חדשה' : 'Confirm New Password'}
+                  {t('common:password_label')}
                 </label>
                 <input
                   type="password"
@@ -80,7 +77,7 @@ export default function ResetPassword() {
                 disabled={password !== confirmPassword || password.length === 0}
                 className="flex w-full justify-center rounded-lg bg-brand-600 px-4 py-3 text-sm font-medium text-white shadow-md hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isRTL ? 'עדכן סיסמה' : 'Update Password'}
+                {t('buttons:save')}
               </button>
             </div>
           </form>

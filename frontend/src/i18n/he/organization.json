@@ -9,5 +9,10 @@
   "edit_unit": "ערוך יחידה",
   "delete_unit": "מחק יחידה",
   "tree_view": "תצוגת עץ",
-  "list_view": "תצוגת רשימה"
+  "list_view": "תצוגת רשימה",
+  "general_hq": "מטה כללי",
+  "ops_division": "חטיבת תפעול",
+  "two_depts": "2 מחלקות פנימיות",
+  "security_division": "חטיבת אבטחה",
+  "regional_hq": "מחוזות אזוריים"
 }

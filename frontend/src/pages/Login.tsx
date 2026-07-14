@@ -1,20 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
-import { useUIStore } from '../stores/uiStore';
+import { useTranslation } from 'react-i18next';
 import { Shield, Lock, Mail } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
-  const { direction } = useUIStore();
+  const { t } = useTranslation();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Default dummy login
     login('mock-jwt-token-xyz', {
       id: 'usr-1',
       name: 'John Doe',
@@ -47,8 +46,6 @@ export default function Login() {
     navigate('/dashboard');
   };
 
-  const isRTL = direction === 'rtl';
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 transition-colors duration-200 dark:bg-slate-950 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8 rounded-2xl border border-slate-200/60 bg-white p-8 shadow-xl dark:border-slate-800/80 dark:bg-slate-900 glassmorphism">
@@ -59,10 +56,10 @@ export default function Login() {
             <Shield className="h-6 w-6" />
           </div>
           <h2 className="mt-6 font-heading text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            {isRTL ? 'כניסה למערכת Pikud360' : 'Sign in to Pikud360'}
+            {t('common:login_title')}
           </h2>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            {isRTL ? 'פורטל ניהול כוח אדם ארגוני' : 'Enterprise Workforce Management Portal'}
+            {t('common:login')}
           </p>
         </div>
 
@@ -71,7 +68,7 @@ export default function Login() {
           <div className="space-y-4 rounded-md">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {isRTL ? 'כתובת אימייל' : 'Email Address'}
+                {t('common:email_label')}
               </label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -85,14 +82,14 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="block w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-slate-950 placeholder-slate-400 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-850 dark:text-white"
-                  placeholder="admin@pikud360.com"
+                  placeholder={t('common:email_placeholder')}
                 />
               </div>
             </div>
             
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {isRTL ? 'סיסמה' : 'Password'}
+                {t('common:password_label')}
               </label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -106,7 +103,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-slate-950 placeholder-slate-400 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-850 dark:text-white"
-                  placeholder="••••••••"
+                  placeholder={t('common:password_placeholder')}
                 />
               </div>
             </div>
@@ -118,7 +115,7 @@ export default function Login() {
               to="/forgot-password"
               className="font-medium text-brand-600 hover:text-brand-500 dark:text-brand-400"
             >
-              {isRTL ? 'שכחת את הסיסמה?' : 'Forgot your password?'}
+              {t('common:forgot_password')}
             </Link>
           </div>
 
@@ -127,7 +124,7 @@ export default function Login() {
               type="submit"
               className="group relative flex w-full justify-center rounded-lg bg-brand-600 px-4 py-3 text-sm font-medium text-white shadow-md transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
             >
-              {isRTL ? 'התחבר' : 'Sign In'}
+              {t('common:submit_login')}
             </button>
           </div>
         </form>
@@ -135,20 +132,20 @@ export default function Login() {
         {/* Demo Fast Login Buttons */}
         <div className="mt-6 border-t border-slate-200/60 pt-6 dark:border-slate-800">
           <p className="text-center text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4">
-            {isRTL ? 'כניסה מהירה להדגמה' : 'Quick Demo Sign In'}
+            {t('common:app_name')}
           </p>
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={loginAsAdmin}
-              className="flex items-center justify-center gap-2 rounded-lg border border-slate-300/80 bg-slate-100 py-2 text-xs font-semibold hover:bg-slate-200 dark:border-slate-750 dark:bg-slate-800 dark:hover:bg-slate-750 cursor-pointer"
+              className="flex items-center justify-center gap-2 rounded-lg border border-slate-300/80 bg-slate-100 py-2 text-xs font-semibold hover:bg-slate-200 dark:border-slate-750 dark:bg-slate-800 dark:hover:bg-slate-750 cursor-pointer text-slate-700 dark:text-slate-200"
             >
-              {isRTL ? 'מנהל מערכת' : 'Administrator'}
+              {t('common:admin')}
             </button>
             <button
               onClick={loginAsOperator}
-              className="flex items-center justify-center gap-2 rounded-lg border border-slate-300/80 bg-slate-100 py-2 text-xs font-semibold hover:bg-slate-200 dark:border-slate-750 dark:bg-slate-800 dark:hover:bg-slate-750 cursor-pointer"
+              className="flex items-center justify-center gap-2 rounded-lg border border-slate-300/80 bg-slate-100 py-2 text-xs font-semibold hover:bg-slate-200 dark:border-slate-750 dark:bg-slate-800 dark:hover:bg-slate-750 cursor-pointer text-slate-700 dark:text-slate-200"
             >
-              {isRTL ? 'מפעיל' : 'Operator'}
+              {t('common:profile')}
             </button>
           </div>
         </div>

@@ -1,10 +1,9 @@
 import { Link } from 'react-router-dom';
-import { useUIStore } from '../stores/uiStore';
-import { AlertCircle, ArrowLeft, ArrowRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { AlertCircle, ArrowLeft } from 'lucide-react';
 
 export default function NotFound() {
-  const { direction } = useUIStore();
-  const isRTL = direction === 'rtl';
+  const { t } = useTranslation();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 dark:bg-slate-950">
@@ -19,13 +18,11 @@ export default function NotFound() {
         </h2>
         
         <p className="font-heading text-xl font-semibold text-slate-800 dark:text-slate-200">
-          {isRTL ? 'הדף לא נמצא' : 'Page Not Found'}
+          {t('common:page_not_found')}
         </p>
 
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isRTL 
-            ? 'הכתובת שחיפשת אינה קיימת או שהועברה למיקום אחר.' 
-            : 'The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.'}
+          {t('common:page_not_found')}
         </p>
 
         <div className="pt-4">
@@ -33,8 +30,8 @@ export default function NotFound() {
             to="/dashboard"
             className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-brand-700"
           >
-            {isRTL ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
-            {isRTL ? 'חזרה ללוח הבקרה' : 'Back to Dashboard'}
+            <ArrowLeft className="h-4 w-4" />
+            {t('common:go_home')}
           </Link>
         </div>
       </div>

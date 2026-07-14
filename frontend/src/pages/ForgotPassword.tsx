@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useUIStore } from '../stores/uiStore';
-import { KeyRound, ArrowLeft, ArrowRight, Mail } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { KeyRound, ArrowRight, Mail } from 'lucide-react';
 
 export default function ForgotPassword() {
-  const { direction } = useUIStore();
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
-  const isRTL = direction === 'rtl';
+  const { t } = useTranslation();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,21 +23,19 @@ export default function ForgotPassword() {
             <KeyRound className="h-6 w-6" />
           </div>
           <h2 className="mt-6 font-heading text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            {isRTL ? 'שחזור סיסמה' : 'Forgot Password'}
+            {t('common:forgot_password_title')}
           </h2>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            {isRTL ? 'שלח קישור לאיפוס הסיסמה לחשבונך' : 'Send a link to reset your account password'}
+            {t('common:forgot_password')}
           </p>
         </div>
 
         {submitted ? (
           <div className="rounded-lg bg-green-50 p-4 text-center text-sm text-green-700 dark:bg-green-950/30 dark:text-green-400">
-            {isRTL 
-              ? 'אם החשבון קיים במערכת, נשלח אליו דואר אלקטרוני עם קישור לאיפוס.' 
-              : 'If that account exists, we have sent a reset password link.'}
+            {t('common:reset_link_sent')}
             <div className="mt-4">
               <Link to="/login" className="font-semibold text-brand-600 hover:text-brand-500 dark:text-brand-400">
-                {isRTL ? 'חזרה לדף ההתחברות' : 'Back to Login'}
+                {t('common:back_to_login')}
               </Link>
             </div>
           </div>
@@ -46,7 +43,7 @@ export default function ForgotPassword() {
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {isRTL ? 'כתובת אימייל' : 'Email Address'}
+                {t('common:email_label')}
               </label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -60,7 +57,7 @@ export default function ForgotPassword() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="block w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-slate-950 placeholder-slate-400 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-850 dark:text-white"
-                  placeholder="admin@pikud360.com"
+                  placeholder={t('common:email_placeholder')}
                 />
               </div>
             </div>
@@ -70,7 +67,7 @@ export default function ForgotPassword() {
                 type="submit"
                 className="flex w-full justify-center rounded-lg bg-brand-600 px-4 py-3 text-sm font-medium text-white shadow-md hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
               >
-                {isRTL ? 'שלח הוראות איפוס' : 'Send Reset Link'}
+                {t('common:send_reset_link')}
               </button>
             </div>
 
@@ -79,8 +76,8 @@ export default function ForgotPassword() {
                 to="/login" 
                 className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400"
               >
-                {isRTL ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
-                {isRTL ? 'חזרה לדף כניסה' : 'Back to sign in'}
+                <ArrowRight className="h-4 w-4" />
+                {t('common:back_to_login')}
               </Link>
             </div>
           </form>

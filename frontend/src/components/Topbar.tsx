@@ -2,16 +2,17 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useUIStore } from '../stores/uiStore';
 import { useAuthStore } from '../stores/authStore';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { 
-  Search, Bell, Sun, Moon, Languages, 
+  Search, Bell, Sun, Moon, 
   ChevronDown, User, LogOut, Settings 
 } from 'lucide-react';
 
 export default function Topbar() {
   const navigate = useNavigate();
-  const { theme, toggleTheme, language, setLanguage, direction } = useUIStore();
+  const { theme, toggleTheme } = useUIStore();
   const { user, logout } = useAuthStore();
-  const isRTL = direction === 'rtl';
+  const { t } = useTranslation();
 
   const handleLogout = () => {
     logout();
@@ -19,7 +20,7 @@ export default function Topbar() {
   };
 
   return (
-    <header className="flex h-16 w-full items-center justify-between border-b border-slate-200/60 bg-white px-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-900 glassmorphism z-30">
+    <header className="flex h-16 w-full items-center justify-between border-b border-slate-200/60 bg-white px-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-900 z-30">
       
       {/* Search Input Box */}
       <div className="relative w-64 max-w-xs hidden sm:block">
@@ -28,7 +29,7 @@ export default function Topbar() {
         </div>
         <input
           type="text"
-          placeholder={isRTL ? 'חיפוש מהיר...' : 'Quick search...'}
+          placeholder={t('employees:search_placeholder')}
           className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
         />
       </div>
@@ -37,15 +38,6 @@ export default function Topbar() {
       {/* Action triggers group */}
       <div className="flex items-center gap-3">
         
-        {/* Toggle Language Option */}
-        <button
-          onClick={() => setLanguage(language === 'en' ? 'he' : 'en')}
-          className="p-2 rounded-lg text-slate-500 hover:bg-slate-55 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors cursor-pointer"
-          title="Toggle Language"
-        >
-          <Languages className="h-4.5 w-4.5" />
-        </button>
-
         {/* Toggle Light/Dark Mode Option */}
         <button
           onClick={toggleTheme}
@@ -81,33 +73,33 @@ export default function Topbar() {
             <DropdownMenu.Portal>
               <DropdownMenu.Content
                 className="min-w-44 rounded-xl border border-slate-200/60 bg-white p-1.5 shadow-lg dark:border-slate-800 dark:bg-slate-950 z-40"
-                align={isRTL ? 'start' : 'end'}
+                align="start"
                 sideOffset={5}
               >
                 <DropdownMenu.Item 
                   onClick={() => navigate('/settings')}
-                  className="flex items-center gap-2 px-2.5 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-lg outline-none cursor-pointer"
+                  className="flex items-center gap-2 px-2.5 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-55 dark:hover:bg-slate-900 rounded-lg outline-none cursor-pointer"
                 >
                   <User className="h-4 w-4" />
-                  <span>{isRTL ? 'הפרופיל שלי' : 'My Profile'}</span>
+                  <span>{t('common:profile')}</span>
                 </DropdownMenu.Item>
                 
                 <DropdownMenu.Item 
                   onClick={() => navigate('/settings')}
-                  className="flex items-center gap-2 px-2.5 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-lg outline-none cursor-pointer"
+                  className="flex items-center gap-2 px-2.5 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-55 dark:hover:bg-slate-900 rounded-lg outline-none cursor-pointer"
                 >
                   <Settings className="h-4 w-4" />
-                  <span>{isRTL ? 'הגדרות' : 'Settings'}</span>
+                  <span>{t('common:settings')}</span>
                 </DropdownMenu.Item>
                 
                 <DropdownMenu.Separator className="h-px bg-slate-100 dark:bg-slate-850 my-1" />
                 
                 <DropdownMenu.Item 
                   onClick={handleLogout}
-                  className="flex items-center gap-2 px-2.5 py-2 text-xs text-red-650 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20 rounded-lg outline-none cursor-pointer"
+                  className="flex items-center gap-2 px-2.5 py-2 text-xs text-red-655 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20 rounded-lg outline-none cursor-pointer"
                 >
                   <LogOut className="h-4 w-4" />
-                  <span>{isRTL ? 'התנתקות' : 'Logout'}</span>
+                  <span>{t('common:logout')}</span>
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Portal>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
-import { useUIStore } from '../../stores/uiStore';
+import { useTranslation } from 'react-i18next';
 import { adminService, AuditLogEntry, AuditFilters } from '../../services/adminService';
 import Unauthorized from '../Unauthorized';
 import { Shield, Download, ChevronLeft, ChevronRight, Filter, AlertTriangle, Info, AlertOctagon } from 'lucide-react';
@@ -18,8 +18,7 @@ const SEVERITY_ICONS: Record<string, any> = {
 
 export default function AuditCenter() {
   const { hasPermission } = useAuthStore();
-  const { language } = useUIStore();
-  const isHe = language === 'he';
+  const { t } = useTranslation('admin');
 
   const [entries, setEntries] = useState<AuditLogEntry[]>([]);
   const [total, setTotal] = useState(0);
@@ -75,7 +74,7 @@ export default function AuditCenter() {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white" dir={isHe ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white" dir="rtl">
       {/* Header */}
       <div className="border-b border-slate-800 bg-slate-900/60 backdrop-blur-sm px-8 py-5">
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -84,20 +83,20 @@ export default function AuditCenter() {
               <Shield className="h-6 w-6 text-purple-400" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">{isHe ? 'מרכז ביקורת' : 'Audit Center'}</h1>
-              <p className="text-sm text-slate-400">{total.toLocaleString()} {isHe ? 'רשומות' : 'records'}</p>
+              <h1 className="text-xl font-bold">{t('audit_title')}</h1>
+              <p className="text-sm text-slate-400">{total.toLocaleString()} {t('records')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setFilterOpen(!filterOpen)}
               className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors">
-              <Filter className="h-4 w-4" /> {isHe ? 'סינון' : 'Filter'}
+              <Filter className="h-4 w-4" /> {t('filter')}
             </button>
             {hasPermission('audit.export') && (
               <button onClick={handleExport} disabled={exporting}
                 className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm transition-colors disabled:opacity-50">
                 <Download className="h-4 w-4" />
-                {exporting ? (isHe ? 'מייצא...' : 'Exporting...') : (isHe ? 'ייצוא CSV' : 'Export CSV')}
+                {exporting ? t('exporting') : t('export_csv')}
               </button>
             )}
           </div>
@@ -107,9 +106,9 @@ export default function AuditCenter() {
         {filterOpen && (
           <div className="mt-4 p-4 bg-slate-800/60 rounded-xl border border-slate-700/50 grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { key: 'event_type', label: isHe ? 'סוג אירוע' : 'Event Type' },
-              { key: 'severity', label: isHe ? 'חומרה' : 'Severity' },
-              { key: 'user_id', label: isHe ? 'מזהה משתמש' : 'User ID' },
+              { key: 'event_type', label: t('event_type') },
+              { key: 'severity', label: t('severity') },
+              { key: 'user_id', label: t('user_id') },
             ].map(({ key, label }) => (
               <div key={key}>
                 <label className="block text-xs text-slate-400 mb-1">{label}</label>
@@ -122,11 +121,11 @@ export default function AuditCenter() {
             ))}
             <div className="flex items-end gap-2">
               <button onClick={applyFilters} className="flex-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm transition-colors">
-                {isHe ? 'החל' : 'Apply'}
+                {t('apply')}
               </button>
               <button onClick={() => { setTempFilters({}); setFilters({ page: 1, page_size: pageSize }); setFilterOpen(false); fetchAudit(1, { page: 1, page_size: pageSize }); }}
                 className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition-colors">
-                {isHe ? 'נקה' : 'Clear'}
+                {t('clear')}
               </button>
             </div>
           </div>
@@ -143,24 +142,24 @@ export default function AuditCenter() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-800 text-slate-400 text-xs uppercase tracking-wider">
-                    <th className="px-4 py-3 text-left">{isHe ? 'זמן' : 'Timestamp'}</th>
-                    <th className="px-4 py-3 text-left">{isHe ? 'סוג' : 'Event Type'}</th>
-                    <th className="px-4 py-3 text-left">{isHe ? 'פעולה' : 'Action'}</th>
-                    <th className="px-4 py-3 text-left">{isHe ? 'טבלה' : 'Table'}</th>
-                    <th className="px-4 py-3 text-left">{isHe ? 'משתמש' : 'User'}</th>
-                    <th className="px-4 py-3 text-left">{isHe ? 'IP' : 'IP'}</th>
-                    <th className="px-4 py-3 text-left">{isHe ? 'חומרה' : 'Severity'}</th>
+                    <th className="px-4 py-3 text-left">{t('timestamp')}</th>
+                    <th className="px-4 py-3 text-left">{t('event_type')}</th>
+                    <th className="px-4 py-3 text-left">{t('action')}</th>
+                    <th className="px-4 py-3 text-left">{t('table')}</th>
+                    <th className="px-4 py-3 text-left">{t('user')}</th>
+                    <th className="px-4 py-3 text-left">{t('ip')}</th>
+                    <th className="px-4 py-3 text-left">{t('severity')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {entries.length === 0 ? (
-                    <tr><td colSpan={7} className="text-center py-12 text-slate-500">{isHe ? 'אין רשומות' : 'No audit entries found'}</td></tr>
+                    <tr><td colSpan={7} className="text-center py-12 text-slate-500">{t('no_records')}</td></tr>
                   ) : entries.map(entry => {
                     const SIcon = SEVERITY_ICONS[entry.severity] || Info;
                     return (
                       <tr key={entry.id} className="border-b border-slate-800/60 hover:bg-slate-800/30 transition-colors">
                         <td className="px-4 py-3 text-slate-400 whitespace-nowrap text-xs">
-                          {new Date(entry.created_at).toLocaleString(isHe ? 'he-IL' : 'en-US')}
+                          {new Date(entry.created_at).toLocaleString('he-IL')}
                         </td>
                         <td className="px-4 py-3 font-mono text-xs text-slate-300">{entry.event_type}</td>
                         <td className="px-4 py-3 text-slate-300">{entry.action}</td>
@@ -182,7 +181,7 @@ export default function AuditCenter() {
 
             {/* Pagination */}
             <div className="flex items-center justify-between mt-4 text-sm text-slate-400">
-              <span>{isHe ? `עמוד ${page} מתוך ${totalPages}` : `Page ${page} of ${totalPages}`}</span>
+              <span>{t('page_info', { page, totalPages })}</span>
               <div className="flex items-center gap-2">
                 <button disabled={page === 1} onClick={() => setPage(p => p - 1)}
                   className="p-1.5 rounded-lg hover:bg-slate-800 disabled:opacity-40 transition-colors">

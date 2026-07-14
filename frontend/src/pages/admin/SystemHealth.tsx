@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../../stores/authStore';
-import { useUIStore } from '../../stores/uiStore';
+import { useTranslation } from 'react-i18next';
 import { adminService, type SystemHealth } from '../../services/adminService';
 import Unauthorized from '../Unauthorized';
 import { Activity, Database, Server, Users, FileText, AlertTriangle, RefreshCw, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
@@ -11,7 +11,7 @@ const STATUS_CONFIG = {
   unavailable: { color: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/30',       icon: XCircle },
 };
 
-function HealthCard({ title, titleHe, value, sub, icon: Icon, status, isHe }: any) {
+function HealthCard({ title, value, sub, icon: Icon, status }: any) {
   const cfg = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.healthy;
   const StatusIcon = cfg.icon;
   return (
@@ -26,7 +26,7 @@ function HealthCard({ title, titleHe, value, sub, icon: Icon, status, isHe }: an
         </div>
       </div>
       <p className="text-2xl font-bold text-white">{value}</p>
-      <p className="text-sm font-medium text-slate-300 mt-0.5">{isHe ? titleHe : title}</p>
+      <p className="text-sm font-medium text-slate-300 mt-0.5">{title}</p>
       {sub && <p className="text-xs text-slate-500 mt-1">{sub}</p>}
     </div>
   );
@@ -34,8 +34,7 @@ function HealthCard({ title, titleHe, value, sub, icon: Icon, status, isHe }: an
 
 export default function SystemHealth() {
   const { hasPermission } = useAuthStore();
-  const { language } = useUIStore();
-  const isHe = language === 'he';
+  const { t } = useTranslation('admin');
 
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,7 +68,7 @@ export default function SystemHealth() {
   const hasErrors = (health?.recent_errors ?? 0) > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white" dir={isHe ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white" dir="rtl">
       {/* Header */}
       <div className="border-b border-slate-800 bg-slate-900/60 backdrop-blur-sm px-8 py-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -77,18 +76,18 @@ export default function SystemHealth() {
             <Activity className="h-6 w-6 text-cyan-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">{isHe ? 'מצב מערכת' : 'System Health'}</h1>
+            <h1 className="text-xl font-bold">{t('health_title')}</h1>
             <p className="text-sm text-slate-400">
               {checkedAt
-                ? `${isHe ? 'עודכן' : 'Updated'}: ${checkedAt.toLocaleTimeString(isHe ? 'he-IL' : 'en-US')}`
-                : isHe ? 'טוען...' : 'Loading...'}
+                ? `${t('updated')}: ${checkedAt.toLocaleTimeString('he-IL')}`
+                : t('loading')}
             </p>
           </div>
         </div>
         <button onClick={() => fetchHealth(true)} disabled={refreshing}
           className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors disabled:opacity-50">
           <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-          {isHe ? 'רענן' : 'Refresh'}
+          {t('refresh')}
         </button>
       </div>
 
@@ -102,46 +101,46 @@ export default function SystemHealth() {
             {hasErrors && (
               <div className="mb-6 flex items-center gap-3 px-5 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-300 text-sm">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
-                {isHe ? `זוהו ${health?.recent_errors} שגיאות בשעה האחרונה. אנא בדוק את יומן הביקורת.` : `${health?.recent_errors} error(s) detected in the last hour. Please review the audit log.`}
+                {t('recent_errors_banner', { count: health?.recent_errors })}
               </div>
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               <HealthCard
-                title="Database" titleHe="מסד נתונים"
-                value={dbStatus.toUpperCase()} sub={isHe ? 'PostgreSQL - חיבור ראשי' : 'PostgreSQL — Primary connection'}
-                icon={Database} status={dbStatus} isHe={isHe}
+                title={t('database')}
+                value={dbStatus.toUpperCase()} sub={t('db_sub')}
+                icon={Database} status={dbStatus}
               />
               <HealthCard
-                title="API Server" titleHe="שרת API"
-                value={apiStatus.toUpperCase()} sub={isHe ? 'Flask REST API' : 'Flask REST API'}
-                icon={Server} status={apiStatus} isHe={isHe}
+                title={t('api_server')}
+                value={apiStatus.toUpperCase()} sub={t('api_sub')}
+                icon={Server} status={apiStatus}
               />
               <HealthCard
-                title="Active Sessions" titleHe="סשנים פעילים"
-                value={health?.active_sessions ?? 0} sub={isHe ? 'משתמשים מחוברים כרגע' : 'Currently logged in users'}
-                icon={Users} status="healthy" isHe={isHe}
+                title={t('active_sessions')}
+                value={health?.active_sessions ?? 0} sub={t('sessions_sub')}
+                icon={Users} status="healthy"
               />
               <HealthCard
-                title="Audit Volume (24h)" titleHe="נפח ביקורת (24ש׳)"
-                value={(health?.audit_volume_24h ?? 0).toLocaleString()} sub={isHe ? 'אירועים שנרשמו היום' : 'Events recorded today'}
-                icon={FileText} status="healthy" isHe={isHe}
+                title={t('audit_volume')}
+                value={(health?.audit_volume_24h ?? 0).toLocaleString()} sub={t('audit_sub')}
+                icon={FileText} status="healthy"
               />
               <HealthCard
-                title="Recent Errors (1h)" titleHe="שגיאות אחרונות (1ש׳)"
-                value={health?.recent_errors ?? 0} sub={isHe ? 'שגיאות ERROR/CRITICAL' : 'ERROR/CRITICAL severity events'}
-                icon={AlertTriangle} status={hasErrors ? 'degraded' : 'healthy'} isHe={isHe}
+                title={t('recent_errors')}
+                value={health?.recent_errors ?? 0} sub={t('errors_sub')}
+                icon={AlertTriangle} status={hasErrors ? 'degraded' : 'healthy'}
               />
               <HealthCard
-                title="Notification Engine" titleHe="מנוע הודעות"
-                value="IN-APP" sub={isHe ? 'ערוץ פעיל: IN-APP' : 'Active channel: IN-APP'}
-                icon={Activity} status="healthy" isHe={isHe}
+                title={t('notification_engine')}
+                value="IN-APP" sub={t('engine_sub')}
+                icon={Activity} status="healthy"
               />
             </div>
 
             {/* Health Legend */}
             <div className="mt-8 flex flex-wrap items-center gap-6 text-xs text-slate-500">
-              <span className="font-semibold text-slate-400">{isHe ? 'מקרא:' : 'Legend:'}</span>
+              <span className="font-semibold text-slate-400">{t('legend')}</span>
               {Object.entries(STATUS_CONFIG).map(([status, cfg]) => {
                 const SIcon = cfg.icon;
                 return (
@@ -150,7 +149,7 @@ export default function SystemHealth() {
                   </span>
                 );
               })}
-              <span className="ml-auto">{isHe ? 'מתרענן אוטומטית כל דקה' : 'Auto-refreshes every 60 seconds'}</span>
+              <span className="ml-auto">{t('auto_refresh')}</span>
             </div>
           </>
         )}

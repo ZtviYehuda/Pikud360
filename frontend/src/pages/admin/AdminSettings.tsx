@@ -1,37 +1,36 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
-import { useUIStore } from '../../stores/uiStore';
+import { useTranslation } from 'react-i18next';
 import { adminService, SystemSetting } from '../../services/adminService';
 import Unauthorized from '../Unauthorized';
 import { Settings, Save, RefreshCw, Lock, Bell, Clock, Globe, Calendar } from 'lucide-react';
 
-const SETTING_GROUPS: { label: string; labelHe: string; icon: any; keys: string[] }[] = [
+const SETTING_GROUPS: { key: string; icon: any; keys: string[] }[] = [
   {
-    label: 'General', labelHe: 'כללי', icon: Globe,
+    key: 'general', icon: Globe,
     keys: ['default_timezone', 'default_language', 'date_format', 'working_days', 'weekend_days']
   },
   {
-    label: 'Scheduling', labelHe: 'שיבוץ', icon: Calendar,
+    key: 'scheduling', icon: Calendar,
     keys: ['scheduling_mode_default', 'sick_alert_threshold_pct', 'unavailable_alert_threshold', 'min_manpower_threshold_pct']
   },
   {
-    label: 'Security', labelHe: 'אבטחה', icon: Lock,
+    key: 'security', icon: Lock,
     keys: ['session_timeout_minutes', 'password_min_length', 'max_failed_login_attempts', 'transfer_require_approval']
   },
   {
-    label: 'Notifications', labelHe: 'התראות', icon: Bell,
+    key: 'notifications', icon: Bell,
     keys: ['notification_email_enabled', 'notification_sms_enabled']
   },
   {
-    label: 'Dashboard', labelHe: 'לוח בקרה', icon: Clock,
+    key: 'dashboard', icon: Clock,
     keys: ['dashboard_refresh_seconds']
   }
 ];
 
 export default function AdminSettings() {
   const { hasPermission } = useAuthStore();
-  const { language } = useUIStore();
-  const isHe = language === 'he';
+  const { t } = useTranslation('admin');
 
   const [settings, setSettings] = useState<SystemSetting[]>([]);
   const [edits, setEdits] = useState<Record<string, string>>({});
@@ -67,7 +66,7 @@ export default function AdminSettings() {
     try {
       const payload = Object.entries(edits).map(([key, value]) => ({ key, value }));
       await adminService.updateSettings(payload);
-      setSaveMsg(isHe ? 'ההגדרות נשמרו בהצלחה' : 'Settings saved successfully');
+      setSaveMsg(t('save_success'));
       setTimeout(() => setSaveMsg(''), 3000);
     } catch (err) {
       console.error('Save failed', err);
@@ -83,7 +82,7 @@ export default function AdminSettings() {
     .filter(Boolean) as SystemSetting[];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white" dir={isHe ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white" dir="rtl">
       {/* Header */}
       <div className="border-b border-slate-800 bg-slate-900/60 backdrop-blur-sm px-8 py-5">
         <div className="flex items-center justify-between">
@@ -92,8 +91,8 @@ export default function AdminSettings() {
               <Settings className="h-6 w-6 text-indigo-400" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">{isHe ? 'הגדרות מערכת' : 'System Settings'}</h1>
-              <p className="text-sm text-slate-400">{isHe ? 'הגדרות פלטפורמה גלובליות' : 'Global platform configuration'}</p>
+              <h1 className="text-xl font-bold text-white">{t('title')}</h1>
+              <p className="text-sm text-slate-400">{t('desc')}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -110,7 +109,7 @@ export default function AdminSettings() {
                 className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
-                {saving ? (isHe ? 'שומר...' : 'Saving...') : (isHe ? 'שמור הגדרות' : 'Save Settings')}
+                {saving ? t('saving') : t('save_settings')}
               </button>
             )}
           </div>
@@ -124,7 +123,7 @@ export default function AdminSettings() {
             const Icon = g.icon;
             return (
               <button
-                key={g.label}
+                key={g.key}
                 onClick={() => setActiveGroup(i)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left ${
                   activeGroup === i
@@ -133,7 +132,7 @@ export default function AdminSettings() {
                 }`}
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                {isHe ? g.labelHe : g.label}
+                {t(g.key)}
               </button>
             );
           })}
@@ -149,11 +148,11 @@ export default function AdminSettings() {
             <div>
               <div className="flex items-center gap-2 mb-6">
                 <GroupIcon className="h-5 w-5 text-indigo-400" />
-                <h2 className="text-lg font-semibold text-white">{isHe ? group.labelHe : group.label}</h2>
+                <h2 className="text-lg font-semibold text-white">{t(group.key)}</h2>
               </div>
               <div className="grid grid-cols-1 gap-4 max-w-2xl">
                 {groupSettings.length === 0 && (
-                  <p className="text-slate-500 text-sm">{isHe ? 'אין הגדרות בקטגוריה זו' : 'No settings in this category'}</p>
+                  <p className="text-slate-500 text-sm">{t('no_settings')}</p>
                 )}
                 {groupSettings.map(setting => (
                   <div key={setting.key} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5">
@@ -173,7 +172,7 @@ export default function AdminSettings() {
                       </div>
                       {edits[setting.key] !== setting.value && (
                         <span className="mt-7 shrink-0 px-2 py-0.5 text-xs bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-full">
-                          {isHe ? 'שונה' : 'modified'}
+                          {t('modified')}
                         </span>
                       )}
                     </div>

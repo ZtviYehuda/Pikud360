@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import EmptyState from '../EmptyState';
 
 interface ChartCardProps {
@@ -9,7 +10,6 @@ interface ChartCardProps {
   emptyMessage?: string;
   actions?: React.ReactNode;
   children: React.ReactNode;
-  isRTL?: boolean;
 }
 
 export default function ChartCard({
@@ -19,9 +19,10 @@ export default function ChartCard({
   empty = false,
   emptyMessage,
   actions,
-  children,
-  isRTL = false
+  children
 }: ChartCardProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col min-h-80">
       {/* Header section */}
@@ -39,7 +40,7 @@ export default function ChartCard({
             <div className="flex flex-col items-center gap-2">
               <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                {isRTL ? 'טוען נתונים...' : 'Loading Data...'}
+                {t('common:loading')}
               </span>
             </div>
           </div>
@@ -48,15 +49,15 @@ export default function ChartCard({
         {error ? (
           <div className="p-4">
             <EmptyState
-              title={isRTL ? 'שגיאה בטעינת תרשים' : 'Failed to Load Chart'}
+              title={t('validation:error_title')}
               description={error}
             />
           </div>
         ) : empty ? (
           <div className="p-4">
             <EmptyState
-              title={isRTL ? 'אין נתונים להצגה' : 'No Data Available'}
-              description={emptyMessage || (isRTL ? 'אין מספיק נתונים מבצעיים להצגת תרשים זה.' : 'Not enough data points found to visualize.')}
+              title={t('common:no_data')}
+              description={emptyMessage || t('common:no_results')}
             />
           </div>
         ) : (

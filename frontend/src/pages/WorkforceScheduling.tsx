@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
-import { useUIStore } from '../stores/uiStore';
 import { 
   schedulingService, 
   ScheduleStatus, 
@@ -15,12 +14,12 @@ import {
   Edit2, Trash2, Shield, AlertTriangle, Sparkles, ChevronDown, ChevronUp, GitFork
 } from 'lucide-react';
 import Unauthorized from './Unauthorized';
+import { useTranslation } from 'react-i18next';
 
 export default function WorkforceScheduling() {
   const navigate = useNavigate();
-  const { direction } = useUIStore();
   const { hasPermission } = useAuthStore();
-  const isRTL = direction === 'rtl';
+  const { t } = useTranslation();
 
   if (!hasPermission('schedule.view')) {
     return <Unauthorized />;
@@ -120,20 +119,20 @@ export default function WorkforceScheduling() {
           setShifts(shiftsData);
         } catch {
           setShifts([
-            { id: 'shift-uuid-morning', tenant_id: 't-1', organization_unit_id: selectedUnitId, name: isRTL ? 'בוקר' : 'Morning', start_time: '06:00', end_time: '14:00', active: true },
-            { id: 'shift-uuid-afternoon', tenant_id: 't-1', organization_unit_id: selectedUnitId, name: isRTL ? 'צהריים' : 'Afternoon', start_time: '14:00', end_time: '22:00', active: true },
-            { id: 'shift-uuid-night', tenant_id: 't-1', organization_unit_id: selectedUnitId, name: isRTL ? 'לילה' : 'Night', start_time: '22:00', end_time: '06:00', active: true }
+            { id: 'shift-uuid-morning', tenant_id: 't-1', organization_unit_id: selectedUnitId, name: t('scheduling:shifts_morning'), start_time: '06:00', end_time: '14:00', active: true },
+            { id: 'shift-uuid-afternoon', tenant_id: 't-1', organization_unit_id: selectedUnitId, name: t('scheduling:shifts_afternoon'), start_time: '14:00', end_time: '22:00', active: true },
+            { id: 'shift-uuid-night', tenant_id: 't-1', organization_unit_id: selectedUnitId, name: t('scheduling:shifts_night'), start_time: '22:00', end_time: '06:00', active: true }
           ]);
         }
       }
     } catch (err: any) {
       // Local development fallback states
       setStatuses([
-        { id: 's-avail', tenant_id: 't-1', code: 'AVAILABLE', name: isRTL ? 'זמין' : 'Available', category: 'AVAILABLE', color: '#4CAF50', is_active: true, sort_order: 1 },
-        { id: 's-sick', tenant_id: 't-1', code: 'SICK', name: isRTL ? 'חולה' : 'Sick', category: 'SICK', color: '#F44336', is_active: true, sort_order: 2 },
-        { id: 's-vac', tenant_id: 't-1', code: 'VACATION', name: isRTL ? 'חופשה' : 'Vacation', category: 'VACATION', color: '#FF9800', is_active: true, sort_order: 3 },
-        { id: 's-train', tenant_id: 't-1', code: 'TRAINING', name: isRTL ? 'אימון' : 'Training', category: 'TRAINING', color: '#9C27B0', is_active: true, sort_order: 4 },
-        { id: 's-rein', tenant_id: 't-1', code: 'REINFORCEMENT', name: isRTL ? 'תגבור' : 'Reinforcement', category: 'REINFORCEMENT', color: '#00BCD4', is_active: true, sort_order: 5 }
+        { id: 's-avail', tenant_id: 't-1', code: 'AVAILABLE', name: t('common:available'), category: 'AVAILABLE', color: '#4CAF50', is_active: true, sort_order: 1 },
+        { id: 's-sick', tenant_id: 't-1', code: 'SICK', name: t('scheduling:sick'), category: 'SICK', color: '#F44336', is_active: true, sort_order: 2 },
+        { id: 's-vac', tenant_id: 't-1', code: 'VACATION', name: t('scheduling:vacation'), category: 'VACATION', color: '#FF9800', is_active: true, sort_order: 3 },
+        { id: 's-train', tenant_id: 't-1', code: 'TRAINING', name: t('scheduling:training'), category: 'TRAINING', color: '#9C27B0', is_active: true, sort_order: 4 },
+        { id: 's-rein', tenant_id: 't-1', code: 'REINFORCEMENT', name: t('scheduling:reinforcement'), category: 'REINFORCEMENT', color: '#00BCD4', is_active: true, sort_order: 5 }
       ]);
       setSettings({
         id: 'settings-mock',
@@ -144,11 +143,11 @@ export default function WorkforceScheduling() {
       setOrgTree([
         {
           id: 'unit-uuid-555',
-          name: isRTL ? 'מפקדת חטיבה' : 'Brigade HQ',
+          name: t('scheduling:brigade_hq'),
           code: 'BRIG_HQ',
           children: [
-            { id: 'unit-uuid-666', name: isRTL ? 'פלוגה א' : 'Company A', code: 'CO_A', children: [] },
-            { id: 'unit-uuid-777', name: isRTL ? 'פלוגה ב' : 'Company B', code: 'CO_B', children: [] }
+            { id: 'unit-uuid-666', name: t('scheduling:company_a'), code: 'CO_A', children: [] },
+            { id: 'unit-uuid-777', name: t('scheduling:company_b'), code: 'CO_B', children: [] }
           ]
         }
       ]);
@@ -199,8 +198,8 @@ export default function WorkforceScheduling() {
         unassigned_employees: 1,
         statuses: { AVAILABLE: 1, SICK: 1 },
         child_units: [
-          { unit_id: 'unit-uuid-666', unit_name: isRTL ? 'פלוגה א' : 'Company A', total_employees: 10, assigned_employees: 8, unassigned_employees: 2 },
-          { unit_id: 'unit-uuid-777', unit_name: isRTL ? 'פלוגה ב' : 'Company B', total_employees: 12, assigned_employees: 6, unassigned_employees: 6 }
+          { unit_id: 'unit-uuid-666', unit_name: t('scheduling:company_a'), total_employees: 10, assigned_employees: 8, unassigned_employees: 2 },
+          { unit_id: 'unit-uuid-777', unit_name: t('scheduling:company_b'), total_employees: 12, assigned_employees: 6, unassigned_employees: 6 }
         ]
       });
     }
@@ -208,7 +207,7 @@ export default function WorkforceScheduling() {
 
   const handleEditOpen = (emp: { id: string; name: string }, existing?: any) => {
     if (!hasPermission('schedule.manage')) {
-      alert(isRTL ? 'אין לך הרשאה מתאימה לביצוע פעולה זו.' : 'You lack permission to update schedules.');
+      alert(t('common:no_permission'));
       return;
     }
     setEditingEmployee(emp);
@@ -274,7 +273,7 @@ export default function WorkforceScheduling() {
 
   const handleDeleteAssignment = async (schedId: string) => {
     if (!hasPermission('schedule.manage')) return;
-    if (!confirm(isRTL ? 'האם להסיר את שיבוץ העובד?' : 'Are you sure you want to remove this assignment?')) return;
+    if (!confirm(t('scheduling:confirm_remove'))) return;
 
     try {
       await schedulingService.deleteAssignment(schedId);
@@ -333,7 +332,7 @@ export default function WorkforceScheduling() {
     return null;
   };
 
-  const currentUnitName = findUnitName(orgTree, selectedUnitId) || (isRTL ? 'מפקדת חטיבה' : 'Brigade HQ');
+  const currentUnitName = findUnitName(orgTree, selectedUnitId) || t('scheduling:brigade_hq');
 
   // Recursive tree node renderer inside custom dropdown selector
   const renderTreeNodes = (nodes: any[], depth = 0) => {
@@ -449,17 +448,17 @@ export default function WorkforceScheduling() {
         <div>
           <h1 className="font-heading text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-brand-600 animate-pulse" />
-            {isRTL ? 'שיבוץ כוח אדם יומי' : 'Daily Workforce Scheduling'}
+            {t('scheduling:title')}
           </h1>
           <p className="text-slate-400 text-xs mt-0.5">
-            {isRTL ? 'לוח פיקוח לתכנון שיבוצים יומיים לכוח האדם.' : 'Commander planning control panel for daily status allocation.'}
+            {t('scheduling:desc')}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           {/* Org Tree Selector Dropdown */}
           <div className="relative flex items-center gap-2" ref={treeDropdownRef}>
-            <label className="text-xs font-bold text-slate-455">{isRTL ? 'יחידה:' : 'Unit:'}</label>
+            <label className="text-xs font-bold text-slate-455">{t('analytics:unit')}:</label>
             <button
               type="button"
               onClick={() => setIsTreeDropdownOpen(!isTreeDropdownOpen)}
@@ -473,7 +472,7 @@ export default function WorkforceScheduling() {
               <div className="absolute right-0 top-full mt-1.5 w-64 rounded-xl border border-slate-250 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xl p-2 z-55 max-h-60 overflow-y-auto animate-fade-in">
                 {orgTree.length === 0 ? (
                   <div className="text-center py-4 text-xs text-slate-400">
-                    {isRTL ? 'אין יחידות זמינות' : 'No units available'}
+                    {t('common:no_data')}
                   </div>
                 ) : (
                   renderTreeNodes(orgTree)
@@ -503,7 +502,7 @@ export default function WorkforceScheduling() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
         <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 glassmorphism">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400">{isRTL ? 'סה"כ כוח אדם' : 'Total Personnel'}</span>
+            <span className="text-xs font-bold text-slate-400">{t('dashboard:total_strength')}</span>
             <Users className="h-5 w-5 text-brand-655" />
           </div>
           <h4 className="font-heading text-2xl font-bold mt-2 text-slate-800 dark:text-white">{totalPersonnelCount}</h4>
@@ -511,7 +510,7 @@ export default function WorkforceScheduling() {
 
         <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 glassmorphism">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400">{isRTL ? 'שוייך היום' : 'Assigned today'}</span>
+            <span className="text-xs font-bold text-slate-400">{t('dashboard:assigned')}</span>
             <div className="h-2 w-2 rounded-full bg-emerald-500" />
           </div>
           <h4 className="font-heading text-2xl font-bold mt-2 text-slate-800 dark:text-white">{assignedCount}</h4>
@@ -519,14 +518,14 @@ export default function WorkforceScheduling() {
 
         <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 glassmorphism">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400">{isRTL ? 'טרם שוייך' : 'Not assigned'}</span>
+            <span className="text-xs font-bold text-slate-400">{t('scheduling:not_assigned')}</span>
             <div className="h-2 w-2 rounded-full bg-red-500" />
           </div>
           <h4 className="font-heading text-2xl font-bold mt-2 text-slate-800 dark:text-white">{unassignedCount}</h4>
         </div>
 
         <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 glassmorphism">
-          <span className="text-xs font-bold text-slate-400">{isRTL ? 'פילוח סטטוסים' : 'Manpower Distribution'}</span>
+          <span className="text-xs font-bold text-slate-400">{t('analytics:distribution')}</span>
           <div className="mt-2 space-y-1 max-h-16 overflow-y-auto pr-1">
             {Object.entries(statusDistribution).map(([name, val]) => (
               <div key={name} className="flex justify-between text-2xs text-slate-500 font-medium">
@@ -542,7 +541,7 @@ export default function WorkforceScheduling() {
       {dashboardSummary?.child_units && dashboardSummary.child_units.length > 0 && (
         <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 glassmorphism">
           <h3 className="font-heading text-xs font-bold text-slate-400 mb-4 uppercase tracking-wider">
-            {isRTL ? 'פירוט לפי תתי-יחידות' : 'Sub-Units Breakdown'}
+            {t('analytics:unit_breakdown')}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {dashboardSummary.child_units.map(child => (
@@ -558,15 +557,15 @@ export default function WorkforceScheduling() {
                   </h4>
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between text-slate-550">
-                      <span>{isRTL ? 'סה"כ כוח אדם:' : 'Total Personnel:'}</span>
+                      <span>{t('dashboard:total_strength')}:</span>
                       <span className="font-bold text-slate-700 dark:text-slate-350">{child.total_employees}</span>
                     </div>
                     <div className="flex justify-between text-slate-550">
-                      <span>{isRTL ? 'שוייך:' : 'Assigned:'}</span>
+                      <span>{t('dashboard:assigned')}:</span>
                       <span className="font-bold text-emerald-600">{child.assigned_employees}</span>
                     </div>
                     <div className="flex justify-between text-slate-550">
-                      <span>{isRTL ? 'טרם שוייך:' : 'Unassigned:'}</span>
+                      <span>{t('scheduling:not_assigned')}:</span>
                       <span className="font-bold text-rose-500">{child.unassigned_employees}</span>
                     </div>
                   </div>
@@ -580,7 +579,7 @@ export default function WorkforceScheduling() {
       {/* SHIFT_BASED Sub-Dashboard shifts counters */}
       {settings?.scheduling_mode === 'SHIFT_BASED' && (
         <div className="rounded-xl bg-white p-4 border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 glassmorphism">
-          <span className="text-xs font-bold text-slate-400 mb-2.5 block">{isRTL ? 'איוש משמרות פעיל' : 'Active Shift Allocation'}</span>
+          <span className="text-xs font-bold text-slate-400 mb-2.5 block">{t('scheduling:shift_settings')}</span>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {Object.entries(shiftDistribution).map(([name, count]) => (
               <div key={name} className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-100 dark:border-slate-850 flex items-center justify-between">
@@ -598,9 +597,7 @@ export default function WorkforceScheduling() {
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-brand-655" />
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              {isRTL 
-                ? `נבחרו ${selectedEmployeeIds.length} עובדים לשיבוץ מרוכז` 
-                : `Selected ${selectedEmployeeIds.length} employees for bulk status allocation`}
+              {`${selectedEmployeeIds.length} ${t('scheduling:employees_selected')}`}
             </span>
           </div>
 
@@ -610,7 +607,7 @@ export default function WorkforceScheduling() {
               onChange={(e) => setBulkStatusId(e.target.value)}
               className="rounded-lg border border-slate-200 bg-white py-1.5 px-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-white"
             >
-              <option value="">{isRTL ? '-- בחר סטטוס --' : '-- Choose Status --'}</option>
+              <option value="">{t('scheduling:choose_status')}</option>
               {statuses.map(st => (
                 <option key={st.id} value={st.id}>{st.name}</option>
               ))}
@@ -621,7 +618,7 @@ export default function WorkforceScheduling() {
               disabled={!bulkStatusId}
               className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              {isRTL ? 'החל שיבוץ מרוכז' : 'Apply Bulk'}
+              {t('scheduling:apply_bulk')}
             </button>
           </div>
         </div>
@@ -638,7 +635,7 @@ export default function WorkforceScheduling() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-10 pr-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 text-slate-800 dark:text-white"
-            placeholder={isRTL ? 'חפש עובדים...' : 'Search employees...'}
+            placeholder={t('employees:search_placeholder')}
           />
         </div>
 
@@ -649,8 +646,8 @@ export default function WorkforceScheduling() {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="rounded-lg border border-slate-200 bg-white py-1.5 px-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-white"
           >
-            <option value="ALL">{isRTL ? 'כל הסטטוסים' : 'All Statuses'}</option>
-            <option value="UNASSIGNED">{isRTL ? 'טרם שוייך' : 'Not Assigned'}</option>
+            <option value="ALL">{t('scheduling:all_statuses')}</option>
+            <option value="UNASSIGNED">{t('scheduling:not_assigned')}</option>
             {statuses.map(st => (
               <option key={st.id} value={st.id}>{st.name}</option>
             ))}
@@ -680,25 +677,25 @@ export default function WorkforceScheduling() {
                     />
                   </th>
                 )}
-                <th className="py-3 px-4">{isRTL ? 'עובד' : 'Employee'}</th>
-                <th className="py-3 px-4">{isRTL ? 'דרגה / תפקיד' : 'Rank / Role'}</th>
-                <th className="py-3 px-4">{isRTL ? 'יחידה ארגונית' : 'Org Unit'}</th>
-                <th className="py-3 px-4">{isRTL ? 'שיבוץ יומי' : 'Daily Status'}</th>
+                <th className="py-3 px-4">{t('employees:employee')}</th>
+                <th className="py-3 px-4">{t('employees:rank_role')}</th>
+                <th className="py-3 px-4">{t('analytics:unit')}</th>
+                <th className="py-3 px-4">{t('scheduling:daily_status')}</th>
                 {settings?.scheduling_mode === 'SHIFT_BASED' && (
                   <>
-                    <th className="py-3 px-4">{isRTL ? 'משמרת' : 'Shift'}</th>
-                    <th className="py-3 px-4">{isRTL ? 'שעות' : 'Hours'}</th>
+                    <th className="py-3 px-4">{t('scheduling:shift_name')}</th>
+                    <th className="py-3 px-4">{t('scheduling:hours')}</th>
                   </>
                 )}
-                <th className="py-3 px-4">{isRTL ? 'הערות מפקד' : 'Notes'}</th>
-                <th className="py-3 px-4 text-right">{isRTL ? 'פעולות' : 'Actions'}</th>
+                <th className="py-3 px-4">{t('scheduling:notes')}</th>
+                <th className="py-3 px-4 text-right">{t('common:actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
               {filteredEmployees.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="py-10 text-center text-slate-400 font-semibold italic">
-                    {isRTL ? 'אין עובדים תואמים לפילוח הנוכחי' : 'No employees matching filters.'}
+                    {t('employees:no_employees')}
                   </td>
                 </tr>
               ) : (
@@ -756,7 +753,7 @@ export default function WorkforceScheduling() {
                           </span>
                         ) : (
                           <span className="text-xs text-red-500 font-semibold italic">
-                            {isRTL ? 'טרם שוייך' : 'Not assigned'}
+                            {t('scheduling:not_assigned')}
                           </span>
                         )}
                       </td>
@@ -782,13 +779,13 @@ export default function WorkforceScheduling() {
                                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-slate-200 hover:bg-slate-50 text-slate-655 hover:text-slate-800 dark:border-slate-750 dark:hover:bg-slate-800 dark:text-slate-350 dark:hover:text-white text-xs font-medium cursor-pointer"
                               >
                                 <Edit2 className="h-3 w-3" />
-                                {sched ? (isRTL ? 'ערוך' : 'Edit') : (isRTL ? 'שבץ' : 'Assign')}
+                                {sched ? t('buttons:edit') : t('scheduling:assign')}
                               </button>
                               {sched && (
                                 <button
                                   onClick={() => handleDeleteAssignment(sched.id)}
                                   className="p-1 text-slate-400 hover:text-red-500 cursor-pointer"
-                                  title={isRTL ? 'הסר שיבוץ' : 'Remove Assignment'}
+                                  title={t('scheduling:remove_assignment')}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </button>
@@ -799,7 +796,7 @@ export default function WorkforceScheduling() {
                             <button
                               onClick={() => navigate(`/employees/${emp.employee_id}/history`)}
                               className="p-1 text-slate-400 hover:text-indigo-650 cursor-pointer"
-                              title={isRTL ? 'היסטוריית שינויים' : 'View History'}
+                              title={t('employees:history_title')}
                             >
                               <Users className="h-4 w-4" />
                             </button>
@@ -821,7 +818,7 @@ export default function WorkforceScheduling() {
           <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4 animate-scale-up">
             <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
               <h3 className="font-heading text-lg font-bold text-slate-900 dark:text-white">
-                {isRTL ? `שיבוץ יומי: ${editingEmployee.name}` : `Daily Assignment: ${editingEmployee.name}`}
+                {`${t('scheduling:daily_assignment')}: ${editingEmployee.name}`}
               </h3>
               <button 
                 onClick={() => setEditingEmployee(null)}
@@ -835,14 +832,14 @@ export default function WorkforceScheduling() {
               
               {/* Daily Status */}
               <div>
-                <label className="block text-slate-400 font-bold mb-1.5">{isRTL ? 'סטטוס זמינות יומי' : 'Daily Availability Status'}</label>
+                <label className="block text-slate-400 font-bold mb-1.5">{t('scheduling:daily_status')}</label>
                 <select
                   required
                   value={statusId}
                   onChange={(e) => setStatusId(e.target.value)}
                   className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 text-slate-800 dark:text-white"
                 >
-                  <option value="">{isRTL ? '-- בחר סטטוס --' : '-- Select Status --'}</option>
+                  <option value="">{t('scheduling:choose_status')}</option>
                   {statuses.map(st => (
                     <option key={st.id} value={st.id}>{st.name}</option>
                   ))}
@@ -853,13 +850,13 @@ export default function WorkforceScheduling() {
               {settings?.scheduling_mode === 'SHIFT_BASED' && (
                 <>
                   <div>
-                     <label className="block text-slate-400 font-bold mb-1.5">{isRTL ? 'שיוך למשמרת' : 'Shift slot'}</label>
+                     <label className="block text-slate-400 font-bold mb-1.5">{t('scheduling:shift_name')}</label>
                      <select
                        value={shiftTypeId}
                        onChange={(e) => setShiftTypeId(e.target.value)}
                        className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 text-slate-800 dark:text-white"
                      >
-                       <option value="">{isRTL ? '-- ללא משמרת --' : '-- No Shift --'}</option>
+                       <option value="">{t('scheduling:no_shift')}</option>
                        {shifts.map(sh => (
                          <option key={sh.id} value={sh.id}>{sh.name} ({sh.start_time}-{sh.end_time})</option>
                        ))}
@@ -868,7 +865,7 @@ export default function WorkforceScheduling() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-slate-400 font-bold mb-1.5">{isRTL ? 'שעת התחלה (אופציונלי)' : 'Start Time (Optional)'}</label>
+                      <label className="block text-slate-400 font-bold mb-1.5">{t('scheduling:start_time_optional')}</label>
                       <input
                         type="text"
                         value={startTime}
@@ -878,7 +875,7 @@ export default function WorkforceScheduling() {
                       />
                     </div>
                     <div>
-                      <label className="block text-slate-400 font-bold mb-1.5">{isRTL ? 'שעת סיום (אופציונלי)' : 'End Time (Optional)'}</label>
+                      <label className="block text-slate-400 font-bold mb-1.5">{t('scheduling:end_time_optional')}</label>
                       <input
                         type="text"
                         value={endTime}
@@ -893,11 +890,11 @@ export default function WorkforceScheduling() {
 
               {/* Notes */}
               <div>
-                <label className="block text-slate-400 font-bold mb-1.5">{isRTL ? 'הערות מפקד' : 'Commander Notes'}</label>
+                <label className="block text-slate-400 font-bold mb-1.5">{t('scheduling:notes')}</label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder={isRTL ? 'רשום הערות אישיות...' : 'Write notes...'}
+                  placeholder={t('scheduling:notes_placeholder')}
                   rows={3}
                   className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 text-slate-800 dark:text-white"
                 />
@@ -909,13 +906,13 @@ export default function WorkforceScheduling() {
                   onClick={() => setEditingEmployee(null)}
                   className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-750 dark:bg-slate-905 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
                 >
-                  {isRTL ? 'ביטול' : 'Cancel'}
+                  {t('buttons:cancel')}
                 </button>
                 <button
                   type="submit"
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 cursor-pointer"
                 >
-                  {isRTL ? 'שמור שיבוץ' : 'Apply'}
+                  {t('scheduling:save_assignment')}
                 </button>
               </div>
 
@@ -933,13 +930,11 @@ export default function WorkforceScheduling() {
             </div>
 
             <h3 className="font-heading text-lg font-bold text-slate-900 dark:text-white">
-              {isRTL ? 'אישור שיבוץ מרוכז' : 'Confirm Bulk Status Assignment'}
+              {t('scheduling:confirm_bulk')}
             </h3>
 
             <p className="text-xs text-slate-550 dark:text-slate-400">
-              {isRTL 
-                ? `האם אתה בטוח שברצונך לשנות את הסטטוס היומי עבור ${selectedEmployeeIds.length} עובדים בתאריך ${selectedDate}?`
-                : `Are you sure you want to allocate the status for ${selectedEmployeeIds.length} employees on date ${selectedDate}?`}
+              {`${t('scheduling:confirm_bulk_msg')} ${selectedEmployeeIds.length} ${t('scheduling:employees_count')} ${selectedDate}?`}
             </p>
 
             <div className="flex gap-3 pt-2">
@@ -948,14 +943,14 @@ export default function WorkforceScheduling() {
                 onClick={() => setShowBulkConfirm(false)}
                 className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-750 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
               >
-                {isRTL ? 'ביטול' : 'Cancel'}
+                {t('buttons:cancel')}
               </button>
               <button
                 type="button"
                 onClick={handleBulkSubmit}
                 className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-700 cursor-pointer"
               >
-                {isRTL ? 'אשר ושיבוץ' : 'Confirm'}
+                {t('buttons:confirm')}
               </button>
             </div>
           </div>
@@ -965,3 +960,6 @@ export default function WorkforceScheduling() {
     </div>
   );
 }
+
+
+

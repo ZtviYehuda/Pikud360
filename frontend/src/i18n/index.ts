@@ -10,6 +10,8 @@ import reports from './he/reports.json';
 import notifications from './he/notifications.json';
 import validation from './he/validation.json';
 import buttons from './he/buttons.json';
+import transfers from './he/transfers.json';
+import admin from './he/admin.json';
 
 i18n
   .use(initReactI18next)
@@ -25,7 +27,9 @@ i18n
         reports,
         notifications,
         validation,
-        buttons
+        buttons,
+        transfers,
+        admin
       }
     },
     lng: 'he',
@@ -40,7 +44,9 @@ i18n
       'reports',
       'notifications',
       'validation',
-      'buttons'
+      'buttons',
+      'transfers',
+      'admin'
     ],
     defaultNS: 'common',
     interpolation: {

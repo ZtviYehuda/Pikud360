@@ -1,9 +1,8 @@
-import { useUIStore } from '../stores/uiStore';
+import { useTranslation } from 'react-i18next';
 import { Search, UserPlus, SlidersHorizontal, ShieldCheck } from 'lucide-react';
 
 export default function Employees() {
-  const { direction } = useUIStore();
-  const isRTL = direction === 'rtl';
+  const { t } = useTranslation();
 
   const mockEmployees = [
     { id: '1', name: 'Alice Smith', role: 'WFM Specialist', dept: 'HR & Operations', email: 'alice@pikud360.com', active: true },
@@ -18,16 +17,16 @@ export default function Employees() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-heading text-3xl font-bold text-slate-900 dark:text-white">
-            {isRTL ? 'ניהול עובדים' : 'Employee Directory'}
+            {t('employees:title')}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">
-            {isRTL ? 'צפייה, חיפוש ועריכת פרופילי עובדים במערכת' : 'View, search, and manage corporate employee directories.'}
+            {t('employees:desc')}
           </p>
         </div>
         
         <button className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 w-fit cursor-pointer">
           <UserPlus className="h-4.5 w-4.5" />
-          {isRTL ? 'הוסף עובד' : 'Add Employee'}
+          {t('employees:add_employee')}
         </button>
       </div>
 
@@ -40,12 +39,12 @@ export default function Employees() {
           <input
             type="text"
             className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-10 pr-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950"
-            placeholder={isRTL ? 'חפש לפי שם, תפקיד, מחלקה...' : 'Search by name, role, department...'}
+            placeholder={t('employees:search_placeholder')}
           />
         </div>
-        <button className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-650 hover:bg-slate-50 dark:border-slate-750 dark:bg-slate-900 dark:hover:bg-slate-800 cursor-pointer">
+        <button className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-650 hover:bg-slate-55 dark:border-slate-750 dark:bg-slate-900 dark:hover:bg-slate-800 cursor-pointer">
           <SlidersHorizontal className="h-4 w-4" />
-          <span className="hidden sm:inline">{isRTL ? 'סינון' : 'Filters'}</span>
+          <span className="hidden sm:inline">{t('buttons:filter')}</span>
         </button>
       </div>
 
@@ -62,14 +61,14 @@ export default function Employees() {
                   ? 'bg-green-100 text-green-700 dark:bg-green-950/20 dark:text-green-400' 
                   : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
               }`}>
-                {emp.active ? (isRTL ? 'פעיל' : 'Active') : (isRTL ? 'לא פעיל' : 'Inactive')}
+                {emp.active ? t('common:success') : t('common:error')}
               </span>
             </div>
             
             <div className="mt-4">
               <h4 className="font-heading text-base font-bold text-slate-800 dark:text-white">{emp.name}</h4>
               <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">{emp.role}</p>
-              <p className="text-xs text-slate-500 mt-2 font-mono">{emp.dept}</p>
+              <p className="text-xs text-slate-555 mt-2 font-mono">{emp.dept}</p>
             </div>
             
             <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-850/60 flex items-center justify-between text-2xs text-slate-400">

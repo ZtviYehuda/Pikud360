@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import { DistributionItem } from '../../../services/analyticsService';
 import ChartCard from './ChartCard';
@@ -7,17 +8,16 @@ interface StatusDistributionPieChartProps {
   data: DistributionItem[] | null;
   loading?: boolean;
   error?: string | null;
-  isRTL?: boolean;
 }
 
 const COLORS: Record<string, string> = {
-  AVAILABLE: '#10B981', // emerald-500
-  SICK: '#F43F5E',      // rose-500
-  TRAINING: '#6366F1',  // indigo-500
-  MISSION: '#F59E0B',   // amber-500
-  REINFORCEMENT: '#3B82F6', // blue-500
-  VACATION: '#EC4899',  // pink-500
-  OTHER: '#64748B'       // slate-500
+  AVAILABLE: '#10B981',
+  SICK: '#F43F5E',
+  TRAINING: '#6366F1',
+  MISSION: '#F59E0B',
+  REINFORCEMENT: '#3B82F6',
+  VACATION: '#EC4899',
+  OTHER: '#64748B'
 };
 
 const DEFAULT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#64748B'];
@@ -25,9 +25,10 @@ const DEFAULT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '
 export default function StatusDistributionPieChart({
   data,
   loading = false,
-  error = null,
-  isRTL = false
+  error = null
 }: StatusDistributionPieChartProps) {
+  const { t } = useTranslation();
+
   const chartData = React.useMemo(() => {
     if (!data) return [];
     return data.map((item) => ({
@@ -41,11 +42,10 @@ export default function StatusDistributionPieChart({
 
   return (
     <ChartCard
-      title={isRTL ? 'התפלגות כשירות וכוח אדם' : 'Workforce Readiness Ratio'}
+      title={t('analytics:distribution')}
       loading={loading}
       error={error}
       empty={empty}
-      isRTL={isRTL}
     >
       <div className="w-full h-64 flex items-center justify-center font-semibold text-xs">
         <ResponsiveContainer width="100%" height="100%">
@@ -72,7 +72,7 @@ export default function StatusDistributionPieChart({
                 borderRadius: '8px',
                 color: '#fff',
                 fontSize: '11px',
-                textAlign: isRTL ? 'right' : 'left'
+                textAlign: 'right'
               }}
               formatter={(value: any, name: any, props: any) => {
                 const pct = props.payload.percentage;
