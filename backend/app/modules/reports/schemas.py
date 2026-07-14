@@ -11,10 +11,10 @@ from app.modules.reports.models import ReportFormat, ReportStatus, ReportType
 class ReportTemplateResponse(BaseModel):
     """Schema representing an available report template."""
     id: str
-    code: str
+    code: ReportType
     name: str
     description: Optional[str] = None
-    supported_formats: List[str]   # serialised as plain strings for API consumers
+    supported_formats: List[ReportFormat]   # serialised as plain strings for API consumers
     enabled: bool
 
     model_config = {"use_enum_values": True}
@@ -22,16 +22,19 @@ class ReportTemplateResponse(BaseModel):
 
 class ReportRequestCreate(BaseModel):
     """Incoming DTO for requesting report generation."""
-    report_type: str
+    report_type: ReportType
     format: ReportFormat
     org_unit_id: Optional[str] = None
     parameters: Optional[Dict[str, Any]] = None
 
     @field_validator("format", mode="before")
     @classmethod
-    def normalise_format(cls, v: str) -> str:
-        """Accept lowercase input and map to the matching ReportFormat member."""
-        upper = str(v).upper()
+    def normalise_format(cls, v: Any) -> ReportFormat:
+        """Accept lowercase input/enum and map to the matching ReportFormat member."""
+        if isinstance(v, ReportFormat):
+            return v
+        v_str = v.value if isinstance(v, ReportFormat) else str(v)
+        upper = v_str.upper()
         try:
             return ReportFormat(upper)
         except ValueError:
@@ -45,9 +48,9 @@ class ReportRequestResponse(BaseModel):
     """Response after creating or tracking a report request."""
     id: str
     name: str
-    report_type: str
-    format: str
-    status: str
+    report_type: ReportType
+    format: ReportFormat
+    status: ReportStatus
     org_unit_id: Optional[str] = None
     file_path: Optional[str] = None
     file_name: Optional[str] = None
@@ -57,6 +60,7 @@ class ReportRequestResponse(BaseModel):
     generated_at: Optional[datetime] = None
     duration_ms: Optional[int] = None
     mime_type: Optional[str] = None
+    checksum: Optional[str] = None
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     created_at: Optional[datetime] = None

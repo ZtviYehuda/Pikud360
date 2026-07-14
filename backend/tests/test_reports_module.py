@@ -22,7 +22,7 @@ class TestReportModels:
     def test_report_template_defaults(self):
         t = ReportTemplate(
             id="1",
-            code=ReportType.MANPOWER_SUMMARY.value,
+            code=ReportType.MANPOWER_SUMMARY,
             name="Manpower Summary",
             supported_formats=[ReportFormat.PDF, ReportFormat.EXCEL]
         )
@@ -32,7 +32,7 @@ class TestReportModels:
     def test_report_request_defaults(self):
         r = ReportRequest(
             id="r1", tenant_id="t1", name="Test",
-            report_type=ReportType.MANPOWER_SUMMARY.value,
+            report_type=ReportType.MANPOWER_SUMMARY,
             format=ReportFormat.PDF,
             generated_by="user1"
         )
@@ -70,14 +70,14 @@ class TestReportModels:
 class TestReportSchemas:
     def test_report_request_create_valid_lowercase(self):
         schema = ReportRequestCreate(
-            report_type=ReportType.MANPOWER_SUMMARY.value, format="pdf"
+            report_type=ReportType.MANPOWER_SUMMARY, format="pdf"
         )
         # use_enum_values=True — serialised as plain string
         assert schema.format == ReportFormat.PDF.value
 
     def test_report_request_create_valid_enum(self):
         schema = ReportRequestCreate(
-            report_type=ReportType.ALERT_LOG.value, format=ReportFormat.EXCEL
+            report_type=ReportType.ALERT_LOG, format=ReportFormat.EXCEL
         )
         assert schema.format == ReportFormat.EXCEL.value
 
@@ -89,9 +89,9 @@ class TestReportSchemas:
     def test_report_template_response_serialization(self):
         schema = ReportTemplateResponse(
             id="1",
-            code=ReportType.ALERT_LOG.value,
+            code=ReportType.ALERT_LOG,
             name="Alert Log",
-            supported_formats=[ReportFormat.PDF.value, ReportFormat.CSV.value],
+            supported_formats=[ReportFormat.PDF, ReportFormat.CSV],
             enabled=True
         )
         data = schema.model_dump()
@@ -101,9 +101,9 @@ class TestReportSchemas:
     def test_report_request_response_optional_fields(self):
         schema = ReportRequestResponse(
             id="r1", name="Test",
-            report_type=ReportType.ALERT_LOG.value,
-            format=ReportFormat.CSV.value,
-            status=ReportStatus.PENDING.value
+            report_type=ReportType.ALERT_LOG,
+            format=ReportFormat.CSV,
+            status=ReportStatus.PENDING
         )
         data = schema.model_dump()
         assert data["file_name"] is None
@@ -114,9 +114,9 @@ class TestReportSchemas:
         """Ensure serialised status is a plain string, not an enum object."""
         schema = ReportRequestResponse(
             id="r1", name="Test",
-            report_type=ReportType.MANPOWER_SUMMARY.value,
-            format=ReportFormat.PDF.value,
-            status=ReportStatus.COMPLETED.value
+            report_type=ReportType.MANPOWER_SUMMARY,
+            format=ReportFormat.PDF,
+            status=ReportStatus.COMPLETED
         )
         data = schema.model_dump()
         assert isinstance(data["status"], str)
@@ -135,7 +135,7 @@ class TestReportProcessor:
         processor = NoOpReportProcessor()
         dummy = ReportRequest(
             id="x", tenant_id="t", name="n",
-            report_type=ReportType.MANPOWER_SUMMARY.value,
+            report_type=ReportType.MANPOWER_SUMMARY,
             format=ReportFormat.PDF,
             generated_by="u"
         )
@@ -158,7 +158,7 @@ class TestReportProcessor:
         assert p.supports(ReportFormat.PDF) is False
         dummy = ReportRequest(
             id="x", tenant_id="t", name="n",
-            report_type=ReportType.ALERT_LOG.value,
+            report_type=ReportType.ALERT_LOG,
             format=ReportFormat.CSV,
             generated_by="u"
         )
@@ -175,14 +175,14 @@ def mock_template_repo():
         instance.list_enabled_templates.return_value = [
             ReportTemplate(
                 id="t1",
-                code=ReportType.MANPOWER_SUMMARY.value,
+                code=ReportType.MANPOWER_SUMMARY,
                 name="Manpower Summary",
                 supported_formats=[ReportFormat.PDF, ReportFormat.EXCEL, ReportFormat.CSV]
             )
         ]
         instance.load_template_by_code.return_value = ReportTemplate(
             id="t1",
-            code=ReportType.MANPOWER_SUMMARY.value,
+            code=ReportType.MANPOWER_SUMMARY,
             name="Manpower Summary",
             supported_formats=[ReportFormat.PDF, ReportFormat.EXCEL, ReportFormat.CSV]
         )
@@ -197,7 +197,7 @@ def mock_report_repo():
         instance.load_report.return_value = ReportRequest(
             id="report-uuid-1", tenant_id="tenant-111",
             name="Manpower Summary — 2025-01-01 10:00",
-            report_type=ReportType.MANPOWER_SUMMARY.value,
+            report_type=ReportType.MANPOWER_SUMMARY,
             format=ReportFormat.PDF,
             generated_by="user-1"
         )
@@ -211,14 +211,14 @@ class TestReportService:
         service = ReportService()
         templates = service.get_enabled_templates()
         assert len(templates) == 1
-        assert templates[0].code == ReportType.MANPOWER_SUMMARY.value
+        assert templates[0].code == ReportType.MANPOWER_SUMMARY
 
     def test_request_report_valid(self, mock_template_repo, mock_report_repo):
         service = ReportService()
         report = service.request_report(
             tenant_id="tenant-111", user_id="user-1",
-            report_type=ReportType.MANPOWER_SUMMARY.value,
-            format=ReportFormat.PDF.value
+            report_type=ReportType.MANPOWER_SUMMARY,
+            format=ReportFormat.PDF
         )
         assert report.id == "report-uuid-1"
         assert report.status == ReportStatus.PENDING
@@ -229,7 +229,7 @@ class TestReportService:
         with pytest.raises(ValueError, match="Unsupported format"):
             service.request_report(
                 tenant_id="t", user_id="u",
-                report_type=ReportType.MANPOWER_SUMMARY.value,
+                report_type=ReportType.MANPOWER_SUMMARY,
                 format="WORD"
             )
 
@@ -239,13 +239,13 @@ class TestReportService:
         with pytest.raises(ValueError, match="Unknown report type"):
             service.request_report(
                 tenant_id="t", user_id="u", report_type="nonexistent",
-                format=ReportFormat.PDF.value
+                format=ReportFormat.PDF
             )
 
     def test_request_report_disabled_template(self, mock_template_repo, mock_report_repo):
         mock_template_repo.load_template_by_code.return_value = ReportTemplate(
             id="t2",
-            code=ReportType.ALERT_LOG.value,
+            code=ReportType.ALERT_LOG,
             name="Alert Log",
             supported_formats=[ReportFormat.PDF],
             enabled=False
@@ -254,14 +254,14 @@ class TestReportService:
         with pytest.raises(ValueError, match="currently disabled"):
             service.request_report(
                 tenant_id="t", user_id="u",
-                report_type=ReportType.ALERT_LOG.value,
-                format=ReportFormat.PDF.value
+                report_type=ReportType.ALERT_LOG,
+                format=ReportFormat.PDF
             )
 
     def test_request_report_unsupported_format_for_template(self, mock_template_repo, mock_report_repo):
         mock_template_repo.load_template_by_code.return_value = ReportTemplate(
             id="t3",
-            code=ReportType.SCHEDULE_DETAILS.value,
+            code=ReportType.SCHEDULE_DETAILS,
             name="Schedule Details",
             supported_formats=[ReportFormat.CSV]   # Only CSV supported
         )
@@ -269,8 +269,8 @@ class TestReportService:
         with pytest.raises(ValueError, match="not supported"):
             service.request_report(
                 tenant_id="t", user_id="u",
-                report_type=ReportType.SCHEDULE_DETAILS.value,
-                format=ReportFormat.PDF.value
+                report_type=ReportType.SCHEDULE_DETAILS,
+                format=ReportFormat.PDF
             )
 
     def test_get_report_enforces_tenant_scope(self, mock_template_repo, mock_report_repo):
@@ -301,7 +301,7 @@ class TestReportService:
         """NoOpReportProcessor raises NotImplementedError → request reverts to PENDING."""
         pending_report = ReportRequest(
             id="r1", tenant_id="t", name="Test",
-            report_type=ReportType.MANPOWER_SUMMARY.value,
+            report_type=ReportType.MANPOWER_SUMMARY,
             format=ReportFormat.PDF, generated_by="u"
         )
         mock_report_repo.load_pending_reports.return_value = [pending_report]
@@ -318,7 +318,7 @@ class TestReportService:
         """A concrete processor that raises RuntimeError should mark the report as FAILED."""
         pending_report = ReportRequest(
             id="r2", tenant_id="t", name="Test",
-            report_type=ReportType.MANPOWER_SUMMARY.value,
+            report_type=ReportType.MANPOWER_SUMMARY,
             format=ReportFormat.PDF, generated_by="u"
         )
         mock_report_repo.load_pending_reports.return_value = [pending_report]

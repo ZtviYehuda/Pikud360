@@ -16,4 +16,8 @@ bcrypt==4.1.3
 # PII Encryption
 cryptography==42.0.8
 
+# Report Generation
+reportlab==4.2.2
+openpyxl==3.1.5
+
 

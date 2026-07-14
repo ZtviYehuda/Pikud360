@@ -41,7 +41,7 @@ class ReportType(str, Enum):
 class ReportTemplate:
     """Represents an available report template definition."""
     id: str
-    code: str
+    code: ReportType
     name: str
     supported_formats: List[ReportFormat]
     description: Optional[str] = None
@@ -59,7 +59,7 @@ class ReportRequest:
     id: str
     tenant_id: str
     name: str
-    report_type: str                 # stores ReportType.value (str) from DB
+    report_type: ReportType                 # stores ReportType.value (str) from DB
     format: ReportFormat
     generated_by: str
     status: ReportStatus = ReportStatus.PENDING

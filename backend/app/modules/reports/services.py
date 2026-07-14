@@ -93,8 +93,8 @@ class ReportService:
         self,
         tenant_id: str,
         user_id: str,
-        report_type: str,
-        format: str,
+        report_type: Any,
+        format: Any,
         org_unit_id: Optional[str] = None,
         parameters: Optional[Dict[str, Any]] = None
     ) -> ReportRequest:
@@ -103,44 +103,56 @@ class ReportService:
         Actual generation is deferred to the SchedulerEngine via the reports job.
         """
         # 1. Validate and coerce format to enum
-        try:
-            fmt = ReportFormat(format.upper())
-        except ValueError:
-            allowed = ", ".join(f.value for f in ReportFormat)
-            raise ValueError(f"Unsupported format '{format}'. Must be one of: {allowed}")
+        if isinstance(format, ReportFormat):
+            fmt = format
+        else:
+            try:
+                fmt = ReportFormat(str(format).upper())
+            except ValueError:
+                allowed = ", ".join(f.value for f in ReportFormat)
+                raise ValueError(f"Unsupported format '{format}'. Must be one of: {allowed}")
 
-        # 2. Validate template exists and is enabled
-        template = self._template_repo.load_template_by_code(report_type)
+        # 2. Validate and coerce report type to enum
+        if isinstance(report_type, ReportType):
+            rep_type = report_type
+        else:
+            try:
+                rep_type = ReportType(str(report_type))
+            except ValueError:
+                raise ValueError(f"Unknown report type '{report_type}'.")
+
+        # 3. Validate template exists and is enabled
+        template = self._template_repo.load_template_by_code(rep_type)
         if not template:
-            raise ValueError(f"Unknown report type '{report_type}'.")
+            raise ValueError(f"Unknown report type '{rep_type.value}'.")
         if not template.enabled:
-            raise ValueError(f"Report type '{report_type}' is currently disabled.")
+            raise ValueError(f"Report type '{rep_type.value}' is currently disabled.")
 
-        # 3. Validate format is supported by this template
+        # 4. Validate format is supported by this template
         if fmt not in template.supported_formats:
             allowed_fmts = ", ".join(
                 f.value if isinstance(f, ReportFormat) else f
                 for f in template.supported_formats
             )
             raise ValueError(
-                f"Format '{fmt.value}' is not supported for '{report_type}'. "
+                f"Format '{fmt.value}' is not supported for '{rep_type.value}'. "
                 f"Supported: {allowed_fmts}"
             )
 
-        # 4. Create PENDING request record
+        # 5. Create PENDING request record
         report_name = f"{template.name} — {datetime.now().strftime('%Y-%m-%d %H:%M')}"
         report_id = self._report_repo.create_report_request(
             tenant_id=tenant_id,
             name=report_name,
-            report_type=report_type,
-            format=fmt.value,
+            report_type=rep_type,
+            format=fmt,
             generated_by=user_id,
             org_unit_id=org_unit_id,
             parameters=parameters
         )
 
         logger.info(
-            f"Report request '{report_id}' created ({report_type}/{fmt.value}). "
+            f"Report request '{report_id}' created ({rep_type.value}/{fmt.value}). "
             "Pending SchedulerEngine execution."
         )
         return self._report_repo.load_report(report_id)

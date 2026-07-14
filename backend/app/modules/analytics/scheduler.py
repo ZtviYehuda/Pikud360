@@ -10,6 +10,7 @@ from typing import Callable, List, Dict, Any, Optional, Set
 
 from app.modules.analytics.repositories import AnalyticsRepository, SnapshotRepository, AlertRepository, JobRepository
 from app.modules.analytics.services import SnapshotGenerator, SummaryCalculator, AlertEvaluator
+from app.modules.reports.models import ReportStatus
 
 logger = logging.getLogger("pikud360.modules.analytics.scheduler")
 
@@ -72,7 +73,7 @@ class SchedulerEngine:
             ),
             "reports": JobDefinition(
                 name="reports",
-                description="Processes PENDING report generation requests via registered ReportProcessor.",
+                description=f"Processes {ReportStatus.PENDING.value} report generation requests via registered ReportProcessor.",
                 callback=self._run_reports_job,
                 interval_setting_key="scheduler_alert_interval",
                 supports_retry=False

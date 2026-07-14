@@ -72,6 +72,7 @@ def get_history():
             generated_at=r.generated_at,
             duration_ms=r.duration_ms,
             mime_type=r.mime_type,
+            checksum=r.checksum,
             started_at=r.started_at,
             completed_at=r.completed_at,
             created_at=r.created_at
@@ -109,6 +110,7 @@ def get_report(report_id):
             generated_at=report.generated_at,
             duration_ms=report.duration_ms,
             mime_type=report.mime_type,
+            checksum=report.checksum,
             started_at=report.started_at,
             completed_at=report.completed_at,
             created_at=report.created_at

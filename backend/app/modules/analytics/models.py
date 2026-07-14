@@ -49,20 +49,22 @@ class AlertRule:
     updated_at: Optional[datetime] = None
 
 
+from app.modules.reports.models import ReportType, ReportFormat, ReportStatus
+
 @dataclass
 class GeneratedReport:
     """Represents metadata for a generated CSV, PDF, or JSON report job."""
     id: str
     tenant_id: str
     name: str
-    report_type: str
-    format: str
+    report_type: ReportType
+    format: ReportFormat
     generated_by: str
     parameters_json: dict = None
     file_path: Optional[str] = None
     file_size: Optional[int] = None
     download_count: int = 0
-    status: str = "PENDING"
+    status: ReportStatus = ReportStatus.PENDING
     error_message: Optional[str] = None
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
