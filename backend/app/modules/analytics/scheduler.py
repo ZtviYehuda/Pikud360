@@ -69,6 +69,13 @@ class SchedulerEngine:
                 description="Prunes expired dashboard snapshots, report logs, and job run histories.",
                 callback=self._run_cleanup_job,
                 interval_setting_key="scheduler_cleanup_interval"
+            ),
+            "reports": JobDefinition(
+                name="reports",
+                description="Processes PENDING report generation requests via registered ReportProcessor.",
+                callback=self._run_reports_job,
+                interval_setting_key="scheduler_alert_interval",
+                supports_retry=False
             )
         }
 
@@ -239,6 +246,14 @@ class SchedulerEngine:
 
         deleted_rows = self._job_repo.prune_all_expired_data(retention_days)
         return deleted_rows
+
+    def _run_reports_job(self) -> int:
+        """Reports Job callback: processes PENDING report requests via the registered processor."""
+        # Import lazily to avoid circular dependencies at module load time
+        from app.modules.reports.services import ReportService, NoOpReportProcessor
+        service = ReportService()
+        processor = NoOpReportProcessor()
+        return service.process_pending_reports(processor)
 
     def _get_setting_value(self, key: Optional[str], default: str) -> str:
         """Helper to fetch setting value from database configuration."""

@@ -870,7 +870,14 @@ CREATE TABLE workforce.generated_reports (
     generated_by UUID NOT NULL REFERENCES security.users(id) ON DELETE CASCADE,
     started_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Extended results fields
+    file_name VARCHAR(255),
+    generated_at TIMESTAMP WITH TIME ZONE,
+    duration_ms INTEGER,
+    mime_type VARCHAR(100),
+    checksum VARCHAR(64)
 );
 
 
@@ -884,6 +891,18 @@ CREATE TABLE audit.job_history (
     success BOOLEAN NOT NULL,
     error_message TEXT,
     records_processed INTEGER DEFAULT 0
+);
+
+
+CREATE TABLE workforce.report_templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    code VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    supported_formats VARCHAR(100) NOT NULL,
+    enabled BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -1409,7 +1428,10 @@ CREATE POLICY generated_reports_tenant_policy ON workforce.generated_reports
 CREATE POLICY job_history_tenant_policy ON audit.job_history
     FOR ALL USING (tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
 
+ALTER TABLE workforce.report_templates ENABLE ROW LEVEL SECURITY;
 
+CREATE POLICY templates_global_policy ON workforce.report_templates
+    FOR SELECT USING (TRUE);
 
 -- ============================================================================
 -- 9. Seed Default Tenant, Users, Roles and Organization Units Hierarchy
@@ -1684,6 +1706,16 @@ BEGIN
     INSERT INTO workforce.alert_rules (tenant_id, name, metric_name, operator, threshold_value, evaluation_period, severity, is_active) VALUES
     (tenant_uuid, 'Sick Rate High Alert', 'SICK_PERCENTAGE', '>', 10.00, 'LAST_7_DAYS', 'WARNING', true)
     ON CONFLICT DO NOTHING;
+
+    -- Seed default report templates
+    INSERT INTO workforce.report_templates (code, name, description, supported_formats, enabled) VALUES
+    ('manpower_summary',       'Manpower Summary',       'Manpower availability and readiness dashboard report',       'PDF,EXCEL,CSV', true),
+    ('alert_log',              'Alert Log',              'Active and resolved system alerts history log',              'PDF,EXCEL,CSV', true),
+    ('schedule_details',       'Schedule Details',       'Detailed employee workforce shifts schedules roster',        'PDF,EXCEL,CSV', true),
+    ('organization_summary',   'Organization Summary',   'Organization unit metadata and summary statistics',          'PDF,EXCEL,CSV', true),
+    ('attendance_statistics',  'Attendance Statistics',  'Employee daily attendance and absence tracking report',      'PDF,EXCEL,CSV', true),
+    ('personnel_distribution', 'Personnel Distribution', 'Workforce distribution across categories and roles',         'PDF,EXCEL,CSV', true)
+    ON CONFLICT (code) DO NOTHING;
 
 END $$;
 

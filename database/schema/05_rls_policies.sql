@@ -188,8 +188,7 @@ ALTER TABLE audit.job_history ENABLE ROW LEVEL SECURITY;
 CREATE POLICY job_history_tenant_policy ON audit.job_history
     FOR ALL USING (tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
 
+ALTER TABLE workforce.report_templates ENABLE ROW LEVEL SECURITY;
 
-
-
-
-
+CREATE POLICY templates_global_policy ON workforce.report_templates
+    FOR SELECT USING (TRUE);

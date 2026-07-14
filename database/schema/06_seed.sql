@@ -390,5 +390,15 @@ BEGIN
     (tenant_uuid, 'Sick Rate High Alert', 'SICK_PERCENTAGE', '>', 10.00, 'LAST_7_DAYS', 'WARNING', true)
     ON CONFLICT DO NOTHING;
 
+    -- Seed default report templates
+    INSERT INTO workforce.report_templates (code, name, description, supported_formats, enabled) VALUES
+    ('manpower_summary', 'Manpower Summary', 'Manpower availability and readiness dashboard report', 'PDF,EXCEL,CSV', true),
+    ('alert_log', 'Alert Log', 'Active and resolved system alerts history log', 'PDF,EXCEL,CSV', true),
+    ('schedule_details', 'Schedule Details', 'Detailed employee workforce shifts schedules roster', 'PDF,EXCEL,CSV', true),
+    ('organization_summary', 'Organization Summary', 'Organization unit metadata and summary statistics', 'PDF,EXCEL,CSV', true),
+    ('attendance_statistics', 'Attendance Statistics', 'Employee daily attendance and absence tracking report', 'PDF,EXCEL,CSV', true),
+    ('personnel_distribution', 'Personnel Distribution', 'Workforce distribution across categories and roles', 'PDF,EXCEL,CSV', true)
+    ON CONFLICT (code) DO NOTHING;
+
 END $$;
 

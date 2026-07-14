@@ -853,7 +853,14 @@ CREATE TABLE workforce.generated_reports (
     generated_by UUID NOT NULL REFERENCES security.users(id) ON DELETE CASCADE,
     started_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Extended results fields
+    file_name VARCHAR(255),
+    generated_at TIMESTAMP WITH TIME ZONE,
+    duration_ms INTEGER,
+    mime_type VARCHAR(100),
+    checksum VARCHAR(64)
 );
 
 
@@ -867,5 +874,17 @@ CREATE TABLE audit.job_history (
     success BOOLEAN NOT NULL,
     error_message TEXT,
     records_processed INTEGER DEFAULT 0
+);
+
+
+CREATE TABLE workforce.report_templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    code VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    supported_formats VARCHAR(100) NOT NULL,
+    enabled BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
