@@ -1,9 +1,9 @@
 """
-Analytics module domain models for dashboard snapshots, alert rules, and generated reports.
+Analytics module domain models for dashboard snapshots, alert rules, reports, and calculations.
 These are plain dataclasses for inter-layer data transfer without ORM dependency.
 """
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Dict
 from datetime import datetime, date
 
 
@@ -66,3 +66,47 @@ class GeneratedReport:
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
+
+
+@dataclass
+class AlertEvaluationResult:
+    """Represents the results of evaluating an alert rule condition."""
+    rule_name: str
+    metric: str
+    current_value: float
+    threshold: float
+    operator: str
+    severity: str
+    organization_unit: str
+    is_triggered: bool
+
+
+@dataclass
+class PersonnelSummary:
+    """Represents aggregated manpower statistics for an organization unit."""
+    total_personnel: int
+    assigned: float
+    unassigned: float
+    available: float
+    unavailable: float
+
+
+@dataclass
+class StatusDistributionItem:
+    """Represents a single status category count and percentage."""
+    status: str
+    count: int
+    percentage: float
+
+
+@dataclass
+class TrendPoint:
+    """Represents a single point-in-time trend statistics record."""
+    date: date
+    total_personnel: int
+    assigned: int
+    unassigned: int
+    available: int
+    unavailable: int
+    readiness_percentage: float
+    status_distribution: Dict[str, int]
