@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import { useTranslation } from 'react-i18next';
-import { Info, AlertTriangle, CheckCircle, AlertOctagon, Check } from 'lucide-react';
+import { Info, AlertTriangle, CheckCircle, AlertOctagon, Check, Bell } from 'lucide-react';
 import { workforceService, SystemNotification } from '../services/workforceService';
 import Unauthorized from './Unauthorized';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
+import { Spinner } from '../components/ui/spinner';
+import { EmptyState } from '../components/ui/empty-state';
 
 export default function Notifications() {
   const { hasPermission } = useAuthStore();
@@ -137,9 +139,15 @@ export default function Notifications() {
       {/* Feed */}
       <Card className="p-6">
         {loading ? (
-          <div className="py-12 text-center text-xs font-semibold text-slate-500 dark:text-slate-400">{t('notifications:loading')}</div>
+          <div className="flex justify-center items-center py-12">
+            <Spinner size="default" />
+          </div>
         ) : filteredNotifications.length === 0 ? (
-          <div className="py-12 text-center text-xs font-semibold text-slate-500 dark:text-slate-400">{t('notifications:no_notifications')}</div>
+          <EmptyState
+            icon={Bell}
+            title={t('notifications:no_notifications')}
+            description={t('notifications:desc')}
+          />
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-850">
             {filteredNotifications.map((notif) => (

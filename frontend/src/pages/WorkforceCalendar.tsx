@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import { useTranslation } from 'react-i18next';
-import { Calendar as CalendarIcon, ChevronRight, X } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronRight } from 'lucide-react';
 import { workforceService, CalendarDayStats, SnapshotData } from '../services/workforceService';
 import { schedulingService } from '../services/schedulingService';
 import Unauthorized from './Unauthorized';
 import { Card } from '../components/ui/card';
-import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '../components/ui/table';
 
 interface OrganizationUnit {
@@ -164,88 +164,78 @@ export default function WorkforceCalendar() {
       )}
 
       {/* Snapshot Modal */}
-      {snapshotDate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <Card className="max-w-4xl w-full max-h-[85vh] flex flex-col p-0 overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="font-heading text-xl font-bold text-slate-900 dark:text-white">
-                {t('common:history')} — {snapshotDate}
-              </h3>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={handleCloseSnapshot}
-                className="h-8 w-8 text-slate-450 hover:text-slate-650"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
+      <Dialog open={!!snapshotDate} onOpenChange={(open) => !open && handleCloseSnapshot()}>
+        <DialogContent className="max-w-4xl w-[calc(100%-2rem)] max-h-[85vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+            <DialogTitle>
+              {t('common:history')} — {snapshotDate}
+            </DialogTitle>
+          </DialogHeader>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {snapshotLoading ? (
-                <div className="py-12 text-center text-slate-500 dark:text-slate-400">{t('common:loading')}</div>
-              ) : snapshotData ? (
-                <>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <Card className="p-4 text-center">
-                      <span className="text-3xs font-semibold text-slate-450 uppercase tracking-wider block mb-1">{t('dashboard:total_strength')}</span>
-                      <strong className="text-2xl text-slate-850 dark:text-white font-bold">{snapshotData.total_personnel}</strong>
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {snapshotLoading ? (
+              <div className="py-12 text-center text-slate-500 dark:text-slate-400">{t('common:loading')}</div>
+            ) : snapshotData ? (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <Card className="p-4 text-center">
+                    <span className="text-3xs font-semibold text-slate-450 uppercase tracking-wider block mb-1">{t('dashboard:total_strength')}</span>
+                    <strong className="text-2xl text-slate-850 dark:text-white font-bold">{snapshotData.total_personnel}</strong>
+                  </Card>
+                  {Object.entries(snapshotData.statuses).map(([code, count]) => (
+                    <Card key={code} className="p-4 text-center">
+                      <span className="text-3xs font-semibold text-slate-450 uppercase tracking-wider block mb-1">{code}</span>
+                      <strong className="text-2xl text-slate-850 dark:text-white font-bold">{count}</strong>
                     </Card>
-                    {Object.entries(snapshotData.statuses).map(([code, count]) => (
-                      <Card key={code} className="p-4 text-center">
-                        <span className="text-3xs font-semibold text-slate-450 uppercase tracking-wider block mb-1">{code}</span>
-                        <strong className="text-2xl text-slate-850 dark:text-white font-bold">{count}</strong>
-                      </Card>
+                  ))}
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-sm text-slate-800 dark:text-white mb-3">{t('common:organization')}</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {Object.entries(snapshotData.organization_breakdown).map(([unitName, count]) => (
+                      <div key={unitName} className="p-3 bg-slate-50/50 dark:bg-slate-950/20 border rounded-lg text-xs flex justify-between">
+                        <span className="text-slate-500">{unitName}</span>
+                        <strong className="text-slate-800 dark:text-white">{count}</strong>
+                      </div>
                     ))}
                   </div>
+                </div>
 
-                  <div>
-                    <h4 className="font-bold text-sm text-slate-800 dark:text-white mb-3">{t('common:organization')}</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {Object.entries(snapshotData.organization_breakdown).map(([unitName, count]) => (
-                        <div key={unitName} className="p-3 bg-slate-50/50 dark:bg-slate-950/20 border rounded-lg text-xs flex justify-between">
-                          <span className="text-slate-500">{unitName}</span>
-                          <strong className="text-slate-800 dark:text-white">{count}</strong>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="font-bold text-sm text-slate-800 dark:text-white mb-3">{t('employees:title')}</h4>
-                    <Card className="overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="px-4">{t('employees:name')}</TableHead>
-                            <TableHead className="px-4">{t('employees:rank')}</TableHead>
-                            <TableHead className="px-4">{t('analytics:unit')}</TableHead>
-                            <TableHead className="px-4">{t('common:status')}</TableHead>
-                            <TableHead className="px-4">{t('scheduling:shift_name')}</TableHead>
+                <div>
+                  <h4 className="font-bold text-sm text-slate-800 dark:text-white mb-3">{t('employees:title')}</h4>
+                  <Card className="overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="px-4">{t('employees:name')}</TableHead>
+                          <TableHead className="px-4">{t('employees:rank')}</TableHead>
+                          <TableHead className="px-4">{t('analytics:unit')}</TableHead>
+                          <TableHead className="px-4">{t('common:status')}</TableHead>
+                          <TableHead className="px-4">{t('scheduling:shift_name')}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {snapshotData.assignments.map((asg, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell className="px-4 font-semibold text-slate-800 dark:text-white">{asg.display_name}</TableCell>
+                            <TableCell className="px-4 text-slate-500">{asg.rank} | {asg.role}</TableCell>
+                            <TableCell className="px-4 text-slate-500">{asg.organization_unit}</TableCell>
+                            <TableCell className="px-4 font-medium text-slate-700 dark:text-slate-350">{asg.status}</TableCell>
+                            <TableCell className="px-4 text-slate-450">{asg.shift || '-'}</TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {snapshotData.assignments.map((asg, idx) => (
-                            <TableRow key={idx}>
-                              <TableCell className="px-4 font-semibold text-slate-800 dark:text-white">{asg.display_name}</TableCell>
-                              <TableCell className="px-4 text-slate-500">{asg.rank} | {asg.role}</TableCell>
-                              <TableCell className="px-4 text-slate-500">{asg.organization_unit}</TableCell>
-                              <TableCell className="px-4 font-medium text-slate-700 dark:text-slate-350">{asg.status}</TableCell>
-                              <TableCell className="px-4 text-slate-450">{asg.shift || '-'}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </Card>
-                  </div>
-                </>
-              ) : (
-                <div className="py-12 text-center text-slate-500">{t('common:error')}</div>
-              )}
-            </div>
-          </Card>
-        </div>
-      )}
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </Card>
+                </div>
+              </>
+            ) : (
+              <div className="py-12 text-center text-slate-500">{t('common:error')}</div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

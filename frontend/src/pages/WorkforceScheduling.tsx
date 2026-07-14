@@ -10,7 +10,7 @@ import {
   DailyDashboardSummary 
 } from '../services/schedulingService';
 import { 
-  Users, X, Search, Calendar, SlidersHorizontal, 
+  Users, Search, Calendar, SlidersHorizontal, 
   Edit2, Trash2, Shield, AlertTriangle, Sparkles, ChevronDown, ChevronUp, GitFork
 } from 'lucide-react';
 import Unauthorized from './Unauthorized';
@@ -20,11 +20,22 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '../components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 
 export default function WorkforceScheduling() {
   const navigate = useNavigate();
   const { hasPermission } = useAuthStore();
   const { t } = useTranslation();
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 767px)');
+    setIsMobile(media.matches);
+    const listener = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  }, []);
 
   if (!hasPermission('schedule.view')) {
     return <Unauthorized />;
@@ -665,60 +676,31 @@ export default function WorkforceScheduling() {
 
       {/* 5. Main Planning Table */}
       <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {hasPermission('schedule.bulk_manage') && (
-                  <TableHead className="w-12 text-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedEmployeeIds.length === filteredEmployees.length && filteredEmployees.length > 0}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedEmployeeIds(filteredEmployees.map(emp => emp.employee_id));
-                        } else {
-                          setSelectedEmployeeIds([]);
-                        }
-                      }}
-                      className="rounded text-brand-600 focus:ring-brand-500 h-4 w-4"
-                    />
-                  </TableHead>
-                )}
-                <TableHead>{t('employees:employee')}</TableHead>
-                <TableHead>{t('employees:rank_role')}</TableHead>
-                <TableHead>{t('analytics:unit')}</TableHead>
-                <TableHead>{t('scheduling:daily_status')}</TableHead>
-                {settings?.scheduling_mode === 'SHIFT_BASED' && (
-                  <>
-                    <TableHead>{t('scheduling:shift_name')}</TableHead>
-                    <TableHead>{t('scheduling:hours')}</TableHead>
-                  </>
-                )}
-                <TableHead>{t('scheduling:notes')}</TableHead>
-                <TableHead className="text-right">{t('common:actions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredEmployees.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={10} className="py-10 text-center text-slate-400 font-semibold italic">
-                    {t('employees:no_employees')}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredEmployees.map((emp) => {
-                  const sched = emp.daily_assignment;
-                  const shiftObj = sched && sched.shift_type_id ? shifts.find(sh => sh.id === sched.shift_type_id) : null;
-                  const isSelected = selectedEmployeeIds.includes(emp.employee_id);
+        {isMobile ? (
+          /* Mobile View */
+          <div className="space-y-4 p-4">
+            {filteredEmployees.length === 0 ? (
+              <div className="py-10 text-center text-slate-400 font-semibold italic">
+                {t('employees:no_employees')}
+              </div>
+            ) : (
+              filteredEmployees.map((emp) => {
+                const sched = emp.daily_assignment;
+                const shiftObj = sched && sched.shift_type_id ? shifts.find(sh => sh.id === sched.shift_type_id) : null;
+                const isSelected = selectedEmployeeIds.includes(emp.employee_id);
 
-                  return (
-                    <TableRow 
-                      key={emp.employee_id} 
-                      className={isSelected ? 'bg-brand-50/10 dark:bg-brand-950/5' : ''}
-                    >
-                      {hasPermission('schedule.bulk_manage') && (
-                        <TableCell className="text-center">
+                return (
+                  <div 
+                    key={emp.employee_id} 
+                    className={`p-4 border border-slate-100 dark:border-slate-800 rounded-xl space-y-3 transition-colors ${
+                      isSelected 
+                        ? 'bg-brand-50/15 border-brand-200 dark:bg-brand-950/10 dark:border-brand-900' 
+                        : 'bg-slate-50/30 dark:bg-slate-900/30'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-3">
+                        {hasPermission('schedule.bulk_manage') && (
                           <input
                             type="checkbox"
                             checked={isSelected}
@@ -729,247 +711,397 @@ export default function WorkforceScheduling() {
                                 setSelectedEmployeeIds(selectedEmployeeIds.filter(id => id !== emp.employee_id));
                               }
                             }}
-                            className="rounded text-brand-600 focus:ring-brand-500 h-4 w-4"
+                            className="rounded text-brand-600 focus:ring-brand-500 h-4.5 w-4.5 shrink-0"
                           />
-                        </TableCell>
-                      )}
-                      <TableCell className="font-bold text-slate-800 dark:text-white">
-                        {emp.display_name}
-                      </TableCell>
-                      <TableCell className="text-xs text-slate-450 font-semibold">
-                        {emp.rank} | {emp.role}
-                      </TableCell>
-                      <TableCell className="text-xs text-slate-500 font-semibold">
-                        {emp.organization_unit.name}
-                      </TableCell>
-                      <TableCell>
-                        {sched ? (
-                          <span 
-                            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border border-black/5"
-                            style={{ 
-                              backgroundColor: (sched.color || '#2196F3') + '15',
-                              color: sched.color || '#2196F3' 
-                            }}
-                          >
-                            <span 
-                              className="h-2 w-2 rounded-full" 
-                              style={{ backgroundColor: sched.color || '#2196F3' }}
-                            />
-                            {sched.status_name}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-red-500 font-semibold italic">
-                            {t('scheduling:not_assigned')}
-                          </span>
                         )}
-                      </TableCell>
-                      {settings?.scheduling_mode === 'SHIFT_BASED' && (
-                        <>
-                          <TableCell className="text-xs font-medium text-slate-800 dark:text-white">
-                            {shiftObj?.name || '-'}
-                          </TableCell>
-                          <TableCell className="font-mono text-2xs font-semibold text-slate-500">
-                            {sched?.start_time && sched?.end_time ? `${sched.start_time}-${sched.end_time}` : '-'}
-                          </TableCell>
-                        </>
+                        <div>
+                          <h4 className="font-bold text-xs text-slate-900 dark:text-white">{emp.display_name}</h4>
+                          <p className="text-[10px] text-slate-400 mt-0.5">{emp.rank} | {emp.role}</p>
+                        </div>
+                      </div>
+
+                      {sched ? (
+                        <span 
+                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border border-black/5"
+                          style={{ 
+                            backgroundColor: (sched.color || '#2196F3') + '15',
+                            color: sched.color || '#2196F3' 
+                          }}
+                        >
+                          <span 
+                            className="h-2 w-2 rounded-full" 
+                            style={{ backgroundColor: sched.color || '#2196F3' }}
+                          />
+                          {sched.status_name}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-rose-500 font-semibold italic bg-rose-50 dark:bg-rose-950/10 px-2 py-0.5 rounded-full">
+                          {t('scheduling:not_assigned')}
+                        </span>
                       )}
-                      <TableCell className="text-xs text-slate-450 truncate max-w-[150px]">
-                        {sched?.notes || '-'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {hasPermission('schedule.manage') && (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEditOpen({ id: emp.employee_id, name: emp.display_name }, sched)}
-                                className="h-8 py-1 px-2.5 text-xs"
-                              >
-                                <Edit2 className="h-3 w-3" />
-                                {sched ? t('buttons:edit') : t('scheduling:assign')}
-                              </Button>
-                              {sched && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleDeleteAssignment(sched.id)}
-                                  className="h-8 w-8 text-slate-400 hover:text-red-500"
-                                  title={t('scheduling:remove_assignment')}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </>
-                          )}
-                          {hasPermission('employees.history.view') && (
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-505 pt-1 border-t border-slate-100 dark:border-slate-800">
+                      <div>
+                        <span className="block text-slate-400">{t('analytics:unit')}</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-355">{emp.organization_unit.name}</span>
+                      </div>
+                      {settings?.scheduling_mode === 'SHIFT_BASED' && (
+                        <div>
+                          <span className="block text-slate-400">{t('scheduling:shift_name')}</span>
+                          <span className="font-semibold text-slate-700 dark:text-slate-355">
+                            {shiftObj?.name || '-'} {sched?.start_time && sched?.end_time ? ` (${sched.start_time}-${sched.end_time})` : ''}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {sched?.notes && (
+                      <div className="text-[10px] text-slate-500 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-2 rounded-lg">
+                        <span className="block text-2xs text-slate-400 uppercase font-semibold mb-0.5">{t('scheduling:notes')}</span>
+                        <p className="leading-relaxed text-slate-600 dark:text-slate-300">{sched.notes}</p>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 justify-end border-t border-slate-100 dark:border-slate-800 pt-2.5">
+                      {hasPermission('schedule.manage') && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditOpen({ id: emp.employee_id, name: emp.display_name }, sched)}
+                            className="h-8 text-2xs px-3"
+                          >
+                            <Edit2 className="h-3.5 w-3.5 mr-1" />
+                            {sched ? t('buttons:edit') : t('scheduling:assign')}
+                          </Button>
+                          {sched && (
                             <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => navigate(`/employees/${emp.employee_id}/history`)}
-                              className="h-8 w-8 text-slate-400 hover:text-indigo-600"
-                              title={t('employees:history_title')}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteAssignment(sched.id)}
+                              className="h-8 text-rose-650 hover:bg-rose-50 dark:hover:bg-rose-950/20 px-3"
                             >
-                              <Users className="h-4 w-4" />
+                              <Trash2 className="h-3.5 w-3.5 mr-1" />
+                              {t('buttons:delete')}
                             </Button>
                           )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                        </>
+                      )}
+                      {hasPermission('employees.history.view') && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/employees/${emp.employee_id}/history`)}
+                          className="h-8 px-3"
+                          title={t('employees:history_title')}
+                        >
+                          <Users className="h-3.5 w-3.5 mr-1" />
+                          {t('employees:history_title')}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        ) : (
+          /* Desktop / Tablet View */
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {hasPermission('schedule.bulk_manage') && (
+                    <TableHead className="w-12 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedEmployeeIds.length === filteredEmployees.length && filteredEmployees.length > 0}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedEmployeeIds(filteredEmployees.map(emp => emp.employee_id));
+                          } else {
+                            setSelectedEmployeeIds([]);
+                          }
+                        }}
+                        className="rounded text-brand-600 focus:ring-brand-500 h-4 w-4"
+                      />
+                    </TableHead>
+                  )}
+                  <TableHead>{t('employees:employee')}</TableHead>
+                  <TableHead>{t('employees:rank_role')}</TableHead>
+                  <TableHead>{t('analytics:unit')}</TableHead>
+                  <TableHead>{t('scheduling:daily_status')}</TableHead>
+                  {settings?.scheduling_mode === 'SHIFT_BASED' && (
+                    <>
+                      <TableHead>{t('scheduling:shift_name')}</TableHead>
+                      <TableHead>{t('scheduling:hours')}</TableHead>
+                    </>
+                  )}
+                  <TableHead>{t('scheduling:notes')}</TableHead>
+                  <TableHead className="text-right">{t('common:actions')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredEmployees.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={10} className="py-10 text-center text-slate-400 font-semibold italic">
+                      {t('employees:no_employees')}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredEmployees.map((emp) => {
+                    const sched = emp.daily_assignment;
+                    const shiftObj = sched && sched.shift_type_id ? shifts.find(sh => sh.id === sched.shift_type_id) : null;
+                    const isSelected = selectedEmployeeIds.includes(emp.employee_id);
+
+                    return (
+                      <TableRow 
+                        key={emp.employee_id} 
+                        className={isSelected ? 'bg-brand-50/10 dark:bg-brand-950/5' : ''}
+                      >
+                        {hasPermission('schedule.bulk_manage') && (
+                          <TableCell className="text-center">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedEmployeeIds([...selectedEmployeeIds, emp.employee_id]);
+                                } else {
+                                  setSelectedEmployeeIds(selectedEmployeeIds.filter(id => id !== emp.employee_id));
+                                }
+                              }}
+                              className="rounded text-brand-600 focus:ring-brand-500 h-4 w-4"
+                            />
+                          </TableCell>
+                        )}
+                        <TableCell className="font-bold text-slate-800 dark:text-white">
+                          {emp.display_name}
+                        </TableCell>
+                        <TableCell className="text-xs text-slate-450 font-semibold">
+                          {emp.rank} | {emp.role}
+                        </TableCell>
+                        <TableCell className="text-xs text-slate-500 font-semibold">
+                          {emp.organization_unit.name}
+                        </TableCell>
+                        <TableCell>
+                          {sched ? (
+                            <span 
+                              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border border-black/5"
+                              style={{ 
+                                backgroundColor: (sched.color || '#2196F3') + '15',
+                                color: sched.color || '#2196F3' 
+                              }}
+                            >
+                              <span 
+                                className="h-2 w-2 rounded-full" 
+                                style={{ backgroundColor: sched.color || '#2196F3' }}
+                              />
+                              {sched.status_name}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-red-505 font-semibold italic">
+                              {t('scheduling:not_assigned')}
+                            </span>
+                          )}
+                        </TableCell>
+                        {settings?.scheduling_mode === 'SHIFT_BASED' && (
+                          <>
+                            <TableCell className="text-xs font-medium text-slate-800 dark:text-white">
+                              {shiftObj?.name || '-'}
+                            </TableCell>
+                            <TableCell className="font-mono text-2xs font-semibold text-slate-505">
+                              {sched?.start_time && sched?.end_time ? `${sched.start_time}-${sched.end_time}` : '-'}
+                            </TableCell>
+                          </>
+                        )}
+                        <TableCell className="text-xs text-slate-450 truncate max-w-[150px]">
+                          {sched?.notes || '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {hasPermission('schedule.manage') && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEditOpen({ id: emp.employee_id, name: emp.display_name }, sched)}
+                                  className="h-8 py-1 px-2.5 text-xs"
+                                >
+                                  <Edit2 className="h-3 w-3" />
+                                  {sched ? t('buttons:edit') : t('scheduling:assign')}
+                                </Button>
+                                {sched && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDeleteAssignment(sched.id)}
+                                    className="h-8 w-8 text-slate-450 hover:text-red-500"
+                                    title={t('scheduling:remove_assignment')}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </>
+                            )}
+                            {hasPermission('employees.history.view') && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => navigate(`/employees/${emp.employee_id}/history`)}
+                                className="h-8 w-8 text-slate-450 hover:text-indigo-650"
+                                title={t('employees:history_title')}
+                              >
+                                <Users className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </Card>
 
       {/* 6. Single edit/assign Modal window dialog */}
-      {editingEmployee && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md p-6 shadow-2xl space-y-4 animate-scale-up">
-            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="font-heading text-lg font-bold text-slate-900 dark:text-white">
-                {`${t('scheduling:daily_assignment')}: ${editingEmployee.name}`}
-              </h3>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setEditingEmployee(null)}
-                className="h-8 w-8"
+      <Dialog open={!!editingEmployee} onOpenChange={(open) => !open && setEditingEmployee(null)}>
+        <DialogContent className="max-w-md p-6">
+          <DialogHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
+            <DialogTitle>
+              {editingEmployee ? `${t('scheduling:daily_assignment')}: ${editingEmployee.name}` : ''}
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleSingleAssignmentSubmit} className="space-y-4 text-xs font-medium text-slate-500">
+            {/* Daily Status */}
+            <div>
+              <label className="block text-slate-450 font-bold mb-1.5">{t('scheduling:daily_status')}</label>
+              <select
+                required
+                value={statusId}
+                onChange={(e) => setStatusId(e.target.value)}
+                className="w-full rounded-lg border border-slate-205 bg-white py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-white"
               >
-                <X className="h-5 w-5" />
-              </Button>
+                <option value="">{t('scheduling:choose_status')}</option>
+                {statuses.map(st => (
+                  <option key={st.id} value={st.id}>{st.name}</option>
+                ))}
+              </select>
             </div>
 
-            <form onSubmit={handleSingleAssignmentSubmit} className="space-y-4 text-xs font-medium text-slate-500">
-              
-              {/* Daily Status */}
-              <div>
-                <label className="block text-slate-400 font-bold mb-1.5">{t('scheduling:daily_status')}</label>
-                <select
-                  required
-                  value={statusId}
-                  onChange={(e) => setStatusId(e.target.value)}
-                  className="w-full rounded-lg border border-slate-205 bg-slate-50 py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 text-slate-800 dark:text-white"
-                >
-                  <option value="">{t('scheduling:choose_status')}</option>
-                  {statuses.map(st => (
-                    <option key={st.id} value={st.id}>{st.name}</option>
-                  ))}
-                </select>
-              </div>
+            {/* Shift details fields (Only displayed under SHIFT_BASED settings configuration) */}
+            {settings?.scheduling_mode === 'SHIFT_BASED' && (
+              <>
+                <div>
+                   <label className="block text-slate-450 font-bold mb-1.5">{t('scheduling:shift_name')}</label>
+                   <select
+                     value={shiftTypeId}
+                     onChange={(e) => setShiftTypeId(e.target.value)}
+                     className="w-full rounded-lg border border-slate-205 bg-white py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-white"
+                   >
+                     <option value="">{t('scheduling:no_shift')}</option>
+                     {shifts.map(sh => (
+                       <option key={sh.id} value={sh.id}>{sh.name} ({sh.start_time}-{sh.end_time})</option>
+                     ))}
+                   </select>
+                </div>
 
-              {/* Shift details fields (Only displayed under SHIFT_BASED settings configuration) */}
-              {settings?.scheduling_mode === 'SHIFT_BASED' && (
-                <>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                     <label className="block text-slate-400 font-bold mb-1.5">{t('scheduling:shift_name')}</label>
-                     <select
-                       value={shiftTypeId}
-                       onChange={(e) => setShiftTypeId(e.target.value)}
-                       className="w-full rounded-lg border border-slate-205 bg-slate-50 py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 text-slate-800 dark:text-white"
-                     >
-                       <option value="">{t('scheduling:no_shift')}</option>
-                       {shifts.map(sh => (
-                         <option key={sh.id} value={sh.id}>{sh.name} ({sh.start_time}-{sh.end_time})</option>
-                       ))}
-                     </select>
+                    <label className="block text-slate-450 font-bold mb-1.5">{t('scheduling:start_time_optional')}</label>
+                    <Input
+                      type="text"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      placeholder="08:00"
+                      className="font-mono text-center"
+                    />
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-slate-400 font-bold mb-1.5">{t('scheduling:start_time_optional')}</label>
-                      <Input
-                        type="text"
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                        placeholder="08:00"
-                        className="font-mono text-center"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-slate-400 font-bold mb-1.5">{t('scheduling:end_time_optional')}</label>
-                      <Input
-                        type="text"
-                        value={endTime}
-                        onChange={(e) => setEndTime(e.target.value)}
-                        placeholder="16:00"
-                        className="font-mono text-center"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-slate-450 font-bold mb-1.5">{t('scheduling:end_time_optional')}</label>
+                    <Input
+                      type="text"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      placeholder="16:00"
+                      className="font-mono text-center"
+                    />
                   </div>
-                </>
-              )}
+                </div>
+              </>
+            )}
 
-              {/* Notes */}
-              <div>
-                <label className="block text-slate-400 font-bold mb-1.5">{t('scheduling:notes')}</label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder={t('scheduling:notes_placeholder')}
-                  rows={3}
-                  className="w-full rounded-lg border border-slate-205 bg-slate-50 py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-950 text-slate-800 dark:text-white"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setEditingEmployee(null)}
-                >
-                  {t('buttons:cancel')}
-                </Button>
-                <Button
-                  type="submit"
-                >
-                  {t('scheduling:save_assignment')}
-                </Button>
-              </div>
-
-            </form>
-          </Card>
-        </div>
-      )}
-
-      {/* 7. Bulk Assignment Warning Confirmation dialog popup */}
-      {showBulkConfirm && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-sm p-6 shadow-2xl text-center space-y-4 animate-scale-up">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-brand-600 dark:bg-brand-950/30 dark:text-brand-400">
-              <AlertTriangle className="h-6 w-6" />
+            {/* Notes */}
+            <div>
+              <label className="block text-slate-450 font-bold mb-1.5">{t('scheduling:notes')}</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder={t('scheduling:notes_placeholder')}
+                rows={3}
+                className="w-full rounded-lg border border-slate-205 bg-white py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-white resize-none"
+              />
             </div>
 
-            <h3 className="font-heading text-lg font-bold text-slate-900 dark:text-white">
-              {t('scheduling:confirm_bulk')}
-            </h3>
-
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {`${t('scheduling:confirm_bulk_msg')} ${selectedEmployeeIds.length} ${t('scheduling:employees_count')} ${selectedDate}?`}
-            </p>
-
-            <div className="flex gap-3 pt-2">
+            <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setShowBulkConfirm(false)}
-                className="flex-1"
+                onClick={() => setEditingEmployee(null)}
               >
                 {t('buttons:cancel')}
               </Button>
               <Button
-                type="button"
-                onClick={handleBulkSubmit}
-                className="flex-1"
+                type="submit"
               >
-                {t('buttons:confirm')}
+                {t('scheduling:save_assignment')}
               </Button>
             </div>
-          </Card>
-        </div>
-      )}
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 7. Bulk Assignment Warning Confirmation dialog popup */}
+      <Dialog open={showBulkConfirm} onOpenChange={setShowBulkConfirm}>
+        <DialogContent className="max-w-sm p-6 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-brand-600 dark:bg-brand-950/30 dark:text-brand-400 mb-4">
+            <AlertTriangle className="h-6 w-6" />
+          </div>
+
+          <DialogHeader className="text-center sm:text-center">
+            <DialogTitle>
+              {t('scheduling:confirm_bulk')}
+            </DialogTitle>
+          </DialogHeader>
+
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+            {`${t('scheduling:confirm_bulk_msg')} ${selectedEmployeeIds.length} ${t('scheduling:employees_count')} ${selectedDate}?`}
+          </p>
+
+          <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800 mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowBulkConfirm(false)}
+              className="flex-1"
+            >
+              {t('buttons:cancel')}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleBulkSubmit}
+              className="flex-1"
+            >
+              {t('buttons:confirm')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

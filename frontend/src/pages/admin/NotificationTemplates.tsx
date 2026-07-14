@@ -3,11 +3,12 @@ import { useAuthStore } from '../../stores/authStore';
 import { useTranslation } from 'react-i18next';
 import { adminService, NotificationTemplate } from '../../services/adminService';
 import Unauthorized from '../Unauthorized';
-import { MessageSquare, Plus, Edit2, X, Mail, Smartphone, Globe } from 'lucide-react';
+import { MessageSquare, Plus, Edit2, Mail, Smartphone, Globe } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 
 const CHANNELS = ['IN_APP', 'EMAIL', 'SMS', 'WEBHOOK'];
 const CHANNEL_ICONS: Record<string, any> = { IN_APP: MessageSquare, EMAIL: Mail, SMS: Smartphone, WEBHOOK: Globe };
@@ -148,57 +149,54 @@ export default function NotificationTemplates() {
       </div>
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-xl p-0 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="font-heading text-lg font-bold">{editTemplate ? t('edit_template') : t('new_template')}</h3>
-              <Button variant="ghost" size="icon" onClick={() => setShowModal(false)} className="h-8 w-8"><X className="h-4 w-4" /></Button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1">{t('name')}</label>
-                  <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1">{t('channel')}</label>
-                  <select value={form.channel} onChange={e => setForm(f => ({ ...f, channel: e.target.value }))}
-                    className="w-full rounded-lg border border-slate-205 bg-white py-2 px-3 text-sm focus:border-sky-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-white">
-                    {CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="max-w-xl p-0 overflow-y-auto max-h-[90vh]">
+          <DialogHeader className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+            <DialogTitle>{editTemplate ? t('edit_template') : t('new_template')}</DialogTitle>
+          </DialogHeader>
+          <div className="p-6 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">{t('name')}</label>
+                <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">{t('notification_type')}</label>
-                <Input value={form.notification_type} onChange={e => setForm(f => ({ ...f, notification_type: e.target.value }))} />
+                <label className="block text-xs font-semibold text-slate-500 mb-1">{t('channel')}</label>
+                <select value={form.channel} onChange={e => setForm(f => ({ ...f, channel: e.target.value }))}
+                  className="w-full rounded-lg border border-slate-205 bg-white py-2 px-3 text-sm focus:border-sky-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-white">
+                  {CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
               </div>
-              {form.channel === 'EMAIL' && (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1">{t('subject')}</label>
-                  <Input value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} />
-                </div>
-              )}
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">{t('body_template')}</label>
-                <textarea value={form.body_template} onChange={e => setForm(f => ({ ...f, body_template: e.target.value }))} rows={4}
-                  className="w-full rounded-lg border border-slate-205 bg-slate-50 py-2 px-3 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 resize-none dark:bg-slate-950" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">{t('variables')}</label>
-                <Input value={form.variables_json} onChange={e => setForm(f => ({ ...f, variables_json: e.target.value }))} placeholder='["name","unit","date"]' className="font-mono" />
-              </div>
-              {error && <p className="text-sm text-red-500 font-semibold">{error}</p>}
             </div>
-            <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-slate-800">
-              <Button variant="outline" onClick={() => setShowModal(false)}>{t('cancel')}</Button>
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? '...' : t('save')}
-              </Button>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">{t('notification_type')}</label>
+              <Input value={form.notification_type} onChange={e => setForm(f => ({ ...f, notification_type: e.target.value }))} />
             </div>
-          </Card>
-        </div>
-      )}
+            {form.channel === 'EMAIL' && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">{t('subject')}</label>
+                <Input value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} />
+              </div>
+            )}
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">{t('body_template')}</label>
+              <textarea value={form.body_template} onChange={e => setForm(f => ({ ...f, body_template: e.target.value }))} rows={4}
+                className="w-full rounded-lg border border-slate-205 bg-slate-50 py-2 px-3 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 resize-none dark:bg-slate-950" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">{t('variables')}</label>
+              <Input value={form.variables_json} onChange={e => setForm(f => ({ ...f, variables_json: e.target.value }))} placeholder='["name","unit","date"]' className="font-mono" />
+            </div>
+            {error && <p className="text-sm text-red-500 font-semibold">{error}</p>}
+          </div>
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-slate-800">
+            <Button variant="outline" onClick={() => setShowModal(false)}>{t('cancel')}</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? '...' : t('save')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

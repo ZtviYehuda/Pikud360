@@ -3,10 +3,11 @@ import { useAuthStore } from '../../stores/authStore';
 import { useTranslation } from 'react-i18next';
 import { adminService, BusinessRule } from '../../services/adminService';
 import Unauthorized from '../Unauthorized';
-import { BookOpen, Plus, Edit2, PowerOff, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { BookOpen, Plus, Edit2, PowerOff, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 
 const RULE_TYPES = ['SICK_THRESHOLD', 'MANPOWER_MIN', 'TRANSFER_APPROVAL', 'UNAVAILABLE_LIMIT', 'SHIFT_VALIDATION', 'STATUS_RESTRICTION'];
 
@@ -134,52 +135,49 @@ export default function BusinessRules() {
       </div>
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-xl p-0 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="font-heading text-lg font-bold">{editRule ? t('edit_rule') : t('new_rule')}</h3>
-              <Button variant="ghost" size="icon" onClick={() => setShowModal(false)} className="h-8 w-8"><X className="h-4 w-4" /></Button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1">{t('rule_type')}</label>
-                  <select value={form.rule_type} onChange={e => setForm(f => ({ ...f, rule_type: e.target.value }))}
-                    className="w-full rounded-lg border border-slate-205 bg-white py-2 px-3 text-sm focus:border-emerald-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-white">
-                    {RULE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1">{t('priority')}</label>
-                  <Input type="number" value={form.priority} onChange={e => setForm(f => ({ ...f, priority: +e.target.value }))} />
-                </div>
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="max-w-xl p-0 overflow-y-auto max-h-[90vh]">
+          <DialogHeader className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+            <DialogTitle>{editRule ? t('edit_rule') : t('new_rule')}</DialogTitle>
+          </DialogHeader>
+          <div className="p-6 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">{t('rule_type')}</label>
+                <select value={form.rule_type} onChange={e => setForm(f => ({ ...f, rule_type: e.target.value }))}
+                  className="w-full rounded-lg border border-slate-205 bg-white py-2 px-3 text-sm focus:border-emerald-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-white">
+                  {RULE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">{t('name')}</label>
-                <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                <label className="block text-xs font-semibold text-slate-500 mb-1">{t('priority')}</label>
+                <Input type="number" value={form.priority} onChange={e => setForm(f => ({ ...f, priority: +e.target.value }))} />
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">{t('condition_json')}</label>
-                <textarea value={form.condition_json} onChange={e => setForm(f => ({ ...f, condition_json: e.target.value }))} rows={3}
-                  className="w-full rounded-lg border border-slate-205 bg-slate-50 py-2 px-3 text-xs font-mono text-emerald-600 dark:text-emerald-400 focus:outline-none focus:border-emerald-500 resize-none dark:bg-slate-950" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">{t('action_json')}</label>
-                <textarea value={form.action_json} onChange={e => setForm(f => ({ ...f, action_json: e.target.value }))} rows={3}
-                  className="w-full rounded-lg border border-slate-205 bg-slate-50 py-2 px-3 text-xs font-mono text-amber-600 dark:text-amber-400 focus:outline-none focus:border-amber-500 resize-none dark:bg-slate-950" />
-              </div>
-              {error && <p className="text-sm text-red-500 font-semibold">{error}</p>}
             </div>
-            <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-slate-800">
-              <Button variant="outline" onClick={() => setShowModal(false)}>{t('cancel')}</Button>
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? '...' : t('save')}
-              </Button>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">{t('name')}</label>
+              <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
             </div>
-          </Card>
-        </div>
-      )}
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">{t('condition_json')}</label>
+              <textarea value={form.condition_json} onChange={e => setForm(f => ({ ...f, condition_json: e.target.value }))} rows={3}
+                className="w-full rounded-lg border border-slate-205 bg-slate-50 py-2 px-3 text-xs font-mono text-emerald-600 dark:text-emerald-400 focus:outline-none focus:border-emerald-500 resize-none dark:bg-slate-950" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">{t('action_json')}</label>
+              <textarea value={form.action_json} onChange={e => setForm(f => ({ ...f, action_json: e.target.value }))} rows={3}
+                className="w-full rounded-lg border border-slate-205 bg-slate-50 py-2 px-3 text-xs font-mono text-amber-600 dark:text-amber-400 focus:outline-none focus:border-amber-500 resize-none dark:bg-slate-950" />
+            </div>
+            {error && <p className="text-sm text-red-500 font-semibold">{error}</p>}
+          </div>
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-slate-800">
+            <Button variant="outline" onClick={() => setShowModal(false)}>{t('cancel')}</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? '...' : t('save')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

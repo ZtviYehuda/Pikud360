@@ -1,16 +1,23 @@
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useUIStore } from '../stores/uiStore';
 import { useAuthStore } from '../stores/authStore';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { 
   Search, Bell, Sun, Moon, 
-  ChevronDown, User, LogOut, Settings 
+  ChevronDown, User, LogOut, Settings, Menu
 } from 'lucide-react';
+import { 
+  DropdownMenu, 
+  DropdownMenuTrigger, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator 
+} from './ui/dropdown-menu';
+import { Input } from './ui/input';
 
 export default function Topbar() {
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useUIStore();
+  const { theme, toggleTheme, toggleMobileSidebar } = useUIStore();
   const { user, logout } = useAuthStore();
   const { t } = useTranslation();
 
@@ -20,20 +27,30 @@ export default function Topbar() {
   };
 
   return (
-    <header className="flex h-16 w-full items-center justify-between border-b border-slate-200/60 bg-white px-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-900 z-30">
+    <header className="flex h-16 w-full items-center justify-between border-b border-slate-200/60 bg-white px-4 md:px-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-900 z-30">
       
-      {/* Search Input Box */}
-      <div className="relative w-64 max-w-xs hidden sm:block">
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-          <Search className="h-4 w-4 text-slate-400" />
+      <div className="flex items-center gap-3">
+        {/* Mobile menu trigger */}
+        <button
+          onClick={toggleMobileSidebar}
+          className="p-2 rounded-lg text-slate-505 hover:bg-slate-55 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-805 dark:hover:text-white transition-colors cursor-pointer md:hidden"
+          title="Open Menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
+        {/* Search Input Box */}
+        <div className="relative w-64 max-w-xs hidden sm:block">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+            <Search className="h-4 w-4 text-slate-400" />
+          </div>
+          <Input
+            type="text"
+            placeholder={t('employees:search_placeholder')}
+            className="pl-9"
+          />
         </div>
-        <input
-          type="text"
-          placeholder={t('employees:search_placeholder')}
-          className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-        />
       </div>
-      <div className="sm:hidden"></div> {/* Spacer for mobile layout */}
 
       {/* Action triggers group */}
       <div className="flex items-center gap-3">
@@ -55,10 +72,10 @@ export default function Topbar() {
           <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900"></span>
         </button>
 
-        {/* User Profile dropdown menu using Radix UI primitives */}
+        {/* User Profile dropdown menu */}
         {user && (
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 outline-none transition-colors cursor-pointer">
                 <div className="h-8 w-8 rounded-full bg-brand-100 dark:bg-brand-950 text-brand-650 dark:text-brand-405 font-bold flex items-center justify-center text-xs">
                   {user.name.split(' ').map(n => n[0]).join('')}
@@ -68,42 +85,34 @@ export default function Topbar() {
                 </div>
                 <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
               </button>
-            </DropdownMenu.Trigger>
+            </DropdownMenuTrigger>
 
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content
-                className="min-w-44 rounded-xl border border-slate-200/60 bg-white p-1.5 shadow-lg dark:border-slate-800 dark:bg-slate-950 z-40"
-                align="start"
-                sideOffset={5}
+            <DropdownMenuContent
+              align="start"
+              sideOffset={5}
+              className="min-w-44"
+            >
+              <DropdownMenuItem onClick={() => navigate('/settings')}>
+                <User className="h-4 w-4 mr-2" />
+                <span>{t('common:profile')}</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem onClick={() => navigate('/settings')}>
+                <Settings className="h-4 w-4 mr-2" />
+                <span>{t('common:settings')}</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
+              <DropdownMenuItem 
+                onClick={handleLogout}
+                className="text-red-655 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20"
               >
-                <DropdownMenu.Item 
-                  onClick={() => navigate('/settings')}
-                  className="flex items-center gap-2 px-2.5 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-55 dark:hover:bg-slate-900 rounded-lg outline-none cursor-pointer"
-                >
-                  <User className="h-4 w-4" />
-                  <span>{t('common:profile')}</span>
-                </DropdownMenu.Item>
-                
-                <DropdownMenu.Item 
-                  onClick={() => navigate('/settings')}
-                  className="flex items-center gap-2 px-2.5 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-55 dark:hover:bg-slate-900 rounded-lg outline-none cursor-pointer"
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>{t('common:settings')}</span>
-                </DropdownMenu.Item>
-                
-                <DropdownMenu.Separator className="h-px bg-slate-100 dark:bg-slate-850 my-1" />
-                
-                <DropdownMenu.Item 
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 px-2.5 py-2 text-xs text-red-655 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20 rounded-lg outline-none cursor-pointer"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>{t('common:logout')}</span>
-                </DropdownMenu.Item>
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
+                <LogOut className="h-4 w-4 mr-2" />
+                <span>{t('common:logout')}</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
 
       </div>

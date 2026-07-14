@@ -124,7 +124,7 @@ export default function CommanderDashboard() {
 
       {!loading && summary && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <KpiCard icon={Users} title={t('dashboard:total_strength')} value={summary.total_personnel} />
             <KpiCard icon={CheckCircle} title={t('dashboard:assigned')} value={summary.assigned} percentage={summary.assigned_percentage} />
             <KpiCard icon={Clock} title={t('dashboard:unassigned')} value={summary.unassigned} percentage={summary.unassigned_percentage} />

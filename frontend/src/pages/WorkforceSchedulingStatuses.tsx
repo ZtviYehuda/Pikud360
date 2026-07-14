@@ -232,62 +232,113 @@ export default function WorkforceSchedulingStatuses() {
           {loading ? (
             <div className="text-center py-10 text-slate-400 animate-pulse">{t('common:loading')}</div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="px-2">{t('common:code')}</TableHead>
-                    <TableHead className="px-2">{t('scheduling:display_name')}</TableHead>
-                    <TableHead className="px-2">{t('scheduling:category')}</TableHead>
-                    <TableHead className="px-2 text-center">{t('common:type')}</TableHead>
-                    <TableHead className="px-2 text-center">{t('common:status')}</TableHead>
-                    <TableHead className="px-2 text-start">{t('common:actions')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {statuses.sort((a, b) => a.sort_order - b.sort_order).map((status) => {
-                    const isSystem = systemStatusCodes.includes(status.code.toUpperCase());
-                    return (
-                      <TableRow key={status.id}>
-                        <TableCell className="px-2 font-mono text-xs font-bold text-slate-700 dark:text-slate-300">{status.code}</TableCell>
-                        <TableCell className="px-2 font-medium text-slate-900 dark:text-white">
-                          <div className="flex items-center gap-2">
-                            <span className="h-3.5 w-3.5 rounded-full border border-black/10 shrink-0" style={{ backgroundColor: status.color || '#2196F3' }} />
-                            {status.name}
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-2 text-xs text-slate-450 font-medium">{status.category}</TableCell>
-                        <TableCell className="px-2 text-center">
-                          {isSystem ? (
-                            <Badge variant="secondary" className="text-[10px]">{t('scheduling:type_system')}</Badge>
-                          ) : (
-                            <Badge variant="default" className="text-[10px] bg-brand-50 text-brand-600 hover:bg-brand-100">{t('scheduling:type_custom')}</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="px-2 text-center">
+            <>
+              {/* Desktop / Tablet View */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="px-2">{t('common:code')}</TableHead>
+                      <TableHead className="px-2">{t('scheduling:display_name')}</TableHead>
+                      <TableHead className="px-2">{t('scheduling:category')}</TableHead>
+                      <TableHead className="px-2 text-center">{t('common:type')}</TableHead>
+                      <TableHead className="px-2 text-center">{t('common:status')}</TableHead>
+                      <TableHead className="px-2 text-start">{t('common:actions')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {statuses.sort((a, b) => a.sort_order - b.sort_order).map((status) => {
+                      const isSystem = systemStatusCodes.includes(status.code.toUpperCase());
+                      return (
+                        <TableRow key={status.id}>
+                          <TableCell className="px-2 font-mono text-xs font-bold text-slate-700 dark:text-slate-300">{status.code}</TableCell>
+                          <TableCell className="px-2 font-medium text-slate-900 dark:text-white">
+                            <div className="flex items-center gap-2">
+                              <span className="h-3.5 w-3.5 rounded-full border border-black/10 shrink-0" style={{ backgroundColor: status.color || '#2196F3' }} />
+                              {status.name}
+                            </div>
+                          </TableCell>
+                          <TableCell className="px-2 text-xs text-slate-450 font-medium">{status.category}</TableCell>
+                          <TableCell className="px-2 text-center">
+                            {isSystem ? (
+                              <Badge variant="secondary" className="text-[10px]">{t('scheduling:type_system')}</Badge>
+                            ) : (
+                              <Badge variant="default" className="text-[10px] bg-brand-50 text-brand-600 hover:bg-brand-100">{t('scheduling:type_custom')}</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="px-2 text-center">
+                            <Button variant="ghost" size="icon" disabled={isSystem} onClick={() => handleToggleActive(status)}
+                              className="h-8 w-8 rounded-full disabled:opacity-50">
+                              {status.is_active ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> : <XCircle className="h-5 w-5 text-slate-400" />}
+                            </Button>
+                          </TableCell>
+                          <TableCell className="px-2">
+                            <div className="flex items-center gap-2">
+                              <Button variant="ghost" size="icon" onClick={() => handleEdit(status)} title={t('common:edit')}
+                                className="h-8 w-8 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400">
+                                <Edit2 className="h-4.5 w-4.5" />
+                              </Button>
+                              <Button variant="ghost" size="icon" disabled={isSystem} onClick={() => handleDelete(status.id, status.code)} title={t('common:disable')}
+                                className="h-8 w-8 text-slate-400 hover:text-red-500 disabled:opacity-30">
+                                <Ban className="h-4.5 w-4.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile View */}
+              <div className="space-y-4 md:hidden">
+                {statuses.sort((a, b) => a.sort_order - b.sort_order).map((status) => {
+                  const isSystem = systemStatusCodes.includes(status.code.toUpperCase());
+                  return (
+                    <div key={status.id} className="p-4 border border-slate-100 dark:border-slate-800 rounded-xl space-y-3 bg-slate-50/30 dark:bg-slate-900/30">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <span className="h-3.5 w-3.5 rounded-full border border-black/10 shrink-0" style={{ backgroundColor: status.color || '#2196F3' }} />
+                          <h4 className="font-bold text-xs text-slate-900 dark:text-white">{status.name}</h4>
+                        </div>
+                        {isSystem ? (
+                          <Badge variant="secondary" className="text-[10px]">{t('scheduling:type_system')}</Badge>
+                        ) : (
+                          <Badge variant="default" className="text-[10px] bg-brand-50 text-brand-600 hover:bg-brand-100">{t('scheduling:type_custom')}</Badge>
+                        )}
+                      </div>
+
+                      <div className="flex justify-between items-center text-[10px] text-slate-505">
+                        <span>Code: <span className="font-mono text-slate-700 dark:text-slate-350">{status.code}</span></span>
+                        <span>{t('scheduling:category')}: <span className="font-medium text-slate-700 dark:text-slate-350">{status.category}</span></span>
+                      </div>
+
+                      <div className="flex justify-between items-center border-t border-slate-100 dark:border-slate-800 pt-2">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-slate-400">{t('common:status')}:</span>
                           <Button variant="ghost" size="icon" disabled={isSystem} onClick={() => handleToggleActive(status)}
                             className="h-8 w-8 rounded-full disabled:opacity-50">
-                            {status.is_active ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> : <XCircle className="h-5 w-5 text-slate-400" />}
+                            {status.is_active ? <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500" /> : <XCircle className="h-4.5 w-4.5 text-slate-400" />}
                           </Button>
-                        </TableCell>
-                        <TableCell className="px-2">
-                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="icon" onClick={() => handleEdit(status)} title={t('common:edit')}
-                              className="h-8 w-8 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400">
-                              <Edit2 className="h-4.5 w-4.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" disabled={isSystem} onClick={() => handleDelete(status.id, status.code)} title={t('common:disable')}
-                              className="h-8 w-8 text-slate-400 hover:text-red-500 disabled:opacity-30">
-                              <Ban className="h-4.5 w-4.5" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" onClick={() => handleEdit(status)} className="h-8 text-2xs flex items-center gap-1">
+                            <Edit2 className="h-3.5 w-3.5" />
+                            {t('common:edit')}
+                          </Button>
+                          <Button variant="outline" size="sm" disabled={isSystem} onClick={() => handleDelete(status.id, status.code)} className="h-8 text-2xs flex items-center gap-1 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20">
+                            <Ban className="h-3.5 w-3.5" />
+                            {t('common:disable')}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </Card>
       </div>

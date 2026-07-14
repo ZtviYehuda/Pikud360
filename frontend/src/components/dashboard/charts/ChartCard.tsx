@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import EmptyState from '../EmptyState';
+import { Card, CardHeader, CardTitle, CardContent } from '../../ui/card';
 
 interface ChartCardProps {
   title: string;
@@ -24,17 +25,17 @@ export default function ChartCard({
   const { t } = useTranslation();
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col min-h-80">
+    <Card className="flex flex-col min-h-80 hover:shadow-md transition-shadow duration-300">
       {/* Header section */}
-      <div className="flex items-center justify-between gap-4 mb-4 pb-2 border-b border-slate-100 dark:border-slate-800/60">
-        <h3 className="text-sm font-bold text-slate-850 dark:text-white">
+      <CardHeader className="flex flex-row items-center justify-between gap-4 mb-4 pb-2 border-b border-slate-100 dark:border-slate-800/60 p-4 md:p-5">
+        <CardTitle className="text-sm font-bold text-slate-850 dark:text-white leading-none">
           {title}
-        </h3>
+        </CardTitle>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
-      </div>
+      </CardHeader>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col relative min-h-60 justify-center">
+      <CardContent className="flex-1 flex flex-col relative min-h-60 justify-center p-4 md:p-5 pt-0 md:pt-0">
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-2xs rounded-xl z-10 animate-pulse">
             <div className="flex flex-col items-center gap-2">
@@ -65,7 +66,7 @@ export default function ChartCard({
             {children}
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

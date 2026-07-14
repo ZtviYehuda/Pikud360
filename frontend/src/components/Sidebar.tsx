@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { cn } from '../lib/utils';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useUIStore } from '../stores/uiStore';
 import { useAuthStore } from '../stores/authStore';
@@ -23,9 +24,14 @@ interface SidebarItem {
   }[];
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+  className?: string;
+  isMobile?: boolean;
+}
+
+export default function Sidebar({ className, isMobile = false }: SidebarProps) {
   const navigate = useNavigate();
-  const { sidebarCollapsed, toggleSidebar } = useUIStore();
+  const { sidebarCollapsed, toggleSidebar, setMobileSidebarOpen } = useUIStore();
   const { user, logout, hasPermission } = useAuthStore();
   const [orgOpen, setOrgOpen] = useState(false);
   const { t } = useTranslation();
@@ -152,6 +158,15 @@ export default function Sidebar() {
   const handleLogout = () => {
     logout();
     navigate('/login');
+    if (isMobile) {
+      setMobileSidebarOpen(false);
+    }
+  };
+
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setMobileSidebarOpen(false);
+    }
   };
 
   const sidebarVariants = {
@@ -165,7 +180,7 @@ export default function Sidebar() {
       animate={sidebarCollapsed ? 'collapsed' : 'expanded'}
       variants={sidebarVariants}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="flex flex-col h-full bg-slate-900 text-slate-300 border-r border-slate-800 shadow-xl overflow-x-hidden relative"
+      className={cn("flex flex-col h-full bg-slate-900 text-slate-300 border-r border-slate-800 shadow-xl overflow-x-hidden relative", className)}
     >
       <div className="flex h-16 items-center justify-between px-4 border-b border-slate-800">
         <div className="flex items-center gap-2">
@@ -184,12 +199,14 @@ export default function Sidebar() {
           )}
         </div>
         
-        <button 
-          onClick={toggleSidebar}
-          className="p-1.5 rounded-md hover:bg-slate-800 text-slate-450 hover:text-white transition-colors cursor-pointer"
-        >
-          <Menu className="h-4.5 w-4.5" />
-        </button>
+        {!isMobile && (
+          <button 
+            onClick={toggleSidebar}
+            className="p-1.5 rounded-md hover:bg-slate-800 text-slate-450 hover:text-white transition-colors cursor-pointer"
+          >
+            <Menu className="h-4.5 w-4.5" />
+          </button>
+        )}
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
@@ -223,6 +240,7 @@ export default function Sidebar() {
                       <NavLink
                         key={sub.path}
                         to={sub.path}
+                        onClick={handleLinkClick}
                         className={({ isActive }) =>
                           `flex items-center gap-3 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
                             isActive 
@@ -245,6 +263,7 @@ export default function Sidebar() {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={handleLinkClick}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   isActive 
@@ -283,6 +302,7 @@ export default function Sidebar() {
               <NavLink
                 key={item.path}
                 to={item.path}
+                onClick={handleLinkClick}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                     isActive

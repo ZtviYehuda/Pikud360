@@ -179,67 +179,126 @@ export default function Transfers() {
             ) : transfers.length === 0 ? (
               <div className="py-12 text-center text-xs font-semibold text-slate-500 dark:text-slate-400">{t('transfers:no_records')}</div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('transfers:employee_column')}</TableHead>
-                    <TableHead>{t('transfers:from_unit')}</TableHead>
-                    <TableHead>{t('transfers:to_unit')}</TableHead>
-                    <TableHead>{t('common:status')}</TableHead>
-                    <TableHead>{t('transfers:reason')}</TableHead>
-                    <TableHead>{t('common:actions')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Desktop / Tablet View */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('transfers:employee_column')}</TableHead>
+                        <TableHead>{t('transfers:from_unit')}</TableHead>
+                        <TableHead>{t('transfers:to_unit')}</TableHead>
+                        <TableHead>{t('common:status')}</TableHead>
+                        <TableHead>{t('transfers:reason')}</TableHead>
+                        <TableHead>{t('common:actions')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {transfers.map((tr) => (
+                        <TableRow key={tr.id}>
+                          <TableCell className="text-slate-800 dark:text-white">{tr.employee_name}</TableCell>
+                          <TableCell className="text-slate-505 dark:text-slate-450">{tr.from_unit_name}</TableCell>
+                          <TableCell className="text-slate-550 dark:text-slate-400 font-medium">{tr.to_unit_name}</TableCell>
+                          <TableCell>
+                            <Badge variant={getStatusBadgeVariant(tr.status)}>{tr.status}</Badge>
+                          </TableCell>
+                          <TableCell className="max-w-xs truncate text-slate-500" title={tr.reason}>{tr.reason || '-'}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              {tr.status === 'PENDING' && hasPermission('transfers.approve') && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleApprove(tr.id)}
+                                    title={t('transfers:approve')}
+                                    className="h-7 w-7 p-0 text-emerald-650 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleReject(tr.id)}
+                                    title={t('transfers:reject')}
+                                    className="h-7 w-7 p-0 text-rose-650 hover:bg-rose-50 dark:hover:bg-rose-950/20"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              )}
+                              {tr.status === 'PENDING' && hasPermission('transfers.request') && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleCancel(tr.id)}
+                                  className="h-7 py-0.5 px-2 text-2xs"
+                                >
+                                  {t('transfers:cancel_request')}
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile View */}
+                <div className="space-y-4 md:hidden">
                   {transfers.map((tr) => (
-                    <TableRow key={tr.id}>
-                      <TableCell className="text-slate-800 dark:text-white">{tr.employee_name}</TableCell>
-                      <TableCell className="text-slate-500 dark:text-slate-450">{tr.from_unit_name}</TableCell>
-                      <TableCell className="text-slate-550 dark:text-slate-400 font-medium">{tr.to_unit_name}</TableCell>
-                      <TableCell>
+                    <div key={tr.id} className="p-4 border border-slate-100 dark:border-slate-800 rounded-xl space-y-3 bg-slate-50/30 dark:bg-slate-900/30">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-bold text-xs text-slate-900 dark:text-white">{tr.employee_name}</h4>
+                          <p className="text-[10px] text-slate-500 mt-0.5">{tr.from_unit_name} → {tr.to_unit_name}</p>
+                        </div>
                         <Badge variant={getStatusBadgeVariant(tr.status)}>{tr.status}</Badge>
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate text-slate-500" title={tr.reason}>{tr.reason || '-'}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          {tr.status === 'PENDING' && hasPermission('transfers.approve') && (
+                      </div>
+                      {tr.reason && (
+                        <p className="text-2xs text-slate-450 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-2">{tr.reason}</p>
+                      )}
+                      {tr.status === 'PENDING' && (
+                        <div className="flex gap-2 justify-end pt-2">
+                          {hasPermission('transfers.approve') && (
                             <>
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
                                 onClick={() => handleApprove(tr.id)}
-                                title={t('transfers:approve')}
-                                className="h-7 w-7 p-0 text-emerald-650 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                                className="h-8 text-2xs text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
                               >
-                                <Check className="h-4 w-4" />
+                                <Check className="h-3.5 w-3.5 mr-1" />
+                                {t('transfers:approve')}
                               </Button>
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
                                 onClick={() => handleReject(tr.id)}
-                                title={t('transfers:reject')}
-                                className="h-7 w-7 p-0 text-rose-650 hover:bg-rose-50 dark:hover:bg-rose-950/20"
+                                className="h-8 text-2xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20"
                               >
-                                <X className="h-4 w-4" />
+                                <X className="h-3.5 w-3.5 mr-1" />
+                                {t('transfers:reject')}
                               </Button>
                             </>
                           )}
-                          {tr.status === 'PENDING' && hasPermission('transfers.request') && (
+                          {hasPermission('transfers.request') && (
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleCancel(tr.id)}
-                              className="h-7 py-0.5 px-2 text-2xs"
+                              className="h-8 px-3 text-2xs"
                             >
                               {t('transfers:cancel_request')}
                             </Button>
                           )}
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      )}
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              </>
             )}
           </Card>
         </div>

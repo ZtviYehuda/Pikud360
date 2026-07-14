@@ -153,7 +153,7 @@ export default function DashboardHeader({
           </Button>
 
           {isTreeDropdownOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-64 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xl p-2 z-50 max-h-60 overflow-y-auto animate-fade-in">
+            <div className="absolute right-0 top-full mt-1.5 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xl p-2 z-50 max-h-60 overflow-y-auto animate-fade-in">
               {orgTree.length === 0 ? (
                 <div className="text-center py-4 text-xs text-slate-450">
                   {t('common:no_data')}

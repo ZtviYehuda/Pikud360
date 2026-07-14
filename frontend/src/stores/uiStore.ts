@@ -10,9 +10,12 @@ interface UIState {
   language: Language;
   direction: Direction;
   sidebarCollapsed: boolean;
+  mobileSidebarOpen: boolean;
   toggleTheme: () => void;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
+  setMobileSidebarOpen: (open: boolean) => void;
+  toggleMobileSidebar: () => void;
   setLanguage: (lang: Language) => void;
 }
 
@@ -41,6 +44,7 @@ export const useUIStore = create<UIState>((set, get) => {
     language: initialLanguage,
     direction: initialDirection,
     sidebarCollapsed: false,
+    mobileSidebarOpen: false,
     
     toggleTheme: () => {
       const nextTheme = get().theme === 'light' ? 'dark' : 'light';
@@ -59,6 +63,14 @@ export const useUIStore = create<UIState>((set, get) => {
     
     setSidebarCollapsed: (collapsed: boolean) => {
       set({ sidebarCollapsed: collapsed });
+    },
+
+    setMobileSidebarOpen: (open: boolean) => {
+      set({ mobileSidebarOpen: open });
+    },
+
+    toggleMobileSidebar: () => {
+      set({ mobileSidebarOpen: !get().mobileSidebarOpen });
     },
     
     setLanguage: (lang: Language) => {
