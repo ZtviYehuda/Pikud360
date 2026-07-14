@@ -1,0 +1,14 @@
+- [x] Create schedulingService APIs wrapper
+- [x] Add WorkforceScheduling page dashboard, headers, cards, and daily planning table
+- [x] Add WorkforceSchedulingSettings page for toggling DIRECT_STATUS and SHIFT_BASED configurations
+- [x] Add WorkforceSchedulingStatuses page for status management
+- [x] Remove old Attendance/Shifts routes from index.tsx
+- [x] Remove old Sidebar navigation tabs and replace with new
+- [x] Write Vitest component testing in WorkforceScheduling.test.tsx
+- [x] Validate compilation builds and Vitest test passing
+- [x] Implement Phase 4.1: Organization-Aware Workforce Planning Enhancement
+  - [x] Filter organization tree selection list by user view scopes
+  - [x] Implement unit-based employee loading endpoint and client integration
+  - [x] Refactor dashboard aggregates with child breakdowns and descendant recursion
+  - [x] Add backend unit tests verifying subtree gates and aggregates recursion
+  - [x] Add frontend component tests for tree selectors and reload actions
