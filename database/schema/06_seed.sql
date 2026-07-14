@@ -369,7 +369,8 @@ BEGIN
     IF analytics_group_id IS NOT NULL THEN
         INSERT INTO security.permissions (group_id, code, description) VALUES
             (analytics_group_id, 'analytics.view',     'Allows viewing dashboard snapshots, metrics, and generated reports'),
-            (analytics_group_id, 'analytics.manage',   'Allows managing alert rules and triggering report generation tasks')
+            (analytics_group_id, 'analytics.manage',   'Allows managing alert rules and triggering report generation tasks'),
+            (analytics_group_id, 'analytics.export',   'Allows exporting analytics metrics and generated reports data')
         ON CONFLICT (code) DO NOTHING;
     END IF;
 
@@ -377,7 +378,7 @@ BEGIN
     INSERT INTO security.role_permissions (role_id, permission_id, permission_scope_type)
     SELECT role_uuid, id, 'GLOBAL'
     FROM security.permissions
-    WHERE code IN ('analytics.view', 'analytics.manage')
+    WHERE code IN ('analytics.view', 'analytics.manage', 'analytics.export')
     ON CONFLICT DO NOTHING;
 
     -- Seed default alert rule for sick rate threshold (> 10% sick rate over LAST_7_DAYS)
