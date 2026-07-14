@@ -2,6 +2,7 @@
 Analytics module domain models for dashboard snapshots, alert rules, reports, and calculations.
 These are plain dataclasses for inter-layer data transfer without ORM dependency.
 """
+from enum import Enum
 from dataclasses import dataclass
 from typing import Optional, Dict
 from datetime import datetime, date
@@ -110,3 +111,10 @@ class TrendPoint:
     unavailable: int
     readiness_percentage: float
     status_distribution: Dict[str, int]
+
+
+class TrendPeriod(str, Enum):
+    """Strongly typed periods for timeline trends mapping."""
+    DAILY = "DAILY"
+    WEEKLY = "WEEKLY"
+    MONTHLY = "MONTHLY"

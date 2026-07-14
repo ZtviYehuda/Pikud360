@@ -9,7 +9,7 @@ from datetime import datetime, date, timedelta
 from typing import List, Dict, Any, Optional
 
 from app.modules.analytics.repositories import AnalyticsRepository, SnapshotRepository, AlertRepository
-from app.modules.analytics.models import AlertRule, DashboardSnapshot
+from app.modules.analytics.models import AlertRule, DashboardSnapshot, TrendPeriod
 from app.core.authorization import resolve_access_scope, AccessDeniedError
 
 logger = logging.getLogger("pikud360.modules.analytics.services")
@@ -43,10 +43,10 @@ class SummaryCalculator:
         status_category_map = {s["id"]: s["category"].upper() for s in statuses}
         status_code_map = {s["id"]: s["code"].upper() for s in statuses}
 
-        # Fetch daily schedules in the date range
-        schedules = self._repo.load_workforce_schedule_by_date(descendant_ids, start_date, end_date)
+        # Fetch aggregated status counts directly from SQL
+        db_status_counts = self._repo.load_status_counts(descendant_ids, start_date, end_date)
 
-        assigned_slots = len(schedules)
+        assigned_slots = 0
         available_slots = 0
         sick_slots = 0
         vacation_slots = 0
@@ -57,28 +57,30 @@ class SummaryCalculator:
 
         status_counts = {s["code"].upper(): 0 for s in statuses}
 
-        for s in schedules:
-            status_id = s["status_id"]
+        for status in statuses:
+            status_id = status["id"]
+            code = status["code"].upper()
             category = status_category_map.get(status_id)
-            code = status_code_map.get(status_id)
+            count = db_status_counts.get(status_id, 0)
 
-            if code in status_counts:
-                status_counts[code] += 1
+            if count > 0:
+                assigned_slots += count
+                status_counts[code] = count
 
-            if category == "AVAILABLE":
-                available_slots += 1
-            elif category == "SICK":
-                sick_slots += 1
-            elif category == "VACATION":
-                vacation_slots += 1
-            elif category == "TRAINING":
-                training_slots += 1
-            elif category == "MISSION":
-                mission_slots += 1
-            elif category == "REINFORCEMENT":
-                reinforcement_slots += 1
-            else:
-                other_slots += 1
+                if category == "AVAILABLE":
+                    available_slots += count
+                elif category == "SICK":
+                    sick_slots += count
+                elif category == "VACATION":
+                    vacation_slots += count
+                elif category == "TRAINING":
+                    training_slots += count
+                elif category == "MISSION":
+                    mission_slots += count
+                elif category == "REINFORCEMENT":
+                    reinforcement_slots += count
+                else:
+                    other_slots += count
 
         unavailable_slots = assigned_slots - available_slots
         unassigned_slots = max(0, total_slots - assigned_slots)
@@ -149,7 +151,7 @@ class TrendCalculator:
         self._summary_calc = summary_calc
 
     def calculate_trends(
-        self, tenant_id: str, unit_id: str, start_date: date, end_date: date, period: str
+        self, tenant_id: str, unit_id: str, start_date: date, end_date: date, period: TrendPeriod
     ) -> List[Dict[str, Any]]:
         """Calculate trend data points divided by the specified period (daily, weekly, monthly)."""
         data_points = []
@@ -157,13 +159,13 @@ class TrendCalculator:
 
         while current_date <= end_date:
             # Determine sub-range end date based on period
-            if period == "daily":
+            if period == TrendPeriod.DAILY:
                 step_end = current_date
                 next_date = current_date + timedelta(days=1)
-            elif period == "weekly":
+            elif period == TrendPeriod.WEEKLY:
                 step_end = min(current_date + timedelta(days=6), end_date)
                 next_date = current_date + timedelta(days=7)
-            elif period == "monthly":
+            elif period == TrendPeriod.MONTHLY:
                 # Find last day of current month or end_date
                 next_month = current_date.month % 12 + 1
                 next_year = current_date.year + (current_date.month // 12)
@@ -212,12 +214,10 @@ class SnapshotGenerator:
         status_category_map = {s["id"]: s["category"].upper() for s in statuses}
         status_code_map = {s["id"]: s["code"].upper() for s in statuses}
 
-        # Load daily schedule for the single target date
-        schedules = self._repo.load_workforce_schedule_by_date(descendant_ids, snapshot_date, snapshot_date)
+        # Fetch aggregated status counts directly from SQL for the single snapshot date
+        db_status_counts = self._repo.load_status_counts(descendant_ids, snapshot_date, snapshot_date)
 
-        assigned_employees = len(schedules)
-        unassigned_employees = max(0, total_personnel - assigned_employees)
-
+        assigned_employees = 0
         available_count = 0
         sick_count = 0
         vacation_count = 0
@@ -228,29 +228,32 @@ class SnapshotGenerator:
 
         status_counts = {s["code"].upper(): 0 for s in statuses}
 
-        for s in schedules:
-            status_id = s["status_id"]
+        for status in statuses:
+            status_id = status["id"]
+            code = status["code"].upper()
             category = status_category_map.get(status_id)
-            code = status_code_map.get(status_id)
+            count = db_status_counts.get(status_id, 0)
 
-            if code in status_counts:
-                status_counts[code] += 1
+            if count > 0:
+                assigned_employees += count
+                status_counts[code] = count
 
-            if category == "AVAILABLE":
-                available_count += 1
-            elif category == "SICK":
-                sick_count += 1
-            elif category == "VACATION":
-                vacation_count += 1
-            elif category == "TRAINING":
-                training_count += 1
-            elif category == "MISSION":
-                mission_count += 1
-            elif category == "REINFORCEMENT":
-                reinforcement_count += 1
-            else:
-                other_count += 1
+                if category == "AVAILABLE":
+                    available_count += count
+                elif category == "SICK":
+                    sick_count += count
+                elif category == "VACATION":
+                    vacation_count += count
+                elif category == "TRAINING":
+                    training_count += count
+                elif category == "MISSION":
+                    mission_count += count
+                elif category == "REINFORCEMENT":
+                    reinforcement_count += count
+                else:
+                    other_count += count
 
+        unassigned_employees = max(0, total_personnel - assigned_employees)
         readiness_percentage = round((available_count / total_personnel * 100), 2) if total_personnel > 0 else 100.00
 
         snapshot_payload = {
@@ -384,7 +387,7 @@ class AnalyticsService:
         return summary
 
     def get_trends(
-        self, tenant_id: str, unit_id: str, start_date: date, end_date: date, period: str, operator_id: str
+        self, tenant_id: str, unit_id: str, start_date: date, end_date: date, period: TrendPeriod, operator_id: str
     ) -> List[Dict[str, Any]]:
         """Fetch trends for specified unit and time interval under RBAC check."""
         ctx = resolve_access_scope(operator_id, tenant_id)

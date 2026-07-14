@@ -21,6 +21,7 @@ from app.modules.analytics.schemas import (
     SnapshotGenerateResponse
 )
 
+from app.modules.analytics.models import TrendPeriod
 logger = logging.getLogger("pikud360.modules.analytics.routes")
 analytics_bp = Blueprint("analytics", __name__)
 analytics_service = AnalyticsService()
@@ -133,20 +134,24 @@ def get_trends():
     if not req.unit_id:
         return ApiResponse.error("Missing unit_id parameter", "BAD_REQUEST", status_code=400)
 
-    period = req.period or "daily"
-    if period not in ["daily", "weekly", "monthly"]:
-        return ApiResponse.error("Invalid period. Must be daily, weekly, or monthly", "BAD_REQUEST", status_code=400)
+    period_str = req.period or "daily"
+    period_map = {
+        "daily": TrendPeriod.DAILY,
+        "weekly": TrendPeriod.WEEKLY,
+        "monthly": TrendPeriod.MONTHLY
+    }
+    trend_period = period_map.get(period_str.lower(), TrendPeriod.DAILY)
 
     # Default to last 7 days for daily, or longer for weekly/monthly
-    default_start = date.today() - timedelta(days=6) if period == "daily" else date.today() - timedelta(days=30)
+    default_start = date.today() - timedelta(days=6) if trend_period == TrendPeriod.DAILY else date.today() - timedelta(days=30)
     start_date = req.start_date or default_start
     end_date = req.end_date or date.today()
 
     try:
-        trends = analytics_service.get_trends(tenant_id, req.unit_id, start_date, end_date, period, user_id)
+        trends = analytics_service.get_trends(tenant_id, req.unit_id, start_date, end_date, trend_period, user_id)
         
         serialized = TrendResponse(
-            period=period,
+            period=trend_period.value,
             unit_id=req.unit_id,
             start_date=start_date,
             end_date=end_date,

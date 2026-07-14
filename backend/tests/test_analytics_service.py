@@ -4,7 +4,7 @@ from datetime import date, datetime
 from unittest.mock import MagicMock, patch
 
 from app.modules.analytics.services import AnalyticsService
-from app.modules.analytics.models import AlertRule
+from app.modules.analytics.models import AlertRule, TrendPeriod
 from app.core.authorization.exceptions import AccessDeniedError
 
 # Define some default mock fixtures
@@ -36,14 +36,16 @@ def mock_repo():
             {"id": "s4", "code": "TRAINING", "category": "TRAINING"}
         ]
         
-        # Default mock: employee daily schedules list
-        instance.load_workforce_schedule_by_date.return_value = [
-            {"status_id": "s1", "schedule_date": date(2026, 7, 14)},
-            {"status_id": "s1", "schedule_date": date(2026, 7, 14)},
-            {"status_id": "s2", "schedule_date": date(2026, 7, 14)},
-            {"status_id": "s3", "schedule_date": date(2026, 7, 14)}
-        ]
-        
+        # Default mock: SQL aggregated status counts query scaled by timeframe days
+        def load_status_counts_side_effect(descendant_ids, start_date, end_date):
+            num_days = (end_date - start_date).days + 1
+            return {
+                "s1": 2 * num_days,
+                "s2": 1 * num_days,
+                "s3": 1 * num_days
+            }
+        instance.load_status_counts.side_effect = load_status_counts_side_effect
+
         # Default mock: active shifts count
         instance.load_active_shifts_count.return_value = 12
         
@@ -125,7 +127,7 @@ def test_trend_calculator_periods(mock_repo):
     summary_calc = SummaryCalculator(mock_repo)
     calc = TrendCalculator(mock_repo, summary_calc)
     
-    trends = calc.calculate_trends("tenant-123", "unit-111", date(2026, 7, 14), date(2026, 7, 15), "daily")
+    trends = calc.calculate_trends("tenant-123", "unit-111", date(2026, 7, 14), date(2026, 7, 15), TrendPeriod.DAILY)
     
     assert len(trends) == 2
     assert trends[0]["date"] == date(2026, 7, 14)
@@ -174,10 +176,10 @@ def test_alert_evaluator_triggers(mock_repo, mock_alert_repo):
     assert sick_alert["is_triggered"] is False
     
     # Rule 2: Manpower Shortage. operator '<', threshold 70.0.
-    # Current value = available_slots=2 / total_slots=350 * 100 = 0.57%.
-    # 0.57 < 70.0 is True, so is_triggered should be True.
+    # Current value = available_slots=14 / total_slots=350 * 100 = 4.0%.
+    # 4.0 < 70.0 is True, so is_triggered should be True.
     shortage_alert = next(a for a in alerts if a["rule_name"] == "Manpower Shortage Alert")
-    assert shortage_alert["current_value"] == 0.57
+    assert shortage_alert["current_value"] == 4.0
     assert shortage_alert["is_triggered"] is True
 
 
