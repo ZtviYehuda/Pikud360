@@ -1,0 +1,23 @@
+{
+  "title": "מחולל דוחות כשירות ומצבה",
+  "desc": "הפקת דוחות כשירות, סיכומי נוכחות חודשיים והתפלגויות במגוון פורמטים.",
+  "generate_report": "הפק דוח חדש",
+  "report_template": "תבנית דוח",
+  "format": "פורמט",
+  "status": "סטטוס",
+  "generated_at": "הופק בתאריך",
+  "download": "הורד",
+  "file_size": "גודל קובץ",
+  "duration": "זמן הפקה (שניות)",
+  "no_reports": "טרם הופקו דוחות בחתך זה.",
+  "pdf": "PDF",
+  "excel": "Excel",
+  "csv": "CSV",
+  "status_pending": "בהמתנה",
+  "status_generating": "בהפקה...",
+  "status_completed": "הושלם",
+  "status_failed": "נכשל",
+  "template_manpower": "דוח מצבת כוח אדם יומית",
+  "template_readiness": "דוח כשירות וכוננות חטיבתית",
+  "template_sickness": "ריכוז נתוני תחלואה חודשי"
+}

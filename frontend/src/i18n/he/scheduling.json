@@ -1,0 +1,13 @@
+{
+  "title": "שיבוץ וסידור כוחות",
+  "desc": "ניהול משמרות, כוננויות ונוכחות יומית.",
+  "calendar_view": "לוח שנה חודשי",
+  "shift_name": "שם המשמרת",
+  "start_time": "שעת התחלה",
+  "end_time": "שעת סיום",
+  "assign_employee": "שבץ חייל",
+  "unassign": "בטל שיבוץ",
+  "shift_settings": "הגדרות משמרת",
+  "statuses_management": "ניהול סטטוסים",
+  "color": "צבע"
+}

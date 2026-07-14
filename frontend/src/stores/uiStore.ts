@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import i18n from '../i18n';
 
 type Theme = 'light' | 'dark';
 type Language = 'en' | 'he';
@@ -20,8 +21,11 @@ export const useUIStore = create<UIState>((set, get) => {
   const initialTheme = (localStorage.getItem('theme') as Theme) || 
     (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   
-  const initialLanguage = (localStorage.getItem('lang') as Language) || 'en';
-  const initialDirection: Direction = initialLanguage === 'he' ? 'rtl' : 'ltr';
+  const initialLanguage = (localStorage.getItem('lang') as Language) || 'he';
+  const initialDirection: Direction = initialLanguage === 'en' ? 'ltr' : 'rtl';
+
+  // Sync initial language configuration with i18n engine
+  i18n.changeLanguage(initialLanguage);
 
   // Apply initial attributes
   if (initialTheme === 'dark') {
@@ -62,6 +66,7 @@ export const useUIStore = create<UIState>((set, get) => {
       localStorage.setItem('lang', lang);
       document.documentElement.setAttribute('dir', nextDir);
       document.documentElement.setAttribute('lang', lang);
+      i18n.changeLanguage(lang);
       set({ language: lang, direction: nextDir });
     }
   };

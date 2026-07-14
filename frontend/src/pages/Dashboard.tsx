@@ -1,12 +1,14 @@
 import { useUIStore } from '../stores/uiStore';
 import { useAuthStore } from '../stores/authStore';
 import { useGetHealth } from '../services/healthService';
+import { useTranslation } from 'react-i18next';
 import { Users, Clock, CalendarDays, BarChart3, AlertCircle, Database, Server } from 'lucide-react';
 
 export default function Dashboard() {
   const { direction } = useUIStore();
   const user = useAuthStore((state) => state.user);
   const isRTL = direction === 'rtl';
+  const { t } = useTranslation();
 
   // Live health query check to demonstrate React Query connection
   const { data: healthData, isLoading: isHealthLoading } = useGetHealth();
@@ -16,10 +18,10 @@ export default function Dashboard() {
       {/* Header Banner */}
       <div>
         <h1 className="font-heading text-3xl font-bold text-slate-900 dark:text-white">
-          {isRTL ? `שלום, ${user?.name || 'משתמש'}` : `Welcome back, ${user?.name || 'User'}`}
+          {t('dashboard:title')} - {user?.name || t('common:profile')}
         </h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">
-          {isRTL ? 'סקירה כללית של הארגון וסטטוס המערכות' : 'Overview of organization metrics and live system status.'}
+          {t('dashboard:desc')}
         </p>
       </div>
 
@@ -30,7 +32,7 @@ export default function Dashboard() {
         <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 card-hover glassmorphism flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-slate-400 dark:text-slate-500">
-              {isRTL ? 'סה"כ עובדים' : 'Total Employees'}
+              {t('dashboard:total_strength')}
             </p>
             <h4 className="font-heading text-2xl font-bold text-slate-800 dark:text-white mt-1">1,248</h4>
             <span className="text-xs text-green-500 font-semibold mt-2 inline-block">↑ +12% {isRTL ? 'החודש' : 'this month'}</span>
@@ -44,10 +46,10 @@ export default function Dashboard() {
         <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 card-hover glassmorphism flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-slate-400 dark:text-slate-500">
-              {isRTL ? 'שיבוץ כוח אדם היום' : "Today's Manpower Plan"}
+              {t('scheduling:title')}
             </p>
             <h4 className="font-heading text-2xl font-bold text-slate-800 dark:text-white mt-1">94.2%</h4>
-            <span className="text-xs text-slate-555 font-semibold mt-2 inline-block">1,176 {isRTL ? 'משובצים' : 'assigned'}</span>
+            <span className="text-xs text-slate-555 font-semibold mt-2 inline-block">1,176 {t('dashboard:assigned')}</span>
           </div>
           <div className="h-12 w-12 rounded-lg bg-green-50 text-green-650 flex items-center justify-center dark:bg-green-950/30 dark:text-green-400">
             <Clock className="h-6 w-6" />
@@ -58,7 +60,7 @@ export default function Dashboard() {
         <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 card-hover glassmorphism flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-slate-400 dark:text-slate-500">
-              {isRTL ? 'איוש משמרות' : 'Shift Coverage'}
+              {t('dashboard:active_shifts')}
             </p>
             <h4 className="font-heading text-2xl font-bold text-slate-800 dark:text-white mt-1">98.5%</h4>
             <span className="text-xs text-green-500 font-semibold mt-2 inline-block">✓ {isRTL ? 'תקין' : 'Optimized'}</span>
@@ -72,7 +74,7 @@ export default function Dashboard() {
         <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 card-hover glassmorphism flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-slate-400 dark:text-slate-500">
-              {isRTL ? 'חריגות פתוחות' : 'Open Violations'}
+              {t('dashboard:shortage_index')}
             </p>
             <h4 className="font-heading text-2xl font-bold text-slate-800 dark:text-white mt-1">3</h4>
             <span className="text-xs text-red-500 font-semibold mt-2 inline-block">⚠ {isRTL ? 'דורש טיפול' : 'Requires review'}</span>

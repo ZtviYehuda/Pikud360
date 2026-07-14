@@ -1,0 +1,14 @@
+{
+  "title": "התראות מערכת",
+  "desc": "יומן התראות, אזהרות כשירות והודעות מערכת פעילות.",
+  "severity": "חומרה",
+  "message": "הודעה",
+  "created_at": "התקבלה בתאריך",
+  "mark_read": "סמן כנקרא",
+  "mark_all_read": "סמן הכל כנקרא",
+  "no_notifications": "אין התראות חדשות.",
+  "severity_info": "מידע",
+  "severity_warning": "אזהרה",
+  "severity_danger": "קריטי",
+  "severity_success": "הצלחה"
+}

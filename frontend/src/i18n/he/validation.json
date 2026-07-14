@@ -1,0 +1,12 @@
+{
+  "required": "שדה חובה",
+  "invalid_value": "ערך לא תקין",
+  "invalid_email": "כתובת אימייל לא תקינה",
+  "invalid_phone": "מספר טלפון לא תקין",
+  "invalid_personal_id": "מספר אישי לא תקין",
+  "date_required": "חובה לבחור תאריך",
+  "employee_not_found": "החייל לא נמצא",
+  "permission_denied": "גישה נדחתה: אין לך הרשאות מתאימות",
+  "network_error": "שגיאת תקשורת: אנא בדוק את החיבור לרשת",
+  "unknown_error": "שגיאה לא ידועה, אנא נסה שוב מאוחר יותר"
+}

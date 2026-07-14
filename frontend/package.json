@@ -17,9 +17,11 @@
     "@tanstack/react-query": "^5.51.1",
     "axios": "^1.7.2",
     "framer-motion": "^11.3.19",
+    "i18next": "^26.3.6",
     "lucide-react": "^0.417.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-i18next": "^17.0.9",
     "react-router-dom": "^7.0.0",
     "recharts": "^3.9.2",
     "zustand": "^4.5.4"
