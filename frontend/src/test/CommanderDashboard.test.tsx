@@ -31,7 +31,9 @@ vi.mock('../services/schedulingService', () => ({
 vi.mock('../services/analyticsService', () => ({
   analyticsService: {
     getSummary: vi.fn(),
-    getAlerts: vi.fn()
+    getAlerts: vi.fn(),
+    getDistribution: vi.fn(),
+    getTrends: vi.fn()
   }
 }));
 
@@ -95,6 +97,8 @@ describe('CommanderDashboard Component Tests', () => {
     (schedulingService.getOrganizationTree as any).mockResolvedValue(mockTree);
     (analyticsService.getSummary as any).mockResolvedValue(mockSummary);
     (analyticsService.getAlerts as any).mockResolvedValue(mockAlerts);
+    (analyticsService.getTrends as any).mockResolvedValue([]);
+    (analyticsService.getDistribution as any).mockResolvedValue([]);
   });
 
   it('renders dashboard layout and active widgets successfully', async () => {

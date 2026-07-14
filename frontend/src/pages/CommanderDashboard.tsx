@@ -2,17 +2,22 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import { useUIStore } from '../stores/uiStore';
 import { schedulingService } from '../services/schedulingService';
-import { analyticsService, SummaryData, AlertData } from '../services/analyticsService';
+import { analyticsService, SummaryData, AlertData, DistributionItem } from '../services/analyticsService';
 import { 
   Users, CheckCircle, Clock, Activity, AlertTriangle, TrendingUp, GitFork, ShieldAlert, PlusCircle
 } from 'lucide-react';
 import Unauthorized from './Unauthorized';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import KpiCard from '../components/dashboard/KpiCard';
-import StatusSummaryGrid from '../components/dashboard/StatusSummaryGrid';
 import AlertPanel from '../components/dashboard/AlertPanel';
 import LoadingSkeleton from '../components/dashboard/LoadingSkeleton';
 import EmptyState from '../components/dashboard/EmptyState';
+
+// Charts
+import PersonnelTrendChart from '../components/dashboard/charts/PersonnelTrendChart';
+import StatusDistributionPieChart from '../components/dashboard/charts/StatusDistributionPieChart';
+import OrganizationHeatMap from '../components/dashboard/charts/OrganizationHeatMap';
+import DailyStatusBarChart from '../components/dashboard/charts/DailyStatusBarChart';
 
 export default function CommanderDashboard() {
   const { direction } = useUIStore();
@@ -32,9 +37,15 @@ export default function CommanderDashboard() {
     return localStorage.getItem('pikud360_dashboard_date') || new Date().toISOString().split('T')[0];
   });
 
+  const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>(() => {
+    return (localStorage.getItem('pikud360_dashboard_period') as any) || 'daily';
+  });
+
   const [orgTree, setOrgTree] = useState<any[]>([]);
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [alerts, setAlerts] = useState<AlertData[] | null>(null);
+  const [trends, setTrends] = useState<any[] | null>(null);
+  const [distribution, setDistribution] = useState<DistributionItem[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
@@ -47,6 +58,10 @@ export default function CommanderDashboard() {
   useEffect(() => {
     localStorage.setItem('pikud360_dashboard_date', selectedDate);
   }, [selectedDate]);
+
+  useEffect(() => {
+    localStorage.setItem('pikud360_dashboard_period', period);
+  }, [period]);
 
   // Load hierarchy tree once
   useEffect(() => {
@@ -75,23 +90,29 @@ export default function CommanderDashboard() {
     return () => { active = false; };
   }, [isRTL]);
 
-  // Load summary and alert metrics
+  // Load summary, alerts, trends, and distribution metrics
   const loadDashboardData = async () => {
     if (!selectedUnitId) return;
     setLoading(true);
     setError(null);
     try {
-      const [summaryData, alertsData] = await Promise.all([
+      const [summaryData, alertsData, trendsData, distData] = await Promise.all([
         analyticsService.getSummary(selectedUnitId, selectedDate, selectedDate),
-        analyticsService.getAlerts(selectedUnitId, selectedDate)
+        analyticsService.getAlerts(selectedUnitId, selectedDate),
+        analyticsService.getTrends(selectedUnitId, undefined, undefined, period),
+        analyticsService.getDistribution(selectedUnitId, selectedDate, selectedDate)
       ]);
       setSummary(summaryData);
       setAlerts(alertsData);
+      setTrends(trendsData);
+      setDistribution(distData);
       setLastUpdated(new Date().toLocaleTimeString());
     } catch (err: any) {
       setError(isRTL ? 'שגיאה בטעינת נתוני המערכת' : 'Error loading dashboard metrics');
       setSummary(null);
       setAlerts(null);
+      setTrends(null);
+      setDistribution(null);
     } finally {
       setLoading(false);
     }
@@ -99,7 +120,7 @@ export default function CommanderDashboard() {
 
   useEffect(() => {
     loadDashboardData();
-  }, [selectedUnitId, selectedDate]);
+  }, [selectedUnitId, selectedDate, period]);
 
   // Helper to extract status count from distribution robustly
   const getStatusCount = (statusKey: string): number => {
@@ -203,23 +224,42 @@ export default function CommanderDashboard() {
             />
           </div>
 
-          {/* Bottom Grid: Status Summary + Alerts Panel */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Status distribution */}
-            <div className="lg:col-span-2">
-              <StatusSummaryGrid
-                distribution={summary.status_distribution}
-                isRTL={isRTL}
-              />
-            </div>
+          {/* Trend Chart Area */}
+          <PersonnelTrendChart
+            data={trends}
+            loading={loading}
+            period={period}
+            onPeriodChange={setPeriod}
+            isRTL={isRTL}
+          />
 
-            {/* Alerts panel */}
-            <div>
-              <AlertPanel
-                alerts={alerts}
-                isRTL={isRTL}
-              />
-            </div>
+          {/* Pie + Heat Map Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <StatusDistributionPieChart
+              data={distribution}
+              loading={loading}
+              isRTL={isRTL}
+            />
+            <OrganizationHeatMap
+              childUnits={summary.child_units}
+              loading={loading}
+              isRTL={isRTL}
+            />
+          </div>
+
+          {/* Stacked Status Bar Chart */}
+          <DailyStatusBarChart
+            childUnits={summary.child_units}
+            loading={loading}
+            isRTL={isRTL}
+          />
+
+          {/* Alerts panel */}
+          <div>
+            <AlertPanel
+              alerts={alerts}
+              isRTL={isRTL}
+            />
           </div>
         </div>
       )}

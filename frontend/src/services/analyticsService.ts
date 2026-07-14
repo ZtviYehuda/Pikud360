@@ -63,6 +63,27 @@ export const analyticsService = {
     };
     const res = await apiClient.get('/api/v1/analytics/alerts', { params });
     return (res as any).data || res;
+  },
+
+  getDistribution: async (unitId: string, startDate?: string, endDate?: string): Promise<DistributionItem[]> => {
+    const params = {
+      unit_id: unitId,
+      ...(startDate && { start_date: startDate }),
+      ...(endDate && { end_date: endDate })
+    };
+    const res = await apiClient.get('/api/v1/analytics/distribution', { params });
+    return (res as any).data || res;
+  },
+
+  getTrends: async (unitId: string, startDate?: string, endDate?: string, period: 'daily' | 'weekly' | 'monthly' = 'daily'): Promise<any> => {
+    const params = {
+      unit_id: unitId,
+      ...(startDate && { start_date: startDate }),
+      ...(endDate && { end_date: endDate }),
+      period
+    };
+    const res = await apiClient.get('/api/v1/analytics/trends', { params });
+    return (res as any).data || res;
   }
 };
 export default analyticsService;
