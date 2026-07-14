@@ -3,7 +3,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
 import { adminService, SystemSetting } from '../../services/adminService';
 import Unauthorized from '../Unauthorized';
-import { Settings, Save, RefreshCw, Lock, Bell, Clock, Globe, Shield, Calendar } from 'lucide-react';
+import { Settings, Save, RefreshCw, Lock, Bell, Clock, Globe, Calendar } from 'lucide-react';
 
 const SETTING_GROUPS: { label: string; labelHe: string; icon: any; keys: string[] }[] = [
   {

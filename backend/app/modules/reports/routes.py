@@ -202,26 +202,23 @@ def download_report(report_id):
     tenant_id = claims.get("tenant_id")
 
     try:
-        report = report_service.get_report(report_id, tenant_id)
-        if not report:
-            return ApiResponse.error("Report not found.", "NOT_FOUND", status_code=404)
-
-        if report.status != ReportStatus.COMPLETED:
-            return ApiResponse.error("Report is not completed.", "BAD_REQUEST", status_code=400)
-
-        file_path = report.file_path
-        if not file_path or not os.path.exists(file_path):
-            return ApiResponse.error("Report file does not exist on disk.", "NOT_FOUND", status_code=404)
-
-        # Increment download counter
-        report_service.increment_download_count(report_id)
+        from app.modules.reports.download import ReportDownloadService
+        download_service = ReportDownloadService()
+        file_path, mime_type, file_name = download_service.get_download_metadata(report_id, tenant_id)
 
         return send_file(
             file_path,
-            mimetype=report.mime_type or "application/octet-stream",
+            mimetype=mime_type,
             as_attachment=True,
-            download_name=report.file_name or f"report_{report_id}.dat"
+            download_name=file_name
         )
+    except ValueError as e:
+        msg = str(e)
+        if "not found" in msg.lower():
+            return ApiResponse.error(msg, "NOT_FOUND", status_code=404)
+        return ApiResponse.error(msg, "BAD_REQUEST", status_code=400)
+    except FileNotFoundError as e:
+        return ApiResponse.error(str(e), "NOT_FOUND", status_code=404)
     except AccessDeniedError as e:
         return ApiResponse.error(str(e), "FORBIDDEN", status_code=403)
     except Exception as e:

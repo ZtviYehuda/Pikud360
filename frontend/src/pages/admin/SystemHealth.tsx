@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
-import { adminService, SystemHealth } from '../../services/adminService';
+import { adminService, type SystemHealth } from '../../services/adminService';
 import Unauthorized from '../Unauthorized';
 import { Activity, Database, Server, Users, FileText, AlertTriangle, RefreshCw, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 

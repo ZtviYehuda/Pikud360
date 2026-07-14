@@ -1,7 +1,8 @@
 """
 Reports module storage layer.
-Handles filesystem-based report archiving partitioned by tenant and date.
+Defines abstract storage interfaces and local filesystem archiving implementations.
 """
+from abc import ABC, abstractmethod
 import os
 from datetime import datetime
 from typing import Dict, Any, Optional
@@ -12,8 +13,17 @@ from app.modules.reports.utils import (
     safe_join_path
 )
 
-class ReportStorage:
-    """Handles report file storage and metadata generation."""
+class StorageBackend(ABC):
+    """Abstract base class defining storage operations for generated reports."""
+
+    @abstractmethod
+    def save_report(self, tenant_id: str, filename: str, content: bytes) -> Dict[str, Any]:
+        """Saves report data and returns metadata."""
+        pass
+
+
+class LocalStorageBackend(StorageBackend):
+    """Handles report file storage on the local filesystem and metadata generation."""
 
     def __init__(self, base_dir: Optional[str] = None):
         if not base_dir:
@@ -60,3 +70,6 @@ class ReportStorage:
             "checksum": checksum,
             "mime_type": mime_type
         }
+
+# Alias for backwards compatibility
+ReportStorage = LocalStorageBackend

@@ -471,8 +471,9 @@ class TestConcreteProcessors:
 
 
 class TestReportDownloadEndpoint:
-    @patch("app.modules.reports.routes.report_service")
-    def test_download_success(self, mock_service, client, app):
+    @patch("app.modules.reports.download.ReportService")
+    def test_download_success(self, mock_service_class, client, app):
+        mock_service = mock_service_class.return_value
         temp_file = tempfile.NamedTemporaryFile(delete=False)
         temp_file.write(b"pdf contents")
         temp_file.close()
@@ -485,11 +486,22 @@ class TestReportDownloadEndpoint:
             file_name="manpower.pdf", mime_type="application/pdf"
         )
         
+        from app.modules.security.models import User
+        mock_user = User(
+            id="user-1",
+            tenant_id="tenant-123",
+            username="test_user",
+            email="test@user.com",
+            password_hash="hash",
+            is_active=True
+        )
+        
         with app.app_context():
             token = create_access_token(identity="user-1", additional_claims={"tenant_id": "tenant-123"})
             headers = {"Authorization": f"Bearer {token}"}
             
-            with patch("app.core.authorization.decorators.resolve_access_scope") as mock_resolve, \
+            with patch("app.modules.security.repositories.UserRepository.get_by_id", return_value=mock_user), \
+                 patch("app.core.authorization.decorators.resolve_access_scope") as mock_resolve, \
                  patch("app.core.authorization.decorators.check_authorization", return_value=True), \
                  patch("app.core.authorization.decorators.audit_repo"):
                 response = client.get("/api/v1/reports/r1/download", headers=headers)
@@ -498,34 +510,60 @@ class TestReportDownloadEndpoint:
         assert response.data == b"pdf contents"
         assert response.headers["Content-Disposition"] == "attachment; filename=manpower.pdf"
         mock_service.increment_download_count.assert_called_once_with("r1")
+        response.close()
         os.unlink(temp_file.name)
 
-    @patch("app.modules.reports.routes.report_service")
-    def test_download_unauthorized_tenant_isolation(self, mock_service, client, app):
+    @patch("app.modules.reports.download.ReportService")
+    def test_download_unauthorized_tenant_isolation(self, mock_service_class, client, app):
+        mock_service = mock_service_class.return_value
         from app.core.authorization.exceptions import AccessDeniedError
         mock_service.get_report.side_effect = AccessDeniedError("Access denied")
+        
+        from app.modules.security.models import User
+        mock_user = User(
+            id="user-1",
+            tenant_id="tenant-999",
+            username="test_user",
+            email="test@user.com",
+            password_hash="hash",
+            is_active=True
+        )
         
         with app.app_context():
             token = create_access_token(identity="user-1", additional_claims={"tenant_id": "tenant-999"})
             headers = {"Authorization": f"Bearer {token}"}
             
-            with patch("app.core.authorization.decorators.resolve_access_scope") as mock_resolve, \
+            with patch("app.modules.security.repositories.UserRepository.get_by_id", return_value=mock_user), \
+                 patch("app.core.authorization.decorators.resolve_access_scope") as mock_resolve, \
                  patch("app.core.authorization.decorators.check_authorization", return_value=True), \
                  patch("app.core.authorization.decorators.audit_repo"):
                 response = client.get("/api/v1/reports/r1/download", headers=headers)
                 
         assert response.status_code == 403
-        assert response.json["status"] == "error"
+        assert response.json["success"] is False
+        assert response.json["error"]["code"] == "FORBIDDEN"
 
-    @patch("app.modules.reports.routes.report_service")
-    def test_download_missing_report(self, mock_service, client, app):
+    @patch("app.modules.reports.download.ReportService")
+    def test_download_missing_report(self, mock_service_class, client, app):
+        mock_service = mock_service_class.return_value
         mock_service.get_report.return_value = None
+        
+        from app.modules.security.models import User
+        mock_user = User(
+            id="user-1",
+            tenant_id="tenant-123",
+            username="test_user",
+            email="test@user.com",
+            password_hash="hash",
+            is_active=True
+        )
         
         with app.app_context():
             token = create_access_token(identity="user-1", additional_claims={"tenant_id": "tenant-123"})
             headers = {"Authorization": f"Bearer {token}"}
             
-            with patch("app.core.authorization.decorators.resolve_access_scope") as mock_resolve, \
+            with patch("app.modules.security.repositories.UserRepository.get_by_id", return_value=mock_user), \
+                 patch("app.core.authorization.decorators.resolve_access_scope") as mock_resolve, \
                  patch("app.core.authorization.decorators.check_authorization", return_value=True), \
                  patch("app.core.authorization.decorators.audit_repo"):
                 response = client.get("/api/v1/reports/nonexistent/download", headers=headers)
@@ -533,8 +571,9 @@ class TestReportDownloadEndpoint:
         assert response.status_code == 404
         assert response.json["error"]["code"] == "NOT_FOUND"
 
-    @patch("app.modules.reports.routes.report_service")
-    def test_download_file_missing_on_disk(self, mock_service, client, app):
+    @patch("app.modules.reports.download.ReportService")
+    def test_download_file_missing_on_disk(self, mock_service_class, client, app):
+        mock_service = mock_service_class.return_value
         mock_service.get_report.return_value = ReportRequest(
             id="r1", tenant_id="tenant-123", name="PDF Report",
             report_type=ReportType.MANPOWER_SUMMARY,
@@ -543,11 +582,22 @@ class TestReportDownloadEndpoint:
             file_name="manpower.pdf", mime_type="application/pdf"
         )
         
+        from app.modules.security.models import User
+        mock_user = User(
+            id="user-1",
+            tenant_id="tenant-123",
+            username="test_user",
+            email="test@user.com",
+            password_hash="hash",
+            is_active=True
+        )
+        
         with app.app_context():
             token = create_access_token(identity="user-1", additional_claims={"tenant_id": "tenant-123"})
             headers = {"Authorization": f"Bearer {token}"}
             
-            with patch("app.core.authorization.decorators.resolve_access_scope") as mock_resolve, \
+            with patch("app.modules.security.repositories.UserRepository.get_by_id", return_value=mock_user), \
+                 patch("app.core.authorization.decorators.resolve_access_scope") as mock_resolve, \
                  patch("app.core.authorization.decorators.check_authorization", return_value=True), \
                  patch("app.core.authorization.decorators.audit_repo"):
                 response = client.get("/api/v1/reports/r1/download", headers=headers)

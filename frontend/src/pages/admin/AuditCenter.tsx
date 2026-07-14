@@ -3,7 +3,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
 import { adminService, AuditLogEntry, AuditFilters } from '../../services/adminService';
 import Unauthorized from '../Unauthorized';
-import { Shield, Search, Download, ChevronLeft, ChevronRight, Filter, AlertTriangle, Info, AlertOctagon } from 'lucide-react';
+import { Shield, Download, ChevronLeft, ChevronRight, Filter, AlertTriangle, Info, AlertOctagon } from 'lucide-react';
 
 const SEVERITY_STYLES: Record<string, string> = {
   INFO: 'bg-blue-500/10 text-blue-300 border-blue-500/30',

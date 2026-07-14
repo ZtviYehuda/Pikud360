@@ -3,7 +3,7 @@ Reports module PDF processor.
 Generates styled PDF files using ReportLab.
 """
 import io
-from datetime import datetime
+from datetime import datetime, date
 from typing import Dict, Any, List
 
 from reportlab.lib.pagesizes import letter
@@ -153,7 +153,7 @@ class PDFReportProcessor(ReportProcessor):
                 formatted_row = []
                 for val in row:
                     val_str = str(val) if val is not None else ""
-                    if isinstance(val, (datetime, datetime.date)):
+                    if isinstance(val, (datetime, date)):
                         val_str = val.isoformat()
                     formatted_row.append(Paragraph(val_str, cell_style))
                 table_data.append(formatted_row)

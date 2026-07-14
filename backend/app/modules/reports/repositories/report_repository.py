@@ -93,31 +93,16 @@ class ReportRepository:
         file_path: Optional[str] = None
     ) -> None:
         """Persist generated report result metadata back into the unified table."""
-        query = """
-            UPDATE workforce.generated_reports
-            SET status = %s,
-                file_name = %s,
-                file_size = %s,
-                duration_ms = %s,
-                mime_type = %s,
-                checksum = %s,
-                file_path = %s,
-                generated_at = CURRENT_TIMESTAMP,
-                completed_at = CURRENT_TIMESTAMP
-            WHERE id = %s;
-        """
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(query, (
-                    ReportStatus.COMPLETED.value,
-                    file_name,
-                    file_size,
-                    duration_ms,
-                    mime_type,
-                    checksum,
-                    file_path,
-                    report_id
-                ))
+        storage_repo = ReportStorageRepository()
+        storage_repo.save_metadata(
+            report_id=report_id,
+            file_name=file_name,
+            file_size=file_size,
+            duration_ms=duration_ms,
+            mime_type=mime_type,
+            checksum=checksum,
+            file_path=file_path
+        )
 
     def load_report(self, report_id: str) -> Optional[ReportRequest]:
         """Fetch a single report record by ID."""
@@ -210,3 +195,44 @@ class ReportRepository:
                     cur.execute(query, (report_id,))
         except Exception:
             pass
+
+
+class ReportStorageRepository:
+    """Repository dedicated to saving storage metadata for generated reports."""
+
+    def save_metadata(
+        self,
+        report_id: str,
+        file_name: str,
+        file_size: int,
+        duration_ms: int,
+        mime_type: str,
+        checksum: Optional[str] = None,
+        file_path: Optional[str] = None
+    ) -> None:
+        """Persist generated report result metadata back into the database."""
+        query = """
+            UPDATE workforce.generated_reports
+            SET status = %s,
+                file_name = %s,
+                file_size = %s,
+                duration_ms = %s,
+                mime_type = %s,
+                checksum = %s,
+                file_path = %s,
+                generated_at = CURRENT_TIMESTAMP,
+                completed_at = CURRENT_TIMESTAMP
+            WHERE id = %s;
+        """
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, (
+                    ReportStatus.COMPLETED.value,
+                    file_name,
+                    file_size,
+                    duration_ms,
+                    mime_type,
+                    checksum,
+                    file_path,
+                    report_id
+                ))

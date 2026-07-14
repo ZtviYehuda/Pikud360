@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { useAuthStore } from '../stores/authStore';
 import { useUIStore } from '../stores/uiStore';
 import { schedulingService } from '../services/schedulingService';
+import { analyticsService } from '../services/analyticsService';
 import CommanderDashboard from '../pages/CommanderDashboard';
 
 // 1. Mock Zustand Stores
@@ -23,8 +24,14 @@ vi.mock('react-router-dom', () => ({
 // 3. Mock Axios Client Services
 vi.mock('../services/schedulingService', () => ({
   schedulingService: {
-    getOrganizationTree: vi.fn(),
-    getCommanderDashboardSummary: vi.fn()
+    getOrganizationTree: vi.fn()
+  }
+}));
+
+vi.mock('../services/analyticsService', () => ({
+  analyticsService: {
+    getSummary: vi.fn(),
+    getAlerts: vi.fn()
   }
 }));
 
@@ -44,38 +51,36 @@ describe('CommanderDashboard Component Tests', () => {
     total_personnel: 10,
     assigned: 8,
     unassigned: 2,
-    availability_percentage: 80.0,
-    sick_percentage: 10.0,
-    training_percentage: 10.0,
-    mission_percentage: 0.0,
-    shortage_index: 20.0,
-    status_distribution: {
-      AVAILABLE: 8,
-      SICK: 1,
-      TRAINING: 1
-    },
-    child_units: [
-      {
-        unit_id: 'unit-uuid-666',
-        unit_name: 'Company A',
-        total_personnel: 5,
-        assigned: 4,
-        unassigned: 1,
-        status_distribution: { AVAILABLE: 4 }
-      }
+    available: 7,
+    unavailable: 3,
+    assigned_percentage: 80.0,
+    availability_percentage: 70.0,
+    absence_percentage: 30.0,
+    unassigned_percentage: 20.0,
+    active_shift_count: 2,
+    status_distribution: [
+      { status: 'AVAILABLE', count: 7, percentage: 70 },
+      { status: 'SICK', count: 1, percentage: 10 },
+      { status: 'TRAINING', count: 1, percentage: 10 },
+      { status: 'MISSION', count: 1, percentage: 10 }
     ],
-    alerts: [
-      {
-        id: 'alert-1',
-        alert_type: 'SICK_THRESHOLD_EXCEEDED',
-        severity: 'WARNING',
-        message: 'High sickness rate',
-        status: 'ACTIVE',
-        created_at: '2026-07-13T12:00:00Z'
-      }
-    ],
-    transfers_count: 0
+    organization_units: [],
+    child_units: [],
+    alerts_count: 1
   };
+
+  const mockAlerts = [
+    {
+      rule_name: 'SICK_THRESHOLD_EXCEEDED',
+      metric: 'sick_percentage',
+      current_value: 10.0,
+      threshold: 5.0,
+      operator: '>',
+      severity: 'WARNING',
+      organization_unit: 'Company A',
+      is_triggered: true
+    }
+  ];
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -88,10 +93,11 @@ describe('CommanderDashboard Component Tests', () => {
 
     // Mock API implementations
     (schedulingService.getOrganizationTree as any).mockResolvedValue(mockTree);
-    (schedulingService.getCommanderDashboardSummary as any).mockResolvedValue(mockSummary);
+    (analyticsService.getSummary as any).mockResolvedValue(mockSummary);
+    (analyticsService.getAlerts as any).mockResolvedValue(mockAlerts);
   });
 
-  it('renders dashboard widgets successfully with mock data values', async () => {
+  it('renders dashboard layout and active widgets successfully', async () => {
     render(<CommanderDashboard />);
 
     // Wait for data load
@@ -99,19 +105,19 @@ describe('CommanderDashboard Component Tests', () => {
       expect(screen.getByText(/Workforce Intelligence Dashboard/i)).toBeDefined();
     });
 
-    // Check KPIs
-    expect(screen.getByText('10')).toBeDefined(); // total strength count
-    expect(screen.getAllByText('80%')[0]).toBeDefined(); // availability rate
-    expect(screen.getByText('20%')).toBeDefined(); // shortage index
+    // Verify KPI Cards
+    expect(screen.getByText('10')).toBeDefined(); // totalstrength
+    expect(screen.getByText('8')).toBeDefined(); // assigned
+    expect(screen.getByText('2')).toBeDefined(); // unassigned
+    expect(screen.getAllByText('7')[0]).toBeDefined(); // available
+    expect(screen.getAllByText('80%')[0]).toBeDefined(); // assigned_percentage
 
-    // Check alerts
-    expect(screen.getByText('High sickness rate')).toBeDefined();
-
-    // Check child units table
-    expect(screen.getByText('Company A')).toBeDefined();
+    // Verify alerts is rendered
+    expect(screen.getByText('SICK THRESHOLD EXCEEDED')).toBeDefined();
+    expect(screen.getByText(/Current: 10/i)).toBeDefined();
   });
 
-  it('blocks view and displays Unauthorized screen if lack permission', () => {
+  it('blocks view and displays Access Denied screen if lacks permission', () => {
     // Override store mocks to reject permissions
     (useAuthStore as any).mockReturnValue({
       hasPermission: () => false
@@ -119,5 +125,14 @@ describe('CommanderDashboard Component Tests', () => {
 
     render(<CommanderDashboard />);
     expect(screen.getByText(/Access Denied/i)).toBeDefined();
+  });
+
+  it('displays empty state if no summary metrics return', async () => {
+    (analyticsService.getSummary as any).mockResolvedValue(null);
+    render(<CommanderDashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/No summary data available/i)).toBeDefined();
+    });
   });
 });
