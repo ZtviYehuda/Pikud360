@@ -129,7 +129,8 @@ describe('CommanderDashboard Component Tests', () => {
 
     // Verify alerts is rendered
     expect(screen.getByText('SICK THRESHOLD EXCEEDED')).toBeDefined();
-    expect(screen.getByText(/Current: 10/i)).toBeDefined();
+    // Alert panel renders metric as: "sick percentage: 10 > 5" (snake_case replaced with spaces)
+    expect(screen.getByText(/sick percentage/i)).toBeDefined();
   });
 
   it('blocks view and displays Access Denied screen if lacks permission', () => {

@@ -1,15 +1,16 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
+import { Card } from '../components/ui/card';
+import { buttonVariants } from '../components/ui/button';
 
 export default function NotFound() {
   const { t } = useTranslation();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 dark:bg-slate-950">
-      <div className="w-full max-w-md text-center space-y-6 rounded-2xl border border-slate-200/60 bg-white p-8 shadow-xl dark:border-slate-800/80 dark:bg-slate-900 glassmorphism">
-        
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+      <Card className="w-full max-w-md text-center space-y-6 p-8 shadow-xl">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-105 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
           <AlertCircle className="h-10 w-10" />
         </div>
         
@@ -17,7 +18,7 @@ export default function NotFound() {
           404
         </h2>
         
-        <p className="font-heading text-xl font-semibold text-slate-800 dark:text-slate-200">
+        <p className="font-heading text-xl font-semibold text-slate-800 dark:text-slate-205">
           {t('common:page_not_found')}
         </p>
 
@@ -25,16 +26,17 @@ export default function NotFound() {
           {t('common:page_not_found')}
         </p>
 
-        <div className="pt-4">
+        <div className="pt-4 flex justify-center">
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-brand-700"
+            className={buttonVariants({ variant: 'default' })}
           >
             <ArrowLeft className="h-4 w-4" />
             {t('common:go_home')}
           </Link>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
+

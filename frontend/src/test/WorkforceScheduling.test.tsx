@@ -14,7 +14,20 @@ vi.mock('react-i18next', () => ({
         'analytics:unit': 'Unit',
         'scheduling:hours': 'Hours',
         'employees:employee': 'Employee',
-        'scheduling:not_assigned': 'Not assigned'
+        'scheduling:not_assigned': 'Not assigned',
+        'scheduling:brigade_hq': 'Brigade HQ',
+        'scheduling:company_a': 'Company A',
+        'scheduling:company_b': 'Company B',
+        'scheduling:all_statuses': 'All Statuses',
+        'scheduling:daily_status': 'Daily Status',
+        'scheduling:notes': 'Notes',
+        'employees:rank_role': 'Rank / Role',
+        'employees:search_placeholder': 'Search...',
+        'employees:no_employees': 'No employees',
+        'common:actions': 'Actions',
+        'common:access_denied': 'Access Denied',
+        'common:no_permission': 'No permission',
+        'common:no_data': 'No data'
       };
       return translations[key] || key;
     }
@@ -147,7 +160,7 @@ describe('WorkforceScheduling Commander Dashboard Component', () => {
     render(<WorkforceScheduling />);
     
     // Should show the Unauthorized page content
-    expect(screen.getByText('common:access_denied')).toBeDefined();
+    expect(screen.getByText('Access Denied')).toBeDefined();
   });
 
   it('loads and displays daily assignments for authorized commanders', async () => {
@@ -183,9 +196,12 @@ describe('WorkforceScheduling Commander Dashboard Component', () => {
       expect(screen.getByText('Daily Workforce Scheduling')).toBeDefined();
     });
 
-    // Click the unit tree select dropdown button
-    const selectBtn = screen.getByRole('button', { name: /Brigade HQ/i });
-    fireEvent.click(selectBtn);
+    // Wait for org tree to load and unit button to show the correct name
+    let selectBtn: HTMLElement;
+    await waitFor(() => {
+      selectBtn = screen.getByRole('button', { name: /Brigade HQ/i });
+    });
+    fireEvent.click(selectBtn!);
 
     // Tree dropdown should open and display the child unit "Company A"
     const childUnitOption = screen.getByText('Company A');

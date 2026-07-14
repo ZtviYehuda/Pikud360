@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Card } from '../ui/card';
 
 interface DistributionItem {
   status: string;
@@ -31,9 +32,9 @@ export default function StatusSummaryGrid({ distribution }: StatusSummaryGridPro
 
   if (items.length === 0) {
     return (
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-2xl p-6 text-center text-slate-450 dark:text-slate-400 text-xs">
+      <Card className="p-6 text-center text-slate-450 dark:text-slate-400 text-xs">
         {t('common:no_data')}
-      </div>
+      </Card>
     );
   }
 
@@ -50,7 +51,7 @@ export default function StatusSummaryGrid({ distribution }: StatusSummaryGridPro
     if (s.includes('SICK') || s.includes('ABSENT') || s.includes('FAILED')) {
       return {
         bg: 'bg-rose-50 dark:bg-rose-950/20',
-        text: 'text-rose-700 dark:text-rose-450',
+        text: 'text-rose-700 dark:text-rose-455',
         border: 'border-rose-100 dark:border-rose-900/30'
       };
     }
@@ -71,12 +72,12 @@ export default function StatusSummaryGrid({ distribution }: StatusSummaryGridPro
     return {
       bg: 'bg-slate-50 dark:bg-slate-950/20',
       text: 'text-slate-700 dark:text-slate-400',
-      border: 'border-slate-200 dark:border-slate-800/40'
+      border: 'border-slate-205 dark:border-slate-800/40'
     };
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm">
+    <Card className="p-6">
       <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-4">
         {t('analytics:distribution')}
       </h3>
@@ -107,6 +108,7 @@ export default function StatusSummaryGrid({ distribution }: StatusSummaryGridPro
           );
         })}
       </div>
-    </div>
+    </Card>
   );
 }
+

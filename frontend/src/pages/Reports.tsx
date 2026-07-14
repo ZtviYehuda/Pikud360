@@ -1,5 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { Download, FileSpreadsheet, FileText } from 'lucide-react';
+import { Card } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
 
 export default function Reports() {
   const { t } = useTranslation();
@@ -12,44 +15,48 @@ export default function Reports() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-3xl font-bold text-slate-900 dark:text-white">
+      <div className="flex flex-col gap-1.5 pb-2">
+        <h1 className="font-heading text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
           {t('reports:title')}
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
           {t('reports:desc')}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        <div className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <h3 className="font-heading text-lg font-bold text-slate-800 dark:text-white mb-4">
-            {t('reports:exported_reports')}
-          </h3>
-          
-          <div className="space-y-3">
-            {mockReports.map((report) => (
-              <div key={report.id}
-                className="flex items-center justify-between p-4 rounded-xl border border-slate-100 hover:border-slate-250 bg-slate-50/50 dark:border-slate-850 dark:bg-slate-950/20 dark:hover:border-slate-800 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-lg bg-indigo-50 text-indigo-650 dark:bg-indigo-950/30 dark:text-indigo-400">
-                    {report.format === 'PDF' ? <FileText className="h-5 w-5" /> : <FileSpreadsheet className="h-5 w-5" />}
-                  </div>
-                  <div>
-                    <span className="font-semibold text-sm text-slate-800 dark:text-white block">{report.name}</span>
-                    <span className="text-2xs text-slate-400">{report.date} • {report.size}</span>
+      <Card className="p-6">
+        <h3 className="font-heading text-base font-bold text-slate-800 dark:text-white mb-4">
+          {t('reports:exported_reports')}
+        </h3>
+        
+        <div className="space-y-3">
+          {mockReports.map((report) => (
+            <div key={report.id}
+              className="flex items-center justify-between p-4 rounded-xl border border-slate-105 hover:border-slate-205 bg-slate-50/50 dark:border-slate-850 dark:bg-slate-950/20 dark:hover:border-slate-800 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-lg bg-indigo-50 text-indigo-650 dark:bg-indigo-950/30 dark:text-indigo-400">
+                  {report.format === 'PDF' ? <FileText className="h-5 w-5" /> : <FileSpreadsheet className="h-5 w-5" />}
+                </div>
+                <div>
+                  <span className="font-semibold text-sm text-slate-800 dark:text-white block">{report.name}</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-2xs text-slate-400 font-medium">{report.date} • {report.size}</span>
+                    <Badge variant={report.format === 'PDF' ? 'destructive' : 'success'} className="text-[9px]">
+                      {report.format}
+                    </Badge>
                   </div>
                 </div>
-                
-                <button className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-650 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800 cursor-pointer">
-                  <Download className="h-3.5 w-3.5" />
-                  <span>{t('buttons:download')}</span>
-                </button>
               </div>
-            ))}
-          </div>
+              
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Download className="h-3.5 w-3.5" />
+                <span>{t('buttons:download')}</span>
+              </Button>
+            </div>
+          ))}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
+

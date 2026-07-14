@@ -4,6 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { Info, AlertTriangle, CheckCircle, AlertOctagon, Check } from 'lucide-react';
 import { workforceService, SystemNotification } from '../services/workforceService';
 import Unauthorized from './Unauthorized';
+import { Button } from '../components/ui/button';
+import { Card } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
 
 export default function Notifications() {
   const { hasPermission } = useAuthStore();
@@ -60,6 +63,15 @@ export default function Notifications() {
     }
   };
 
+  const getSeverityBadgeVariant = (severity: string) => {
+    switch (severity.toUpperCase()) {
+      case 'WARNING': return 'warning';
+      case 'SUCCESS': return 'success';
+      case 'DANGER': case 'ERROR': return 'destructive';
+      default: return 'info';
+    }
+  };
+
   const renderIcon = (severity: string) => {
     switch (severity.toUpperCase()) {
       case 'WARNING': return <AlertTriangle className="h-5 w-5" />;
@@ -78,21 +90,22 @@ export default function Notifications() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-3xl font-bold text-slate-900 dark:text-white">
+        <div className="flex flex-col gap-1">
+          <h1 className="font-heading text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
             {t('notifications:title')}
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
             {t('notifications:desc')}
           </p>
         </div>
 
         {hasPermission('notifications.manage') && (
-          <button onClick={handleMarkAllRead}
+          <Button onClick={handleMarkAllRead}
             disabled={notifications.filter(n => n.status === 'UNREAD').length === 0}
-            className="self-start sm:self-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 transition-colors shadow-sm">
+            className="w-fit"
+          >
             {t('notifications:mark_all_read')}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -101,7 +114,7 @@ export default function Notifications() {
         <div className="flex rounded-lg border border-slate-200 dark:border-slate-800 p-0.5 bg-slate-50 dark:bg-slate-950">
           {(['ALL', 'UNREAD', 'READ'] as const).map((opt) => (
             <button key={opt} onClick={() => setFilter(opt)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
                 filter === opt
                   ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
                   : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
@@ -112,7 +125,7 @@ export default function Notifications() {
         </div>
 
         <select value={severityFilter} onChange={(e) => setSeverityFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-350">
+          className="rounded-lg border border-slate-205 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 outline-hidden dark:border-slate-800 dark:bg-slate-950 dark:text-slate-350 cursor-pointer">
           <option value="ALL">{t('notifications:all_severities')}</option>
           <option value="INFO">{t('notifications:severity_info')}</option>
           <option value="SUCCESS">{t('notifications:severity_success')}</option>
@@ -122,11 +135,11 @@ export default function Notifications() {
       </div>
 
       {/* Feed */}
-      <div className="rounded-xl border border-slate-200/60 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <Card className="p-6">
         {loading ? (
-          <div className="py-12 text-center text-slate-500 dark:text-slate-400">{t('notifications:loading')}</div>
+          <div className="py-12 text-center text-xs font-semibold text-slate-500 dark:text-slate-400">{t('notifications:loading')}</div>
         ) : filteredNotifications.length === 0 ? (
-          <div className="py-12 text-center text-slate-500 dark:text-slate-400">{t('notifications:no_notifications')}</div>
+          <div className="py-12 text-center text-xs font-semibold text-slate-500 dark:text-slate-400">{t('notifications:no_notifications')}</div>
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-850">
             {filteredNotifications.map((notif) => (
@@ -135,20 +148,29 @@ export default function Notifications() {
                   {renderIcon(notif.severity)}
                 </div>
 
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 text-right">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-2xs text-slate-400 font-medium">
+                    <span className="text-2xs text-slate-450 font-semibold">
                       {new Date(notif.created_at).toLocaleString('he-IL')}
                     </span>
-                    {notif.status === 'UNREAD' && hasPermission('notifications.manage') && (
-                      <button onClick={() => handleMarkRead(notif.id)}
-                        className="p-1 rounded-md text-slate-400 hover:text-indigo-650 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                        title={t('notifications:mark_read')}>
-                        <Check className="h-4.5 w-4.5" />
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <Badge variant={getSeverityBadgeVariant(notif.severity)} className="uppercase text-[9px]">
+                        {notif.severity}
+                      </Badge>
+                      {notif.status === 'UNREAD' && hasPermission('notifications.manage') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleMarkRead(notif.id)}
+                          className="h-7 w-7 p-0 text-slate-450 hover:text-indigo-650 hover:bg-slate-100 dark:hover:bg-slate-800"
+                          title={t('notifications:mark_read')}
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <h4 className="font-semibold text-sm text-slate-800 dark:text-white mt-1">
+                  <h4 className="font-bold text-sm text-slate-800 dark:text-white mt-1">
                     {notif.notification_type.replace(/_/g, ' ')}
                   </h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
@@ -159,7 +181,8 @@ export default function Notifications() {
             ))}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
+

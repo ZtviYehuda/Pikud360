@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GitFork, Calendar, RefreshCw, ChevronDown, ChevronUp, Activity } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 
 interface DashboardHeaderProps {
   orgTree: any[];
@@ -140,14 +142,15 @@ export default function DashboardHeader({
         {/* Org Tree Selector Dropdown */}
         <div className="relative flex items-center gap-2" ref={treeDropdownRef}>
           <label className="text-xs font-bold text-slate-450">{t('analytics:unit')}:</label>
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => setIsTreeDropdownOpen(!isTreeDropdownOpen)}
-            className="rounded-lg border border-slate-200 bg-slate-50 py-1.5 px-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-850 dark:bg-slate-950 text-slate-800 dark:text-white flex items-center gap-2 cursor-pointer font-semibold shadow-2xs hover:bg-slate-100/50"
+            className="h-8 py-1 px-3 text-xs flex items-center gap-2 font-semibold shadow-2xs"
           >
             <span>{currentUnitName}</span>
             {isTreeDropdownOpen ? <ChevronUp className="h-3.5 w-3.5 shrink-0" /> : <ChevronDown className="h-3.5 w-3.5 shrink-0" />}
-          </button>
+          </Button>
 
           {isTreeDropdownOpen && (
             <div className="absolute right-0 top-full mt-1.5 w-64 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xl p-2 z-50 max-h-60 overflow-y-auto animate-fade-in">
@@ -168,11 +171,11 @@ export default function DashboardHeader({
         <div className="flex items-center gap-2">
           <label className="text-xs font-bold text-slate-450">{t('common:calendar')}:</label>
           <div className="relative">
-            <input
+            <Input
               type="date"
               value={selectedDate}
               onChange={(e) => onDateChange(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-850 dark:bg-slate-950 text-slate-800 dark:text-white font-semibold cursor-pointer shadow-2xs"
+              className="pl-8 pr-3 font-semibold cursor-pointer h-8 w-32"
             />
             <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
           </div>
@@ -180,15 +183,17 @@ export default function DashboardHeader({
 
         {/* Action Controls */}
         <div className="flex items-center gap-2 border-l border-slate-200/80 dark:border-slate-800 pl-3">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={onRefresh}
             disabled={loading}
-            className="p-2 rounded-lg border border-slate-200 hover:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-900 text-slate-500 dark:text-slate-400 transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
+            className="h-8 w-8 p-0"
             title={t('buttons:refresh')}
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
+          </Button>
           {lastUpdated && (
             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider hidden sm:inline">
               {t('dashboard:last_updated')}: {lastUpdated}
@@ -199,3 +204,4 @@ export default function DashboardHeader({
     </div>
   );
 }
+
