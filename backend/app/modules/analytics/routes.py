@@ -4,7 +4,7 @@ All routes require analytics permissions and respect tenant and organization uni
 """
 import logging
 from typing import Optional
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from flask import Blueprint, request
 from flask_jwt_extended import get_jwt_identity, get_jwt
 from pydantic import ValidationError
@@ -15,23 +15,15 @@ from app.core.authorization.exceptions import AccessDeniedError
 from app.core.responses import ApiResponse
 from app.modules.analytics.services import AnalyticsService
 from app.modules.analytics.schemas import (
-    SummaryResponse, TrendsResponse, TrendDataPoint,
-    StatusDistributionItem, AlertEvaluationResult,
-    SnapshotGenerateRequest, SnapshotGenerateResponse
+    AnalyticsFilterRequest, SnapshotGenerateRequest,
+    SummaryResponse, TrendResponse, TrendDataPoint,
+    DistributionItem, DistributionResponse, AlertResponse,
+    SnapshotGenerateResponse
 )
 
 logger = logging.getLogger("pikud360.modules.analytics.routes")
 analytics_bp = Blueprint("analytics", __name__)
 analytics_service = AnalyticsService()
-
-
-def _parse_date(date_str: Optional[str], default_val: date) -> date:
-    if not date_str:
-        return default_val
-    try:
-        return datetime.strptime(date_str, "%Y-%m-%d").date()
-    except ValueError:
-        return default_val
 
 
 # ── SUMMARY ENDPOINT ──────────────────────────────────────────────────────────
@@ -44,15 +36,24 @@ def get_summary():
     claims = get_jwt()
     tenant_id = claims.get("tenant_id")
 
-    unit_id = request.args.get("unit_id")
-    if not unit_id:
+    # Validate query parameters using Common Filter DTO
+    try:
+        req = AnalyticsFilterRequest(
+            unit_id=request.args.get("unit_id") or "",
+            start_date=request.args.get("start_date") or None,
+            end_date=request.args.get("end_date") or None
+        )
+    except ValidationError as e:
+        return ApiResponse.error("Validation failed", "VALIDATION_ERROR", e.errors(), 400)
+
+    if not req.unit_id:
         return ApiResponse.error("Missing unit_id parameter", "BAD_REQUEST", status_code=400)
 
-    start_date = _parse_date(request.args.get("start_date"), date.today())
-    end_date = _parse_date(request.args.get("end_date"), date.today())
+    start_date = req.start_date or date.today()
+    end_date = req.end_date or date.today()
 
     try:
-        data = analytics_service.get_summary(tenant_id, unit_id, start_date, end_date, user_id)
+        data = analytics_service.get_summary(tenant_id, req.unit_id, start_date, end_date, user_id)
         
         # Serialize response using Pydantic SummaryResponse model
         serialized = SummaryResponse(
@@ -74,7 +75,7 @@ def get_summary():
                     "assigned": u["assigned"],
                     "unassigned": u["unassigned"],
                     "status_distribution": [
-                        StatusDistributionItem(status=d["status"], count=d["count"], percentage=d["percentage"])
+                        DistributionItem(status=d["status"], count=d["count"], percentage=d["percentage"])
                         for d in u["status_distribution"]
                     ]
                 }
@@ -88,14 +89,14 @@ def get_summary():
                     "assigned": u["assigned"],
                     "unassigned": u["unassigned"],
                     "status_distribution": [
-                        StatusDistributionItem(status=d["status"], count=d["count"], percentage=d["percentage"])
+                        DistributionItem(status=d["status"], count=d["count"], percentage=d["percentage"])
                         for d in u["status_distribution"]
                     ]
                 }
                 for u in data["child_units"]
             ],
             status_distribution=[
-                StatusDistributionItem(status=item["status"], count=item["count"], percentage=item["percentage"])
+                DistributionItem(status=item["status"], count=item["count"], percentage=item["percentage"])
                 for item in data["status_distribution"]
             ],
             alerts_count=data["alerts_count"]
@@ -118,25 +119,35 @@ def get_trends():
     claims = get_jwt()
     tenant_id = claims.get("tenant_id")
 
-    unit_id = request.args.get("unit_id")
-    if not unit_id:
+    # Validate query parameters using Common Filter DTO
+    try:
+        req = AnalyticsFilterRequest(
+            unit_id=request.args.get("unit_id") or "",
+            start_date=request.args.get("start_date") or None,
+            end_date=request.args.get("end_date") or None,
+            period=request.args.get("period", "daily").lower()
+        )
+    except ValidationError as e:
+        return ApiResponse.error("Validation failed", "VALIDATION_ERROR", e.errors(), 400)
+
+    if not req.unit_id:
         return ApiResponse.error("Missing unit_id parameter", "BAD_REQUEST", status_code=400)
 
-    period = request.args.get("period", "daily").lower()
+    period = req.period or "daily"
     if period not in ["daily", "weekly", "monthly"]:
         return ApiResponse.error("Invalid period. Must be daily, weekly, or monthly", "BAD_REQUEST", status_code=400)
 
     # Default to last 7 days for daily, or longer for weekly/monthly
     default_start = date.today() - timedelta(days=6) if period == "daily" else date.today() - timedelta(days=30)
-    start_date = _parse_date(request.args.get("start_date"), default_start)
-    end_date = _parse_date(request.args.get("end_date"), date.today())
+    start_date = req.start_date or default_start
+    end_date = req.end_date or date.today()
 
     try:
-        trends = analytics_service.get_trends(tenant_id, unit_id, start_date, end_date, period, user_id)
+        trends = analytics_service.get_trends(tenant_id, req.unit_id, start_date, end_date, period, user_id)
         
-        serialized = TrendsResponse(
+        serialized = TrendResponse(
             period=period,
-            unit_id=unit_id,
+            unit_id=req.unit_id,
             start_date=start_date,
             end_date=end_date,
             data=[
@@ -171,20 +182,31 @@ def get_distribution():
     claims = get_jwt()
     tenant_id = claims.get("tenant_id")
 
-    unit_id = request.args.get("unit_id")
-    if not unit_id:
+    # Validate query parameters using Common Filter DTO
+    try:
+        req = AnalyticsFilterRequest(
+            unit_id=request.args.get("unit_id") or "",
+            start_date=request.args.get("start_date") or None,
+            end_date=request.args.get("end_date") or None
+        )
+    except ValidationError as e:
+        return ApiResponse.error("Validation failed", "VALIDATION_ERROR", e.errors(), 400)
+
+    if not req.unit_id:
         return ApiResponse.error("Missing unit_id parameter", "BAD_REQUEST", status_code=400)
 
-    start_date = _parse_date(request.args.get("start_date"), date.today())
-    end_date = _parse_date(request.args.get("end_date"), date.today())
+    start_date = req.start_date or date.today()
+    end_date = req.end_date or date.today()
 
     try:
-        dist = analytics_service.get_distribution(tenant_id, unit_id, start_date, end_date, user_id)
-        serialized = [
-            StatusDistributionItem(status=item["status"], count=item["count"], percentage=item["percentage"]).model_dump()
-            for item in dist
-        ]
-        return ApiResponse.success(data=serialized)
+        dist = analytics_service.get_distribution(tenant_id, req.unit_id, start_date, end_date, user_id)
+        serialized = DistributionResponse(
+            distribution=[
+                DistributionItem(status=item["status"], count=item["count"], percentage=item["percentage"])
+                for item in dist
+            ]
+        )
+        return ApiResponse.success(data=serialized.model_dump())
     except AccessDeniedError as e:
         return ApiResponse.error(str(e), "FORBIDDEN", status_code=403)
     except Exception as e:
@@ -206,12 +228,21 @@ def get_alerts():
     if not unit_id:
         return ApiResponse.error("Missing unit_id parameter", "BAD_REQUEST", status_code=400)
 
-    reference_date = _parse_date(request.args.get("date"), date.today())
+    # Validate query parameters using Common Filter DTO
+    try:
+        req = AnalyticsFilterRequest(
+            unit_id=unit_id,
+            start_date=request.args.get("date") or None
+        )
+    except ValidationError as e:
+        return ApiResponse.error("Validation failed", "VALIDATION_ERROR", e.errors(), 400)
+
+    reference_date = req.start_date or date.today()
 
     try:
-        alerts = analytics_service.get_alerts(tenant_id, unit_id, reference_date, user_id)
+        alerts = analytics_service.get_alerts(tenant_id, req.unit_id, reference_date, user_id)
         serialized = [
-            AlertEvaluationResult(
+            AlertResponse(
                 rule_name=a["rule_name"],
                 metric=a["metric"],
                 current_value=a["current_value"],

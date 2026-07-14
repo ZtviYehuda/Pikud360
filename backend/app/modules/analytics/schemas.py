@@ -1,31 +1,59 @@
 """
 Analytics module Pydantic schemas for request validation and response serialization.
+Supports clear separation between Request and Response DTOs.
 """
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, List
 from datetime import datetime, date
 from pydantic import BaseModel, Field
 
 
-# ─── Status Distribution ──────────────────────────────────────────────────────
+# ============================================================================
+# REQUEST DTOs
+# ============================================================================
 
-class StatusDistributionItem(BaseModel):
+class AnalyticsFilterRequest(BaseModel):
+    """Common request query parameters filter validation DTO."""
+    unit_id: str
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    period: Optional[str] = None  # daily, weekly, monthly
+
+
+class SnapshotGenerateRequest(BaseModel):
+    """Request payload parameters for triggering point-in-time snapshot builds."""
+    unit_id: str
+    snapshot_date: date = Field(default_factory=date.today)
+    snapshot_hour: int = Field(default=12, ge=0, le=23)
+
+
+# ============================================================================
+# RESPONSE DTOs
+# ============================================================================
+
+class DistributionItem(BaseModel):
+    """Represents a single category count and percentage."""
     status: str
     count: int
     percentage: float
 
 
-# ─── Summary ─────────────────────────────────────────────────────────────────
+class DistributionResponse(BaseModel):
+    """Response containing status categories distribution list."""
+    distribution: List[DistributionItem]
+
 
 class ChildUnitSummary(BaseModel):
+    """Manpower stats summary for a child unit."""
     unit_id: str
     unit_name: str
     total_personnel: int
     assigned: float
     unassigned: float
-    status_distribution: List[StatusDistributionItem]
+    status_distribution: List[DistributionItem]
 
 
 class SummaryResponse(BaseModel):
+    """Response containing detailed operational dashboard summary KPIs."""
     total_personnel: int
     assigned: float
     unassigned: float
@@ -38,13 +66,12 @@ class SummaryResponse(BaseModel):
     active_shift_count: int
     organization_units: List[ChildUnitSummary]
     child_units: List[ChildUnitSummary]
-    status_distribution: List[StatusDistributionItem]
+    status_distribution: List[DistributionItem]
     alerts_count: int
 
 
-# ─── Trends ──────────────────────────────────────────────────────────────────
-
 class TrendDataPoint(BaseModel):
+    """Historical timeline statistical record."""
     date: date
     total_personnel: int
     assigned: int
@@ -55,7 +82,8 @@ class TrendDataPoint(BaseModel):
     status_distribution: Dict[str, int]
 
 
-class TrendsResponse(BaseModel):
+class TrendResponse(BaseModel):
+    """Response containing historical trend timeline statistics."""
     period: str
     unit_id: str
     start_date: date
@@ -63,9 +91,8 @@ class TrendsResponse(BaseModel):
     data: List[TrendDataPoint]
 
 
-# ─── Alerts ──────────────────────────────────────────────────────────────────
-
-class AlertEvaluationResult(BaseModel):
+class AlertResponse(BaseModel):
+    """Response representing detailed evaluated alert status objects."""
     rule_name: str
     metric: str
     current_value: float
@@ -76,15 +103,8 @@ class AlertEvaluationResult(BaseModel):
     is_triggered: bool
 
 
-# ─── Snapshots ────────────────────────────────────────────────────────────────
-
-class SnapshotGenerateRequest(BaseModel):
-    unit_id: str
-    snapshot_date: date = Field(default_factory=date.today)
-    snapshot_hour: int = Field(default=12, ge=0, le=23)
-
-
 class SnapshotGenerateResponse(BaseModel):
+    """Response containing telemetry summary metrics for a generated snapshot job."""
     success: bool
     generated_at: datetime
     duration_ms: int
