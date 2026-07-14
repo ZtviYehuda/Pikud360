@@ -157,6 +157,34 @@ CREATE POLICY notifications_tenant_policy ON core.notifications
     );
 
 
+-- Phase 7 & 7.1 RLS Policies
+ALTER TABLE core.business_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE core.automation_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE core.notification_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workforce.dashboard_snapshots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workforce.alert_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workforce.generated_reports ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY business_rules_tenant_policy ON core.business_rules
+    FOR ALL USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
+
+CREATE POLICY automation_rules_tenant_policy ON core.automation_rules
+    FOR ALL USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
+
+CREATE POLICY notification_templates_tenant_policy ON core.notification_templates
+    FOR ALL USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
+
+CREATE POLICY snapshots_tenant_policy ON workforce.dashboard_snapshots
+    FOR ALL USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
+
+CREATE POLICY alert_rules_tenant_policy ON workforce.alert_rules
+    FOR ALL USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
+
+CREATE POLICY generated_reports_tenant_policy ON workforce.generated_reports
+    FOR ALL USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
+
+
+
 
 
 

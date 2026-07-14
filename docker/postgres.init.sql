@@ -707,23 +707,8 @@ CREATE TABLE audit.attachment_access_logs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- aggregated snapshots dashboard
-CREATE TABLE audit.dashboard_snapshots (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    org_unit_id UUID NOT NULL REFERENCES core.organization_units(id) ON DELETE CASCADE,
-    snapshot_date DATE NOT NULL,
-    snapshot_hour INTEGER NOT NULL,
-    total_employees INTEGER DEFAULT 0,
-    office_count INTEGER DEFAULT 0,
-    field_count INTEGER DEFAULT 0,
-    home_count INTEGER DEFAULT 0,
-    sick_count INTEGER DEFAULT 0,
-    vacation_count INTEGER DEFAULT 0,
-    course_count INTEGER DEFAULT 0,
-    reinforcement_count INTEGER DEFAULT 0,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uq_snapshot_unit_date_hour UNIQUE (org_unit_id, snapshot_date, snapshot_hour)
-);
+-- audit.dashboard_snapshots was removed and migrated to workforce.dashboard_snapshots in Phase 7.1
+
 
 -- PARTITIONED Audit Logs table (Partitioned by Range of created_at)
 CREATE TABLE audit.audit_logs (
@@ -746,31 +731,148 @@ CREATE TABLE audit.audit_logs (
 ) PARTITION BY RANGE (created_at);
 
 -- ----------------------------------------------------------------------------
--- 4. TRANSFER MANAGEMENT SUB-TABLES
+-- 4. OPERATIONAL AND SYSTEM CONFIGURATION TABLES (Phase 6, 7 & 7.1)
 -- ----------------------------------------------------------------------------
-CREATE TABLE workforce.transfer_requests (
+
+CREATE TABLE workforce.employee_transfers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES core.tenants(id) ON DELETE CASCADE,
     employee_id UUID NOT NULL REFERENCES workforce.employees(id) ON DELETE CASCADE,
-    from_org_unit_id UUID NOT NULL REFERENCES core.organization_units(id) ON DELETE RESTRICT,
-    to_org_unit_id UUID NOT NULL REFERENCES core.organization_units(id) ON DELETE RESTRICT,
+    from_unit_id UUID NOT NULL REFERENCES core.organization_units(id) ON DELETE RESTRICT,
+    to_unit_id UUID NOT NULL REFERENCES core.organization_units(id) ON DELETE RESTRICT,
     requested_by UUID NOT NULL REFERENCES security.users(id) ON DELETE RESTRICT,
-    reason TEXT NOT NULL,
-    status VARCHAR(50) DEFAULT 'PENDING',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
-    created_by UUID REFERENCES security.users(id) ON DELETE SET NULL,
-    updated_by UUID REFERENCES security.users(id) ON DELETE SET NULL
+    approved_by UUID REFERENCES security.users(id) ON DELETE SET NULL,
+    reason TEXT,
+    status VARCHAR(50) NOT NULL,
+    requested_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    approved_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+    completed_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
 );
 
-CREATE TABLE workforce.transfer_approval_history (
+CREATE TABLE core.notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    transfer_request_id UUID NOT NULL REFERENCES workforce.transfer_requests(id) ON DELETE CASCADE,
-    approved_by UUID NOT NULL REFERENCES security.users(id) ON DELETE RESTRICT,
-    decision VARCHAR(50) NOT NULL,
-    comment TEXT,
+    tenant_id UUID NOT NULL REFERENCES core.tenants(id) ON DELETE CASCADE,
+    organization_unit_id UUID REFERENCES core.organization_units(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES security.users(id) ON DELETE CASCADE,
+    notification_type VARCHAR(100) NOT NULL,
+    severity VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'UNREAD',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    read_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
+);
+
+CREATE TABLE core.business_rules (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES core.tenants(id) ON DELETE CASCADE,
+    organization_unit_id UUID REFERENCES core.organization_units(id) ON DELETE CASCADE,
+    rule_type VARCHAR(100) NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    description TEXT,
+    condition_json JSONB NOT NULL DEFAULT '{}',
+    action_json JSONB NOT NULL DEFAULT '{}',
+    is_active BOOLEAN DEFAULT TRUE,
+    priority INTEGER DEFAULT 100,
+    created_by UUID REFERENCES security.users(id) ON DELETE SET NULL,
+    updated_by UUID REFERENCES security.users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE core.automation_rules (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES core.tenants(id) ON DELETE CASCADE,
+    name VARCHAR(150) NOT NULL,
+    description TEXT,
+    trigger_event VARCHAR(100) NOT NULL,
+    condition_json JSONB NOT NULL DEFAULT '{}',
+    action_type VARCHAR(100) NOT NULL,
+    action_config JSONB NOT NULL DEFAULT '{}',
+    schedule_cron VARCHAR(100),
+    is_active BOOLEAN DEFAULT TRUE,
+    last_triggered_at TIMESTAMP WITH TIME ZONE,
+    trigger_count INTEGER DEFAULT 0,
+    created_by UUID REFERENCES security.users(id) ON DELETE SET NULL,
+    updated_by UUID REFERENCES security.users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE core.notification_templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES core.tenants(id) ON DELETE CASCADE,
+    name VARCHAR(150) NOT NULL,
+    notification_type VARCHAR(100) NOT NULL,
+    channel VARCHAR(50) NOT NULL DEFAULT 'IN_APP',
+    subject VARCHAR(255),
+    body_template TEXT NOT NULL,
+    variables_json JSONB NOT NULL DEFAULT '[]',
+    is_active BOOLEAN DEFAULT TRUE,
+    is_default BOOLEAN DEFAULT FALSE,
+    created_by UUID REFERENCES security.users(id) ON DELETE SET NULL,
+    updated_by UUID REFERENCES security.users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_template_type_channel UNIQUE (tenant_id, notification_type, channel)
+);
+
+CREATE TABLE workforce.dashboard_snapshots (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES core.tenants(id) ON DELETE CASCADE,
+    org_unit_id UUID NOT NULL REFERENCES core.organization_units(id) ON DELETE CASCADE,
+    snapshot_date DATE NOT NULL,
+    snapshot_hour INTEGER NOT NULL,
+    total_employees INTEGER DEFAULT 0,
+    assigned_employees INTEGER DEFAULT 0,
+    unassigned_employees INTEGER DEFAULT 0,
+    available_count INTEGER DEFAULT 0,
+    sick_count INTEGER DEFAULT 0,
+    vacation_count INTEGER DEFAULT 0,
+    training_count INTEGER DEFAULT 0,
+    mission_count INTEGER DEFAULT 0,
+    reinforcement_count INTEGER DEFAULT 0,
+    other_count INTEGER DEFAULT 0,
+    readiness_percentage NUMERIC(5,2) DEFAULT 100.00,
+    status_distribution JSONB DEFAULT '{}',
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_workforce_snapshot_unit_date_hour UNIQUE (tenant_id, org_unit_id, snapshot_date, snapshot_hour)
+);
+
+CREATE TABLE workforce.alert_rules (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES core.tenants(id) ON DELETE CASCADE,
+    org_unit_id UUID REFERENCES core.organization_units(id) ON DELETE CASCADE,
+    name VARCHAR(150) NOT NULL,
+    metric_name VARCHAR(100) NOT NULL,
+    operator VARCHAR(10) NOT NULL CHECK (operator IN ('>', '>=', '<', '<=', '=', '!=')),
+    threshold_value NUMERIC(10,2) NOT NULL,
+    evaluation_period VARCHAR(50) NOT NULL CHECK (evaluation_period IN ('TODAY', 'LAST_7_DAYS', 'LAST_30_DAYS')),
+    severity VARCHAR(50) NOT NULL DEFAULT 'WARNING',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_by UUID REFERENCES security.users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE workforce.generated_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES core.tenants(id) ON DELETE CASCADE,
+    org_unit_id UUID REFERENCES core.organization_units(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    report_type VARCHAR(100) NOT NULL,
+    parameters_json JSONB DEFAULT '{}',
+    format VARCHAR(20) NOT NULL,
+    file_path VARCHAR(512),
+    file_size INTEGER,
+    download_count INTEGER DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'PENDING',
+    error_message TEXT,
+    generated_by UUID NOT NULL REFERENCES security.users(id) ON DELETE CASCADE,
+    started_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
 
 
 -- ----------------------------------------------------------------------------
@@ -813,11 +915,27 @@ CREATE INDEX idx_notifications_recipient_unread
 CREATE INDEX idx_notif_receipts_user ON comms.notification_read_receipts(user_id);
 
 CREATE INDEX idx_snapshots_composite 
-    ON audit.dashboard_snapshots(org_unit_id, snapshot_date, snapshot_hour);
+    ON workforce.dashboard_snapshots(tenant_id, org_unit_id, snapshot_date);
 
 CREATE INDEX idx_audit_logs_lookup ON audit.audit_logs(table_name, record_id);
 CREATE INDEX idx_audit_logs_request ON audit.audit_logs(request_id);
 CREATE INDEX idx_audit_logs_tenant_timestamp ON audit.audit_logs(tenant_id, created_at);
+
+-- Phase 6, 7 and 7.1 Indexes
+CREATE INDEX idx_transfers_tenant ON workforce.employee_transfers(tenant_id);
+CREATE INDEX idx_transfers_employee ON workforce.employee_transfers(employee_id);
+CREATE INDEX idx_transfers_status ON workforce.employee_transfers(status);
+CREATE INDEX idx_transfers_from_unit ON workforce.employee_transfers(from_unit_id);
+CREATE INDEX idx_transfers_to_unit ON workforce.employee_transfers(to_unit_id);
+
+CREATE INDEX idx_notifications_tenant ON core.notifications(tenant_id);
+CREATE INDEX idx_notifications_user ON core.notifications(user_id);
+CREATE INDEX idx_notifications_unit ON core.notifications(organization_unit_id);
+CREATE INDEX idx_notifications_status ON core.notifications(status);
+
+CREATE INDEX idx_workforce_alert_rules_tenant_metric ON workforce.alert_rules(tenant_id, metric_name, is_active);
+CREATE INDEX idx_workforce_generated_reports_tenant_user ON workforce.generated_reports(tenant_id, generated_by, created_at DESC);
+
 
 
 -- ----------------------------------------------------------------------------
@@ -934,6 +1052,22 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER tr_org_units_closure_maintain
     AFTER INSERT OR UPDATE ON core.organization_units
     FOR EACH ROW EXECUTE FUNCTION core.fn_maintain_hierarchy_closure();
+
+CREATE TRIGGER tr_business_rules_timestamp BEFORE UPDATE ON core.business_rules
+    FOR EACH ROW EXECUTE FUNCTION core.fn_update_timestamp();
+
+CREATE TRIGGER tr_automation_rules_timestamp BEFORE UPDATE ON core.automation_rules
+    FOR EACH ROW EXECUTE FUNCTION core.fn_update_timestamp();
+
+CREATE TRIGGER tr_notification_templates_timestamp BEFORE UPDATE ON core.notification_templates
+    FOR EACH ROW EXECUTE FUNCTION core.fn_update_timestamp();
+
+CREATE TRIGGER tr_dashboard_snapshots_timestamp BEFORE UPDATE ON workforce.dashboard_snapshots
+    FOR EACH ROW EXECUTE FUNCTION core.fn_update_timestamp();
+
+CREATE TRIGGER tr_alert_rules_timestamp BEFORE UPDATE ON workforce.alert_rules
+    FOR EACH ROW EXECUTE FUNCTION core.fn_update_timestamp();
+
 
 
 -- ----------------------------------------------------------------------------
@@ -1234,6 +1368,32 @@ CREATE POLICY notifications_tenant_policy ON core.notifications
         tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID
     );
 
+ALTER TABLE core.business_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE core.automation_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE core.notification_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workforce.dashboard_snapshots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workforce.alert_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workforce.generated_reports ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY business_rules_tenant_policy ON core.business_rules
+    FOR ALL USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
+
+CREATE POLICY automation_rules_tenant_policy ON core.automation_rules
+    FOR ALL USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
+
+CREATE POLICY notification_templates_tenant_policy ON core.notification_templates
+    FOR ALL USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
+
+CREATE POLICY snapshots_tenant_policy ON workforce.dashboard_snapshots
+    FOR ALL USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
+
+CREATE POLICY alert_rules_tenant_policy ON workforce.alert_rules
+    FOR ALL USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
+
+CREATE POLICY generated_reports_tenant_policy ON workforce.generated_reports
+    FOR ALL USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::UUID);
+
+
 
 -- ============================================================================
 -- 9. Seed Default Tenant, Users, Roles and Organization Units Hierarchy
@@ -1396,6 +1556,116 @@ BEGIN
     ON CONFLICT (organization_unit_id) DO NOTHING;
 
 END $$;
+
+
+-- ============================================================================
+-- Phase 7 Seed: System Administration Permissions & Default Settings
+-- ============================================================================
+DO $$
+DECLARE
+    admin_group_id UUID;
+    role_uuid UUID := 'role-uuid-123';
+BEGIN
+    -- Create System Administration permission group
+    INSERT INTO security.permission_groups (name, description) VALUES
+        ('System Administration', 'Platform-wide configuration, audit, and automation management')
+    ON CONFLICT (name) DO NOTHING;
+
+    SELECT id INTO admin_group_id FROM security.permission_groups WHERE name = 'System Administration';
+
+    IF admin_group_id IS NOT NULL THEN
+        INSERT INTO security.permissions (group_id, code, description) VALUES
+            (admin_group_id, 'system.settings.view',              'Allows viewing global system settings'),
+            (admin_group_id, 'system.settings.manage',            'Allows modifying global system settings'),
+            (admin_group_id, 'audit.view',                        'Allows viewing platform audit log events'),
+            (admin_group_id, 'audit.export',                      'Allows exporting audit log as CSV'),
+            (admin_group_id, 'automation.view',                   'Allows viewing automation rule definitions'),
+            (admin_group_id, 'automation.manage',                  'Allows creating and managing automation rules'),
+            (admin_group_id, 'business_rules.view',               'Allows viewing configured business rules'),
+            (admin_group_id, 'business_rules.manage',             'Allows creating and managing business rules'),
+            (admin_group_id, 'notification_templates.view',       'Allows viewing notification message templates'),
+            (admin_group_id, 'notification_templates.manage',     'Allows editing notification message templates'),
+            (admin_group_id, 'system_health.view',                'Allows viewing system health and status dashboard')
+        ON CONFLICT (code) DO NOTHING;
+    END IF;
+
+    -- Grant all new permissions to admin role with GLOBAL scope
+    INSERT INTO security.role_permissions (role_id, permission_id, permission_scope_type)
+    SELECT role_uuid, id, 'GLOBAL'
+    FROM security.permissions
+    WHERE code IN (
+        'system.settings.view', 'system.settings.manage',
+        'audit.view', 'audit.export',
+        'automation.view', 'automation.manage',
+        'business_rules.view', 'business_rules.manage',
+        'notification_templates.view', 'notification_templates.manage',
+        'system_health.view'
+    )
+    ON CONFLICT DO NOTHING;
+
+END $$;
+
+
+-- ============================================================================
+-- Phase 7 Seed: Default System Settings
+-- ============================================================================
+INSERT INTO core.system_settings (key, value, description) VALUES
+    ('scheduling_mode_default',     'DIRECT_STATUS',  'Default scheduling mode for new organization units'),
+    ('session_timeout_minutes',     '480',             'Idle session timeout in minutes'),
+    ('dashboard_refresh_seconds',   '60',              'Commander dashboard auto-refresh interval in seconds'),
+    ('default_timezone',            'Asia/Jerusalem',  'Platform default timezone for date/time display'),
+    ('default_language',            'he',              'Platform default language code (he/en)'),
+    ('date_format',                 'DD/MM/YYYY',      'Display date format used across the platform'),
+    ('working_days',                '0,1,2,3,4',       'Comma-separated day indices (0=Sun … 6=Sat)'),
+    ('weekend_days',                '5,6',             'Comma-separated weekend day indices'),
+    ('sick_alert_threshold_pct',    '10',              'Alert when sick percentage exceeds this value'),
+    ('unavailable_alert_threshold', '20',              'Alert when unavailable percentage exceeds this value'),
+    ('min_manpower_threshold_pct',  '70',              'Minimum acceptable manpower coverage percentage'),
+    ('transfer_require_approval',   'true',            'Whether transfers require commander approval'),
+    ('password_min_length',         '8',               'Minimum password length for user accounts'),
+    ('max_failed_login_attempts',   '5',               'Lock account after this many consecutive failures'),
+    ('notification_email_enabled',  'false',           'Enable email notification dispatch'),
+    ('notification_sms_enabled',    'false',           'Enable SMS notification dispatch')
+ON CONFLICT (key) DO NOTHING;
+
+
+-- ============================================================================
+-- Phase 7.1 Seed: Analytics Permissions and Default Rules
+-- ============================================================================
+DO $$
+DECLARE
+    analytics_group_id UUID;
+    role_uuid UUID := 'role-uuid-123';
+    tenant_uuid UUID := 'de305d54-75b4-431b-adb2-eb6b9e546013';
+BEGIN
+    -- Create Analytics permission group
+    INSERT INTO security.permission_groups (name, description) VALUES
+        ('Analytics & Reports', 'Operations for viewing and managing workforce intelligence, snapshots, and generated reports')
+    ON CONFLICT (name) DO NOTHING;
+
+    SELECT id INTO analytics_group_id FROM security.permission_groups WHERE name = 'Analytics & Reports';
+
+    IF analytics_group_id IS NOT NULL THEN
+        INSERT INTO security.permissions (group_id, code, description) VALUES
+            (analytics_group_id, 'analytics.view',     'Allows viewing dashboard snapshots, metrics, and generated reports'),
+            (analytics_group_id, 'analytics.manage',   'Allows managing alert rules and triggering report generation tasks')
+        ON CONFLICT (code) DO NOTHING;
+    END IF;
+
+    -- Grant permissions to admin role globally
+    INSERT INTO security.role_permissions (role_id, permission_id, permission_scope_type)
+    SELECT role_uuid, id, 'GLOBAL'
+    FROM security.permissions
+    WHERE code IN ('analytics.view', 'analytics.manage')
+    ON CONFLICT DO NOTHING;
+
+    -- Seed default alert rule for sick rate threshold (> 10% sick rate over LAST_7_DAYS)
+    INSERT INTO workforce.alert_rules (tenant_id, name, metric_name, operator, threshold_value, evaluation_period, severity, is_active) VALUES
+    (tenant_uuid, 'Sick Rate High Alert', 'SICK_PERCENTAGE', '>', 10.00, 'LAST_7_DAYS', 'WARNING', true)
+    ON CONFLICT DO NOTHING;
+
+END $$;
+
 
 
 

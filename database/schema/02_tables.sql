@@ -679,23 +679,8 @@ CREATE TABLE audit.attachment_access_logs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Pre-aggregated Dashboard Snapshots
-CREATE TABLE audit.dashboard_snapshots (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    org_unit_id UUID NOT NULL REFERENCES core.organization_units(id) ON DELETE CASCADE,
-    snapshot_date DATE NOT NULL,
-    snapshot_hour INTEGER NOT NULL,
-    total_employees INTEGER DEFAULT 0,
-    office_count INTEGER DEFAULT 0,
-    field_count INTEGER DEFAULT 0,
-    home_count INTEGER DEFAULT 0,
-    sick_count INTEGER DEFAULT 0,
-    vacation_count INTEGER DEFAULT 0,
-    course_count INTEGER DEFAULT 0,
-    reinforcement_count INTEGER DEFAULT 0,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uq_snapshot_unit_date_hour UNIQUE (org_unit_id, snapshot_date, snapshot_hour)
-);
+-- audit.dashboard_snapshots was removed and migrated to workforce.dashboard_snapshots in Phase 7.1
+
 
 -- PARTITIONED Audit Logs table (Partitioned by Range of created_at)
 CREATE TABLE audit.audit_logs (
@@ -808,3 +793,66 @@ CREATE TABLE core.notification_templates (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_template_type_channel UNIQUE (tenant_id, notification_type, channel)
 );
+
+
+-- ============================================================================
+-- Phase 7.1 Tables: Analytics Database Foundation
+-- ============================================================================
+
+CREATE TABLE workforce.dashboard_snapshots (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES core.tenants(id) ON DELETE CASCADE,
+    org_unit_id UUID NOT NULL REFERENCES core.organization_units(id) ON DELETE CASCADE,
+    snapshot_date DATE NOT NULL,
+    snapshot_hour INTEGER NOT NULL,
+    total_employees INTEGER DEFAULT 0,
+    assigned_employees INTEGER DEFAULT 0,
+    unassigned_employees INTEGER DEFAULT 0,
+    available_count INTEGER DEFAULT 0,
+    sick_count INTEGER DEFAULT 0,
+    vacation_count INTEGER DEFAULT 0,
+    training_count INTEGER DEFAULT 0,
+    mission_count INTEGER DEFAULT 0,
+    reinforcement_count INTEGER DEFAULT 0,
+    other_count INTEGER DEFAULT 0,
+    readiness_percentage NUMERIC(5,2) DEFAULT 100.00,
+    status_distribution JSONB DEFAULT '{}',
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_workforce_snapshot_unit_date_hour UNIQUE (tenant_id, org_unit_id, snapshot_date, snapshot_hour)
+);
+
+CREATE TABLE workforce.alert_rules (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES core.tenants(id) ON DELETE CASCADE,
+    org_unit_id UUID REFERENCES core.organization_units(id) ON DELETE CASCADE,
+    name VARCHAR(150) NOT NULL,
+    metric_name VARCHAR(100) NOT NULL,
+    operator VARCHAR(10) NOT NULL CHECK (operator IN ('>', '>=', '<', '<=', '=', '!=')),
+    threshold_value NUMERIC(10,2) NOT NULL,
+    evaluation_period VARCHAR(50) NOT NULL CHECK (evaluation_period IN ('TODAY', 'LAST_7_DAYS', 'LAST_30_DAYS')),
+    severity VARCHAR(50) NOT NULL DEFAULT 'WARNING',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_by UUID REFERENCES security.users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE workforce.generated_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES core.tenants(id) ON DELETE CASCADE,
+    org_unit_id UUID REFERENCES core.organization_units(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    report_type VARCHAR(100) NOT NULL,
+    parameters_json JSONB DEFAULT '{}',
+    format VARCHAR(20) NOT NULL,
+    file_path VARCHAR(512),
+    file_size INTEGER,
+    download_count INTEGER DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'PENDING',
+    error_message TEXT,
+    generated_by UUID NOT NULL REFERENCES security.users(id) ON DELETE CASCADE,
+    started_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+

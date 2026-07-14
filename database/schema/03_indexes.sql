@@ -47,7 +47,8 @@ CREATE INDEX idx_notif_receipts_user ON comms.notification_read_receipts(user_id
 
 -- 9. High-Performance Dashboard Snapshot Index
 CREATE INDEX idx_snapshots_composite 
-    ON audit.dashboard_snapshots(org_unit_id, snapshot_date, snapshot_hour);
+    ON workforce.dashboard_snapshots(tenant_id, org_unit_id, snapshot_date);
+
 
 -- 10. Audit Log Performance
 CREATE INDEX idx_audit_logs_lookup ON audit.audit_logs(table_name, record_id);
@@ -66,3 +67,9 @@ CREATE INDEX idx_notifications_tenant ON core.notifications(tenant_id);
 CREATE INDEX idx_notifications_user ON core.notifications(user_id);
 CREATE INDEX idx_notifications_unit ON core.notifications(organization_unit_id);
 CREATE INDEX idx_notifications_status ON core.notifications(status);
+
+
+-- Phase 7.1 Indexes: Analytics Database Foundation
+CREATE INDEX idx_workforce_alert_rules_tenant_metric ON workforce.alert_rules(tenant_id, metric_name, is_active);
+CREATE INDEX idx_workforce_generated_reports_tenant_user ON workforce.generated_reports(tenant_id, generated_by, created_at DESC);
+

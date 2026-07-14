@@ -348,3 +348,42 @@ INSERT INTO core.system_settings (key, value, description) VALUES
     ('notification_email_enabled',  'false',           'Enable email notification dispatch'),
     ('notification_sms_enabled',    'false',           'Enable SMS notification dispatch')
 ON CONFLICT (key) DO NOTHING;
+
+
+-- ============================================================================
+-- Phase 7.1 Seed: Analytics Permissions and Default Rules
+-- ============================================================================
+DO $$
+DECLARE
+    analytics_group_id UUID;
+    role_uuid UUID := 'role-uuid-123';
+    tenant_uuid UUID := 'de305d54-75b4-431b-adb2-eb6b9e546013';
+BEGIN
+    -- Create Analytics permission group
+    INSERT INTO security.permission_groups (name, description) VALUES
+        ('Analytics & Reports', 'Operations for viewing and managing workforce intelligence, snapshots, and generated reports')
+    ON CONFLICT (name) DO NOTHING;
+
+    SELECT id INTO analytics_group_id FROM security.permission_groups WHERE name = 'Analytics & Reports';
+
+    IF analytics_group_id IS NOT NULL THEN
+        INSERT INTO security.permissions (group_id, code, description) VALUES
+            (analytics_group_id, 'analytics.view',     'Allows viewing dashboard snapshots, metrics, and generated reports'),
+            (analytics_group_id, 'analytics.manage',   'Allows managing alert rules and triggering report generation tasks')
+        ON CONFLICT (code) DO NOTHING;
+    END IF;
+
+    -- Grant permissions to admin role globally
+    INSERT INTO security.role_permissions (role_id, permission_id, permission_scope_type)
+    SELECT role_uuid, id, 'GLOBAL'
+    FROM security.permissions
+    WHERE code IN ('analytics.view', 'analytics.manage')
+    ON CONFLICT DO NOTHING;
+
+    -- Seed default alert rule for sick rate threshold (> 10% sick rate over LAST_7_DAYS)
+    INSERT INTO workforce.alert_rules (tenant_id, name, metric_name, operator, threshold_value, evaluation_period, severity, is_active) VALUES
+    (tenant_uuid, 'Sick Rate High Alert', 'SICK_PERCENTAGE', '>', 10.00, 'LAST_7_DAYS', 'WARNING', true)
+    ON CONFLICT DO NOTHING;
+
+END $$;
+

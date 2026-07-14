@@ -130,3 +130,21 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER tr_org_units_closure_maintain
     AFTER INSERT OR UPDATE ON core.organization_units
     FOR EACH ROW EXECUTE FUNCTION core.fn_maintain_hierarchy_closure();
+
+
+-- Phase 7 & 7.1 updated_at Triggers
+CREATE TRIGGER tr_business_rules_timestamp BEFORE UPDATE ON core.business_rules
+    FOR EACH ROW EXECUTE FUNCTION core.fn_update_timestamp();
+
+CREATE TRIGGER tr_automation_rules_timestamp BEFORE UPDATE ON core.automation_rules
+    FOR EACH ROW EXECUTE FUNCTION core.fn_update_timestamp();
+
+CREATE TRIGGER tr_notification_templates_timestamp BEFORE UPDATE ON core.notification_templates
+    FOR EACH ROW EXECUTE FUNCTION core.fn_update_timestamp();
+
+CREATE TRIGGER tr_dashboard_snapshots_timestamp BEFORE UPDATE ON workforce.dashboard_snapshots
+    FOR EACH ROW EXECUTE FUNCTION core.fn_update_timestamp();
+
+CREATE TRIGGER tr_alert_rules_timestamp BEFORE UPDATE ON workforce.alert_rules
+    FOR EACH ROW EXECUTE FUNCTION core.fn_update_timestamp();
+
