@@ -247,7 +247,87 @@ def test_self_scope_validation(client, mock_db, app):
     mock_db.fetchall.side_effect = fetchall_self
 
     headers = {"Authorization": f"Bearer {token}"}
-    # Requesting profile of employee linked to user-uuid-123
     response = client.get("/api/workforce/employees/employee-uuid-111", headers=headers)
     assert response.status_code == 200
     assert json.loads(response.data)["success"] is True
+
+
+def test_employee_organization_info_integration(client, mock_db, mock_employee_data, app):
+    """Test that fetching an employee successfully populates the organization_info breadcrumbs and commander metrics."""
+    with app.app_context():
+        token = create_access_token(identity="user-uuid-123", additional_claims={"tenant_id": "tenant-uuid-456"})
+
+    original_fetchone = mock_db.fetchone.side_effect
+    original_fetchall = mock_db.fetchall.side_effect
+
+    # Define custom row with commander_id set
+    emp_row_with_commander = (
+        "employee-uuid-111",      # id
+        "user-uuid-123",          # user_id
+        "commander-uuid-222",     # commander_id
+        "unit-uuid-555",          # org_unit_id
+        "EMP-10023",              # employee_number
+        "John",                   # first_name
+        "Doe",                    # last_name
+        mock_employee_data["phone_cipher"],
+        mock_employee_data["phone_nonce"],
+        mock_employee_data["phone_tag"],
+        mock_employee_data["phone_hash"],
+        mock_employee_data["email_cipher"],
+        mock_employee_data["email_nonce"],
+        mock_employee_data["email_tag"],
+        mock_employee_data["email_hash"],
+        mock_employee_data["bd_cipher"],
+        mock_employee_data["bd_nonce"],
+        mock_employee_data["bd_tag"],
+        "Captain",                # rank
+        "Operations Chief",       # position
+        "Regular Service",        # service_type
+        "ACTIVE",                 # status
+        None, None, None, None, None  # timestamps / creators
+    )
+
+    def custom_fetchone():
+        q = mock_db.active_query.lower() if mock_db.active_query else ""
+        if "count(distinct descendant_id)" in q:
+            return (3,)
+        elif "count(distinct e.id)" in q:
+            return (10,)
+        elif "core.organization_units" in q:
+            return ("חוליית מו\"פ", "CYBER_MOP")
+        elif "workforce.employees" in q:
+            if "id = %s" in q and "commander-uuid-222" in str(mock_db.query_history[-1][1]):
+                return ("רס\"ן", "דוד", "כהן")
+            return emp_row_with_commander
+        return original_fetchone()
+
+    def custom_fetchall():
+        q = mock_db.active_query.lower() if mock_db.active_query else ""
+        if "core.organization_unit_closure" in q:
+            if "ouc.descendant_id = %s" in q:
+                # Ancestor names query
+                return [("מחלקת טכנולוגיות",), ("מדור הסייבר המבצעי",)]
+        elif "core.organization_unit_commanders" in q:
+            # Commanded units query
+            return [("unit-uuid-555", "מחלקה")]
+        return original_fetchall()
+
+    mock_db.fetchone.side_effect = custom_fetchone
+    mock_db.fetchall.side_effect = custom_fetchall
+
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.get("/api/workforce/employees/employee-uuid-111", headers=headers)
+    assert response.status_code == 200
+    
+    res_data = json.loads(response.data)
+    assert res_data["success"] is True
+    
+    org_info = res_data["data"]["organization_info"]
+    assert org_info is not None
+    assert org_info["organization_path"] == ["מחלקת טכנולוגיות", "מדור הסייבר המבצעי", "חוליית מו\"פ"]
+    assert org_info["current_unit"]["name"] == "חוליית מו\"פ"
+    assert org_info["direct_commander"] == "רס\"ן דוד כהן"
+    assert org_info["command_responsibilities"] is not None
+    assert org_info["command_responsibilities"]["scope_level"] == "מחלקה"
+    assert org_info["command_responsibilities"]["subordinate_units_count"] == 3
+    assert org_info["command_responsibilities"]["employees_under_responsibility_count"] == 10

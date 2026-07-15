@@ -26,6 +26,7 @@ class Employee:
     deleted_at: Optional[datetime] = None
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
+    organization_info: Optional[dict] = None
 
 @dataclass
 class EmployeeHistory:

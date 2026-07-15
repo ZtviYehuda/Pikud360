@@ -33,7 +33,7 @@ export default function Topbar() {
         {/* Mobile menu trigger */}
         <button
           onClick={toggleMobileSidebar}
-          className="p-2 rounded-lg text-slate-505 hover:bg-slate-55 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-805 dark:hover:text-white transition-colors cursor-pointer md:hidden"
+          className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors cursor-pointer md:hidden"
           title="Open Menu"
         >
           <Menu className="h-5 w-5" />
@@ -58,7 +58,7 @@ export default function Topbar() {
         {/* Toggle Light/Dark Mode Option */}
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-lg text-slate-500 hover:bg-slate-55 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors cursor-pointer"
+          className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors cursor-pointer"
           title="Toggle Theme"
         >
           {theme === 'dark' ? <Sun className="h-4.5 w-4.5 text-yellow-500" /> : <Moon className="h-4.5 w-4.5 text-indigo-500" />}
@@ -66,7 +66,7 @@ export default function Topbar() {
 
         {/* Notification Bell */}
         <button
-          className="p-2 rounded-lg text-slate-505 hover:bg-slate-55 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors relative cursor-pointer"
+          className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors relative cursor-pointer"
         >
           <Bell className="h-4.5 w-4.5" />
           <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900"></span>
@@ -77,7 +77,7 @@ export default function Topbar() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 outline-none transition-colors cursor-pointer">
-                <div className="h-8 w-8 rounded-full bg-brand-100 dark:bg-brand-950 text-brand-650 dark:text-brand-405 font-bold flex items-center justify-center text-xs">
+                <div className="h-8 w-8 rounded-full bg-brand-100 dark:bg-brand-950 text-brand-600 dark:text-brand-400 font-bold flex items-center justify-center text-xs">
                   {user.name.split(' ').map(n => n[0]).join('')}
                 </div>
                 <div className="text-left hidden md:block">
@@ -106,7 +106,7 @@ export default function Topbar() {
               
               <DropdownMenuItem 
                 onClick={handleLogout}
-                className="text-red-655 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20"
+                className="text-rose-600 hover:bg-rose-50 dark:text-rose-450 dark:hover:bg-rose-950/20"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 <span>{t('common:logout')}</span>

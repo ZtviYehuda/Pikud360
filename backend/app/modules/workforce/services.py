@@ -176,7 +176,139 @@ class WorkforceService:
             record_id=employee_id
         )
 
+        # Populate organization info
+        emp.organization_info = self.get_employee_organization_info(
+            employee_id=emp.id,
+            org_unit_id=emp.org_unit_id,
+            commander_id=emp.commander_id,
+            emp_position=emp.position,
+            emp_rank=emp.rank,
+            emp_status=emp.status
+        )
+
         return emp
+
+    def get_employee_organization_info(
+        self,
+        employee_id: str,
+        org_unit_id: str,
+        commander_id: Optional[str],
+        emp_position: str,
+        emp_rank: str,
+        emp_status: str
+    ) -> dict:
+        info = {
+            "organization_path": [],
+            "current_unit": {"id": org_unit_id, "name": "Default Unit", "code": "default"},
+            "direct_commander": None,
+            "position": emp_position,
+            "rank": emp_rank,
+            "status": emp_status,
+            "availability": "כשירות מלאה" if emp_status == "AVAILABLE" else "כשירות מוגבלת",
+            "command_responsibilities": None
+        }
+
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    # 1. Fetch current unit info
+                    cur.execute(
+                        "SELECT name, code FROM core.organization_units WHERE id = %s AND deleted_at IS NULL",
+                        (org_unit_id,)
+                    )
+                    unit_row = cur.fetchone()
+                    if unit_row:
+                        info["current_unit"] = {
+                            "id": org_unit_id,
+                            "name": unit_row[0],
+                            "code": unit_row[1]
+                        }
+
+                    # 2. Fetch ancestors path
+                    cur.execute(
+                        """
+                        SELECT ou.name 
+                        FROM core.organization_units ou
+                        JOIN core.organization_unit_closure ouc ON ouc.ancestor_id = ou.id
+                        WHERE ouc.descendant_id = %s AND ouc.depth > 0 AND ou.deleted_at IS NULL
+                        ORDER BY ouc.depth DESC, ou.sort_order;
+                        """,
+                        (org_unit_id,)
+                    )
+                    ancestor_names = [row[0] for row in cur.fetchall()]
+                    info["organization_path"] = ancestor_names + [info["current_unit"]["name"]]
+
+                    # 3. Fetch direct commander name
+                    if commander_id:
+                        cur.execute(
+                            "SELECT rank, first_name, last_name FROM workforce.employees WHERE id = %s AND deleted_at IS NULL",
+                            (commander_id,)
+                        )
+                        comm_row = cur.fetchone()
+                        if comm_row:
+                            rank = comm_row[0] or ""
+                            fn = comm_row[1] or ""
+                            ln = comm_row[2] or ""
+                            info["direct_commander"] = f"{rank} {fn} {ln}".strip()
+
+                    # 4. Check command responsibilities
+                    cur.execute(
+                        """
+                        SELECT ou.id, out.name
+                        FROM core.organization_unit_commanders ouc
+                        JOIN core.organization_units ou ON ou.id = ouc.org_unit_id
+                        JOIN core.organization_unit_types out ON out.id = ou.type_id
+                        WHERE ouc.commander_id = %s AND ouc.is_active = TRUE AND ou.deleted_at IS NULL
+                        """,
+                        (employee_id,)
+                    )
+                    commanded_units = cur.fetchall()
+                    if commanded_units:
+                        # Commander details
+                        scope_levels = list(set([row[1] for row in commanded_units]))
+                        scope_level = ", ".join(scope_levels)
+                        
+                        sub_units_count = 0
+                        employees_count = 0
+                        
+                        for c_unit_id, _ in commanded_units:
+                            # Subordinate units count
+                            cur.execute(
+                                """
+                                SELECT COUNT(DISTINCT descendant_id)
+                                FROM core.organization_unit_closure
+                                WHERE ancestor_id = %s AND depth > 0
+                                """,
+                                (c_unit_id,)
+                            )
+                            c_sub = cur.fetchone()
+                            if c_sub:
+                                sub_units_count += c_sub[0]
+
+                            # Employees under responsibility
+                            cur.execute(
+                                """
+                                SELECT COUNT(DISTINCT e.id)
+                                FROM workforce.employees e
+                                JOIN core.organization_unit_closure ouc ON ouc.descendant_id = e.org_unit_id
+                                WHERE ouc.ancestor_id = %s AND e.deleted_at IS NULL
+                                """,
+                                (c_unit_id,)
+                            )
+                            c_emp = cur.fetchone()
+                            if c_emp:
+                                employees_count += c_emp[0]
+                                
+                        info["command_responsibilities"] = {
+                            "scope_level": scope_level,
+                            "subordinate_units_count": sub_units_count,
+                            "employees_under_responsibility_count": employees_count
+                        }
+
+        except Exception as e:
+            logger.error(f"Error fetching employee organization info: {e}", exc_info=True)
+
+        return info
 
     def list_employees(
         self,

@@ -20,6 +20,7 @@ import Settings from '../pages/Settings';
 import CommanderDashboard from '../pages/CommanderDashboard';
 import Transfers from '../pages/Transfers';
 import EmployeeHistory from '../pages/EmployeeHistory';
+import EmployeeProfile from '../pages/EmployeeProfile';
 import WorkforceCalendar from '../pages/WorkforceCalendar';
 
 // Admin pages
@@ -97,6 +98,10 @@ export const router = createBrowserRouter([
       {
         path: 'transfers',
         element: <Transfers />,
+      },
+      {
+        path: 'employees/:id',
+        element: <EmployeeProfile />,
       },
       {
         path: 'employees/:id/history',

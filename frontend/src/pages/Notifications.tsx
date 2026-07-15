@@ -127,7 +127,7 @@ export default function Notifications() {
         </div>
 
         <select value={severityFilter} onChange={(e) => setSeverityFilter(e.target.value)}
-          className="rounded-lg border border-slate-205 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 outline-hidden dark:border-slate-800 dark:bg-slate-950 dark:text-slate-350 cursor-pointer">
+          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 outline-hidden dark:border-slate-800 dark:bg-slate-950 dark:text-slate-350 cursor-pointer">
           <option value="ALL">{t('notifications:all_severities')}</option>
           <option value="INFO">{t('notifications:severity_info')}</option>
           <option value="SUCCESS">{t('notifications:severity_success')}</option>
@@ -149,7 +149,7 @@ export default function Notifications() {
             description={t('notifications:desc')}
           />
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-850">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {filteredNotifications.map((notif) => (
               <div key={notif.id} className={`py-4 first:pt-0 last:pb-0 flex items-start gap-4 transition-opacity ${notif.status === 'READ' ? 'opacity-65' : ''}`}>
                 <div className={`p-2.5 rounded-xl border ${getSeverityStyle(notif.severity)}`}>
@@ -158,7 +158,7 @@ export default function Notifications() {
 
                 <div className="flex-1 min-w-0 text-right">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-2xs text-slate-450 font-semibold">
+                    <span className="text-2xs text-slate-400 font-semibold">
                       {new Date(notif.created_at).toLocaleString('he-IL')}
                     </span>
                     <div className="flex items-center gap-2">
@@ -170,7 +170,7 @@ export default function Notifications() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleMarkRead(notif.id)}
-                          className="h-7 w-7 p-0 text-slate-450 hover:text-indigo-650 hover:bg-slate-100 dark:hover:bg-slate-800"
+                          className="h-7 w-7 p-0 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800"
                           title={t('notifications:mark_read')}
                         >
                           <Check className="h-4 w-4" />

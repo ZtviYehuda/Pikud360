@@ -128,7 +128,7 @@ export default function WorkforceSchedulingStatuses() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-1.5 pb-2 border-b border-slate-105 dark:border-slate-800">
+      <div className="flex flex-col gap-1.5 pb-2 border-b border-slate-200 dark:border-slate-800">
         <h1 className="font-heading text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
           {t('scheduling:status_catalog')}
         </h1>
@@ -178,7 +178,7 @@ export default function WorkforceSchedulingStatuses() {
                 {t('scheduling:category')}
               </label>
               <select value={category} onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-lg border border-slate-205 bg-white py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-white">
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-white">
                 <option value="AVAILABLE">{t('scheduling:cat_available')}</option>
                 <option value="SICK">{t('scheduling:cat_sick')}</option>
                 <option value="VACATION">{t('scheduling:cat_vacation')}</option>
@@ -195,7 +195,7 @@ export default function WorkforceSchedulingStatuses() {
               </label>
               <div className="flex items-center gap-3">
                 <input type="color" value={color} onChange={(e) => setColor(e.target.value)}
-                  className="h-10 w-12 rounded border border-slate-205 dark:border-slate-700 bg-transparent cursor-pointer" />
+                  className="h-10 w-12 rounded border border-slate-200 dark:border-slate-700 bg-transparent cursor-pointer" />
                 <span className="text-xs font-mono font-medium text-slate-500">{color}</span>
               </div>
             </div>
@@ -258,7 +258,7 @@ export default function WorkforceSchedulingStatuses() {
                               {status.name}
                             </div>
                           </TableCell>
-                          <TableCell className="px-2 text-xs text-slate-450 font-medium">{status.category}</TableCell>
+                          <TableCell className="px-2 text-xs text-slate-400 font-medium">{status.category}</TableCell>
                           <TableCell className="px-2 text-center">
                             {isSystem ? (
                               <Badge variant="secondary" className="text-[10px]">{t('scheduling:type_system')}</Badge>

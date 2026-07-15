@@ -131,7 +131,7 @@ export default function Transfers() {
                   {t('transfers:select_employee')}
                 </label>
                 <select value={selectedEmpId} onChange={(e) => setSelectedEmpId(e.target.value)}
-                  className="w-full rounded-lg border border-slate-205 bg-slate-50 px-3 py-2 text-xs text-slate-700 outline-hidden focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 outline-hidden focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
                   <option value="">-- {t('transfers:select_employee')} --</option>
                   {employees.map(emp => (
                     <option key={emp.id} value={emp.id}>{emp.rank} {emp.first_name} {emp.last_name} ({emp.position})</option>
@@ -144,7 +144,7 @@ export default function Transfers() {
                   {t('transfers:destination_unit')}
                 </label>
                 <select value={selectedUnitId} onChange={(e) => setSelectedUnitId(e.target.value)}
-                  className="w-full rounded-lg border border-slate-205 bg-slate-50 px-3 py-2 text-xs text-slate-700 outline-hidden focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 outline-hidden focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
                   <option value="">-- {t('transfers:select_unit')} --</option>
                   {units.map(unit => (
                     <option key={unit.id} value={unit.id}>{unit.name} ({unit.code})</option>
@@ -157,7 +157,7 @@ export default function Transfers() {
                   {t('transfers:reason')}
                 </label>
                 <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3}
-                  className="w-full rounded-lg border border-slate-205 bg-slate-50 px-3 py-2 text-xs text-slate-700 outline-hidden focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 outline-hidden focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
                   placeholder={t('transfers:reason_placeholder')} />
               </div>
 
@@ -197,8 +197,8 @@ export default function Transfers() {
                       {transfers.map((tr) => (
                         <TableRow key={tr.id}>
                           <TableCell className="text-slate-800 dark:text-white">{tr.employee_name}</TableCell>
-                          <TableCell className="text-slate-505 dark:text-slate-450">{tr.from_unit_name}</TableCell>
-                          <TableCell className="text-slate-550 dark:text-slate-400 font-medium">{tr.to_unit_name}</TableCell>
+                          <TableCell className="text-slate-500 dark:text-slate-400">{tr.from_unit_name}</TableCell>
+                          <TableCell className="text-slate-500 dark:text-slate-400 font-medium">{tr.to_unit_name}</TableCell>
                           <TableCell>
                             <Badge variant={getStatusBadgeVariant(tr.status)}>{tr.status}</Badge>
                           </TableCell>
@@ -257,7 +257,7 @@ export default function Transfers() {
                         <Badge variant={getStatusBadgeVariant(tr.status)}>{tr.status}</Badge>
                       </div>
                       {tr.reason && (
-                        <p className="text-2xs text-slate-450 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-2">{tr.reason}</p>
+                        <p className="text-2xs text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-2">{tr.reason}</p>
                       )}
                       {tr.status === 'PENDING' && (
                         <div className="flex gap-2 justify-end pt-2">

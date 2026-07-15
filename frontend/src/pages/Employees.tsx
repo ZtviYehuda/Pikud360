@@ -35,7 +35,7 @@ export default function Employees() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex gap-3 bg-white p-4 rounded-xl border border-slate-205/60 dark:border-slate-800 dark:bg-slate-900 shadow-xs">
+      <div className="flex gap-3 bg-white p-4 rounded-xl border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 shadow-xs">
         <div className="relative flex-1">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
             <Search className="h-4 w-4 text-slate-400" />
@@ -57,7 +57,7 @@ export default function Employees() {
         {mockEmployees.map((emp) => (
           <Card key={emp.id} className="p-5 flex flex-col justify-between hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between">
-              <div className="h-10 w-10 rounded-full bg-brand-105 dark:bg-brand-950/40 text-brand-650 dark:text-brand-405 flex items-center justify-center font-bold font-heading text-lg">
+              <div className="h-10 w-10 rounded-full bg-brand-100 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 flex items-center justify-center font-bold font-heading text-lg">
                 {emp.name.split(' ').map(n => n[0]).join('')}
               </div>
               <Badge variant={emp.active ? 'success' : 'secondary'}>
@@ -68,10 +68,10 @@ export default function Employees() {
             <div className="mt-4">
               <h4 className="font-heading text-base font-bold text-slate-800 dark:text-white">{emp.name}</h4>
               <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">{emp.role}</p>
-              <p className="text-xs text-slate-555 mt-2 font-mono">{emp.dept}</p>
+              <p className="text-xs text-slate-500 mt-2 font-mono">{emp.dept}</p>
             </div>
             
-            <div className="mt-4 pt-3 border-t border-slate-105 dark:border-slate-850/60 flex items-center justify-between text-2xs text-slate-400 font-medium">
+            <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-2xs text-slate-400 font-medium">
               <span>{emp.email}</span>
               <ShieldCheck className="h-4 w-4 text-emerald-500" />
             </div>

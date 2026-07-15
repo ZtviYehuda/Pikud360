@@ -63,8 +63,8 @@ export default function Dashboard() {
           </div>
           
           {/* Mock chart layout structure */}
-          <div className="h-64 w-full rounded-lg bg-slate-50 dark:bg-slate-950/50 border border-dashed border-slate-205 dark:border-slate-800 flex items-center justify-center">
-            <p className="text-slate-450 text-xs font-semibold">
+          <div className="h-64 w-full rounded-lg bg-slate-50 dark:bg-slate-950/50 border border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center">
+            <p className="text-slate-400 text-xs font-semibold">
               {t('analytics:trends')}
             </p>
           </div>
@@ -81,7 +81,7 @@ export default function Dashboard() {
             <div className="space-y-4">
               {/* Web Client */}
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-555 font-semibold">{t('dashboard:frontend_client')}</span>
+                <span className="text-slate-500 font-semibold">{t('dashboard:frontend_client')}</span>
                 <Badge variant="success">
                   {t('dashboard:online')}
                 </Badge>
@@ -89,7 +89,7 @@ export default function Dashboard() {
               
               {/* Backend API status */}
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-555 font-semibold">{t('dashboard:backend_server')}</span>
+                <span className="text-slate-500 font-semibold">{t('dashboard:backend_server')}</span>
                 {isHealthLoading ? (
                   <span className="flex items-center gap-1.5 text-slate-400 font-semibold">
                     <Spinner size="sm" />
@@ -108,7 +108,7 @@ export default function Dashboard() {
 
               {/* PostgreSQL status */}
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-555 font-semibold flex items-center gap-1">
+                <span className="text-slate-500 font-semibold flex items-center gap-1">
                   <Database className="h-3.5 w-3.5" />
                   {t('dashboard:database')}
                 </span>
@@ -130,7 +130,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="border-t border-slate-105 dark:border-slate-800 pt-4 mt-6 text-2xs text-slate-400 font-medium">
+          <div className="border-t border-slate-200 dark:border-slate-800 pt-4 mt-6 text-2xs text-slate-400 font-medium">
             {t('dashboard:connection_info')}
           </div>
         </Card>

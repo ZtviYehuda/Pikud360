@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useUIStore } from '../stores/uiStore';
@@ -7,7 +8,23 @@ import { Sheet, SheetContent } from '../components/ui/sheet';
 
 export default function BaseLayout() {
   const { isAuthenticated } = useAuthStore();
-  const { direction, mobileSidebarOpen, setMobileSidebarOpen } = useUIStore();
+  const { direction, mobileSidebarOpen, setMobileSidebarOpen, setSidebarCollapsed } = useUIStore();
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 768px) and (max-width: 1023px)');
+    if (media.matches) {
+      setSidebarCollapsed(true);
+    }
+    const listener = (e: MediaQueryListEvent) => {
+      if (e.matches) {
+        setSidebarCollapsed(true);
+      } else {
+        setSidebarCollapsed(false);
+      }
+    };
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  }, [setSidebarCollapsed]);
 
   // Route Guard: Redirect to login if not authenticated
   if (!isAuthenticated) {

@@ -184,7 +184,7 @@ export default function Sidebar({ className, isMobile = false }: SidebarProps) {
     >
       <div className="flex h-16 items-center justify-between px-4 border-b border-slate-800">
         <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-650 text-white font-bold shadow-md shadow-brand-500/10">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-white font-bold shadow-md shadow-brand-500/10">
             <Shield className="h-5 w-5" />
           </div>
           {!sidebarCollapsed && (
@@ -192,7 +192,7 @@ export default function Sidebar({ className, isMobile = false }: SidebarProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="font-heading text-lg font-bold tracking-wider bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent"
+              className="font-heading text-lg font-bold tracking-wider text-white"
             >
               Pikud360
             </motion.span>
@@ -202,7 +202,7 @@ export default function Sidebar({ className, isMobile = false }: SidebarProps) {
         {!isMobile && (
           <button 
             onClick={toggleSidebar}
-            className="p-1.5 rounded-md hover:bg-slate-800 text-slate-450 hover:text-white transition-colors cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
           >
             <Menu className="h-4.5 w-4.5" />
           </button>
@@ -244,8 +244,8 @@ export default function Sidebar({ className, isMobile = false }: SidebarProps) {
                         className={({ isActive }) =>
                           `flex items-center gap-3 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
                             isActive 
-                              ? 'bg-slate-805 text-white' 
-                              : 'text-slate-450 hover:text-white hover:bg-slate-800/50'
+                              ? 'bg-slate-800 text-white' 
+                              : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                           }`
                         }
                       >
@@ -307,7 +307,7 @@ export default function Sidebar({ className, isMobile = false }: SidebarProps) {
                   `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                     isActive
                       ? 'bg-indigo-700 text-white shadow-md'
-                      : 'hover:bg-slate-800 hover:text-white text-slate-450'
+                      : 'hover:bg-slate-800 hover:text-white text-slate-400'
                   }`
                 }
               >
@@ -331,7 +331,7 @@ export default function Sidebar({ className, isMobile = false }: SidebarProps) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-white truncate">{user.name}</p>
-              <p className="text-2xs text-slate-555 truncate">{user.email}</p>
+              <p className="text-2xs text-slate-500 truncate">{user.email}</p>
             </div>
           </div>
         )}

@@ -16,6 +16,11 @@
   --color-brand-800: #5b21b6;
   --color-brand-900: #4c1d95;
 
+  /* Midpoint brand mappings for compatibility */
+  --color-brand-105: #ede9fe;
+  --color-brand-405: #a78bfa;
+  --color-brand-650: #7c3aed;
+
   /* Custom neutral greys */
   --color-slate-50: #f8fafc;
   --color-slate-100: #f1f5f9;
@@ -28,6 +33,16 @@
   --color-slate-800: #1e293b;
   --color-slate-900: #0f172a;
   --color-slate-950: #020617;
+
+  /* Midpoint slate mappings for compatibility */
+  --color-slate-105: #f1f5f9;
+  --color-slate-205: #e2e8f0;
+  --color-slate-450: #94a3b8;
+  --color-slate-505: #64748b;
+  --color-slate-555: #64748b;
+  --color-slate-655: #475569;
+  --color-slate-850: #1e293b;
+  --color-slate-855: #1e293b;
 }
 
 @layer base {

@@ -31,10 +31,10 @@ export default function KpiCard({ icon: Icon, title, value, percentage, loading 
     <Card className="p-5 hover:shadow-md transition-all duration-300 relative overflow-hidden group">
       <div className="absolute top-0 right-0 h-24 w-24 bg-gradient-to-bl from-brand-500/5 to-transparent rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform duration-300"></div>
       <div className="flex justify-between items-center mb-2.5">
-        <h3 className="text-xs font-semibold text-slate-450 dark:text-slate-400 tracking-wider uppercase">
+        <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-400 tracking-wider uppercase">
           {title}
         </h3>
-        <div className="p-2 rounded-xl bg-brand-50 dark:bg-brand-950/20 text-brand-550 dark:text-brand-400 group-hover:scale-105 transition-transform">
+        <div className="p-2 rounded-xl bg-brand-50 dark:bg-brand-950/20 text-brand-600 dark:text-brand-400 group-hover:scale-105 transition-transform">
           <Icon className="h-5 w-5" />
         </div>
       </div>

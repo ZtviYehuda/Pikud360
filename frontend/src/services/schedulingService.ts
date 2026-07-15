@@ -278,5 +278,10 @@ export const schedulingService = {
     // Yes, that is very helpful to show a list of shifts on settings screen! Let's write the service wrapper for it.
     const res = await apiClient.get(`/api/scheduling/shifts/${unitId}`);
     return (res as any).data;
+  },
+
+  getEmployeeSchedules: async (employeeId: string): Promise<any[]> => {
+    const res = await apiClient.get(`/api/scheduling/employee/${employeeId}`);
+    return (res as any).data;
   }
 };

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, EmailStr, field_validator
-from typing import Optional
+from typing import Optional, List
 import re
 from datetime import datetime
 
@@ -96,6 +96,26 @@ class EmployeeUpdateRequest(BaseModel):
         return v
 
 
+class OrgUnitInfo(BaseModel):
+    id: str
+    name: str
+    code: str
+
+class CommandResponsibilities(BaseModel):
+    scope_level: str
+    subordinate_units_count: int
+    employees_under_responsibility_count: int
+
+class EmployeeOrganizationInfo(BaseModel):
+    organization_path: List[str]
+    current_unit: OrgUnitInfo
+    direct_commander: Optional[str] = None
+    position: str
+    rank: str
+    status: str
+    availability: str
+    command_responsibilities: Optional[CommandResponsibilities] = None
+
 class EmployeeResponse(BaseModel):
     id: str
     org_unit_id: str
@@ -113,6 +133,7 @@ class EmployeeResponse(BaseModel):
     status: str
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    organization_info: Optional[EmployeeOrganizationInfo] = None
 
     class Config:
         from_attributes = True

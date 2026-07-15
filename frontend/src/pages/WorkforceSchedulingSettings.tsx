@@ -83,7 +83,7 @@ export default function WorkforceSchedulingSettings() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-105 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div className="flex flex-col gap-1.5">
           <h1 className="font-heading text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
             {t('scheduling:shift_settings_title')}
@@ -95,7 +95,7 @@ export default function WorkforceSchedulingSettings() {
         <div className="flex items-center gap-2">
           <label className="text-xs font-bold text-slate-400">{t('analytics:unit')}:</label>
           <select value={selectedUnitId} onChange={(e) => setSelectedUnitId(e.target.value)}
-            className="rounded-lg border border-slate-205 bg-white py-1.5 px-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-white">
+            className="rounded-lg border border-slate-200 bg-white py-1.5 px-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-white">
             {unitsList.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
           </select>
         </div>
@@ -118,7 +118,7 @@ export default function WorkforceSchedulingSettings() {
                   <label key={mode} className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
                     settings?.scheduling_mode === mode
                       ? 'border-brand-500 bg-brand-50/20 dark:bg-brand-950/10'
-                      : 'border-slate-100 hover:bg-slate-50 dark:border-slate-850 dark:hover:bg-slate-900'
+                      : 'border-slate-100 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900'
                   }`}>
                     <input type="radio" name="scheduling_mode" checked={settings?.scheduling_mode === mode}
                       onChange={() => handleModeChange(mode)} className="mt-1 h-4 w-4 text-brand-600 focus:ring-brand-500" />
@@ -130,7 +130,7 @@ export default function WorkforceSchedulingSettings() {
               </div>
             </div>
 
-            <div className="border-t border-slate-100 dark:border-slate-855 pt-4 mt-6 flex items-center gap-2 text-2xs text-slate-400">
+            <div className="border-t border-slate-100 dark:border-slate-800 pt-4 mt-6 flex items-center gap-2 text-2xs text-slate-400">
               <Sparkles className="h-4 w-4 text-amber-500" />
               <span>{t('common:save')}</span>
             </div>
