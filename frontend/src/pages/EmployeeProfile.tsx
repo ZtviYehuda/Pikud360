@@ -399,9 +399,45 @@ export default function EmployeeProfile() {
       } catch (schedErr) {
         console.error('Failed to load employee schedules, using fallback', schedErr);
         setAssignments([
-          { id: '1', schedule_date: new Date().toISOString().split('T')[0], status_id: 'AVAILABLE', status_code: 'AVAILABLE', status_name: 'AVAILABLE', notes: 'משמרת בוקר - לוגיסטיקה', shift_type_name: 'משמרת בוקר' },
-          { id: '2', schedule_date: new Date(Date.now() + 86400000).toISOString().split('T')[0], status_id: 'AVAILABLE', status_code: 'AVAILABLE', status_name: 'AVAILABLE', notes: 'כוננות ערב', shift_type_name: 'משמרת ערב' },
-          { id: '3', schedule_date: new Date(Date.now() - 86400000).toISOString().split('T')[0], status_id: 'AVAILABLE', status_code: 'AVAILABLE', status_name: 'AVAILABLE', notes: 'משמרת לילה - שמירה', shift_type_name: 'משמרת לילה' }
+          { 
+            id: '1', 
+            schedule_date: new Date().toISOString().split('T')[0], 
+            status_id: 'AVAILABLE', 
+            status_code: 'AVAILABLE', 
+            status_name: 'פעיל / כשיר', 
+            notes: 'משמרת בוקר - לוגיסטיקה', 
+            shift_type_name: 'משמרת בוקר',
+            start_time: '08:00',
+            end_time: '16:00',
+            org_unit_name: 'מדור הסייבר המבצעי',
+            commander_name: 'רס״ן דוד כהן'
+          },
+          { 
+            id: '2', 
+            schedule_date: new Date(Date.now() + 86400000).toISOString().split('T')[0], 
+            status_id: 'AVAILABLE', 
+            status_code: 'AVAILABLE', 
+            status_name: 'פעיל / כשיר', 
+            notes: 'כוננות ערב', 
+            shift_type_name: 'משמרת ערב',
+            start_time: '16:00',
+            end_time: '00:00',
+            org_unit_name: 'מדור הסייבר המבצעי',
+            commander_name: 'רס״ן דוד כהן'
+          },
+          { 
+            id: '3', 
+            schedule_date: new Date(Date.now() - 86400000).toISOString().split('T')[0], 
+            status_id: 'AVAILABLE', 
+            status_code: 'AVAILABLE', 
+            status_name: 'פעיל / כשיר', 
+            notes: 'משמרת לילה - שמירה', 
+            shift_type_name: 'משמרת לילה',
+            start_time: '00:00',
+            end_time: '08:00',
+            org_unit_name: 'מדור הסייבר המבצעי',
+            commander_name: 'רס״ן דוד כהן'
+          }
         ]);
       }
 
@@ -1098,18 +1134,73 @@ export default function EmployeeProfile() {
                   {/* Tab Contents: שיבוצים (Assignments) */}
                   {activeTab === 'assignments' && (() => {
                     const todayStr = new Date().toISOString().split('T')[0];
-                    const currentAssignment = assignments.find(a => a.schedule_date === todayStr);
                     const upcomingAssignments = assignments.filter(a => a.schedule_date > todayStr);
-                    const pastAssignments = assignments.filter(a => a.schedule_date < todayStr);
+                    const historyAssignments = assignments.filter(a => a.schedule_date <= todayStr);
 
-                    const renderAssignmentCard = (a: any, badgeText?: string) => {
-                      const dateStr = new Date(a.schedule_date).toLocaleDateString('he-IL', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
+                    if (assignments.length === 0) {
+                      return (
+                        <EmptyState 
+                          icon={Calendar} 
+                          title="אין שיבוצים רשומים" 
+                          description="לא נמצאו שיבוצי עבודה פעילים או קודמים עבור עובד זה." 
+                        />
+                      );
+                    }
+
+                    // Sort upcoming ascending
+                    upcomingAssignments.sort((a, b) => a.schedule_date.localeCompare(b.schedule_date));
+
+                    // Group upcoming by date
+                    const groupedUpcoming = (() => {
+                      const groups: { [date: string]: any[] } = {};
+                      upcomingAssignments.forEach(a => {
+                        if (!groups[a.schedule_date]) {
+                          groups[a.schedule_date] = [];
+                        }
+                        groups[a.schedule_date].push(a);
+                      });
+                      return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
+                    })();
+
+                    // Sort history descending (newest first)
+                    historyAssignments.sort((a, b) => b.schedule_date.localeCompare(a.schedule_date));
+
+                    // Group history by Today, Yesterday, This Week, Older
+                    const groupedHistory = (() => {
+                      const todayList: any[] = [];
+                      const yesterdayList: any[] = [];
+                      const thisWeekList: any[] = [];
+                      const olderList: any[] = [];
+
+                      const now = new Date();
+                      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+                      const startOfYesterday = startOfToday - 86400000;
+                      const startOfThisWeek = startOfToday - 86400000 * 7;
+
+                      historyAssignments.forEach(a => {
+                        if (!a.schedule_date) return;
+                        const time = new Date(a.schedule_date).getTime();
+
+                        if (time >= startOfToday) {
+                          todayList.push(a);
+                        } else if (time >= startOfYesterday) {
+                          yesterdayList.push(a);
+                        } else if (time >= startOfThisWeek) {
+                          thisWeekList.push(a);
+                        } else {
+                          olderList.push(a);
+                        }
                       });
 
+                      return [
+                        { key: 'today', label: 'היום', events: todayList },
+                        { key: 'yesterday', label: 'אתמול', events: yesterdayList },
+                        { key: 'thisWeek', label: 'השבוע', events: thisWeekList },
+                        { key: 'older', label: 'ישן יותר', events: olderList }
+                      ];
+                    })();
+
+                    const renderAssignmentCard = (a: any) => {
                       const statusColors: { [key: string]: "success" | "destructive" | "warning" | "info" | "secondary" | "default" } = {
                         AVAILABLE: "success",
                         SICK: "destructive",
@@ -1128,87 +1219,84 @@ export default function EmployeeProfile() {
 
                       const statusVariant = statusColors[a.status_code] || "default";
                       const statusLabel = a.status_name || statusNameMap[a.status_code] || a.status_code || "לא ידוע";
-                      const orgUnitName = a.org_unit_name || employee?.organization_info?.current_unit?.name || 'Default Operations Unit';
+                      const orgUnitName = a.org_unit_name || employee?.organization_info?.current_unit?.name || 'לא זמין';
+
+                      // Format display date for inline info
+                      const cardDateStr = new Date(a.schedule_date).toLocaleDateString('he-IL', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      });
 
                       return (
-                        <div key={a.id} className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800/80 shadow-xs transition-all duration-200 hover:border-slate-200 dark:hover:border-slate-700/80 space-y-3">
-                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-50 dark:border-slate-800/50 pb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-800 dark:text-slate-100 text-sm">
-                                {a.shift_type_name || 'משמרת'}
-                              </span>
-                              {badgeText && (
-                                <Badge variant="info" className="text-4xs px-1.5 py-0.2">
-                                  {badgeText}
-                                </Badge>
-                              )}
-                            </div>
-                            <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
-                              {dateStr}
-                            </span>
+                        <Card key={a.id} className="p-4 hover:shadow-xs transition-all border border-slate-100 dark:border-slate-800/80">
+                          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">
+                            <h4 className="text-xs font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
+                              <span className="h-2 w-2 rounded-full bg-indigo-500" />
+                              {a.shift_type_name || 'משמרת'}
+                            </h4>
+                            <Badge variant={statusVariant} className="font-extrabold text-[10px] px-2 py-0.2">
+                              {statusLabel}
+                            </Badge>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-4 text-xs">
-                            <div>
-                              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold block mb-0.5">יחידה ארגונית</span>
-                              <span className="text-slate-700 dark:text-slate-300 font-medium">
-                                {orgUnitName}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold block mb-0.5">סטטוס משמרת</span>
-                              <Badge variant={statusVariant} className="font-bold text-[10px]">
-                                {statusLabel}
-                              </Badge>
-                            </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <EmployeeInfoRow 
+                              label="תאריך" 
+                              value={cardDateStr} 
+                            />
+                            <EmployeeInfoRow 
+                              label="שעת התחלה" 
+                              value={a.start_time || 'לא זמין'} 
+                            />
+                            <EmployeeInfoRow 
+                              label="שעת סיום" 
+                              value={a.end_time || 'לא זמין'} 
+                            />
+                            <EmployeeInfoRow 
+                              label="יחידה ארגונית" 
+                              value={orgUnitName} 
+                            />
                           </div>
 
                           {a.notes && (
-                            <div className="bg-slate-50 dark:bg-slate-955/40 p-2.5 rounded-lg text-slate-500 dark:text-slate-400 text-xs border border-slate-100/50 dark:border-slate-900/30">
-                              <span className="font-bold text-[10px] text-slate-400 dark:text-slate-500 block mb-1">הערות שיבוץ</span>
-                              <p className="leading-relaxed">{a.notes}</p>
+                            <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-lg text-slate-600 dark:text-slate-350 text-[11px] border border-slate-100/60 dark:border-slate-800/40 mt-3 font-medium leading-relaxed">
+                              {a.notes}
                             </div>
                           )}
-                        </div>
+                        </Card>
                       );
                     };
 
-                    if (assignments.length === 0) {
-                      return (
-                        <EmptyState 
-                          icon={Calendar} 
-                          title="אין שיבוצים רשומים" 
-                          description="לא נמצאו שיבוצי עבודה פעילים או קודמים עבור עובד זה." 
-                        />
-                      );
-                    }
-
                     return (
-                      <div className="space-y-6">
-                        {/* Current Assignment */}
-                        <div className="space-y-2">
-                          <h4 className="font-heading text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                            <Clock className="h-4 w-4 text-amber-500" />
-                            שיבוץ נוכחי (Today)
-                          </h4>
-                          {currentAssignment ? (
-                            renderAssignmentCard(currentAssignment, "פעיל היום")
-                          ) : (
-                            <div className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/40 text-slate-400 text-center font-medium">
-                              אין שיבוץ פעיל מוגדר להיום
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Upcoming Assignments */}
-                        <div className="space-y-2">
-                          <h4 className="font-heading text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                      <div className="space-y-6 max-w-xl mx-auto text-xs">
+                        {/* Upcoming Assignments Section */}
+                        <div className="space-y-4">
+                          <h3 className="font-heading text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                             <Calendar className="h-4 w-4 text-indigo-500" />
                             שיבוצים קרובים (Upcoming)
-                          </h4>
-                          {upcomingAssignments.length > 0 ? (
-                            <div className="space-y-3">
-                              {upcomingAssignments.map(a => renderAssignmentCard(a))}
+                          </h3>
+                          {groupedUpcoming.length > 0 ? (
+                            <div className="space-y-4">
+                              {groupedUpcoming.map(([date, dateEvents]) => {
+                                const formattedDate = new Date(date).toLocaleDateString('he-IL', {
+                                  weekday: 'long',
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric'
+                                });
+                                return (
+                                  <div key={date} className="space-y-2 border-r-2 border-slate-100 dark:border-slate-800 mr-2 pr-4 py-1">
+                                    <div className="text-[11px] font-bold text-slate-450 dark:text-slate-500">
+                                      {formattedDate}
+                                    </div>
+                                    <div className="space-y-2">
+                                      {dateEvents.map(a => renderAssignmentCard(a))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           ) : (
                             <div className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/40 text-slate-400 text-center font-medium">
@@ -1217,15 +1305,28 @@ export default function EmployeeProfile() {
                           )}
                         </div>
 
-                        {/* Assignment History */}
-                        <div className="space-y-2">
-                          <h4 className="font-heading text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                            <RefreshCw className="h-4 w-4 text-slate-500" />
+                        {/* Assignment History Section */}
+                        <div className="space-y-4 border-t border-slate-100 dark:border-slate-800/60 pt-6">
+                          <h3 className="font-heading text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                            <Clock className="h-4 w-4 text-amber-500" />
                             היסטוריית שיבוצים (History)
-                          </h4>
-                          {pastAssignments.length > 0 ? (
-                            <div className="space-y-3">
-                              {pastAssignments.map(a => renderAssignmentCard(a))}
+                          </h3>
+                          {historyAssignments.length > 0 ? (
+                            <div className="space-y-4">
+                              {groupedHistory.map((group) => {
+                                const { key, label, events } = group;
+                                if (events.length === 0) return null;
+                                return (
+                                  <div key={key} className="space-y-2 border-r-2 border-slate-100 dark:border-slate-800 mr-2 pr-4 py-1">
+                                    <div className="text-[11px] font-bold text-slate-450 dark:text-slate-500">
+                                      {label}
+                                    </div>
+                                    <div className="space-y-2">
+                                      {events.map(a => renderAssignmentCard(a))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           ) : (
                             <div className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/40 text-slate-400 text-center font-medium">
