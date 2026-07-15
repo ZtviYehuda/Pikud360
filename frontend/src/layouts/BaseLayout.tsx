@@ -4,6 +4,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useUIStore } from '../stores/uiStore';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
+import GlobalSearch from '../components/GlobalSearch';
 import { Sheet, SheetContent } from '../components/ui/sheet';
 
 export default function BaseLayout() {
@@ -63,6 +64,9 @@ export default function BaseLayout() {
           </div>
         </main>
       </div>
+      
+      {/* Global Search dialog */}
+      <GlobalSearch />
     </div>
   );
 }

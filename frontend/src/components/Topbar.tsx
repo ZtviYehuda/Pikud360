@@ -13,11 +13,11 @@ import {
   DropdownMenuItem, 
   DropdownMenuSeparator 
 } from './ui/dropdown-menu';
-import { Input } from './ui/input';
+
 
 export default function Topbar() {
   const navigate = useNavigate();
-  const { theme, toggleTheme, toggleMobileSidebar } = useUIStore();
+  const { theme, toggleTheme, toggleMobileSidebar, setSearchOpen } = useUIStore();
   const { user, logout } = useAuthStore();
   const { t } = useTranslation();
 
@@ -39,22 +39,34 @@ export default function Topbar() {
           <Menu className="h-5 w-5" />
         </button>
 
-        {/* Search Input Box */}
-        <div className="relative w-64 max-w-xs hidden sm:block">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <Search className="h-4 w-4 text-slate-400" />
+        {/* Search trigger button */}
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="relative w-64 max-w-xs hidden sm:flex items-center text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-350 border border-slate-250 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs bg-slate-50/50 dark:bg-slate-900/35 transition-colors cursor-pointer justify-between"
+        >
+          <div className="flex items-center gap-2">
+            <Search className="h-3.5 w-3.5" />
+            <span>{t('employees:search_placeholder')}</span>
           </div>
-          <Input
-            type="text"
-            placeholder={t('employees:search_placeholder')}
-            className="pl-9"
-          />
-        </div>
+          <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-0.5 rounded border border-slate-200 bg-white px-1.5 font-mono text-[9px] font-bold text-slate-450 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-500">
+            <span>Ctrl</span>
+            <span>K</span>
+          </kbd>
+        </button>
       </div>
 
       {/* Action triggers group */}
       <div className="flex items-center gap-3">
         
+        {/* Mobile Search Button Trigger */}
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors cursor-pointer sm:hidden"
+          title="Search"
+        >
+          <Search className="h-4.5 w-4.5" />
+        </button>
+
         {/* Toggle Light/Dark Mode Option */}
         <button
           onClick={toggleTheme}

@@ -11,12 +11,14 @@ interface UIState {
   direction: Direction;
   sidebarCollapsed: boolean;
   mobileSidebarOpen: boolean;
+  searchOpen: boolean;
   toggleTheme: () => void;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   setMobileSidebarOpen: (open: boolean) => void;
   toggleMobileSidebar: () => void;
   setLanguage: (lang: Language) => void;
+  setSearchOpen: (open: boolean) => void;
 }
 
 export const useUIStore = create<UIState>((set, get) => {
@@ -45,6 +47,7 @@ export const useUIStore = create<UIState>((set, get) => {
     direction: initialDirection,
     sidebarCollapsed: false,
     mobileSidebarOpen: false,
+    searchOpen: false,
     
     toggleTheme: () => {
       const nextTheme = get().theme === 'light' ? 'dark' : 'light';
@@ -80,6 +83,10 @@ export const useUIStore = create<UIState>((set, get) => {
       document.documentElement.setAttribute('lang', lang);
       i18n.changeLanguage(lang);
       set({ language: lang, direction: nextDir });
+    },
+
+    setSearchOpen: (open: boolean) => {
+      set({ searchOpen: open });
     }
   };
 });

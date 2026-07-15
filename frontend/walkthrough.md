@@ -1,21 +1,26 @@
-# Employee Upcoming Assignments Walkthrough (Phase 8.6.2B)
+# Global Search Foundation Walkthrough (Phase 8.7.1)
 
 ## Phase Summary
 
-Extended the "שיבוצים" (Assignments) tab within `EmployeeProfile.tsx` to list upcoming assignments grouped by date.
+Built the foundation for a global search experience by introducing a global keyboard-shortcut listener (`Ctrl/Cmd + K`) and a matching popup dialog interface using the existing Enterprise Design System.
 
 ---
 
 ## Deliverables Summary
 
-### 1. Reusable Card Component
-- Standardized assignment card representation using the single helper function `renderAssignmentCard(a: any, showCommander?: boolean)` to prevent UI component duplication.
-- Shows Shift name, Start Time, End Time, Status Badge, and Organization Unit for all assignments (and additionally Commander for the current assignment).
+### 1. Reusable Dialog Overlay
+- Created **`GlobalSearch.tsx`** dialog component using shadcn `Dialog`, `Input`, and `EmptyState`.
+- Mounts globally inside **`BaseLayout.tsx`**, making it available on all authenticated screens.
 
-### 2. Grouping by Date
-- Sorts future schedules chronologically (ascending).
-- Groups assignments under Hebrew localized date header subtitles (e.g. `יום חמישי, 16 ביולי 2026`).
-- Visualized with a clean vertical divider track (`border-r-2 border-slate-100 dark:border-slate-800`).
+### 2. Search Box & Mobile Triggers
+- Transformed the static search input box in **`Topbar.tsx`** into a professional trigger button displaying a read-only shortcut kbd badge (`Ctrl K` / `Cmd K`).
+- Introduced a mobile action trigger button that displays on screen widths smaller than `sm` to ensure search access on responsive layouts.
+
+### 3. Shortcut Key listeners
+- Keyboard listener automatically binds `Ctrl + K` (Windows) and `Cmd + K` (macOS) keys to toggle the search overlay state.
+
+### 4. Interactive Simulation
+- Added a simulated query load phase. Typing in the search input shows a loading spinner, which then transitions to the empty state view to test responsiveness.
 
 ---
 
