@@ -77,11 +77,11 @@ const parseEventDetails = (event: any) => {
   let orgUnit = event.org_unit_name || event.to_unit_name || null;
 
   if (event.type === 'TRANSFER') {
-    title = "העברת יחידה (Transfer)";
-    description = `בקשת העברה מ-${event.from_unit_name || '—'} ל-${event.to_unit_name || '—'}. סטטוס בקשה: ${event.status}`;
+    title = "העברה בין יחידות (Transfer)";
+    description = `בקשת העברה מ-${event.from_unit_name || '—'} ל-${event.to_unit_name || '—'}. סטטוס: ${event.status === 'APPROVED' ? 'אושר' : event.status === 'PENDING' ? 'ממתין' : 'בוטל'}`;
     icon = GitFork;
     severity = event.status === 'APPROVED' ? 'success' : event.status === 'PENDING' ? 'warning' : 'default';
-  } else if (event.type === 'HISTORY_CHANGE') {
+  } else if (event.type === 'HISTORY_CHANGE' || event.type === 'AUDIT_LOG') {
     const changeType = event.change_type;
     const snapshot = event.snapshot || {};
     const before = snapshot.before || {};
@@ -95,43 +95,48 @@ const parseEventDetails = (event: any) => {
     } else if (changeType === 'STATUS_CHANGE' || after.status !== before.status) {
       const newStatus = after.status || event.status || "";
       if (newStatus === 'SICK' || newStatus.includes('חולה')) {
-        title = "דיווח מחלה (Sick Report)";
+        title = "דיווח מחלה (Sick Leave)";
         description = `דווח סטטוס מחלה/חופשת מחלה במערכת על ידי ${operator}.`;
         icon = HeartPulse;
         severity = "warning";
-      } else if (newStatus === 'LEAVE' || newStatus.includes('חופש')) {
+      } else if (newStatus === 'LEAVE' || newStatus === 'VACATION' || newStatus.includes('חופש')) {
         title = "דיווח חופשה (Leave / Vacation)";
         description = `דווח סטטוס חופשה במערכת על ידי ${operator}.`;
         icon = Coffee;
         severity = "info";
       } else {
-        title = "עדכון סטטוס נוכחות (Status Change)";
+        title = "שינוי סטטוס (Status Change)";
         description = `הסטטוס עודכן ל-${newStatus || '—'} על ידי ${operator}.`;
         icon = Clock;
         severity = "info";
       }
     } else if (changeType === 'SCHEDULE_ASSIGNMENT' || changeType.includes('SCHEDULE') || after.schedule_date) {
-      title = "שיבוץ למשמרת (Schedule Assignment)";
-      description = `שובץ שיבוץ/משמרת לתאריך ${after.schedule_date || '—'}.`;
+      title = "שיבוץ למשמרת (Shift Assignment)";
+      description = `שובץ למשמרת ${after.shift_type_name || event.notes || 'בוקר'} בתאריך ${after.schedule_date || '—'}.`;
       icon = Calendar;
       severity = "info";
+    } else if (changeType === 'SHIFT_END' || changeType === 'SHIFT_COMPLETED') {
+      title = "סיום משמרת (Shift Completed)";
+      description = `ביצע יציאה וסיום משמרת ${event.notes || '—'} בהצלחה.`;
+      icon = Check;
+      severity = "success";
+    } else if (changeType === 'DOCUMENT_ADDED' || changeType === 'DOCUMENT') {
+      title = "הוספת מסמך (Document Added)";
+      description = `התווסף מסמך חדש לתיק העובד: ${event.notes || 'אישור רפואי / טופס'}.`;
+      icon = FileText;
+      severity = "success";
     } else if (changeType === 'PERMISSION_CHANGE' || changeType.includes('PERMISSION')) {
       title = "שינוי הרשאות (Permission Change)";
-      description = "הרשאות גישה או תפקידי אבטחה של המשתמש עודכנו.";
+      description = "הרשאות גישה או תפקידי אבטחה של המשתמש עודכנו במערכת.";
       icon = ShieldCheck;
       severity = "warning";
     } else if (changeType === 'LOGIN' || changeType.includes('LOGIN')) {
-      title = "כניסה למערכת (Login)";
+      title = "התחברות למערכת (System Login)";
       description = `המשתמש התחבר למערכת בהצלחה ממפתח דיגיטלי.`;
       icon = Key;
       severity = "success";
-    } else if (changeType === 'REPORT_GENERATION' || changeType.includes('REPORT')) {
-      title = "הפקת דוח (Report Generated)";
-      description = `הופק דוח נוכחות או פלט נתונים על ידי המשתמש.`;
-      icon = FileText;
-      severity = "info";
     } else {
-      title = "עדכון פרטי שוטר (Details Updated)";
+      title = "עדכון פרטי עובד (Employee Details Updated)";
       const changesList: string[] = [];
       if (after.first_name !== before.first_name || after.last_name !== before.last_name) changesList.push("שם");
       if (after.rank !== before.rank) changesList.push("דרגה");
@@ -156,37 +161,91 @@ const getEnrichedTimeline = (dbTimeline: any[]) => {
       id: 'mock-login-1',
       type: 'HISTORY_CHANGE',
       change_type: 'LOGIN',
-      timestamp: new Date(Date.now() - 3600000 * 2).toISOString(), // 2 hours ago
-      operator: 'John Doe',
+      timestamp: new Date(Date.now() - 3600000 * 2).toISOString(), // 2 hours ago Today
+      operator: 'ג׳ון דו',
       org_unit_name: 'חוליית מו"פ',
       snapshot: {}
     },
     {
-      id: 'mock-report-1',
+      id: 'mock-status-1',
       type: 'HISTORY_CHANGE',
-      change_type: 'REPORT_GENERATION',
-      timestamp: new Date(Date.now() - 3600000 * 24).toISOString(), // 1 day ago
-      operator: 'John Doe',
+      change_type: 'STATUS_CHANGE',
+      timestamp: new Date(Date.now() - 3600000 * 4).toISOString(), // 4 hours ago Today
+      operator: 'רס״ן דוד כהן',
       org_unit_name: 'חוליית מו"פ',
-      snapshot: {}
+      snapshot: { before: { status: 'LEAVE' }, after: { status: 'AVAILABLE' } }
     },
     {
       id: 'mock-schedule-1',
       type: 'HISTORY_CHANGE',
       change_type: 'SCHEDULE_ASSIGNMENT',
-      timestamp: new Date(Date.now() - 3600000 * 48).toISOString(), // 2 days ago
-      operator: 'John Doe',
+      timestamp: new Date(Date.now() - 3600000 * 12).toISOString(), // 12 hours ago (Yesterday)
+      operator: 'רס״ן דוד כהן',
       org_unit_name: 'חוליית מו"פ',
-      snapshot: { after: { schedule_date: new Date().toISOString().split('T')[0] } }
+      snapshot: { after: { schedule_date: new Date(Date.now() - 86400000).toISOString().split('T')[0], shift_type_name: 'משמרת בוקר' } }
+    },
+    {
+      id: 'mock-shift-end-1',
+      type: 'HISTORY_CHANGE',
+      change_type: 'SHIFT_END',
+      timestamp: new Date(Date.now() - 3600000 * 18).toISOString(), // 18 hours ago (Yesterday)
+      operator: 'ג׳ון דו',
+      org_unit_name: 'חוליית מו"פ',
+      notes: 'משמרת ערב - שמירה היקפית'
+    },
+    {
+      id: 'mock-doc-1',
+      type: 'HISTORY_CHANGE',
+      change_type: 'DOCUMENT_ADDED',
+      timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 days ago (This Week)
+      operator: 'שלישות יחידה',
+      org_unit_name: 'מדור הסייבר המבצעי',
+      notes: 'צילום תעודת מזהה'
+    },
+    {
+      id: 'mock-vacation-1',
+      type: 'HISTORY_CHANGE',
+      change_type: 'STATUS_CHANGE',
+      timestamp: new Date(Date.now() - 86400000 * 4).toISOString(), // 4 days ago (This Week)
+      operator: 'רס״ן דוד כהן',
+      org_unit_name: 'מדור הסייבר המבצעי',
+      snapshot: { after: { status: 'LEAVE' } }
+    },
+    {
+      id: 'mock-sick-1',
+      type: 'HISTORY_CHANGE',
+      change_type: 'STATUS_CHANGE',
+      timestamp: new Date(Date.now() - 86400000 * 6).toISOString(), // 6 days ago (This Week)
+      operator: 'רפואה יחידתית',
+      org_unit_name: 'מדור הסייבר המבצעי',
+      snapshot: { after: { status: 'SICK' } }
+    },
+    {
+      id: 'mock-transfer-1',
+      type: 'TRANSFER',
+      timestamp: new Date(Date.now() - 86400000 * 10).toISOString(), // 10 days ago (Older)
+      from_unit_name: 'מפקדת אוגדה',
+      to_unit_name: 'חוליית מו"פ',
+      operator: 'רס״ן דוד כהן',
+      status: 'APPROVED'
     },
     {
       id: 'mock-perm-1',
       type: 'HISTORY_CHANGE',
       change_type: 'PERMISSION_CHANGE',
-      timestamp: new Date(Date.now() - 3600000 * 72).toISOString(), // 3 days ago
-      operator: 'Admin',
+      timestamp: new Date(Date.now() - 86400000 * 15).toISOString(), // 15 days ago (Older)
+      operator: 'מנהל מערכת',
       org_unit_name: 'מדור הסייבר המבצעי',
       snapshot: {}
+    },
+    {
+      id: 'mock-update-1',
+      type: 'HISTORY_CHANGE',
+      change_type: 'EMPLOYEE_UPDATED',
+      timestamp: new Date(Date.now() - 86400000 * 30).toISOString(), // 30 days ago (Older)
+      operator: 'מנהל מערכת',
+      org_unit_name: 'חוליית מו"פ',
+      snapshot: { before: { rank: 'Cpl' }, after: { rank: 'Sgt' } }
     }
   ];
 
@@ -207,47 +266,54 @@ export default function EmployeeProfile() {
   const [assignments, setAssignments] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [equipment, setEquipment] = useState<any[]>([]);
-
-  // Grouping timeline by date
+  // Grouping timeline by relative day categories
   const groupedTimeline = useMemo(() => {
-    const groups: { [dateStr: string]: any[] } = {};
+    const today: any[] = [];
+    const yesterday: any[] = [];
+    const thisWeek: any[] = [];
+    const older: any[] = [];
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const startOfYesterday = startOfToday - 86400000;
+    const startOfThisWeek = startOfToday - 86400000 * 7;
+
     timeline.forEach(event => {
       if (!event.timestamp) return;
-      const dateStr = new Date(event.timestamp).toLocaleDateString('he-IL', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-      if (!groups[dateStr]) {
-        groups[dateStr] = [];
+      const time = new Date(event.timestamp).getTime();
+
+      if (time >= startOfToday) {
+        today.push(event);
+      } else if (time >= startOfYesterday) {
+        yesterday.push(event);
+      } else if (time >= startOfThisWeek) {
+        thisWeek.push(event);
+      } else {
+        older.push(event);
       }
-      groups[dateStr].push(event);
     });
-    return Object.entries(groups);
+
+    return [
+      { key: 'today', label: 'היום', events: today },
+      { key: 'yesterday', label: 'אתמול', events: yesterday },
+      { key: 'thisWeek', label: 'השבוע', events: thisWeek },
+      { key: 'older', label: 'ישן יותר (Older)', events: older }
+    ];
   }, [timeline]);
 
-  const [collapsedDays, setCollapsedDays] = useState<{ [dateStr: string]: boolean }>({});
+  const [collapsedGroups, setCollapsedGroups] = useState<{ [key: string]: boolean }>({
+    today: false,
+    yesterday: false,
+    thisWeek: false,
+    older: true
+  });
 
-  const toggleDayCollapse = (dateStr: string) => {
-    setCollapsedDays(prev => ({
+  const toggleGroupCollapse = (key: string) => {
+    setCollapsedGroups(prev => ({
       ...prev,
-      [dateStr]: !prev[dateStr]
+      [key]: !prev[key]
     }));
   };
-
-  // Initialize collapse states when groupedTimeline changes
-  useEffect(() => {
-    if (groupedTimeline.length > 0) {
-      const initial: { [dateStr: string]: boolean } = {};
-      groupedTimeline.forEach((entry, index) => {
-        const dateStr = entry[0];
-        // Collapse all groups after the first one
-        initial[dateStr] = index > 0;
-      });
-      setCollapsedDays(initial);
-    }
-  }, [groupedTimeline]);
-
   // Permissions mapping
   const canEdit = hasPermission('employees.update') || hasPermission('manage_employees');
   const canTransfer = hasPermission('transfers.create') || hasPermission('transfers.view');
@@ -929,87 +995,89 @@ export default function EmployeeProfile() {
                           description="לא נמצאו רשומות היסטוריה עבור עובד זה." 
                         />
                       ) : (
-                        <div className="space-y-6">
-                          {groupedTimeline.map((entry) => {
-                            const dateStr = entry[0];
-                            const events = entry[1];
-                            const isCollapsed = !!collapsedDays[dateStr];
+                        <div className="space-y-6 text-xs">
+                          {groupedTimeline.map((group) => {
+                            const { key, label, events } = group;
+                            if (events.length === 0) return null;
+                            const isCollapsed = !!collapsedGroups[key];
                             return (
-                              <div key={dateStr} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800/80 p-4 transition-all duration-200">
+                              <div key={key} className="bg-slate-50/50 dark:bg-slate-900/40 rounded-xl border border-slate-100/80 dark:border-slate-800/80 p-4 transition-all duration-200">
                                 {/* Date Group Header */}
                                 <button 
-                                  onClick={() => toggleDayCollapse(dateStr)}
-                                  className="w-full flex items-center justify-between font-bold text-slate-800 dark:text-slate-200 text-sm pb-2 border-b border-slate-50 dark:border-slate-800/40 mb-4 cursor-pointer group"
+                                  onClick={() => toggleGroupCollapse(key)}
+                                  className="w-full flex items-center justify-between font-bold text-slate-800 dark:text-slate-200 text-sm pb-2 border-b border-slate-100 dark:border-slate-800/60 mb-4 cursor-pointer group"
                                 >
                                   <div className="flex items-center gap-2">
                                     <Calendar className="h-4 w-4 text-indigo-500" />
-                                    <span>{dateStr}</span>
+                                    <span>{label}</span>
                                     <Badge variant="secondary" className="text-3xs px-2 py-0">
                                       {events.length} {events.length === 1 ? 'פעילות' : 'פעילויות'}
                                     </Badge>
                                   </div>
-                                  <span className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-350 transition-colors">
+                                  <span className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-350 transition-colors text-xs font-semibold">
                                     {isCollapsed ? 'הצג ▾' : 'סגור ▴'}
                                   </span>
                                 </button>
 
                                 {/* Date Group Events */}
                                 {!isCollapsed && (
-                                  <div className="relative border-r border-slate-100 dark:border-slate-800 mr-4 pr-6 space-y-6 py-2">
+                                  <div className="relative border-r-2 border-slate-100 dark:border-slate-800 mr-3 pr-6 space-y-6 py-2">
                                     {events.map((event: any) => {
                                       const { title, description, icon: IconComponent, severity, operator, orgUnit } = parseEventDetails(event);
                                       
                                       // Severity badge variant colors mapping
                                       const badgeColors = {
-                                        default: "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-950/30 dark:text-slate-400 dark:border-slate-900/50",
-                                        success: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50",
-                                        warning: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50",
-                                        info: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/50"
+                                        default: "bg-slate-50 text-slate-700 border-slate-250 dark:bg-slate-950/30 dark:text-slate-400 dark:border-slate-900/50",
+                                        success: "bg-emerald-50 text-emerald-700 border-emerald-250 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50",
+                                        warning: "bg-amber-50 text-amber-700 border-amber-250 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50",
+                                        info: "bg-blue-50 text-blue-700 border-blue-250 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/50"
                                       };
 
                                       const iconWrapperColors = {
-                                        default: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
-                                        success: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400",
-                                        warning: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
-                                        info: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                                        default: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700",
+                                        success: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/30",
+                                        warning: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800/30",
+                                        info: "bg-blue-100 text-blue-650 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800/30"
                                       };
 
                                       return (
                                         <div key={event.id} className="relative group">
                                           {/* Timeline Bullet (Icon) */}
-                                          <div className={`absolute top-0 right-[-37px] h-[26px] w-[26px] rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 transition-all duration-300 ${iconWrapperColors[severity]}`}>
+                                          <div className={`absolute top-0.5 right-[-36px] h-6.5 w-6.5 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-xs transition-all duration-300 ${iconWrapperColors[severity as 'default' | 'success' | 'warning' | 'info'] || iconWrapperColors.default}`}>
                                             <IconComponent className="h-3.5 w-3.5" />
                                           </div>
 
                                           {/* Event Card Content */}
-                                          <div className="space-y-1.5">
+                                          <div className="space-y-1 bg-white dark:bg-slate-950/20 border border-slate-100 dark:border-slate-900/60 rounded-xl p-3.5 hover:shadow-xs transition-all">
                                             <div className="flex flex-wrap items-center justify-between gap-2">
                                               <span className="font-bold text-slate-800 dark:text-white text-sm">
                                                 {title}
                                               </span>
-                                              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-sans">
-                                                {new Date(event.timestamp).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
-                                              </span>
+                                              <div className="flex items-center gap-1.5 text-3xs text-slate-400 dark:text-slate-500 font-sans font-medium">
+                                                <span>{new Date(event.timestamp).toLocaleDateString('he-IL')}</span>
+                                                <span>·</span>
+                                                <span>{new Date(event.timestamp).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}</span>
+                                              </div>
                                             </div>
                                             
-                                            <p className="text-xs text-slate-550 dark:text-slate-400 leading-relaxed">
+                                            <p className="text-xs text-slate-600 dark:text-slate-350 leading-relaxed font-medium">
                                               {description}
                                             </p>
 
                                             {/* Extra Metadata Row */}
-                                            <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-slate-450 dark:text-slate-500 font-medium">
+                                            <div className="flex flex-wrap items-center gap-3 pt-2 text-3xs text-slate-450 dark:text-slate-500 font-bold border-t border-slate-50 dark:border-slate-900/30 mt-2">
                                               <div className="flex items-center gap-1">
-                                                <span className="font-semibold">מבצע הפעולה:</span>
-                                                <span className="bg-slate-100 dark:bg-slate-850 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300">{operator}</span>
+                                                <span className="font-medium text-slate-400">מבצע הפעולה:</span>
+                                                <span className="bg-slate-100 dark:bg-slate-850 px-1.5 py-0.5 rounded text-slate-700 dark:text-slate-300 font-semibold">{operator}</span>
                                               </div>
                                               {orgUnit && (
                                                 <div className="flex items-center gap-1">
-                                                  <span className="font-semibold">יחידה:</span>
-                                                  <span className="text-slate-600 dark:text-slate-400">{orgUnit}</span>
+                                                  <span className="font-medium text-slate-400">יחידה:</span>
+                                                  <span className="text-slate-600 dark:text-slate-300 font-semibold">{orgUnit}</span>
                                                 </div>
                                               )}
-                                              <Badge variant="secondary" className={`font-semibold py-0.5 text-3xs ${badgeColors[severity]}`}>
-                                                {severity.toUpperCase()}
+                                              <Badge variant="secondary" className={`font-extrabold py-0 px-1 rounded text-4xs uppercase tracking-wider ${badgeColors[severity as 'default' | 'success' | 'warning' | 'info'] || badgeColors.default}`}>
+                                                {severity}
                                               </Badge>
                                             </div>
                                           </div>
@@ -1025,6 +1093,7 @@ export default function EmployeeProfile() {
                       )}
                     </div>
                   )}
+
 
                   {/* Tab Contents: שיבוצים (Assignments) */}
                   {activeTab === 'assignments' && (() => {
