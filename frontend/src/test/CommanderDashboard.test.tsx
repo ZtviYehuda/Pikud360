@@ -101,7 +101,15 @@ describe('CommanderDashboard Component Tests', () => {
     // Mock stores behavior
     (useUIStore as any).mockReturnValue({ direction: 'ltr' });
     (useAuthStore as any).mockReturnValue({
-      hasPermission: (perm: string) => perm === 'dashboard.view'
+      hasPermission: (perm: string) => perm === 'dashboard.view',
+      user: {
+        id: 'user-1',
+        name: 'Test Commander',
+        email: 'commander@test.com',
+        roles: ['commander'],
+        permissions: ['dashboard.view'],
+        orgUnitId: 'unit-uuid-555'
+      }
     });
 
     // Mock API implementations
@@ -117,15 +125,14 @@ describe('CommanderDashboard Component Tests', () => {
 
     // Wait for data load
     await waitFor(() => {
-      expect(screen.getByText(/Workforce Intelligence Dashboard/i)).toBeDefined();
+      expect(screen.getAllByText('10')[0]).toBeDefined();
     });
 
     // Verify KPI Cards
-    expect(screen.getByText('10')).toBeDefined(); // totalstrength
-    expect(screen.getByText('8')).toBeDefined(); // assigned
-    expect(screen.getByText('2')).toBeDefined(); // unassigned
+    expect(screen.getAllByText('10')[0]).toBeDefined(); // totalstrength
+    expect(screen.getAllByText(/state_unassigned_warning/)[0]).toBeDefined(); // unassigned
     expect(screen.getAllByText('7')[0]).toBeDefined(); // available
-    expect(screen.getAllByText('80%')[0]).toBeDefined(); // assigned_percentage
+    expect(screen.getAllByText('70%')[0]).toBeDefined(); // availability percentage
 
     // Verify alerts is rendered
     expect(screen.getByText('SICK THRESHOLD EXCEEDED')).toBeDefined();

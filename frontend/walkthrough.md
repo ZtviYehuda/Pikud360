@@ -1,26 +1,31 @@
-# Global Search Foundation Walkthrough (Phase 8.7.1)
+# Command Palette Walkthrough (Phase 8.7.3)
 
 ## Phase Summary
 
-Built the foundation for a global search experience by introducing a global keyboard-shortcut listener (`Ctrl/Cmd + K`) and a matching popup dialog interface using the existing Enterprise Design System.
+Extended the global search dialog into a fully functional **Command Palette**, supporting searchable quick actions, keyboard arrow navigation, and responsive routes redirection.
 
 ---
 
 ## Deliverables Summary
 
-### 1. Reusable Dialog Overlay
-- Created **`GlobalSearch.tsx`** dialog component using shadcn `Dialog`, `Input`, and `EmptyState`.
-- Mounts globally inside **`BaseLayout.tsx`**, making it available on all authenticated screens.
+### 1. Actionable Quick Commands (Searchable)
+- Integrated a comprehensive commands list to trigger standard operations from the palette:
+  - **הוספת עובד חדש** (Create Employee) -> `/employees`
+  - **פתח לוח מפקד** (Open Commander Dashboard) -> `/workforce/dashboard`
+  - **פתח לוח בקרה ראשי** (Open Main Dashboard) -> `/dashboard`
+  - **פתח דוחות ואנליטיקה** (Open Reports) -> `/reports`
+  - **פתח לוח שיבוצים** (Open Scheduling) -> `/workforce/scheduling`
+  - **פתח מבנה ארגוני** (Open Organization structure) -> `/organization`
+  - **פתח התראות מערכת** (Open Notifications center) -> `/notifications`
+- All commands filter dynamically alongside queried model results.
 
-### 2. Search Box & Mobile Triggers
-- Transformed the static search input box in **`Topbar.tsx`** into a professional trigger button displaying a read-only shortcut kbd badge (`Ctrl K` / `Cmd K`).
-- Introduced a mobile action trigger button that displays on screen widths smaller than `sm` to ensure search access on responsive layouts.
+### 2. Default suggestions view (Query empty)
+- When no search query is typed, displays default recommendations listing all quick commands and main reports.
+- Integrates seamlessly with keyboard listeners to allow direct navigation using arrow keys.
 
-### 3. Shortcut Key listeners
-- Keyboard listener automatically binds `Ctrl + K` (Windows) and `Cmd + K` (macOS) keys to toggle the search overlay state.
-
-### 4. Interactive Simulation
-- Added a simulated query load phase. Typing in the search input shows a loading spinner, which then transitions to the empty state view to test responsiveness.
+### 3. Navigation Controls
+- Binds standard list indexes so that Arrow Keys cycle selections across all sections (Commands, Employees, Units, Reports, and Notifications).
+- Highlights the selected item with localized feedback ("ביצוע ↵").
 
 ---
 

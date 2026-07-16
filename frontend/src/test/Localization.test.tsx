@@ -13,7 +13,7 @@ describe('Application Localization Infrastructure Tests', () => {
   });
 
   it('translates dashboard keys into Hebrew correctly', () => {
-    expect(i18n.t('dashboard:total_strength')).toBe('סך הכל כוח אדם');
+    expect(i18n.t('dashboard:total_strength')).toBe('מצבת כוח אדם');
     expect(i18n.t('dashboard:shortage_index')).toBe('מדד מחסור');
   });
 

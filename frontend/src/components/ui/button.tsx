@@ -1,32 +1,31 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
+import { Loader2 } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer",
+  "inline-flex items-center justify-center gap-enterprise-component-gap whitespace-nowrap text-enterprise-btn-label font-weight-enterprise-bold transition-all duration-enterprise-fast ease-enterprise-standard focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-enterprise-primary disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer active:scale-[0.98] select-none",
   {
     variants: {
       variant: {
-        default:
-          "bg-brand-600 text-white shadow-xs hover:bg-brand-700 active:bg-brand-800",
-        destructive:
-          "bg-rose-600 text-white shadow-xs hover:bg-rose-700 active:bg-rose-800",
-        outline:
-          "border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900 dark:hover:text-slate-50",
-        secondary:
-          "bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-50 dark:hover:bg-slate-700",
-        ghost: "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-900 dark:hover:text-slate-50",
-        link: "text-brand-600 underline-offset-4 hover:underline dark:text-brand-400",
+        primary: "bg-enterprise-primary text-white shadow-enterprise-card hover:bg-enterprise-primary/95 active:bg-enterprise-primary/90 border border-transparent",
+        default: "bg-enterprise-primary text-white shadow-enterprise-card hover:bg-enterprise-primary/95 active:bg-enterprise-primary/90 border border-transparent",
+        secondary: "bg-enterprise-border/40 text-enterprise-neutral hover:bg-enterprise-border/70 active:bg-enterprise-border/80 border border-enterprise-border/20",
+        outline: "border border-enterprise-border bg-enterprise-surface text-enterprise-neutral hover:bg-enterprise-background",
+        ghost: "text-enterprise-neutral hover:bg-enterprise-background",
+        danger: "bg-enterprise-danger text-white shadow-enterprise-card hover:bg-enterprise-danger/95 active:bg-enterprise-danger/90 border border-transparent",
+        destructive: "bg-enterprise-danger text-white shadow-enterprise-card hover:bg-enterprise-danger/95 active:bg-enterprise-danger/90 border border-transparent",
+        link: "text-enterprise-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
+        default: "h-enterprise-btn-h-md px-4 rounded-enterprise-md text-enterprise-btn-label",
+        sm: "h-enterprise-btn-h-sm px-3 rounded-enterprise-sm text-enterprise-caption",
+        lg: "h-enterprise-btn-h-lg px-6 rounded-enterprise-lg text-enterprise-body",
+        icon: "h-enterprise-btn-h-md w-enterprise-btn-h-md rounded-enterprise-md flex items-center justify-center",
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "primary",
       size: "default",
     },
   }
@@ -34,16 +33,45 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {}
+    VariantProps<typeof buttonVariants> {
+  loading?: boolean;
+  fullWidth?: boolean;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+}
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      loading = false,
+      fullWidth = false,
+      leftIcon,
+      rightIcon,
+      disabled,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     return (
       <button
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(
+          buttonVariants({ variant, size, className }),
+          fullWidth && "w-full",
+          loading && "opacity-85 pointer-events-none"
+        )}
         ref={ref}
+        disabled={disabled || loading}
         {...props}
-      />
+      >
+        {loading && <Loader2 className="h-4 w-4 animate-spin shrink-0" />}
+        {!loading && leftIcon && <span className="inline-flex shrink-0">{leftIcon}</span>}
+        {children}
+        {!loading && rightIcon && <span className="inline-flex shrink-0">{rightIcon}</span>}
+      </button>
     );
   }
 );

@@ -14,5 +14,11 @@
   "ops_division": "חטיבת תפעול",
   "two_depts": "2 מחלקות פנימיות",
   "security_division": "חטיבת אבטחה",
-  "regional_hq": "מחוזות אזוריים"
+  "regional_hq": "מחוזות אזוריים",
+  "type_label": "סוג יחידה",
+  "type_brigade": "חטיבה",
+  "type_battalion": "גדוד",
+  "type_company": "פלוגה",
+  "type_platoon": "מחלקה",
+  "type_hq": "מפקדה"
 }

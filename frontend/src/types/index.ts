@@ -31,3 +31,10 @@ export interface SystemHealthStatus {
   database: 'connected' | 'disconnected';
   timestamp: number;
 }
+
+export interface OrganizationUnit {
+  id: string;
+  name: string;
+  code: string;
+  children?: OrganizationUnit[];
+}

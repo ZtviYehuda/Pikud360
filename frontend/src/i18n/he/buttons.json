@@ -12,5 +12,18 @@
   "back": "חזור",
   "next": "הבא",
   "filter": "סנן",
-  "add": "הוסף"
+  "add": "הוסף",
+  "back_to_parent": "חזרה ליחידת האם",
+  "quick_new_employee": "עובד חדש",
+  "quick_create_assignment": "יצירת שיבוץ",
+  "quick_transfer_employee": "העברת עובד",
+  "quick_open_reports": "פתיחת דוחות",
+  "quick_manage_units": "ניהול יחידות",
+  "quick_actions": "פעולות מהירות",
+  "quick_create_assignment_desc": "שיבץ כוח אדם לתפקידים ומשמרות",
+  "quick_transfer_employee_desc": "העבר חייל בין יחידות",
+  "quick_new_employee_desc": "רשום חייל חדש במערכת",
+  "resolve_alert": "טפל כעת",
+  "schedule_now": "שבץ כעת",
+  "assigned_success": "✓ משובץ"
 }

@@ -65,3 +65,12 @@ Primary colors should remain neutral (Slate/Slate-zinc). Use standard status col
 - Maintain accessible contrast ratios.
 - Support keyboard navigation and visible focus states.
 - Ensure correct ARIA attributes where appropriate.
+
+---
+
+## 8. One Layout System
+
+- **One Layout System. Many Screens. Zero Custom Layouts**:
+  - No page or component should define arbitrary custom margins, paddings, or spacing (such as `gap-7`, `gap-9`, `mt-11` or arbitrary absolute margins).
+  - All spacing, paddings, and alignment settings must come directly from the standardized spacing tokens of our Design System Layout System. This guarantees that all views remain visually consistent and professional.
+

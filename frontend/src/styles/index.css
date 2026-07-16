@@ -1,25 +1,65 @@
 @import "tailwindcss";
 
+:root {
+  /* Semantic Enterprise Colors - Light Mode Base */
+  --enterprise-primary: #2563eb; /* brand-600 */
+  --enterprise-secondary: #475569; /* slate-600 */
+  --enterprise-success: #10b981; /* emerald-500 */
+  --enterprise-warning: #f59e0b; /* amber-500 */
+  --enterprise-danger: #f43f5e; /* rose-500 */
+  --enterprise-info: #0ea5e9; /* sky-500 */
+  --enterprise-neutral: #334155; /* slate-700 */
+  --enterprise-background: #f8fafc; /* slate-50 */
+  --enterprise-surface: #ffffff;
+  --enterprise-border: #e2e8f0; /* slate-200 */
+}
+
+.dark {
+  /* Semantic Enterprise Colors - Dark Mode Refinements */
+  --enterprise-primary: #60a5fa; /* brand-400 */
+  --enterprise-secondary: #94a3b8; /* slate-400 */
+  --enterprise-success: #34d399; /* emerald-400 */
+  --enterprise-warning: #fbbf24; /* amber-400 */
+  --enterprise-danger: #fb7185; /* rose-400 */
+  --enterprise-info: #38bdf8; /* sky-400 */
+  --enterprise-neutral: #cbd5e1; /* slate-300 */
+  --enterprise-background: #020617; /* slate-950 */
+  --enterprise-surface: #0f172a; /* slate-900 */
+  --enterprise-border: #1e293b; /* slate-800 */
+}
+
 @theme {
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-heading: 'Outfit', system-ui, -apple-system, sans-serif;
 
-  /* Custom enterprise brand colors (vibrant, modern blue-violet) */
-  --color-brand-50: #f5f3ff;
-  --color-brand-100: #ede9fe;
-  --color-brand-200: #ddd6fe;
-  --color-brand-300: #c4b5fd;
-  --color-brand-400: #a78bfa;
-  --color-brand-500: #8b5cf6;
-  --color-brand-600: #7c3aed;
-  --color-brand-700: #6d28d9;
-  --color-brand-800: #5b21b6;
-  --color-brand-900: #4c1d95;
+  /* Enterprise Semantic Colors mapping */
+  --color-enterprise-primary: var(--enterprise-primary);
+  --color-enterprise-secondary: var(--enterprise-secondary);
+  --color-enterprise-success: var(--enterprise-success);
+  --color-enterprise-warning: var(--enterprise-warning);
+  --color-enterprise-danger: var(--enterprise-danger);
+  --color-enterprise-info: var(--enterprise-info);
+  --color-enterprise-neutral: var(--enterprise-neutral);
+  --color-enterprise-background: var(--enterprise-background);
+  --color-enterprise-surface: var(--enterprise-surface);
+  --color-enterprise-border: var(--enterprise-border);
+
+  /* Custom enterprise brand colors (clean enterprise blue accents) */
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
 
   /* Midpoint brand mappings for compatibility */
-  --color-brand-105: #ede9fe;
-  --color-brand-405: #a78bfa;
-  --color-brand-650: #7c3aed;
+  --color-brand-105: #dbeafe;
+  --color-brand-405: #60a5fa;
+  --color-brand-650: #2563eb;
 
   /* Custom neutral greys */
   --color-slate-50: #f8fafc;
@@ -43,6 +83,80 @@
   --color-slate-655: #475569;
   --color-slate-850: #1e293b;
   --color-slate-855: #1e293b;
+
+  /* Typography Font Weights */
+  --font-weight-enterprise-bold: 700;
+  --font-weight-enterprise-medium: 500;
+  --font-weight-enterprise-normal: 400;
+
+  /* Typography Sizes */
+  --text-enterprise-display: 2.25rem;
+  --text-enterprise-page-title: 1.25rem;
+  --text-enterprise-section-title: 1.125rem;
+  --text-enterprise-card-title: 0.875rem;
+  --text-enterprise-table-header: 0.75rem;
+  --text-enterprise-btn-label: 0.875rem;
+  --text-enterprise-body: 1rem;
+  --text-enterprise-body-sm: 0.875rem;
+  --text-enterprise-caption: 0.75rem;
+  --text-enterprise-overline: 0.625rem;
+
+  /* Spacing Scale (prefixed with --spacing-* for auto spacing/gap/pad utility generation) */
+  --spacing-enterprise-page-pad: 1rem;
+  --spacing-enterprise-card-pad: 1rem;
+  --spacing-enterprise-section-gap: 1.5rem;
+  --spacing-enterprise-grid-gap: 1rem;
+  --spacing-enterprise-component-gap: 0.75rem;
+
+  /* Component Sizes (as spacing tokens to auto-generate height, width, size classes) */
+  --spacing-enterprise-btn-h-sm: 2.25rem;
+  --spacing-enterprise-btn-h-md: 2.75rem; /* 44px touch target */
+  --spacing-enterprise-btn-h-lg: 3.25rem;
+
+  --spacing-enterprise-input-h-sm: 2.25rem;
+  --spacing-enterprise-input-h-md: 2.75rem; /* 44px touch target */
+  --spacing-enterprise-input-h-lg: 3.25rem;
+
+  --spacing-enterprise-icon-sm: 0.875rem;
+  --spacing-enterprise-icon-md: 1.125rem;
+  --spacing-enterprise-icon-lg: 1.5rem;
+
+  --spacing-enterprise-avatar-sm: 2rem;
+  --spacing-enterprise-avatar-md: 2.5rem;
+  --spacing-enterprise-avatar-lg: 3rem;
+
+  --spacing-enterprise-badge-h-sm: 1.25rem;
+  --spacing-enterprise-badge-h-md: 1.5rem;
+
+  /* Border Radius */
+  --radius-enterprise-sm: 0.375rem;
+  --radius-enterprise-md: 0.625rem;
+  --radius-enterprise-lg: 0.875rem;
+  --radius-enterprise-xl: 1.25rem;
+
+  /* Shadows */
+  --shadow-enterprise-flat: 0 0 0 1px var(--enterprise-border);
+  --shadow-enterprise-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  --shadow-enterprise-floating: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-enterprise-drawer: -4px 0 16px rgba(0, 0, 0, 0.08);
+  --shadow-enterprise-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* Motion */
+  --duration-enterprise-fast: 150ms;
+  --duration-enterprise-normal: 250ms;
+  --duration-enterprise-slow: 350ms;
+
+  --ease-enterprise-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-enterprise-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --ease-enterprise-accelerate: cubic-bezier(0.4, 0, 1, 1);
+
+  /* Z-Index */
+  --z-index-enterprise-tooltip: 1060;
+  --z-index-enterprise-toast: 1050;
+  --z-index-enterprise-modal: 1040;
+  --z-index-enterprise-drawer: 1030;
+  --z-index-enterprise-dropdown: 1020;
+  --z-index-enterprise-sticky: 1000;
 }
 
 @layer base {
