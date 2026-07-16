@@ -3,37 +3,78 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-2xs font-semibold transition-colors focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center gap-1 border font-weight-enterprise-bold select-none whitespace-nowrap rounded-full transition-colors",
   {
     variants: {
       variant: {
-        default:
-          "border-transparent bg-slate-900 text-slate-50 dark:bg-slate-50 dark:text-slate-900",
-        secondary:
-          "border-transparent bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-50",
-        destructive:
-          "border-transparent bg-rose-100 text-rose-800 dark:bg-rose-950/30 dark:text-rose-400 border-rose-200/40 dark:border-rose-900/30",
-        success:
-          "border-transparent bg-emerald-100 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200/40 dark:border-emerald-900/30",
-        warning:
-          "border-transparent bg-amber-100 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200/40 dark:border-amber-900/30",
-        info:
-          "border-transparent bg-blue-105 text-blue-800 dark:bg-blue-955/30 dark:text-blue-400 border-blue-200/40 dark:border-blue-900/30",
+        success: "bg-enterprise-success/15 border-enterprise-success/30 text-enterprise-success",
+        warning: "bg-enterprise-warning/15 border-enterprise-warning/30 text-enterprise-warning",
+        danger: "bg-enterprise-danger/15 border-enterprise-danger/30 text-enterprise-danger",
+        info: "bg-enterprise-info/15 border-enterprise-info/30 text-enterprise-info",
+        neutral: "bg-enterprise-border/50 border-enterprise-border/80 text-enterprise-neutral",
+        outline: "border-enterprise-border bg-transparent text-enterprise-neutral",
+        // Backward compatibility mappings
+        default: "bg-enterprise-border/50 border-enterprise-border/80 text-enterprise-neutral",
+        secondary: "bg-enterprise-info/15 border-enterprise-info/30 text-enterprise-info",
+        destructive: "bg-enterprise-danger/15 border-enterprise-danger/30 text-enterprise-danger",
       },
+      size: {
+        sm: "px-1.5 py-0.5 text-enterprise-overline [&_svg]:size-2.5",
+        md: "px-2.5 py-0.5 text-enterprise-caption [&_svg]:size-3.5",
+      }
     },
     defaultVariants: {
-      variant: "default",
-    },
+      variant: "neutral",
+      size: "md"
+    }
   }
 );
 
+const dotColors: Record<string, string> = {
+  success: "bg-enterprise-success",
+  warning: "bg-enterprise-warning",
+  danger: "bg-enterprise-danger",
+  info: "bg-enterprise-info",
+  neutral: "bg-enterprise-neutral",
+  outline: "bg-enterprise-neutral",
+  default: "bg-enterprise-neutral",
+  secondary: "bg-enterprise-info",
+  destructive: "bg-enterprise-danger"
+};
+
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
+    VariantProps<typeof badgeVariants> {
+  icon?: React.ReactNode;
+  showDot?: boolean;
+}
 
-function Badge({ className, variant, ...props }: BadgeProps) {
+function Badge({
+  className,
+  variant = "neutral",
+  size = "md",
+  icon,
+  showDot = false,
+  children,
+  ...props
+}: BadgeProps) {
+  const dotColor = dotColors[variant || "neutral"] || "bg-enterprise-neutral";
+
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+    <div className={cn(badgeVariants({ variant, size }), className)} {...props}>
+      {showDot && (
+        <span
+          className={cn("inline-block rounded-full w-1.5 h-1.5 shrink-0", dotColor)}
+          aria-hidden="true"
+        />
+      )}
+      {icon && (
+        <span className="inline-flex shrink-0" aria-hidden="true">
+          {icon}
+        </span>
+      )}
+      {children}
+    </div>
   );
 }
 
