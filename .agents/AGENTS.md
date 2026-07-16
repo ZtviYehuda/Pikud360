@@ -74,3 +74,70 @@ Primary colors should remain neutral (Slate/Slate-zinc). Use standard status col
   - No page or component should define arbitrary custom margins, paddings, or spacing (such as `gap-7`, `gap-9`, `mt-11` or arbitrary absolute margins).
   - All spacing, paddings, and alignment settings must come directly from the standardized spacing tokens of our Design System Layout System. This guarantees that all views remain visually consistent and professional.
 
+---
+
+## 9. UI Component Standards
+
+Every new UI component must follow this exact architectural structure:
+
+Component
+│
+├── Types
+├── CVA Variants
+├── Accessibility (A11y)
+├── Composition
+├── Documentation
+└── Tests (where applicable)
+
+Requirements:
+1. **Valid TypeScript**: Strong typing for all component props, variant interfaces, and event handlers.
+2. **CVA Variants**: Styling configurations defined strictly via `class-variance-authority` (CVA) using design tokens. No inline hardcoded Tailwind styling exceptions.
+3. **Accessibility**: All icons, status indicators, and decorative elements must have `aria-hidden="true"`. Components must never rely solely on color to communicate state. Proper ARIA tags must be implemented for screen-readers.
+4. **Composition**: Components are stateless, generic, and composed of reusable parts (e.g. dots, icons, and children wrappers). Avoid embedding business logic or domain-specific assumptions directly inside UI components.
+5. **Documentation**: Every new component family must be documented in a separate file under the `docs/design-system/` folder.
+6. **Tests**: Covered with relevant unit tests to prevent visual or functional regressions.
+
+---
+
+## 10. Screen State Completeness
+
+Every page or screen component in the application must always support and be able to render four visual states cleanly:
+- **Loading State**: Displays loading skeletons matching the page structure while data is loading.
+- **Empty State**: Displays clear instructions and placeholder content when no records/items are found.
+- **Error State**: Displays helpful error notifications and a retry trigger if loading failed.
+- **Success State**: Displays standard dashboard grids, lists, tables, and metrics when data loaded successfully.
+
+---
+
+## 11. Global UX Workflows
+
+### The One-Minute Rule
+**Any action that takes less than one minute to complete must open in a Drawer. Only complex or multi-step processes that require their own dedicated context receive a full page.**
+
+This rule preserves fast, focused mobile interaction without burdening the user with unnecessary page transitions.
+
+### Decision Guide
+
+| Pattern | When to use |
+|---|---|
+| **Drawer** | Single-step actions, quick edits, inline operations, contextual detail views |
+| **Full Page** | Multi-step wizards, reports, dashboards, administration, analytics |
+
+### Examples:
+- **✓ Drawers (In-Context sheets)**:
+  - שיבוץ עובד (Assign Personnel)
+  - עדכון נוכחות (Update Attendance)
+  - העברת עובד (Transfer Employee)
+  - צפייה בפרטי עובד (View Employee Details)
+  - טיפול בהתראה (Resolve Alert)
+  - עריכת רשומה (Edit Record)
+- **✗ Full Page Navigation**:
+  - דוחות (Reports Center)
+  - אנליטיקה (Analytics Dashboard)
+  - ניהול מערכת (System Administration)
+  - הגדרות (Settings)
+  - אשף רב-שלבי (Multi-step Wizard)
+
+
+
+

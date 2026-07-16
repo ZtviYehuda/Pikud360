@@ -10,6 +10,8 @@ Welcome to the Pikud360 Enterprise Design System documentation repository. This 
 - **[cards.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/cards.md)**: Surfaces and card variant styles.
 - **[buttons.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/buttons.md)**: Button variant props and loading state APIs.
 - **[badges.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/badges.md)**: Accessible status badges and composition patterns.
+- **[states.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/states.md)**: Standardized components for Empty, Loading, and Error page states.
+- **[tables.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/tables.md)**: Unified responsive data tables and control toolbars.
 - **[accessibility.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/accessibility.md)**: Accessible guidelines, contrast principles, and screen reader markup details.
 
 ---
