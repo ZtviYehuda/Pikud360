@@ -1,31 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  /* Semantic Enterprise Colors - Light Mode Base */
-  --enterprise-primary: #2563eb; /* brand-600 */
-  --enterprise-secondary: #475569; /* slate-600 */
-  --enterprise-success: #10b981; /* emerald-500 */
-  --enterprise-warning: #f59e0b; /* amber-500 */
-  --enterprise-danger: #f43f5e; /* rose-500 */
-  --enterprise-info: #0ea5e9; /* sky-500 */
-  --enterprise-neutral: #334155; /* slate-700 */
-  --enterprise-background: #f8fafc; /* slate-50 */
-  --enterprise-surface: #ffffff;
-  --enterprise-border: #e2e8f0; /* slate-200 */
+  /* Semantic Enterprise Colors - Redesigned Light Theme Base (Atlassian / Linear inspired) */
+  --enterprise-primary: #0052cc; /* Highly professional enterprise blue */
+  --enterprise-secondary: #42526e; /* Soft slate grey */
+  --enterprise-success: #36b37e; /* Vibrant teal green */
+  --enterprise-warning: #ffab00; /* Warm amber yellow */
+  --enterprise-danger: #ff5630; /* Crisp orange red */
+  --enterprise-info: #00b8d9; /* Deep cyan info */
+  --enterprise-neutral: #172b4d; /* High-contrast slate text */
+  --enterprise-background: #f4f5f7; /* Soft Atlassian background grey */
+  --enterprise-surface: #ffffff; /* Crisp white card surface */
+  --enterprise-border: #dfe1e6; /* Soft border separator */
 }
 
 .dark {
-  /* Semantic Enterprise Colors - Dark Mode Refinements */
-  --enterprise-primary: #60a5fa; /* brand-400 */
-  --enterprise-secondary: #94a3b8; /* slate-400 */
-  --enterprise-success: #34d399; /* emerald-400 */
-  --enterprise-warning: #fbbf24; /* amber-400 */
-  --enterprise-danger: #fb7185; /* rose-400 */
-  --enterprise-info: #38bdf8; /* sky-400 */
-  --enterprise-neutral: #cbd5e1; /* slate-300 */
-  --enterprise-background: #020617; /* slate-950 */
-  --enterprise-surface: #0f172a; /* slate-900 */
-  --enterprise-border: #1e293b; /* slate-800 */
+  /* Semantic Enterprise Colors - Redesigned Dark Theme Base (Linear / Obsidian inspired) */
+  --enterprise-primary: #3b82f6; /* Premium command blue */
+  --enterprise-secondary: #707f94; /* Slate label gray */
+  --enterprise-success: #10b981; /* Teal green */
+  --enterprise-warning: #f59e0b; /* Amber orange */
+  --enterprise-danger: #ef4444; /* Vibrant rose red */
+  --enterprise-info: #06b6d4; /* Cyan info */
+  --enterprise-neutral: #cbd5e1; /* Off-white label text */
+  --enterprise-background: #0a0d16; /* Deep obsidian navy (not pure black) */
+  --enterprise-surface: #121826; /* Premium card slate surface */
+  --enterprise-border: #1f293d; /* Distinct separator border */
 }
 
 @theme {
@@ -136,19 +136,92 @@
 
   /* Shadows */
   --shadow-enterprise-flat: 0 0 0 1px var(--enterprise-border);
-  --shadow-enterprise-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
-  --shadow-enterprise-floating: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-  --shadow-enterprise-drawer: -4px 0 16px rgba(0, 0, 0, 0.08);
-  --shadow-enterprise-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-enterprise-card: 0 1px 3px 0 rgba(9, 30, 66, 0.06), 0 1px 2px 0 rgba(9, 30, 66, 0.04);
+  --shadow-enterprise-floating: 0 4px 12px -1px rgba(9, 30, 66, 0.1), 0 2px 6px -1px rgba(9, 30, 66, 0.06);
+  --shadow-enterprise-drawer: -4px 0 24px rgba(9, 30, 66, 0.08);
+  --shadow-enterprise-modal: 0 20px 32px -5px rgba(9, 30, 66, 0.12), 0 10px 16px -5px rgba(9, 30, 66, 0.08);
 
-  /* Motion */
+  /* Motion Scale & Distance Tokens */
+  --scale-enterprise-hover: 1.01;
+  --scale-enterprise-active: 0.98;
+
+  --spacing-enterprise-slide-sm: 0.25rem; /* 4px */
+  --spacing-enterprise-slide-md: 0.5rem;  /* 8px */
+  --spacing-enterprise-slide-lg: 1rem;    /* 16px */
+
+  /* Motion Duration Tokens */
+  --duration-enterprise-instant: 0ms;
   --duration-enterprise-fast: 150ms;
   --duration-enterprise-normal: 250ms;
   --duration-enterprise-slow: 350ms;
 
+  /* Motion Easing Tokens */
   --ease-enterprise-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-enterprise-decelerate: cubic-bezier(0, 0, 0.2, 1);
   --ease-enterprise-accelerate: cubic-bezier(0.4, 0, 1, 1);
+
+  /* Animation Keyframes */
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+      transform: translateY(var(--spacing-enterprise-slide-md));
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes success-pop {
+    0% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    50% {
+      transform: scale(1.02);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes shake-error {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    20%, 60% {
+      transform: translateX(-4px);
+    }
+    40%, 80% {
+      transform: translateX(4px);
+    }
+  }
+
+  @keyframes pulse-subtle {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.55;
+    }
+  }
+
+  @keyframes spin-linear {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Semantic Animation Tokens */
+  --animate-page-enter: page-enter var(--duration-enterprise-normal) var(--ease-enterprise-decelerate) forwards;
+  --animate-skeleton-pulse: pulse-subtle 2s var(--ease-enterprise-standard) infinite;
+  --animate-loading-spin: spin-linear 0.8s linear infinite;
+  --animate-feedback-success: success-pop var(--duration-enterprise-normal) var(--ease-enterprise-decelerate) forwards;
+  --animate-feedback-error: shake-error 0.4s var(--ease-enterprise-standard);
 
   /* Z-Index */
   --z-index-enterprise-tooltip: 1060;
@@ -166,7 +239,7 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-800 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-200;
+    @apply bg-enterprise-background text-slate-800 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-200;
   }
 }
 
@@ -188,4 +261,48 @@
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-slate-400 dark:bg-slate-600;
+}
+
+/* ==========================================
+   Semantic Motion & Animation System Utilities
+   ========================================== */
+
+.motion-page-enter {
+  animation: page-enter var(--duration-enterprise-normal) var(--ease-enterprise-decelerate) forwards;
+}
+
+.motion-list-enter {
+  animation: page-enter var(--duration-enterprise-fast) var(--ease-enterprise-decelerate) forwards;
+}
+
+.motion-emphasis-hover {
+  transition: transform var(--duration-enterprise-fast) var(--ease-enterprise-standard), 
+              box-shadow var(--duration-enterprise-fast) var(--ease-enterprise-standard);
+}
+
+.motion-emphasis-hover:hover {
+  transform: scale(var(--scale-enterprise-hover));
+}
+
+.motion-feedback-success {
+  animation: success-pop var(--duration-enterprise-normal) var(--ease-enterprise-decelerate) forwards;
+}
+
+.motion-feedback-error {
+  animation: shake-error 0.4s var(--ease-enterprise-standard);
+}
+
+/* Base level global accessibility overrides for prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: scroll !important;
+    scroll-behavior: auto !important;
+    transition-delay: 0s !important;
+    transition-duration: 0s !important;
+  }
 }

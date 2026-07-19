@@ -13,6 +13,15 @@ Welcome to the Pikud360 Enterprise Design System documentation repository. This 
 - **[states.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/states.md)**: Standardized components for Empty, Loading, and Error page states.
 - **[tables.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/tables.md)**: Unified responsive data tables and control toolbars.
 - **[drawers.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/drawers.md)**: Adaptive Drawer system — bottom sheet on mobile, right-side panel on desktop.
+- **[forms.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/forms.md)**: Reusable form layout primitives — sections, rows, field groups, labels, hints, errors.
+- **[toolbars.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/toolbars.md)**: Standard interaction area components for filtering and searching.
+- **[dialogs.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/dialogs.md)**: Enterprise Modal & Dialog wrappers, size presets, and layout helpers.
+- **[command-palette.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/command-palette.md)**: Extensible command palette registry and global shortcut hooks.
+- **[motion.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/motion.md)**: Semantic motion tokens, animation hierarchies, and reduced motion guidelines.
+- **[application-shell.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/application-shell.md)**: Unified responsive application layout shell and switcher panels.
+- **[commander-dashboard-architecture.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/dashboard/commander-dashboard-architecture.md)**: Operational principles, widget profile inventory, and KPI definitions.
+- **[commander-dashboard-wireframes.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/dashboard/commander-dashboard-wireframes.md)**: Text-based layout wireframe designs for Desktop, Tablet, and Mobile.
+- **[commander-dashboard-review.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/dashboard/commander-dashboard-review.md)**: Architectural design reviews, open questions, and tradeoffs.
 - **[accessibility.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/accessibility.md)**: Accessible guidelines, contrast principles, and screen reader markup details.
 
 ---

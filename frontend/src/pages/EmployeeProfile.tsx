@@ -6,8 +6,9 @@ import {
   ArrowRight, ArrowLeft, Calendar, Clock, GitFork, Edit, 
   FileText, Check, AlertCircle, Info, RefreshCw,
   HeartPulse, Bell, ClipboardList, ShieldCheck, Coffee, Package,
-  User, Mail, Network, Key
+  User, Mail, Network, Key, BookOpen
 } from 'lucide-react';
+import { useUIStore } from '../stores/uiStore';
 import KpiCard from '../components/dashboard/KpiCard';
 import { EmptyState } from '../components/ui/empty-state';
 import EmployeeInfoRow from '../components/ui/EmployeeInfoRow';
@@ -259,12 +260,13 @@ export default function EmployeeProfile() {
   const navigate = useNavigate();
   const { hasPermission } = useAuthStore();
   const { t } = useTranslation();
+  const { direction } = useUIStore();
+  const isRtl = direction === 'rtl';
   
   // Tab control state
-  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'assignments' | 'documents' | 'equipment' | 'alerts' | 'permissions'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'assignments' | 'documents' | 'equipment' | 'alerts' | 'permissions' | 'notes'>('details');
   const [timeline, setTimeline] = useState<any[]>([]);
   const [assignments, setAssignments] = useState<any[]>([]);
-  const [documents, setDocuments] = useState<any[]>([]);
   const [equipment, setEquipment] = useState<any[]>([]);
   // Grouping timeline by relative day categories
   const groupedTimeline = useMemo(() => {
@@ -441,15 +443,7 @@ export default function EmployeeProfile() {
         ]);
       }
 
-      try {
-        // Placeholder for future API integration:
-        // const docs = await apiClient.get(`/api/workforce/employees/${id}/documents`);
-        // setDocuments(docs.data);
-        setDocuments([]);
-      } catch (docErr) {
-        console.error('Failed to load employee documents', docErr);
-        setDocuments([]);
-      }
+      // Documents checklist is statically rendered under tab for high-density overview
 
       try {
         // Placeholder for future API integration:
@@ -518,7 +512,6 @@ export default function EmployeeProfile() {
         { id: '3', schedule_date: new Date(Date.now() - 86400000).toISOString().split('T')[0], status_id: 'AVAILABLE', status_code: 'AVAILABLE', status_name: 'AVAILABLE', notes: 'משמרת לילה - שמירה', shift_type_name: 'משמרת לילה' }
       ]);
 
-      setDocuments([]);
       setEquipment([]);
     } finally {
       setLoading(false);
@@ -850,13 +843,14 @@ export default function EmployeeProfile() {
                 <Card className="p-6">
                   <div className="flex border-b border-slate-100 dark:border-slate-800 pb-3 gap-4 mb-6 overflow-x-auto scrollbar-none whitespace-nowrap">
                     {[
-                      { key: 'details', label: 'פרטים' },
-                      { key: 'history', label: 'היסטוריה' },
-                      { key: 'assignments', label: 'שיבוצים' },
-                      { key: 'documents', label: 'מסמכים' },
-                      { key: 'equipment', label: 'ציוד' },
-                      { key: 'alerts', label: 'התראות' },
-                      { key: 'permissions', label: 'הרשאות' }
+                      { key: 'details', label: isRtl ? 'פרטים אישיים' : 'Personal Details' },
+                      { key: 'assignments', label: isRtl ? 'נוכחות ומשמרות' : 'Attendance & Shifts' },
+                      { key: 'documents', label: isRtl ? 'מסמכים והסמכות' : 'Documents & Training' },
+                      { key: 'notes', label: isRtl ? 'הערות פנימיות' : 'Internal Notes' },
+                      { key: 'history', label: isRtl ? 'ציר זמן ואודיט' : 'Timeline & Audit' },
+                      { key: 'permissions', label: isRtl ? 'הרשאות ואבטחה' : 'Security & Permissions' },
+                      { key: 'equipment', label: isRtl ? 'ציוד חתום' : 'Signed Equipment' },
+                      { key: 'alerts', label: isRtl ? 'התראות כשירות' : 'Availability Alerts' }
                     ].map((tab) => (
                       <button
                         key={tab.key}
@@ -864,7 +858,7 @@ export default function EmployeeProfile() {
                         className={`text-xs font-bold pb-1.5 border-b-2 transition-all cursor-pointer ${
                           activeTab === tab.key
                             ? 'border-brand-500 text-brand-600 dark:text-brand-400'
-                            : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-white'
+                            : 'border-transparent text-slate-450 hover:text-slate-700 dark:hover:text-white'
                         }`}
                       >
                         {tab.label}
@@ -1338,34 +1332,65 @@ export default function EmployeeProfile() {
                     );
                   })()}
 
-                  {/* Tab Contents: מסמכים (Documents) */}
+                  {/* Tab Contents: מסמכים והסמכות (Documents & Training) */}
                   {activeTab === 'documents' && (
-                    <div className="space-y-4">
-                      {documents.length === 0 ? (
-                        <EmptyState 
-                          icon={FileText} 
-                          title="אין מסמכים" 
-                          description="לא נמצאו מסמכים המקושרים לתיק עובד זה." 
-                        />
-                      ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                          {documents.map((doc) => (
-                            <Card key={doc.id} className="p-4 flex flex-col justify-between hover:shadow-xs transition-all">
-                              <div className="flex items-start justify-between">
-                                <div className="space-y-1">
+                    <div className="space-y-6 text-xs">
+                      {/* Document List */}
+                      <div className="space-y-3">
+                        <h4 className="font-heading text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                          <FileText className="h-4 w-4 text-indigo-500" />
+                          <span>מסמכים חתומים בתיק (Employee Files)</span>
+                        </h4>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {[
+                            { name: 'צילום תעודת זהות + ספח', size: '2.4 MB', type: 'PDF', date: '10/01/2026' },
+                            { name: 'אישור בדיקה ביטחונית בתוקף', size: '1.8 MB', type: 'PDF', date: '14/03/2026' },
+                            { name: 'חוזה העסקה חתום', size: '4.2 MB', type: 'DOCX', date: '01/01/2026' }
+                          ].map((doc, idx) => (
+                            <Card key={idx} className="p-3.5 flex flex-col justify-between hover:shadow-xs transition-all border border-slate-100 dark:border-slate-800">
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
                                   <p className="font-bold text-slate-800 dark:text-white truncate max-w-[200px]">{doc.name}</p>
-                                  <p className="text-slate-400 text-3xs font-medium">{doc.size} · {new Date(doc.uploaded_at).toLocaleDateString('he-IL')}</p>
+                                  <p className="text-slate-400 text-[10px] font-semibold mt-1">{doc.size} · {doc.date}</p>
                                 </div>
-                                <Badge variant="secondary" className="uppercase text-3xs font-bold">{doc.file_type}</Badge>
+                                <Badge variant="secondary" className="uppercase text-[9px] font-bold shrink-0">{doc.type}</Badge>
                               </div>
-                              <div className="flex gap-2 mt-4">
-                                <Button variant="outline" size="sm" className="w-full text-2xs py-1 h-auto font-semibold">צפייה</Button>
-                                <Button variant="outline" size="sm" className="w-full text-2xs py-1 h-auto font-semibold">הורדה</Button>
+                              <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                                <Button variant="outline" size="sm" className="w-full text-[10px] py-1 h-8 font-extrabold cursor-pointer">צפייה</Button>
+                                <Button variant="outline" size="sm" className="w-full text-[10px] py-1 h-8 font-extrabold cursor-pointer">הורדה</Button>
                               </div>
                             </Card>
                           ))}
                         </div>
-                      )}
+                      </div>
+
+                      {/* Training / Licenses Checklist */}
+                      <div className="space-y-3 border-t border-slate-150 dark:border-slate-800/60 pt-5">
+                        <h4 className="font-heading text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                          <BookOpen className="h-4 w-4 text-emerald-500" />
+                          <span>הסמכות ורישיונות (Qualifications & Training)</span>
+                        </h4>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {[
+                            { name: 'רענון עזרה ראשונה / חובשים', status: 'בתוקף', exp: '12/12/2027', code: 'MED_REFRESH', variant: 'success' as const },
+                            { name: 'הסמכת מפעיל מערכת פיקוד 360', status: 'בתוקף', exp: '01/06/2028', code: 'SYS_OPERATOR', variant: 'success' as const },
+                            { name: 'מטווח ירי שנתי', status: 'פג תוקף', exp: '15/05/2026', code: 'FIREARMS_QUAL', variant: 'danger' as const }
+                          ].map((cert, idx) => (
+                            <Card key={idx} className="p-3.5 space-y-3 border border-slate-100 dark:border-slate-800">
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-slate-800 dark:text-white text-xs">{cert.name}</span>
+                                <Badge variant={cert.variant} className="text-[9px] font-extrabold">{cert.status}</Badge>
+                              </div>
+                              <div className="flex justify-between text-[11px] font-semibold text-slate-500">
+                                <span>תוקף: {cert.exp}</span>
+                                <span className="font-mono text-[9px] bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-slate-400">{cert.code}</span>
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -1411,6 +1436,68 @@ export default function EmployeeProfile() {
                       description="אין התראות כשירות או פניות פתוחות עבור עובד זה." 
                     />
                   )}
+
+                  {/* Tab Contents: הערות פנימיות (Notes & Remarks) */}
+                  {activeTab === 'notes' && (() => {
+                    const [localNotes, setLocalNotes] = useState([
+                      { id: 1, author: 'רס״ן דנה אברהם', text: 'עובד מצטיין, מגלה יוזמה רבה במשימות היחידה.', date: '10/06/2026', tags: ['מצטיין', 'חיובי'] },
+                      { id: 2, author: 'אל״ם יוסי כהן', text: 'יש לתאם עימו מועד לריענון נהיגה ביטחונית בשבוע הבא.', date: '14/07/2026', tags: ['משימה'] }
+                    ]);
+                    const [newNoteText, setNewNoteText] = useState('');
+
+                    const handleAddNote = (e: React.FormEvent) => {
+                      e.preventDefault();
+                      if (!newNoteText.trim()) return;
+                      setLocalNotes(prev => [
+                        ...prev,
+                        {
+                          id: Date.now(),
+                          author: 'מפקד מחובר',
+                          text: newNoteText,
+                          date: new Date().toLocaleDateString('he-IL'),
+                          tags: ['כללי']
+                        }
+                      ]);
+                      setNewNoteText('');
+                    };
+
+                    return (
+                      <div className="space-y-5 text-xs max-w-xl mx-auto">
+                        {/* New Note Form */}
+                        <form onSubmit={handleAddNote} className="space-y-3 p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+                          <span className="font-bold text-slate-800 dark:text-white text-xs block">{isRtl ? 'הוספת הערת מפקד חדשה' : 'Add Commander Note'}</span>
+                          <textarea
+                            value={newNoteText}
+                            onChange={(e) => setNewNoteText(e.target.value)}
+                            rows={3}
+                            className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 text-slate-800 dark:text-white"
+                            placeholder={isRtl ? 'הוסף הערה לגבי כשירות, התנהגות או משימות...' : 'Write notes here...'}
+                          />
+                          <div className="flex justify-end">
+                            <Button type="submit" size="sm" className="h-8 text-[11px] font-bold cursor-pointer">הוסף הערה</Button>
+                          </div>
+                        </form>
+
+                        {/* Notes List */}
+                        <div className="space-y-3">
+                          {localNotes.map(n => (
+                            <Card key={n.id} className="p-4 space-y-2.5 border border-slate-100 dark:border-slate-800">
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-slate-800 dark:text-white text-xs">{n.author}</span>
+                                <span className="text-[10px] text-slate-400 font-semibold">{n.date}</span>
+                              </div>
+                              <p className="text-slate-650 dark:text-slate-350 leading-relaxed font-medium">{n.text}</p>
+                              <div className="flex gap-1.5 pt-1">
+                                {n.tags.map(t => (
+                                  <Badge key={t} variant="neutral" className="text-[8px] px-1.5 py-0.2 font-extrabold">{t}</Badge>
+                                ))}
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Tab Contents: הרשאות (Permissions) */}
                   {activeTab === 'permissions' && (

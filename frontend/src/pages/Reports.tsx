@@ -13,6 +13,19 @@ export default function Reports() {
     { id: 'rep-3', name: 'Overtime Analysis Report', format: 'PDF', date: 'Q2 2026', size: '5.1 MB' },
   ];
 
+  const handleDownload = (report: typeof mockReports[0]) => {
+    const fileContent = `Report Name: ${report.name}\nDate: ${report.date}\nFormat: ${report.format}\nSize: ${report.size}\nThis is a mock export file from Pikud360 platform stabilizer.`;
+    const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${report.name.toLowerCase().replace(/\s+/g, '_')}.${report.format === 'PDF' ? 'txt' : 'csv'}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-1.5 pb-2">
@@ -48,7 +61,12 @@ export default function Reports() {
                 </div>
               </div>
               
-              <Button variant="outline" size="sm" className="gap-1.5 w-full sm:w-auto justify-center sm:justify-start">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 w-full sm:w-auto justify-center sm:justify-start"
+                onClick={() => handleDownload(report)}
+              >
                 <Download className="h-3.5 w-3.5" />
                 <span>{t('buttons:download')}</span>
               </Button>

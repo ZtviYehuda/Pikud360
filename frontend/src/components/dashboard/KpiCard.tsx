@@ -9,9 +9,10 @@ interface KpiCardProps {
   value: string | number;
   percentage?: string | number;
   loading?: boolean;
+  description?: string;
 }
 
-export default function KpiCard({ icon: Icon, title, value, percentage, loading }: KpiCardProps) {
+export default function KpiCard({ icon: Icon, title, value, percentage, loading, description }: KpiCardProps) {
   if (loading) {
     return (
       <Card className="p-5 animate-pulse space-y-3">
@@ -23,6 +24,7 @@ export default function KpiCard({ icon: Icon, title, value, percentage, loading 
         {percentage !== undefined && (
           <Skeleton className="h-3 w-12" />
         )}
+        {description && <Skeleton className="h-3.5 w-20" />}
       </Card>
     );
   }
@@ -50,6 +52,11 @@ export default function KpiCard({ icon: Icon, title, value, percentage, loading 
           </Badge>
         )}
       </div>
+      {description && (
+        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 font-medium">
+          {description}
+        </p>
+      )}
     </Card>
   );
 }
