@@ -12,6 +12,7 @@ Welcome to the Pikud360 Enterprise Design System documentation repository. This 
 - **[badges.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/badges.md)**: Accessible status badges and composition patterns.
 - **[states.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/states.md)**: Standardized components for Empty, Loading, and Error page states.
 - **[tables.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/tables.md)**: Unified responsive data tables and control toolbars.
+- **[drawers.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/drawers.md)**: Adaptive Drawer system — bottom sheet on mobile, right-side panel on desktop.
 - **[accessibility.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/accessibility.md)**: Accessible guidelines, contrast principles, and screen reader markup details.
 
 ---

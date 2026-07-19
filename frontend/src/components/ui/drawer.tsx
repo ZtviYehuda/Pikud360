@@ -1,77 +1,111 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import { cva } from "class-variance-authority";
-import { ActionGroup } from "./layout-primitives";
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
 
 // ==========================================
 // Types
 // ==========================================
 
-export interface DrawerContentProps
-  extends Omit<React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>, "title"> {
-  /** Optional title rendered as an accessible DialogPrimitive.Title */
-  title?: React.ReactNode;
-  /** Optional subtitle rendered as an accessible DialogPrimitive.Description */
-  description?: React.ReactNode;
-}
+export type DrawerSize = "sm" | "md" | "lg" | "xl" | "full";
 
 // ==========================================
-// CVA Variants
+// CVA Variants — Responsive Panel
+//
+// Single implementation. Responsive breakpoint:
+//   < md  →  Bottom Sheet  (slides from bottom, max-h bound)
+//   ≥ md  →  Right Drawer  (slides from right, full height)
 // ==========================================
 
-const drawerContentVariants = cva(
+const drawerPanelVariants = cva(
   [
-    // Base layout
-    "fixed z-50 flex flex-col",
+    // ── Shared base ──
+    "fixed z-50 flex flex-col overflow-hidden",
     "bg-white dark:bg-slate-900",
-    "shadow-xl focus:outline-none",
-    "transition ease-in-out",
+    "shadow-2xl focus:outline-none",
+    "transition ease-in-out duration-300",
     "data-[state=open]:animate-in data-[state=closed]:animate-out",
-    "duration-300",
+
+    // ── Mobile: bottom sheet ──
+    "inset-x-0 bottom-0 w-full rounded-t-2xl",
+    "border-t border-slate-200 dark:border-slate-800",
+    "data-[state=closed]:slide-out-to-bottom",
+    "data-[state=open]:slide-in-from-bottom",
+
+    // ── Desktop: right-side drawer (responsive override) ──
+    "md:inset-x-auto md:inset-y-0 md:right-0 md:left-auto",
+    "md:h-full md:max-h-none",
+    "md:border-t-0 md:border-l md:border-slate-200 dark:md:border-slate-800",
+    "md:rounded-none md:rounded-l-2xl",
+    "md:data-[state=closed]:slide-out-to-right",
+    "md:data-[state=open]:slide-in-from-right",
   ].join(" "),
   {
     variants: {
-      position: {
-        // Mobile: bottom sheet
-        mobile: [
-          "inset-x-0 bottom-0",
-          "w-full max-h-[85vh]",
-          "rounded-t-2xl",
-          "border-t border-slate-200 dark:border-slate-800",
-          "data-[state=closed]:slide-out-to-bottom",
-          "data-[state=open]:slide-in-from-bottom",
-        ].join(" "),
-        // Desktop: right-side drawer
-        desktop: [
-          "inset-y-0 right-0",
-          "h-full w-[480px]",
-          "border-l border-slate-200 dark:border-slate-800",
-          "data-[state=closed]:slide-out-to-right",
-          "data-[state=open]:slide-in-from-right",
-        ].join(" "),
+      /**
+       * Size presets.
+       * Mobile: controls max-height of the bottom sheet.
+       * Desktop: controls the panel width.
+       */
+      size: {
+        sm:   "max-h-[55vh]  md:w-[340px]",
+        md:   "max-h-[75vh]  md:w-[480px]",
+        lg:   "max-h-[85vh]  md:w-[600px]",
+        xl:   "max-h-[92vh]  md:w-[720px]",
+        full: "max-h-[100vh] md:w-screen",
       },
     },
     defaultVariants: {
-      position: "mobile",
+      size: "md",
     },
   }
 );
 
 // ==========================================
-// Primitives (thin wrappers around Radix)
+// 1. Drawer (Root)
 // ==========================================
 
-/** Root drawer context — controls open/close state. */
-export const Drawer = DialogPrimitive.Root;
+export interface DrawerProps
+  extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root> {
+  /** Lifecycle callback — called when the drawer opens. No business logic here. */
+  onOpen?: () => void;
+  /** Lifecycle callback — called when the drawer closes. No business logic here. */
+  onClose?: () => void;
+}
+
+/**
+ * Root wrapper. Controls open/close state via Radix Dialog primitive.
+ *
+ * Exposes `onOpen` and `onClose` lifecycle callbacks for external coordination
+ * (e.g. resetting form state, analytics, focus management).
+ */
+export const Drawer: React.FC<DrawerProps> = ({
+  onOpen,
+  onClose,
+  onOpenChange,
+  ...props
+}) => (
+  <DialogPrimitive.Root
+    onOpenChange={(open) => {
+      onOpenChange?.(open);
+      if (open) onOpen?.();
+      else onClose?.();
+    }}
+    {...props}
+  />
+);
 Drawer.displayName = "Drawer";
 
-/** Trigger element that opens the drawer when clicked. */
+// ==========================================
+// 2. Thin Primitive Wrappers
+// ==========================================
+
+/** Element that opens the Drawer on click. */
 export const DrawerTrigger = DialogPrimitive.Trigger;
 DrawerTrigger.displayName = "DrawerTrigger";
 
-/** Programmatic close button primitive. */
+/** Programmatic close primitive. Wrap a custom button with this to close. */
 export const DrawerClose = DialogPrimitive.Close;
 DrawerClose.displayName = "DrawerClose";
 
@@ -80,10 +114,10 @@ export const DrawerPortal = DialogPrimitive.Portal;
 DrawerPortal.displayName = "DrawerPortal";
 
 // ==========================================
-// DrawerOverlay
+// 3. DrawerOverlay
 // ==========================================
 
-/** Backdrop overlay behind the drawer panel. */
+/** Dark backdrop rendered behind the drawer panel. */
 export const DrawerOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
@@ -91,8 +125,7 @@ export const DrawerOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50",
-      "bg-black/60 backdrop-blur-sm",
+      "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm",
       "transition-all duration-200",
       "data-[state=open]:animate-in data-[state=closed]:animate-out",
       "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -104,105 +137,185 @@ export const DrawerOverlay = React.forwardRef<
 DrawerOverlay.displayName = "DrawerOverlay";
 
 // ==========================================
-// DrawerContent
+// 4. DrawerContent (Panel Shell)
 // ==========================================
 
+export interface DrawerContentProps
+  extends Omit<
+      React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>,
+      "title"
+    >,
+    VariantProps<typeof drawerPanelVariants> {
+  /**
+   * Accessible panel title.
+   * Rendered as DialogPrimitive.Title — read aloud when drawer opens.
+   */
+  title?: React.ReactNode;
+  /**
+   * Accessible panel subtitle.
+   * Rendered as DialogPrimitive.Description — read aloud when drawer opens.
+   */
+  description?: React.ReactNode;
+  /**
+   * Sticky footer slot.
+   *
+   * Content placed here is rendered OUTSIDE the scrollable body area,
+   * pinned to the bottom of the panel. Use DrawerFooter + DrawerActions here.
+   *
+   * @example
+   * footer={
+   *   <DrawerFooter>
+   *     <DrawerActions>
+   *       <Button variant="outline">ביטול</Button>
+   *       <Button variant="primary">שמור</Button>
+   *     </DrawerActions>
+   *   </DrawerFooter>
+   * }
+   */
+  footer?: React.ReactNode;
+  /**
+   * When true, replaces the body content with a loading skeleton.
+   * The sticky footer remains visible during loading.
+   */
+  loading?: boolean;
+}
+
 /**
- * Main Drawer panel.
+ * Adaptive Drawer panel shell.
  *
- * Automatically adapts:
- * - Mobile:  Bottom Sheet (slides in from bottom, max-height 85vh)
- * - Desktop: Right-side Drawer (slides in from right, full height)
+ * ## Anatomy
+ * ```
+ * DrawerContent
+ * ├── [drag handle — mobile only]
+ * ├── Panel header (title / description / close button)
+ * ├── Scrollable body  ← children render here
+ * └── Sticky footer    ← footer prop renders here
+ * ```
  *
- * Accessibility:
- * - Focus trap managed by Radix Dialog
- * - ESC key closes drawer
- * - Focus restored to trigger after close
- * - ARIA roles applied automatically by Radix
+ * ## Responsive behavior
+ * - Mobile  (`< md`):  Bottom Sheet, slides from bottom.
+ * - Desktop (`≥ md`):  Right-side Panel, slides from right.
+ *
+ * ## Accessibility (via Radix Dialog)
+ * - Focus trap on open
+ * - ESC key closes
+ * - Focus restored to trigger on close
+ * - `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, `aria-describedby`
  */
 export const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DrawerContentProps
->(({ className, children, title, description, ...props }, ref) => (
-  <DrawerPortal>
-    <DrawerOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        // Mobile base (bottom sheet)
-        drawerContentVariants({ position: "mobile" }),
-        // Desktop override (right drawer) via responsive prefix
-        "md:inset-x-auto md:inset-y-0 md:right-0 md:left-auto",
-        "md:h-full md:w-[480px] md:max-h-none",
-        "md:rounded-none md:border-l md:border-t-0",
-        "md:data-[state=closed]:slide-out-to-right md:data-[state=open]:slide-in-from-right",
-        "md:data-[state=closed]:slide-out-to-bottom-[0px] md:data-[state=open]:slide-in-from-bottom-[0px]",
-        className
-      )}
-      {...props}
-    >
-      {/* ── Drag handle (mobile only) ── */}
-      <div className="flex justify-center pt-3 pb-1 md:hidden" aria-hidden="true">
-        <div className="h-1 w-10 rounded-full bg-slate-300 dark:bg-slate-700" />
-      </div>
-
-      {/* ── Close button ── */}
-      <DialogPrimitive.Close
-        className={cn(
-          "absolute top-4 right-4",
-          "h-8 w-8 rounded-lg",
-          "flex items-center justify-center",
-          "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200",
-          "hover:bg-slate-100 dark:hover:bg-slate-800",
-          "transition-colors",
-          "focus:outline-none focus:ring-2 focus:ring-blue-500",
-          "disabled:pointer-events-none"
-        )}
-        aria-label="סגור"
+>(
+  (
+    {
+      className,
+      children,
+      title,
+      description,
+      footer,
+      loading = false,
+      size = "md",
+      ...props
+    },
+    ref
+  ) => (
+    <DrawerPortal>
+      <DrawerOverlay />
+      <DialogPrimitive.Content
+        ref={ref}
+        className={cn(drawerPanelVariants({ size }), className)}
+        {...props}
       >
-        <X className="h-4 w-4" aria-hidden="true" />
-      </DialogPrimitive.Close>
+        {/* ── Drag handle (mobile only) ── */}
+        <div
+          className="flex shrink-0 justify-center pt-3 pb-1 md:hidden"
+          aria-hidden="true"
+        >
+          <div className="h-1 w-10 rounded-full bg-slate-300 dark:bg-slate-700" />
+        </div>
 
-      {/* ── Accessible title / description ── */}
-      {(title || description) && (
-        <div className="px-6 pt-4 pb-0 space-y-1 select-none pr-12">
-          {title && (
-            <DialogPrimitive.Title
-              className={cn(
-                "text-base font-semibold leading-tight",
-                "text-slate-900 dark:text-white"
-              )}
-            >
-              {title}
-            </DialogPrimitive.Title>
+        {/* ── Panel header ── */}
+        <div
+          className={cn(
+            "shrink-0 flex items-start gap-3 px-6",
+            title || description
+              ? "pt-4 pb-3 border-b border-slate-200 dark:border-slate-800"
+              : "pt-2 pb-0"
           )}
-          {description && (
-            <DialogPrimitive.Description
-              className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed"
-            >
-              {description}
-            </DialogPrimitive.Description>
+        >
+          {/* Title + description block */}
+          {(title || description) && (
+            <div className="flex flex-col space-y-0.5 flex-1 text-right min-w-0">
+              {title && (
+                <DialogPrimitive.Title className="text-base font-semibold leading-snug text-slate-900 dark:text-white truncate">
+                  {title}
+                </DialogPrimitive.Title>
+              )}
+              {description && (
+                <DialogPrimitive.Description className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {description}
+                </DialogPrimitive.Description>
+              )}
+            </div>
+          )}
+
+          {/* Close button — always present */}
+          <DialogPrimitive.Close
+            className={cn(
+              "shrink-0 h-8 w-8 rounded-lg",
+              "flex items-center justify-center",
+              "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200",
+              "hover:bg-slate-100 dark:hover:bg-slate-800",
+              "transition-colors",
+              "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1",
+              "disabled:pointer-events-none",
+              // When no title/desc, push close to top-right
+              !(title || description) && "ml-auto"
+            )}
+            aria-label="סגור"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </DialogPrimitive.Close>
+        </div>
+
+        {/* ── Scrollable body ── */}
+        <div className="flex-1 overflow-y-auto min-h-0 px-6 py-4">
+          {loading ? (
+            <div className="flex flex-col gap-3 animate-pulse" aria-busy="true" aria-label="טוען...">
+              <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded-md w-3/4" />
+              <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded-md w-full" />
+              <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded-md w-5/6" />
+              <div className="h-24 bg-slate-200 dark:bg-slate-800 rounded-xl mt-2" />
+              <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded-md w-1/2 mt-2" />
+              <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded-md w-2/3" />
+              <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded-md w-4/5" />
+            </div>
+          ) : (
+            children
           )}
         </div>
-      )}
 
-      {/* ── Scrollable body ── */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
-        {children}
-      </div>
-    </DialogPrimitive.Content>
-  </DrawerPortal>
-));
+        {/* ── Sticky footer slot ── */}
+        {footer && (
+          <div className="shrink-0 px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            {footer}
+          </div>
+        )}
+      </DialogPrimitive.Content>
+    </DrawerPortal>
+  )
+);
 DrawerContent.displayName = "DrawerContent";
 
 // ==========================================
-// DrawerHeader
+// 5. DrawerHeader
 // ==========================================
 
 /**
- * Optional semantic header block for use inside DrawerContent children.
- * Use when you need a header section within the scrollable body itself
- * (e.g., section title, breadcrumbs, entity name).
+ * Optional semantic section header inside the scrollable body.
+ *
+ * Use for sub-section titles or entity name headers within the drawer content area.
+ * This is separate from the built-in panel header (title/description) in DrawerContent.
  */
 export const DrawerHeader = React.forwardRef<
   HTMLDivElement,
@@ -211,10 +324,9 @@ export const DrawerHeader = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "flex flex-col space-y-1",
-      "pb-4 mb-4",
+      "flex flex-col space-y-1 pb-4 mb-4",
       "border-b border-slate-200 dark:border-slate-800",
-      "select-none text-right",
+      "text-right select-none",
       className
     )}
     {...props}
@@ -223,13 +335,59 @@ export const DrawerHeader = React.forwardRef<
 DrawerHeader.displayName = "DrawerHeader";
 
 // ==========================================
-// DrawerFooter
+// 6. DrawerTitle / DrawerDescription
+//    (for use inside DrawerHeader, in the scrollable body)
+// ==========================================
+
+export const DrawerTitle = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Title>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Title
+    ref={ref}
+    className={cn(
+      "text-sm font-semibold text-slate-900 dark:text-white",
+      className
+    )}
+    {...props}
+  />
+));
+DrawerTitle.displayName = "DrawerTitle";
+
+export const DrawerDescription = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Description>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Description
+    ref={ref}
+    className={cn("text-xs text-slate-500 dark:text-slate-400", className)}
+    {...props}
+  />
+));
+DrawerDescription.displayName = "DrawerDescription";
+
+// ==========================================
+// 7. DrawerFooter
 // ==========================================
 
 /**
- * Sticky footer container.
- * Always rendered below the scrollable content area.
- * Use for primary/secondary action buttons.
+ * Standalone footer wrapper for use inside the `footer` prop of DrawerContent.
+ *
+ * Guarantees sticky behavior — always visible regardless of content scroll position.
+ *
+ * @example
+ * <DrawerContent
+ *   footer={
+ *     <DrawerFooter>
+ *       <DrawerActions>
+ *         <Button variant="outline">ביטול</Button>
+ *         <Button variant="primary">שמור</Button>
+ *       </DrawerActions>
+ *     </DrawerFooter>
+ *   }
+ * >
+ *   …body…
+ * </DrawerContent>
  */
 export const DrawerFooter = React.forwardRef<
   HTMLDivElement,
@@ -237,42 +395,38 @@ export const DrawerFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn(
-      "shrink-0",
-      "px-6 py-4",
-      "border-t border-slate-200 dark:border-slate-800",
-      "bg-white dark:bg-slate-900",
-      "select-none",
-      className
-    )}
+    className={cn("w-full select-none", className)}
     {...props}
   />
 ));
 DrawerFooter.displayName = "DrawerFooter";
 
 // ==========================================
-// DrawerActions
+// 8. DrawerActions
 // ==========================================
 
 /**
- * Action button alignment container inside DrawerFooter.
- * Composes the layout-primitives ActionGroup with end alignment.
+ * Right-aligned action button row.
+ *
+ * Always place inside DrawerFooter.
+ * Primary action goes last (rightmost on desktop, bottommost on mobile).
  *
  * @example
- * <DrawerFooter>
- *   <DrawerActions>
- *     <Button variant="outline" onClick={onCancel}>ביטול</Button>
- *     <Button variant="primary" onClick={onSave}>שמור</Button>
- *   </DrawerActions>
- * </DrawerFooter>
+ * <DrawerActions>
+ *   <Button variant="outline">ביטול</Button>
+ *   <Button variant="primary" loading={saving}>שמור שינויים</Button>
+ * </DrawerActions>
  */
 export const DrawerActions = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <ActionGroup
+  <div
     ref={ref}
-    className={cn("justify-end", className)}
+    className={cn(
+      "flex items-center justify-end gap-2 flex-wrap-reverse",
+      className
+    )}
     {...props}
   />
 ));
