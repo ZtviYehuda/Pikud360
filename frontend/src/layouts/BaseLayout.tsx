@@ -46,7 +46,7 @@ export default function BaseLayout() {
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
         <SheetContent 
           side={direction === 'rtl' ? 'right' : 'left'} 
-          className="p-0 bg-slate-900 border-none w-[260px]"
+          className="p-0 bg-slate-50 dark:bg-slate-900 border-none w-[260px]"
         >
           <Sidebar isMobile />
         </SheetContent>
