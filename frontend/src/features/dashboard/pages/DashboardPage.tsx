@@ -241,36 +241,46 @@ export const DashboardPage: React.FC = () => {
               ROW 1: מדדי שלישות מפתח
             </h2>
           </div>
-          <div className="col-span-12">
-            <WorkforceSummaryWidget data={summary?.workforce} loading={loading} error={error} />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <TodayReadinessWidget
-              score={summary?.readinessScore}
-              threshold={85}
-              loading={loading}
-              error={error}
-            />
-            <AttendanceSummaryWidget
-              data={summary?.attendance}
-              loading={loading}
-              error={error}
-              onSendReminder={(subunit) => setFeedbackDialog({
-                title: "שליחת תזכורת",
-                message: `תזכורת דיווח נוכחות נשלחה בהצלחה למפקד מחלקת ${subunit}.`
-              })}
-            />
-            <Card className="p-4 border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm rounded-enterprise-md">
-              <CardHeader className="p-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-450 dark:text-slate-500">מטלות ממתינות לטיפול</span>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 flex flex-col justify-center items-center text-center">
-                <span className="text-3xl font-bold text-slate-900 dark:text-white">3</span>
-                <span className="text-[10px] text-slate-400 font-semibold mt-1">מטלות שלישות פתוחות</span>
-              </CardContent>
-            </Card>
+          
+          <div className="grid grid-cols-1 md:grid-cols-8 lg:grid-cols-12 gap-6 items-stretch">
+            <div className="col-span-1 md:col-span-8 lg:col-span-12">
+              <WorkforceSummaryWidget data={summary?.workforce} loading={loading} error={error} />
+            </div>
+            
+            <div className="col-span-1 md:col-span-4 lg:col-span-4 flex">
+              <TodayReadinessWidget
+                score={summary?.readinessScore}
+                threshold={85}
+                loading={loading}
+                error={error}
+              />
+            </div>
+            
+            <div className="col-span-1 md:col-span-4 lg:col-span-4 flex">
+              <AttendanceSummaryWidget
+                data={summary?.attendance}
+                loading={loading}
+                error={error}
+                onSendReminder={(subunit) => setFeedbackDialog({
+                  title: "שליחת תזכורת",
+                  message: `תזכורת דיווח נוכחות נשלחה בהצלחה למפקד מחלקת ${subunit}.`
+                })}
+              />
+            </div>
+            
+            <div className="col-span-1 md:col-span-8 lg:col-span-4 flex">
+              <Card className="p-4 border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm rounded-2xl flex flex-col justify-between w-full">
+                <CardHeader className="p-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-450 dark:text-slate-500">מטלות ממתינות לטיפול</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 flex flex-col justify-center items-center text-center flex-1">
+                  <span className="text-3xl font-bold text-slate-900 dark:text-white">3</span>
+                  <span className="text-[10px] text-slate-400 font-semibold mt-1">מטלות שלישות פתוחות</span>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </section>
 
@@ -281,11 +291,11 @@ export const DashboardPage: React.FC = () => {
               ROW 2: ניתוח לוחות זמנים ומגמות
             </h2>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="col-span-12 lg:col-span-8">
+          <div className="grid grid-cols-1 md:grid-cols-8 lg:grid-cols-12 gap-6 items-stretch">
+            <div className="col-span-1 md:col-span-5 lg:col-span-8 flex">
               <ShiftCoverageWidget data={shiftCoverage} loading={loading} error={error} />
             </div>
-            <div className="col-span-12 lg:col-span-4">
+            <div className="col-span-1 md:col-span-3 lg:col-span-4 flex">
               <OrganizationOverviewWidget data={orgTree} loading={loading} error={error} />
             </div>
           </div>
@@ -298,10 +308,16 @@ export const DashboardPage: React.FC = () => {
               ROW 3: עדכוני פעילות וסבבי מעבר
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <RecentActivityWidget activities={activities} loading={loading} error={error} />
-            <NotificationsWidget notifications={notifications} loading={loading} error={error} />
-            <UpcomingEventsWidget loading={loading} error={error} />
+          <div className="grid grid-cols-1 md:grid-cols-8 lg:grid-cols-12 gap-6 items-stretch">
+            <div className="col-span-1 md:col-span-4 lg:col-span-4 flex">
+              <RecentActivityWidget activities={activities} loading={loading} error={error} />
+            </div>
+            <div className="col-span-1 md:col-span-4 lg:col-span-4 flex">
+              <NotificationsWidget notifications={notifications} loading={loading} error={error} />
+            </div>
+            <div className="col-span-1 md:col-span-8 lg:col-span-4 flex">
+              <UpcomingEventsWidget loading={loading} error={error} />
+            </div>
           </div>
         </section>
 
@@ -312,24 +328,28 @@ export const DashboardPage: React.FC = () => {
               ROW 4: תפעול מערכת ותובנות בינה מלאכותית
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <QuickActionsWidget actions={quickActions} onActionClick={handleActionClick} />
+          <div className="grid grid-cols-1 md:grid-cols-8 lg:grid-cols-12 gap-6 items-stretch">
+            <div className="col-span-1 md:col-span-4 lg:col-span-3 flex">
+              <QuickActionsWidget actions={quickActions} onActionClick={handleActionClick} />
+            </div>
             
-            <Card className="border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm rounded-enterprise-md">
-              <CardHeader className="p-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-                <div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400">
-                  <Sparkles className="h-4 w-4" />
-                  <span className="text-xs font-bold text-slate-850 dark:text-white">תובנות בינה מלאכותית (AI)</span>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 text-right">
-                <p className="text-[10px] text-slate-650 dark:text-slate-400 font-medium leading-relaxed">
-                  מגמת עליה של 4% בימי מחלה בפלוגת מפקדה בשבוע האחרון. מומלץ לאשר סבבי תגבורת מוקדמים ממאגרי המפח״ט.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="col-span-1 md:col-span-4 lg:col-span-3 flex">
+              <Card className="border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm rounded-2xl flex flex-col justify-between w-full">
+                <CardHeader className="p-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400">
+                    <Sparkles className="h-4 w-4" />
+                    <span className="text-xs font-bold text-slate-850 dark:text-white">תובנות בינה מלאכותית (AI)</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 text-right flex-1 flex items-center justify-center">
+                  <p className="text-[10px] text-slate-650 dark:text-slate-400 font-medium leading-relaxed">
+                    מגמת עליה של 4% בימי מחלה בפלוגת מפקדה בשבוע האחרון. מומלץ לאשר סבבי תגבורת מוקדמים ממאגרי המפח״ט.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
 
-            <div className="col-span-12 md:col-span-2">
+            <div className="col-span-1 md:col-span-8 lg:col-span-6 flex">
               <PendingApprovalsWidget
                 data={pendingApprovals}
                 loading={loading}
