@@ -1,7 +1,6 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { PageContainer } from "../../../components/ui/app-shell/PageContainer";
-import { DashboardLayout } from "../components/DashboardLayout";
 import { DashboardHeader } from "../components/DashboardHeader";
 import { WorkforceSummaryWidget } from "../widgets/WorkforceSummaryWidget";
 import { AttendanceSummaryWidget } from "../widgets/AttendanceSummaryWidget";
@@ -16,6 +15,8 @@ import { NotificationsWidget } from "../widgets/NotificationsWidget";
 import { UpcomingEventsWidget } from "../widgets/UpcomingEventsWidget";
 import { useDashboardData } from "../hooks/useDashboardData";
 import { AlertDialog } from "../../../components/ui/dialog";
+import { Card, CardHeader, CardContent } from "../../../components/ui/card";
+import { Sparkles, Terminal, Activity } from "lucide-react";
 
 import { useCommanderWorkspace } from "../../commander/context/CommanderWorkspaceContext";
 
@@ -67,7 +68,6 @@ export const DashboardPage: React.FC = () => {
     if (type === "NAVIGATE") {
       navigate(target);
     } else if (id === "add-employee") {
-      // Redirect directly to employees and toggle add modal view
       navigate("/employees");
     } else {
       setFeedbackDialog({
@@ -112,15 +112,27 @@ export const DashboardPage: React.FC = () => {
         onRefresh={refetch}
       />
 
-      <DashboardLayout>
-        {/* Row 1: Workforce Summary KPI cards (Full row - spans all 12 columns) */}
-        <div className="col-span-12">
-          <WorkforceSummaryWidget data={summary?.workforce} loading={loading} error={error} />
-        </div>
-
-        {/* Column Left (Desktop: 3 cols, Tablet: 4 cols, Mobile: 12 cols) */}
-        <div className="col-span-12 md:col-span-3 space-y-6 flex flex-col justify-start">
-          <QuickActionsWidget actions={quickActions} onActionClick={handleActionClick} />
+      <div className="space-y-8 mt-6">
+        
+        {/* TOP: Critical Alerts Banner & Summary Header */}
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl">
+            <div className="flex flex-col text-right">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">מבנה נוכחי</span>
+              <span className="text-sm font-bold text-slate-900 dark:text-white mt-1">מפקדת גדוד 51 · מפח״ט</span>
+            </div>
+            <div className="flex flex-col text-right">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">תאריך דיווח</span>
+              <span className="text-sm font-bold text-slate-900 dark:text-white mt-1">{selectedDate}</span>
+            </div>
+            <div className="flex flex-col text-right">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">סטטוס סנכרון</span>
+              <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1.5">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-950 animate-pulse" />
+                מחובר ללב פיקודי
+              </span>
+            </div>
+          </div>
           
           <CriticalAlertsWidget
             alerts={alerts}
@@ -128,26 +140,25 @@ export const DashboardPage: React.FC = () => {
             error={error}
             onResolve={handleResolveAlert}
           />
-          
-          <PendingApprovalsWidget
-            data={pendingApprovals}
-            loading={loading}
-            error={error}
-            onApprove={handleApprove}
-            onReject={handleReject}
-          />
-        </div>
+        </section>
 
-        {/* Column Middle (Desktop: 6 cols, Tablet: 8 cols, Mobile: 12 cols) */}
-        <div className="col-span-12 md:col-span-6 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {/* ROW 1: Key Metrics summary */}
+        <section className="space-y-4">
+          <div className="border-b border-slate-100 dark:border-slate-850 pb-2">
+            <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              ROW 1: מדדי שלישות מפתח
+            </h2>
+          </div>
+          <div className="col-span-12">
+            <WorkforceSummaryWidget data={summary?.workforce} loading={loading} error={error} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <TodayReadinessWidget
               score={summary?.readinessScore}
               threshold={85}
               loading={loading}
               error={error}
             />
-            
             <AttendanceSummaryWidget
               data={summary?.attendance}
               loading={loading}
@@ -157,22 +168,105 @@ export const DashboardPage: React.FC = () => {
                 message: `תזכורת דיווח נוכחות נשלחה בהצלחה למפקד מחלקת ${subunit}.`
               })}
             />
+            <Card className="p-4 border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm rounded-enterprise-md">
+              <CardHeader className="p-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-450 dark:text-slate-500">מטלות ממתינות לטיפול</span>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 flex flex-col justify-center items-center text-center">
+                <span className="text-3xl font-bold text-slate-900 dark:text-white">3</span>
+                <span className="text-[10px] text-slate-400 font-semibold mt-1">מטלות שלישות פתוחות</span>
+              </CardContent>
+            </Card>
           </div>
+        </section>
 
-          <ShiftCoverageWidget data={shiftCoverage} loading={loading} error={error} />
+        {/* ROW 2: Charts and timelines */}
+        <section className="space-y-4">
+          <div className="border-b border-slate-100 dark:border-slate-850 pb-2">
+            <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              ROW 2: ניתוח לוחות זמנים ומגמות
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="col-span-12 lg:col-span-8">
+              <ShiftCoverageWidget data={shiftCoverage} loading={loading} error={error} />
+            </div>
+            <div className="col-span-12 lg:col-span-4">
+              <OrganizationOverviewWidget data={orgTree} loading={loading} error={error} />
+            </div>
+          </div>
+        </section>
 
-          <OrganizationOverviewWidget data={orgTree} loading={loading} error={error} />
-        </div>
+        {/* ROW 3: Feeds & logs updates */}
+        <section className="space-y-4">
+          <div className="border-b border-slate-100 dark:border-slate-850 pb-2">
+            <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              ROW 3: עדכוני פעילות וסבבי מעבר
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <RecentActivityWidget activities={activities} loading={loading} error={error} />
+            <NotificationsWidget notifications={notifications} loading={loading} error={error} />
+            <UpcomingEventsWidget loading={loading} error={error} />
+          </div>
+        </section>
 
-        {/* Column Right (Desktop: 3 cols, Tablet: 12 cols, Mobile: 12 cols) */}
-        <div className="col-span-12 md:col-span-3 space-y-6">
-          <UpcomingEventsWidget loading={loading} error={error} />
+        {/* ROW 4: Actions & AI Insights */}
+        <section className="space-y-4">
+          <div className="border-b border-slate-100 dark:border-slate-850 pb-2">
+            <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              ROW 4: תפעול מערכת ותובנות בינה מלאכותית
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <QuickActionsWidget actions={quickActions} onActionClick={handleActionClick} />
+            
+            <Card className="border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm rounded-enterprise-md">
+              <CardHeader className="p-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="text-xs font-bold text-slate-850 dark:text-white">תובנות בינה מלאכותית (AI)</span>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 text-right">
+                <p className="text-[10px] text-slate-650 dark:text-slate-400 font-medium leading-relaxed">
+                  מגמת עליה של 4% בימי מחלה בפלוגת מפקדה בשבוע האחרון. מומלץ לאשר סבבי תגבורת מוקדמים ממאגרי המפח״ט.
+                </p>
+              </CardContent>
+            </Card>
 
-          <RecentActivityWidget activities={activities} loading={loading} error={error} />
+            <div className="col-span-12 md:col-span-2">
+              <PendingApprovalsWidget
+                data={pendingApprovals}
+                loading={loading}
+                error={error}
+                onApprove={handleApprove}
+                onReject={handleReject}
+              />
+            </div>
+          </div>
+        </section>
 
-          <NotificationsWidget notifications={notifications} loading={loading} error={error} />
-        </div>
-      </DashboardLayout>
+        {/* BOTTOM: Audit Feeds & Versions */}
+        <section className="space-y-4 border-t border-slate-200/60 dark:border-slate-850 pt-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-400 dark:text-slate-500 font-bold select-none">
+            <div className="flex items-center gap-3">
+              <Terminal className="h-4 w-4 text-slate-400" />
+              <span>יומן פעילות אודיט פיקודי פעיל</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span>גרסת מערכת: 2026.4.1</span>
+              <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-450">
+                <Activity className="h-3.5 w-3.5" />
+                מערכות תקינות
+              </span>
+            </div>
+          </div>
+        </section>
+
+      </div>
 
       {feedbackDialog && (
         <AlertDialog
