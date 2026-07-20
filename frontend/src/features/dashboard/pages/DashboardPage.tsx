@@ -5,7 +5,6 @@ import { DashboardHeader } from "../components/DashboardHeader";
 import { WorkforceSummaryWidget } from "../widgets/WorkforceSummaryWidget";
 import { AttendanceSummaryWidget } from "../widgets/AttendanceSummaryWidget";
 import { TodayReadinessWidget } from "../widgets/TodayReadinessWidget";
-import { CriticalAlertsWidget } from "../widgets/CriticalAlertsWidget";
 import { PendingApprovalsWidget } from "../widgets/PendingApprovalsWidget";
 import { ShiftCoverageWidget } from "../widgets/ShiftCoverageWidget";
 import { OrganizationOverviewWidget } from "../widgets/OrganizationOverviewWidget";
@@ -17,6 +16,7 @@ import { useDashboardData } from "../hooks/useDashboardData";
 import { AlertDialog } from "../../../components/ui/dialog";
 import { Card, CardHeader, CardContent } from "../../../components/ui/card";
 import { Sparkles, Terminal, Activity } from "lucide-react";
+import { cn } from "../../../lib/utils";
 
 import { useCommanderWorkspace } from "../../commander/context/CommanderWorkspaceContext";
 
@@ -114,32 +114,124 @@ export const DashboardPage: React.FC = () => {
 
       <div className="space-y-8 mt-6">
         
-        {/* TOP: Critical Alerts Banner & Summary Header */}
-        <section className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl">
-            <div className="flex flex-col text-right">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">מבנה נוכחי</span>
-              <span className="text-sm font-bold text-slate-900 dark:text-white mt-1">מפקדת גדוד 51 · מפח״ט</span>
+        {/* TOP HERO SECTION: Organization | Summary | Alerts | Quick Actions */}
+        <section className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            
+            {/* Column 1: Organization metadata (lg:col-span-3) */}
+            <div className="lg:col-span-3 flex flex-col justify-between border-l border-slate-100 dark:border-slate-800 pl-6 text-right">
+              <div className="space-y-4">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">מבנה שלישות</span>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white mt-1">מפקדת גדוד 51 · גולני</h3>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">שעון מקומי ותאריך</span>
+                  <div className="text-xs font-bold text-slate-700 dark:text-slate-350 mt-1">
+                    {selectedDate} · 11:20:00
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-slate-50 dark:border-slate-850">
+                <span className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-450">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-950 animate-pulse" />
+                  מערכות מסונכרנות ללב שלישות
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col text-right">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">תאריך דיווח</span>
-              <span className="text-sm font-bold text-slate-900 dark:text-white mt-1">{selectedDate}</span>
+
+            {/* Column 2: Today's Summary (lg:col-span-3) */}
+            <div className="lg:col-span-3 flex flex-col justify-between border-l border-slate-100 dark:border-slate-800 px-6 text-right">
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">סטטוס כוח אדם יומי</span>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3 mt-3">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-450">נוכחים:</span>
+                    <span className="font-bold text-slate-800 dark:text-white">142</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-450">נפקדים:</span>
+                    <span className="font-bold text-red-500">2</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-450">בחופשה:</span>
+                    <span className="font-bold text-slate-800 dark:text-white">8</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-450">חולים:</span>
+                    <span className="font-bold text-amber-500">4</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-450">מילואים:</span>
+                    <span className="font-bold text-slate-800 dark:text-white">12</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-450">מרחוק:</span>
+                    <span className="font-bold text-slate-800 dark:text-white">6</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col text-right">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">סטטוס סנכרון</span>
-              <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-950 animate-pulse" />
-                מחובר ללב פיקודי
-              </span>
+
+            {/* Column 3: Alerts priority queue (lg:col-span-3) */}
+            <div className="lg:col-span-3 flex flex-col justify-between border-l border-slate-100 dark:border-slate-800 px-6 text-right">
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">התרעות דחופות שלישות</span>
+                <div className="space-y-2 mt-3">
+                  {alerts.length === 0 ? (
+                    <div className="text-[10px] text-slate-400 font-semibold py-4 text-center">אין התרעות דחופות</div>
+                  ) : (
+                    alerts.slice(0, 2).map((alert) => (
+                      <div 
+                        key={alert.id}
+                        onClick={() => handleResolveAlert(alert.id)}
+                        className={cn(
+                          "p-2.5 rounded-lg border text-right cursor-pointer transition-colors",
+                          alert.severity === "CRITICAL" 
+                            ? "border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-750 dark:text-red-400" 
+                            : "border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                        )}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-bold">{alert.title}</span>
+                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800">
+                            {alert.severity === "CRITICAL" ? "קריטי" : "בינוני"}
+                          </span>
+                        </div>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-1">{alert.description}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
+
+            {/* Column 4: Quick Action triggers (lg:col-span-3) */}
+            <div className="lg:col-span-3 flex flex-col justify-center pr-6 text-right">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-3">פעולות מהירות מפקד</span>
+              <div className="grid grid-cols-1 gap-2.5">
+                <button
+                  onClick={() => navigate("/employees")}
+                  className="w-full py-2 px-3 text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-550 rounded-lg shadow-xs cursor-pointer text-center"
+                >
+                  הוסף חייל / עובד
+                </button>
+                <button
+                  onClick={() => navigate("/workforce/scheduling")}
+                  className="w-full py-2 px-3 text-xs font-bold border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850 rounded-lg cursor-pointer text-center"
+                >
+                  נהל סידור עבודה
+                </button>
+                <button
+                  onClick={() => navigate("/reports")}
+                  className="w-full py-2 px-3 text-xs font-bold border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850 rounded-lg cursor-pointer text-center"
+                >
+                  הפק דוח נוכחות
+                </button>
+              </div>
+            </div>
+
           </div>
-          
-          <CriticalAlertsWidget
-            alerts={alerts}
-            loading={loading}
-            error={error}
-            onResolve={handleResolveAlert}
-          />
         </section>
 
         {/* ROW 1: Key Metrics summary */}
