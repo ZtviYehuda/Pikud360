@@ -1,31 +1,86 @@
 @import "tailwindcss";
 
+/* Tailwind CSS v4 class-based dark mode variant declaration */
+@variant dark (&:where(.dark, .dark *));
+
 :root {
-  /* Semantic Enterprise Colors - Redesigned Light Theme Base (Atlassian / Linear inspired) */
-  --enterprise-primary: #0052cc; /* Highly professional enterprise blue */
-  --enterprise-secondary: #42526e; /* Soft slate grey */
-  --enterprise-success: #36b37e; /* Vibrant teal green */
-  --enterprise-warning: #ffab00; /* Warm amber yellow */
-  --enterprise-danger: #ff5630; /* Crisp orange red */
-  --enterprise-info: #00b8d9; /* Deep cyan info */
-  --enterprise-neutral: #172b4d; /* High-contrast slate text */
-  --enterprise-background: #f4f5f7; /* Soft Atlassian background grey */
-  --enterprise-surface: #ffffff; /* Crisp white card surface */
-  --enterprise-border: #dfe1e6; /* Soft border separator */
+  color-scheme: light;
+
+  /* Standard Tailwind / shadcn Semantic Color Tokens (Light Mode) */
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #3b82f6;
+
+  /* Semantic Enterprise Colors - Redesigned Light Theme Base */
+  --enterprise-primary: #0052cc;
+  --enterprise-secondary: #42526e;
+  --enterprise-success: #36b37e;
+  --enterprise-warning: #ffab00;
+  --enterprise-danger: #ff5630;
+  --enterprise-info: #00b8d9;
+  --enterprise-neutral: #172b4d;
+  --enterprise-background: #f4f5f7;
+  --enterprise-surface: #ffffff;
+  --enterprise-border: #dfe1e6;
 }
 
 .dark {
-  /* Semantic Enterprise Colors - Redesigned Dark Theme Base (Linear / Obsidian inspired) */
-  --enterprise-primary: #3b82f6; /* Premium command blue */
-  --enterprise-secondary: #707f94; /* Slate label gray */
-  --enterprise-success: #10b981; /* Teal green */
-  --enterprise-warning: #f59e0b; /* Amber orange */
-  --enterprise-danger: #ef4444; /* Vibrant rose red */
-  --enterprise-info: #06b6d4; /* Cyan info */
-  --enterprise-neutral: #cbd5e1; /* Off-white label text */
-  --enterprise-background: #0a0d16; /* Deep obsidian navy (not pure black) */
-  --enterprise-surface: #121826; /* Premium card slate surface */
-  --enterprise-border: #1f293d; /* Distinct separator border */
+  color-scheme: dark;
+
+  /* Standard Tailwind / shadcn Semantic Color Tokens (Dark Mode) */
+  --background: #090d16;
+  --foreground: #f8fafc;
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+  --popover: #0f172a;
+  --popover-foreground: #f8fafc;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #f8fafc;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #3b82f6;
+
+  /* Semantic Enterprise Colors - Redesigned Dark Theme Base */
+  --enterprise-primary: #3b82f6;
+  --enterprise-secondary: #707f94;
+  --enterprise-success: #10b981;
+  --enterprise-warning: #f59e0b;
+  --enterprise-danger: #ef4444;
+  --enterprise-info: #06b6d4;
+  --enterprise-neutral: #cbd5e1;
+  --enterprise-background: #090d16;
+  --enterprise-surface: #0f172a;
+  --enterprise-border: #1e293b;
+}
+
+html, body {
+  background-color: var(--background);
+  color: var(--foreground);
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
 @theme {

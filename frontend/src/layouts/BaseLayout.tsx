@@ -1,15 +1,20 @@
 import { useEffect } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useUIStore } from '../stores/uiStore';
-import Sidebar from '../components/Sidebar';
-import Topbar from '../components/Topbar';
+import { AppShell } from '../components/ui/app-shell';
 import GlobalSearch from '../components/GlobalSearch';
-import { Sheet, SheetContent } from '../components/ui/sheet';
+import {
+  LayoutGrid, CalendarCheck, Calendar, Users,
+  ArrowLeftRight, MessageSquare, Activity, Settings
+} from 'lucide-react';
+import { NavigationItem } from '../components/ui/app-shell/types';
 
 export default function BaseLayout() {
-  const { isAuthenticated } = useAuthStore();
-  const { direction, mobileSidebarOpen, setMobileSidebarOpen, setSidebarCollapsed } = useUIStore();
+  const { isAuthenticated, user, logout } = useAuthStore();
+  const { direction, sidebarCollapsed, setSidebarCollapsed } = useUIStore();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const media = window.matchMedia('(min-width: 768px) and (max-width: 1023px)');
@@ -17,55 +22,92 @@ export default function BaseLayout() {
       setSidebarCollapsed(true);
     }
     const listener = (e: MediaQueryListEvent) => {
-      if (e.matches) {
-        setSidebarCollapsed(true);
-      } else {
-        setSidebarCollapsed(false);
-      }
+      setSidebarCollapsed(e.matches);
     };
     media.addEventListener('change', listener);
     return () => media.removeEventListener('change', listener);
   }, [setSidebarCollapsed]);
 
-  // Route Guard: Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
+  const navigationItems: NavigationItem[] = [
+    {
+      id: "dashboard",
+      label: "לוח בקרה",
+      icon: <LayoutGrid className="h-5 w-5" />,
+      href: "/dashboard",
+      group: "ראשי"
+    },
+    {
+      id: "attendance",
+      label: "מעקב נוכחות",
+      icon: <CalendarCheck className="h-5 w-5" />,
+      href: "/workforce/dashboard",
+      group: "ראשי"
+    },
+    {
+      id: "scheduling",
+      label: "סידור עבודה",
+      icon: <Calendar className="h-5 w-5" />,
+      href: "/workforce/scheduling",
+      group: "ראשי"
+    },
+    {
+      id: "employees",
+      label: "ניהול שוטרים",
+      icon: <Users className="h-5 w-5" />,
+      href: "/employees",
+      group: "ראשי"
+    },
+    {
+      id: "transfers",
+      label: "בקשות העברה",
+      icon: <ArrowLeftRight className="h-5 w-5" />,
+      href: "/transfers",
+      group: "ראשי"
+    },
+    {
+      id: "feedback",
+      label: "מרכז משוב",
+      icon: <MessageSquare className="h-5 w-5" />,
+      href: "/notifications",
+      group: "ראשי"
+    },
+    {
+      id: "activity",
+      label: "יומן פעילות",
+      icon: <Activity className="h-5 w-5" />,
+      href: "/admin/audit",
+      group: "ראשי"
+    },
+    {
+      id: "settings",
+      label: "הגדרות",
+      icon: <Settings className="h-5 w-5" />,
+      href: "/settings",
+      group: "ראשי"
+    }
+  ];
+
   return (
-    <div 
-      className="flex h-screen w-screen overflow-hidden bg-slate-50 transition-colors duration-200 dark:bg-slate-950"
-      dir={direction}
-    >
-      {/* Permanent Sidebar (Tablet / Desktop) */}
-      <div className="hidden md:flex h-full shrink-0">
-        <Sidebar />
-      </div>
-
-      {/* Mobile Drawer Sidebar (triggered from Topbar) */}
-      <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
-        <SheetContent 
-          side={direction === 'rtl' ? 'right' : 'left'} 
-          className="p-0 bg-slate-50 dark:bg-slate-900 border-none w-[260px]"
-        >
-          <Sidebar isMobile />
-        </SheetContent>
-      </Sheet>
-
-      {/* Main Content Area Container */}
-      <div className="flex flex-col flex-1 h-full min-w-0 overflow-hidden">
-        {/* Topbar Header */}
-        <Topbar />
-
-        {/* Scrollable Workspace panel */}
-        <main className="flex-1 overflow-y-auto px-4 py-6 md:px-6 md:py-8">
-          <div className="w-full h-full">
-            <Outlet />
-          </div>
-        </main>
-      </div>
-      
-      {/* Global Search dialog */}
+    <div dir={direction} className="h-screen w-screen overflow-hidden">
+      <AppShell
+        navigationItems={navigationItems}
+        currentPath={location.pathname}
+        onNavigate={(path) => navigate(path)}
+        sidebarCollapsed={sidebarCollapsed}
+        onSidebarCollapseChange={setSidebarCollapsed}
+        user={user ? { name: user.name, role: (user as any).role || (user as any).roles?.[0] || "ניהול מערכת" } : { name: "צוות תמיכה", role: "ניהול מערכת" }}
+        onLogout={() => {
+          logout();
+          navigate('/login');
+        }}
+        currentWorkspace={{ id: "unit-51", name: "מפקדת גדוד 51", details: "גולני" }}
+      >
+        <Outlet />
+      </AppShell>
       <GlobalSearch />
     </div>
   );
