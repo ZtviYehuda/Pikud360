@@ -18,7 +18,8 @@ export const StatusChart: React.FC = () => {
   return (
     <motion.div
       whileHover={{ y: -2 }}
-      className="bg-card text-card-foreground border border-border rounded-2xl p-6 shadow-xs flex flex-col justify-between h-full select-none text-right transition-colors"
+      whileTap={{ scale: 0.99, y: 0 }}
+      className="bg-card text-card-foreground border border-border/70 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md dark:hover:shadow-slate-950/40 rounded-2xl p-6 shadow-xs flex flex-col justify-between h-full select-none text-right transition-all duration-200"
     >
       {/* Card Header */}
       <div className="flex items-center justify-between pb-2 border-b border-border">

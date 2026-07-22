@@ -26,8 +26,14 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import apiClient from "../config/api.client";
-import { toast } from "sonner";
 import { Badge } from "../components/ui/badge";
+import {
+  PageToolbar,
+  SearchInput,
+  FilterGroup,
+  FilterSelect,
+  ClearFiltersButton,
+} from "@/components/shared/page-toolbar";
 import { Button } from "../components/ui/button";
 import { cn } from "../lib/utils";
 import { Card } from "../components/ui/card";
@@ -790,7 +796,7 @@ const FeedbackPage = () => {
         dir="rtl"
       >
         {/* Page Header */}
-        <div className="pt-6 pb-4 px-4 sm:px-6 shrink-0">
+        <div className="pt-4 pb-2 px-4 sm:px-6 shrink-0">
           <PageHeader
             icon={MessageSquare}
             title="הודעות וניהול פניות"
@@ -892,146 +898,64 @@ const FeedbackPage = () => {
                       animate={{ opacity: 1, y: 0 }}
                       className="space-y-6"
                     >
-                      {/* ── Toolbar ── */}
-                      <div className="flex flex-col gap-4 bg-background/20 rounded-2xl border border-border/30 p-4">
-                        {/* Row 1: Search + Action Buttons */}
-                        <div className="flex items-center gap-3">
-                          {/* Search */}
-                          <div className="relative flex-1">
-                            <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-                            <input
-                              type="text"
-                              placeholder="חיפוש לפי שם, תיאור..."
-                              value={searchQuery}
-                              onChange={(e) => setSearchQuery(e.target.value)}
-                              className="w-full h-11 pr-11 pl-4 bg-background border border-border/40 rounded-2xl text-sm font-bold text-foreground placeholder:text-muted-foreground/50 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                            />
-                          </div>
+                      <PageToolbar>
+                        <SearchInput
+                          value={searchQuery}
+                          onChange={setSearchQuery}
+                          placeholder="חיפוש לפי שם, תיאור..."
+                          className="max-w-md flex-1"
+                        />
 
-                          {/* Refresh */}
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={
-                              isAdmin ? fetchAdminTickets : fetchMyTickets
-                            }
-                            disabled={isLoadingTickets}
-                            className="h-11 w-11 rounded-2xl border-border/40 bg-background text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all shrink-0"
-                          >
-                            <RefreshCw
-                              className={cn(
-                                "w-4 h-4",
-                                isLoadingTickets && "animate-spin",
-                              )}
-                            />
-                          </Button>
+                        <FilterSelect
+                          label="סטטוס"
+                          value={adminFilter}
+                          onChange={(val) => setAdminFilter(val as any)}
+                          options={[
+                            { value: "all", label: "כל הסטטוסים" },
+                            { value: "pending", label: "ממתין", color: "#d97706" },
+                            { value: "done", label: "טופל", color: "#059669" },
+                            { value: "dismissed", label: "ארכיון", color: "#6b7280" },
+                          ]}
+                        />
 
-                          {/* Add Update (Admin only) */}
+                        <FilterSelect
+                          label="סוג פנייה"
+                          value={adminCategoryFilter}
+                          onChange={(val) => setAdminCategoryFilter(val as any)}
+                          options={[
+                            { value: "all", label: "כל הסוגים" },
+                            { value: "bug", label: "באג" },
+                            { value: "improvement", label: "שיפור" },
+                            { value: "feature", label: "פיצ'ר" },
+                            { value: "support", label: "תמיכה" },
+                          ]}
+                        />
+
+                        <ClearFiltersButton
+                          hasActiveFilters={adminFilter !== "all" || adminCategoryFilter !== "all" || !!searchQuery}
+                          onClick={() => {
+                            setAdminFilter("all");
+                            setAdminCategoryFilter("all");
+                            setSearchQuery("");
+                          }}
+                        />
+
+                        <div className="mr-auto flex items-center gap-2">
+                          <RefreshButton
+                            onClick={isAdmin ? fetchAdminTickets : fetchMyTickets}
+                            loading={isLoadingTickets}
+                          />
+
                           {isAdmin && (
                             <Button
                               onClick={() => setAddUpdateOpen(true)}
-                              className="h-11 px-5 rounded-2xl bg-gradient-to-l from-violet-600 to-primary text-white font-black text-xs shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all flex items-center gap-2 shrink-0"
+                              className="h-9 px-3.5 rounded-xl bg-gradient-to-l from-violet-600 to-primary text-white font-black text-xs shadow-2xs hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
                             >
                               <GitPullRequest className="w-3.5 h-3.5" />
-                              עדכון גרסה
+                              <span>עדכון גרסה</span>
                             </Button>
-                          )}
                         </div>
-
-                        {/* Row 2: Filter Pills */}
-                        <div className="flex flex-wrap items-center gap-2">
-                          {/* Status Filters */}
-                          <div className="flex items-center bg-background border border-border/40 rounded-2xl p-1 gap-0.5">
-                            {(
-                              [
-                                {
-                                  value: "pending",
-                                  label: "ממתין",
-                                  color: "text-amber-600",
-                                },
-                                {
-                                  value: "done",
-                                  label: "טופל",
-                                  color: "text-emerald-600",
-                                },
-                                {
-                                  value: "dismissed",
-                                  label: "ארכיון",
-                                  color: "text-muted-foreground",
-                                },
-                                {
-                                  value: "all",
-                                  label: "הכל",
-                                  color: "text-primary",
-                                },
-                              ] as const
-                            ).map(({ value, label, color }) => (
-                              <button
-                                key={value}
-                                onClick={() => setAdminFilter(value)}
-                                className={cn(
-                                  "px-3 py-1.5 rounded-xl text-[11px] font-black transition-all whitespace-nowrap",
-                                  adminFilter === value
-                                    ? "bg-primary text-white shadow-sm"
-                                    : `${color} hover:bg-muted`,
-                                )}
-                              >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-
-                          <div className="w-px h-5 bg-border/40" />
-
-                          {/* Category Filters */}
-                          <div className="flex items-center flex-wrap gap-1">
-                            {(
-                              [
-                                { value: "all", label: "כל הסוגים" },
-                                { value: "bug", label: "באג" },
-                                { value: "improvement", label: "שיפור" },
-                                { value: "feature", label: "פיצ'ר" },
-                                { value: "support", label: "תמיכה" },
-                              ] as const
-                            ).map(({ value, label }) => (
-                              <button
-                                key={value}
-                                onClick={() => setAdminCategoryFilter(value)}
-                                className={cn(
-                                  "px-3 py-1.5 rounded-xl text-[11px] font-black transition-all whitespace-nowrap border",
-                                  adminCategoryFilter === value
-                                    ? "bg-primary text-white border-primary shadow-sm"
-                                    : "text-muted-foreground border-border/30 hover:border-primary/20 hover:text-foreground hover:bg-muted/40",
-                                )}
-                              >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-
-                          {/* Results count */}
-                          {(adminFilter !== "all" ||
-                            adminCategoryFilter !== "all" ||
-                            searchQuery) && (
-                            <div className="mr-auto flex items-center gap-2">
-                              <span className="text-[11px] font-bold text-muted-foreground">
-                                {filteredItems.length} תוצאות
-                              </span>
-                              <button
-                                onClick={() => {
-                                  setAdminFilter("all");
-                                  setAdminCategoryFilter("all");
-                                  setSearchQuery("");
-                                }}
-                                className="text-[11px] font-black text-destructive hover:underline flex items-center gap-1"
-                              >
-                                <X className="w-3 h-3" />
-                                נקה
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                      </PageToolbar>
                       {/* Stylized Cards List */}
                       <div className="space-y-3">
                         {filteredItems.length === 0 ? (
@@ -2706,7 +2630,7 @@ function StatItem({
   return (
     <Card
       className={cn(
-        "group relative overflow-hidden p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-all flex items-center justify-between bg-card/80 border-border/40 hover:bg-accent/30 hover:border-primary/20",
+        "group relative overflow-hidden p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-all duration-200 flex items-center justify-between bg-card border-border/50 hover:-translate-y-0.5 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:border-primary/40 hover:shadow-md active:translate-y-0 active:scale-[0.98] active:bg-slate-200/80 dark:active:bg-slate-750",
         className,
       )}
     >

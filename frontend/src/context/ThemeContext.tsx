@@ -81,6 +81,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const root = window.document.documentElement;
 
+    // Suppress CSS transitions temporarily for instant & clean theme switch
+    const style = document.createElement("style");
+    style.appendChild(
+      document.createTextNode(
+        `*, *::before, *::after {
+           transition: none !important;
+           animation: none !important;
+         }`
+      )
+    );
+    document.head.appendChild(style);
+
     // Theme class
     root.classList.remove("light", "dark");
     root.classList.add(theme);
@@ -137,6 +149,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.style.fontSize = sizeMap[fontSize];
     localStorage.setItem("fontSize", fontSize);
 
+    // Force reflow to ensure instant style application without color sweep
+    const _ = window.getComputedStyle(root).opacity;
+    const timer = setTimeout(() => {
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
+    }, 20);
+
     // 3. Sync with server if user is logged in and we aren't in the middle of a profile load
     if (user && !isSyncingRef.current) {
       // Check if values actually changed from what's in the user object to avoid redundant calls
@@ -155,6 +175,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         });
       }
     }
+
+    return () => clearTimeout(timer);
   }, [theme, accentColor, fontSize, user, updatePreferences, refreshUser]);
 
   const toggleTheme = () => {

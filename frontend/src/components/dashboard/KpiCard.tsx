@@ -1,4 +1,4 @@
-import { LucideIcon, ArrowUpRight, ArrowDownRight, RefreshCw, AlertTriangle } from "lucide-react";
+import { type LucideIcon, ArrowUpRight, ArrowDownRight, RefreshCw, AlertTriangle } from "lucide-react";
 import { Card } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
 import { cn } from "../../lib/utils";

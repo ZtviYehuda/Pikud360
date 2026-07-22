@@ -52,11 +52,34 @@ export const useUIStore = create<UIState>((set, get) => {
     toggleTheme: () => {
       const nextTheme = get().theme === 'light' ? 'dark' : 'light';
       localStorage.setItem('theme', nextTheme);
+
+      // Suppress CSS transitions temporarily for instant & clean theme switch
+      const style = document.createElement("style");
+      style.appendChild(
+        document.createTextNode(
+          `*, *::before, *::after {
+             transition: none !important;
+             animation: none !important;
+           }`
+        )
+      );
+      document.head.appendChild(style);
+
       if (nextTheme === 'dark') {
         document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
       } else {
         document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
       }
+
+      const _ = window.getComputedStyle(document.body).opacity;
+      setTimeout(() => {
+        if (document.head.contains(style)) {
+          document.head.removeChild(style);
+        }
+      }, 20);
+
       set({ theme: nextTheme });
     },
     

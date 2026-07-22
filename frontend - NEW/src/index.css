@@ -1,0 +1,659 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@100..900&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Custom Calendar Grid - Responsive Optimization */
+.grid-calendar-view {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+@media (min-width: 768px) {
+  .grid-calendar-view {
+    grid-template-columns: repeat(5, 1fr) 0.7fr 0.7fr;
+  }
+}
+
+.grid-background {
+  background-image: radial-gradient(circle at 1px 1px, #e5e7eb 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.dark .grid-background {
+  background-image: radial-gradient(circle at 1px 1px, #1e293b 1px, transparent 0);
+}
+
+* {
+  font-family: "Noto Sans Hebrew", sans-serif;
+}
+
+html,
+body {
+  direction: rtl;
+  background-color: var(--background);
+  color: var(--foreground);
+  overflow: hidden;
+  /* Use dynamic viewport height so mobile browser UI (address bar) doesn't clip content */
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+}
+
+/* Base transitions - scoped for better performance */
+.btn-transition {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50 transition-colors;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --: 0 20px 50px -12px rgba(var(--primary-rgb), 0.05);
+  --: 0 30px 60px -12px rgba(var(--primary-rgb), 0.08);
+}
+
+:root {
+  color-scheme: light;
+  --radius: 0.75rem;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #0074ff;
+  --primary-foreground: #ffffff;
+  --secondary: #eff6ff;
+  --secondary-foreground: var(--primary);
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #eff6ff;
+  --accent-foreground: var(--primary);
+  --destructive: #df1b12;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: var(--primary);
+  --primary-rgb: 0, 116, 255;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #090d16;
+  --foreground: #f1f5f9;
+  --card: #101726;
+  --card-foreground: #f1f5f9;
+  --popover: #101726;
+  --popover-foreground: #f1f5f9;
+  --primary: #10b981;
+  --primary-foreground: #ffffff;
+  --secondary: #1e293b;
+  --secondary-foreground: #f1f5f9;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: var(--primary);
+  --destructive: #ef4444;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: var(--primary);
+  --primary-rgb: 16, 185, 129;
+}
+
+/* Accent Color Overrides - Highest Specificity */
+:root {
+  &.accent-cyan {
+    --primary: #06b6d4;
+    --secondary: #ecfeff;
+    --accent: #ecfeff;
+  }
+
+  &.accent-emerald {
+    --primary: #10b981;
+    --secondary: #ecfdf5;
+    --accent: #ecfdf5;
+  }
+
+  &.accent-rose {
+    --primary: #d93856;
+    --secondary: #fff1f2;
+    --accent: #fff1f2;
+  }
+
+  &.accent-amber {
+    --primary: #f59e0b;
+    --secondary: #fffbeb;
+    --accent: #fffbeb;
+  }
+
+  &.accent-blue {
+    --primary: #0074ff;
+    --secondary: #eff6ff;
+    --accent: #eff6ff;
+  }
+
+  &.accent-zinc {
+    --primary: #475569;
+    --secondary: #f1f5f9;
+    --accent: #f1f5f9;
+  }
+
+  &.accent-violet {
+    --primary: #7c3aed;
+    --secondary: #f5f3ff;
+    --accent: #f5f3ff;
+  }
+
+  &.accent-indigo {
+    --primary: #4f46e5;
+    --secondary: #eef2ff;
+    --accent: #eef2ff;
+  }
+
+  &.accent-teal {
+    --primary: #0d9488;
+    --secondary: #f0fdfa;
+    --accent: #f0fdfa;
+  }
+
+  &.accent-orange {
+    --primary: #f97316;
+    --secondary: #fff7ed;
+    --accent: #fff7ed;
+  }
+
+  &.accent-pink {
+    --primary: #c21a5b;
+    --secondary: #fdf2f8;
+    --accent: #fdf2f8;
+  }
+
+  &.accent-lime {
+    --primary: #65a30d;
+    --secondary: #f7fee7;
+    --accent: #f7fee7;
+  }
+}
+
+.dark {
+  &.accent-cyan {
+    --primary: #47c1d3;
+    --secondary: #0b2f36;
+    --accent: #0b2f36;
+    --primary-rgb: 71, 193, 211;
+  }
+
+  &.accent-emerald {
+    --primary: #10b981;
+    --secondary: #11221b;
+    --accent: #11221b;
+    --primary-rgb: 16, 185, 129;
+  }
+
+  &.accent-rose {
+    --primary: #e05a76;
+    --secondary: #221217;
+    --accent: #221217;
+    --primary-rgb: 224, 90, 118;
+  }
+
+  &.accent-amber {
+    --primary: #f59e0b;
+    --secondary: #221a0f;
+    --accent: #221a0f;
+    --primary-rgb: 245, 158, 11;
+  }
+
+  &.accent-blue {
+    --primary: #3b82f6;
+    --secondary: #0f1c30;
+    --accent: #0f1c30;
+    --primary-rgb: 59, 130, 246;
+  }
+
+  &.accent-zinc {
+    --primary: #aab2c0;
+    --secondary: #1e293b;
+    --accent: #1e293b;
+    --primary-rgb: 170, 178, 192;
+  }
+
+  &.accent-violet {
+    --primary: #a37dfa;
+    --secondary: #26113f;
+    --accent: #26113f;
+    --primary-rgb: 163, 125, 250;
+  }
+
+  &.accent-indigo {
+    --primary: #818cf8;
+    --secondary: #1e1b4b;
+    --accent: #1e1b4b;
+    --primary-rgb: 129, 140, 248;
+  }
+
+  &.accent-teal {
+    --primary: #2dd4bf;
+    --secondary: #042f2e;
+    --accent: #042f2e;
+    --primary-rgb: 45, 212, 191;
+  }
+
+  &.accent-orange {
+    --primary: #fb923c;
+    --secondary: #431407;
+    --accent: #431407;
+    --primary-rgb: 251, 146, 60;
+  }
+
+  &.accent-pink {
+    --primary: #f472b6;
+    --secondary: #4a044e;
+    --accent: #4a044e;
+    --primary-rgb: 244, 114, 182;
+  }
+
+  &.accent-lime {
+    --primary: #a3e635;
+    --secondary: #1a2e05;
+    --accent: #1a2e05;
+    --primary-rgb: 163, 230, 53;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  /* Focus management - remove browser defaults, use focus-visible */
+  :focus {
+    outline: none;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-ring/50 outline-offset-2;
+  }
+
+  /* Disable focus rings for charts specifically even on focus */
+  .recharts-wrapper,
+  .recharts-wrapper *,
+  svg.recharts-surface,
+  .recharts-surface:focus {
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  button, 
+  [role="button"],
+  a,
+  select,
+  input[type="checkbox"],
+  input[type="radio"] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
+/* Responsive utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Prevent horizontal overflow */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  background-color: #f8fafc; /* Professional light gray background from screenshot */
+}
+
+.dark html,
+.dark body {
+  background-color: #0b141a;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.2);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.4);
+}
+
+/* Shimmer animation for birthday badge */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes birthday-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+}
+
+.animate-birthday-pulse {
+  animation: birthday-pulse 2s ease-in-out infinite;
+}
+
+.custom-scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.custom-scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 🔄 Global Close Button Rotation Animation 
+   Whenever an 'X' or 'XIcon' from Lucide is inside a button, rotate it on hover. */
+button:hover svg.lucide-x,
+button:hover svg.lucide-x-icon {
+  transform: rotate(90deg);
+}
+
+svg.lucide-x-icon {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Hide Global AI Support button when any modal is open */
+body[data-scroll-locked] .global-ai-support-btn {
+  display: none !important;
+}
+
+/* 🌟 Premium Tutorial Highlight Styling with perfect centering and pulsing animation */
+.tutorial-highlight {
+  position: relative !important;
+  animation: tutorial-pulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 30%, transparent) !important;
+  z-index: 40 !important;
+}
+
+.tutorial-highlight::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: -6px !important;
+  border: 2px dashed var(--primary) !important;
+  border-radius: inherit !important;
+  animation: tutorial-ring-ping 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+  pointer-events: none !important;
+  opacity: 0;
+  z-index: -1 !important;
+}
+
+@keyframes tutorial-ring-ping {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+@keyframes tutorial-pulse {
+  0%, 100% {
+    transform: scale(1);
+    background-color: color-mix(in srgb, var(--primary) 10%, transparent) !important;
+  }
+  50% {
+    transform: scale(1.02);
+    background-color: color-mix(in srgb, var(--primary) 22%, transparent) !important;
+  }
+}
+
+/* 🌟 Delicate Borders & Zero Shadow Overrides */
+.shadow-sm,
+.shadow,
+.shadow-md,
+.shadow-lg,
+.shadow-xl,
+.shadow-2xl,
+.hover\:shadow-md:hover,
+.hover\:shadow-lg:hover,
+.group:hover .shadow-sm,
+.group:hover .shadow-md {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Make all borders across components extremely delicate and premium */
+.border,
+.border-border,
+.border-border\/40,
+.border-primary\/10 {
+  border-color: rgba(0, 116, 255, 0.08) !important;
+}
+
+.dark .border,
+.dark .border-border,
+.dark .border-border\/40,
+.dark .border-primary\/10 {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Make card borders extremely delicate (almost invisible) and remove shadows */
+[data-slot="card"],
+.bg-white\/70,
+.bg-card\/60,
+.bg-card\/80,
+.bg-card {
+  box-shadow: none !important;
+  border: 1px solid rgba(0, 116, 255, 0.08) !important;
+}
+
+.dark [data-slot="card"],
+.dark .bg-white\/70,
+.dark .bg-card\/60,
+.dark .bg-card\/80,
+.dark .bg-card {
+  box-shadow: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+
+/* Hide dialog overlay completely during the tour so targeted cells are not blurred or covered */
+body.tour-active [data-slot="dialog-overlay"],
+body.tour-active [class*="dialog-overlay"],
+body.tour-active [data-radix-portal] > [class*="bg-black/50"] {
+  display: none !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.toren-spin-container {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1000px;
+}
+
+.toren-spin-logo {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  position: relative;
+  z-index: 5;
+}
+
+.toren-spin-logo,
+img[src*="/toren_logo_base.png"],
+img[src*="/toren_logo.png"],
+.toren-logo-img {
+  filter: drop-shadow(0 4px 12px rgba(15, 23, 42, 0.06));
+}
+
+.dark .toren-spin-logo,
+.dark img[src*="/toren_logo_base.png"],
+.dark img[src*="/toren_logo.png"],
+.dark .toren-logo-img {
+  /* Soft, silver-blue tint that matches dark theme and is easy on the eyes */
+  filter: invert(0.86) brightness(1.18) sepia(0.08) saturate(1.4) hue-rotate(192deg) drop-shadow(0 0 10px rgba(59, 130, 246, 0.16));
+}
+
+.toren-spin-beam-original {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100px;
+  height: 100px;
+  margin-top: -50px;
+  margin-left: -50px;
+  z-index: 4;
+  pointer-events: none;
+  animation: toren-rotate-beam-3d 6s linear infinite;
+  transform-origin: 50% 24%;
+  transform-style: preserve-3d;
+  
+  /* Mask coloring for dynamic light/dark mode and active accent */
+  background-color: var(--primary);
+  -webkit-mask-image: url('/toren_logo_beam.png');
+  mask-image: url('/toren_logo_beam.png');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  opacity: 0.55;
+  filter: drop-shadow(0 0 5px var(--primary));
+}
+
+.dark .toren-spin-beam-original {
+  background-color: #ffffff;
+  opacity: 0.8;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.45));
+}
+
+.dark .toren-lighthouse-flash {
+  background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--primary) 22%, transparent) 0%, transparent 75%);
+}
+
+.toren-lantern-flare {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* Center exactly on the lantern: since container height is 140px and logo height is 100px centered,
+     the logo top starts at 20px. The lantern is at 24px of the logo, so it is at 44px from container top.
+     Container vertical center is 70px.
+     So the lantern is at 44px, which is exactly -26px relative to container center!
+  */
+  margin-top: -66px; /* -26px offset + -40px half-height */
+  margin-left: -40px;
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle, #ffffff 0%, color-mix(in srgb, var(--primary) 70%, transparent) 40%, transparent 70%);
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.5);
+  animation: toren-flare-pulse 6s ease-in-out infinite;
+}
+
+.toren-lighthouse-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--primary) 12%, transparent) 0%, transparent 75%);
+  opacity: 0;
+  pointer-events: none;
+  animation: toren-flash-glow 6s ease-in-out infinite;
+}
+
+@keyframes toren-rotate-beam-3d {
+  0% {
+    transform: rotateX(20deg) rotateY(0deg);
+  }
+  100% {
+    transform: rotateX(20deg) rotateY(360deg);
+  }
+}
+
+@keyframes toren-flare-pulse {
+  0% { opacity: 0; transform: scale(0.5); }
+  18% { opacity: 0; transform: scale(0.5); }
+  25% { opacity: 1; transform: scale(1.4); } /* Lens flare peak! */
+  31% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 0; transform: scale(0.5); }
+}
+
+@keyframes toren-flash-glow {
+  0% { opacity: 0; }
+  17% { opacity: 0; }
+  25% { opacity: 1; } /* Flash peak! */
+  33% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+
+

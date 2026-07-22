@@ -1,4 +1,4 @@
-import { LucideIcon, FileQuestion, HelpCircle } from "lucide-react";
+import { type LucideIcon, FileQuestion, HelpCircle } from "lucide-react";
 import { Button } from "./button";
 import { cn } from "../../lib/utils";
 
@@ -18,7 +18,7 @@ export interface EmptyStateProps {
   // Help Link
   helpLinkLabel?: string;
   helpLinkHref?: string;
-  
+  compact?: boolean;
   className?: string;
 }
 
@@ -32,18 +32,23 @@ export function EmptyState({
   onSecondaryAction,
   helpLinkLabel,
   helpLinkHref,
+  compact = false,
   className,
 }: EmptyStateProps) {
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center text-center p-8 md:p-12 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-xl shadow-xs max-w-lg mx-auto w-full text-right select-none",
+        "flex flex-col items-center justify-center text-center bg-white dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/80 rounded-xl select-none mx-auto w-full",
+        compact ? "p-5 max-w-sm my-4" : "p-8 md:p-12 shadow-xs max-w-lg",
         className
       )}
     >
       {/* Icon Frame */}
-      <div className="p-4 bg-slate-50 dark:bg-slate-950/20 text-slate-400 dark:text-slate-500 rounded-xl mb-4 transition-all duration-300">
-        <Icon className="h-10 w-10 shrink-0" />
+      <div className={cn(
+        "bg-slate-100 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 rounded-xl transition-all duration-300",
+        compact ? "p-2.5 mb-2.5" : "p-4 mb-4"
+      )}>
+        <Icon className={cn("shrink-0", compact ? "h-6 w-6" : "h-10 w-10")} />
       </div>
 
       {/* Text Info */}

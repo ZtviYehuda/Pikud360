@@ -19,7 +19,7 @@ export const DashboardPage: React.FC = () => {
       <div className="space-y-6">
         {/* Top Header & Actions Toolbar */}
         <DashboardHeader
-          onFilterClick={() => setActiveDialog("סינון נתונים")}
+          onFilterClick={() => setActiveDialog("סינון")}
           onReportsClick={() => setActiveDialog("הפקת דוחות")}
           onEventsClick={() => setActiveDialog("יומן אירועים")}
           onAttendanceClick={() => setActiveDialog("דיווח נוכחות")}

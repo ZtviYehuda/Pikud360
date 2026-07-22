@@ -11,8 +11,15 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  PageToolbar,
+  SearchInput,
+  ToolbarActions,
+  FilterTriggerButton,
+} from "@/components/shared/page-toolbar";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Search,
   ChevronRight,
@@ -262,58 +269,31 @@ export const EmployeeTable = ({
 
   return (
     <div className="space-y-3 sm:space-y-5">
-      {/* Search & Filter Bar */}
-      <div id="employees-search-container" className="flex flex-col sm:flex-row items-center justify-between gap-3 p-0 bg-transparent w-full">
-        {/* Right side: Search & Filter */}
-        <div className="flex flex-row items-center gap-2 w-full sm:w-auto sm:flex-1 max-w-md md:max-w-xl">
-          <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="חיפוש שם או שם משתמש..."
-              className="pr-10 h-10 text-right border-input focus:ring-ring/20 focus:border-ring rounded-xl text-sm w-full"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-            />
-          </div>
+      {/* Shared Page Toolbar */}
+      <PageToolbar id="employees-search-container">
+        <SearchInput
+          value={searchTerm}
+          onChange={(val) => {
+            setSearchTerm(val);
+            setCurrentPage(1);
+          }}
+          placeholder="חיפוש שם או שם משתמש..."
+          className="max-w-md flex-1"
+        />
 
-          <Button
-            variant="outline"
-            size="sm"
-            className={cn(
-              "h-10 text-xs sm:text-sm border-border/60 dark:border-slate-800 hover:bg-muted rounded-xl px-4 flex items-center justify-center shrink-0 relative",
-              Object.keys(activeFilters).length > 0
-                ? "text-primary border-primary"
-                : "text-muted-foreground",
-            )}
-            onClick={() => setFilterModalOpen(true)}
-          >
-            <Filter className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1.5" />
-            <span>סינון</span>
-            {Object.keys(activeFilters).filter(k => {
+        <ToolbarActions>
+          <FilterTriggerButton
+            hasActiveFilters={Object.keys(activeFilters).length > 0}
+            activeCount={Object.keys(activeFilters).filter(k => {
               const val = activeFilters[k as keyof EmployeeFilters];
               if (Array.isArray(val)) return val.length > 0;
               if (typeof val === 'boolean') return val;
               if (k === 'ageRange') return val && ((val as any)[0] !== 18 || (val as any)[1] !== 67);
               return val;
-            }).length > 0 && (
-              <span className="absolute -top-1 -left-1 w-5 h-5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-background">
-                {Object.keys(activeFilters).filter(k => {
-                  const val = activeFilters[k as keyof EmployeeFilters];
-                  if (Array.isArray(val)) return val.length > 0;
-                  if (typeof val === 'boolean') return val;
-                  if (k === 'ageRange') return val && ((val as any)[0] !== 18 || (val as any)[1] !== 67);
-                  return val;
-                }).length}
-              </span>
-            )}
-          </Button>
-        </div>
-
-        {/* Left side: Import & Add */}
-        <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-start sm:mr-auto">
+            }).length}
+            onReset={() => handleApplyFilters({})}
+            onClick={() => setFilterModalOpen(true)}
+          />
           {!user?.is_temp_commander && (
             <>
               {user?.is_admin && (
@@ -321,11 +301,11 @@ export const EmployeeTable = ({
                   <Button
                     id="import-employees-button"
                     variant="outline"
-                    className="h-10 text-xs sm:text-sm bg-background border-border/60 hover:bg-muted text-foreground rounded-xl flex items-center justify-center"
+                    className="h-9 text-xs bg-card border-border/50 hover:bg-muted text-foreground rounded-xl px-3 flex items-center justify-center font-bold shadow-2xs cursor-pointer"
                     onClick={() => document.getElementById('employee-upload-input')?.click()}
                   >
-                    <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1.5 text-primary" />
-                    ייבוא מקובץ
+                    <Upload className="w-3.5 h-3.5 ml-1 text-primary" />
+                    ייבוא
                   </Button>
                   <input 
                     type="file" 
@@ -339,45 +319,45 @@ export const EmployeeTable = ({
               <Button
                 id="add-employee-button"
                 className={cn(
-                  "h-10 text-xs sm:text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl flex items-center justify-center",
+                  "h-9 text-xs bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-3.5 flex items-center justify-center font-bold shadow-2xs cursor-pointer",
                   searchParams.get("tutorial") === "add-employee" && "tutorial-highlight"
                 )}
                 onClick={() => navigate("/employees/new")}
               >
-                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1.5" />
+                <Plus className="w-3.5 h-3.5 ml-1" />
                 הוספה
               </Button>
             </>
           )}
-        </div>
-      </div>
+        </ToolbarActions>
+      </PageToolbar>
 
       {/* Main Table - Desktop View */}
-      <Card className="hidden lg:block overflow-hidden">
+      <Card className="hidden lg:block overflow-hidden border-slate-200/60 dark:border-slate-800 shadow-xs rounded-xl">
         <div className="overflow-x-auto">
           <Table className="min-w-full">
-            <TableHeader className="bg-muted/30 backdrop-blur-sm">
-              <TableRow className="hover:bg-transparent border-b border-border/40">
-                <TableHead className="text-right font-black text-muted-foreground uppercase text-[10px] h-16 px-6 tracking-widest">
+            <TableHeader className="bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xs">
+              <TableRow className="hover:bg-transparent border-b border-slate-200/60 dark:border-slate-800">
+                <TableHead className="text-right font-bold text-slate-500 uppercase text-[11px] h-9 px-4 tracking-wider">
                   שוטר
                 </TableHead>
 
-                <TableHead className="text-right font-black text-muted-foreground uppercase text-[10px] h-16 px-6 tracking-widest">
+                <TableHead className="text-right font-bold text-slate-500 uppercase text-[11px] h-9 px-4 tracking-wider">
                   טלפון
                 </TableHead>
-                <TableHead className="text-right font-black text-muted-foreground uppercase text-[10px] h-16 px-6 tracking-widest">
+                <TableHead className="text-right font-bold text-slate-500 uppercase text-[11px] h-9 px-4 tracking-wider">
                   תאריך לידה
                 </TableHead>
-                <TableHead className="text-right font-black text-muted-foreground uppercase text-[10px] h-16 px-6 tracking-widest">
+                <TableHead className="text-right font-bold text-slate-500 uppercase text-[11px] h-9 px-4 tracking-wider">
                   תפקיד/סמכות
                 </TableHead>
-                <TableHead className="text-right font-black text-muted-foreground uppercase text-[10px] h-16 px-6 tracking-widest">
+                <TableHead className="text-right font-bold text-slate-500 uppercase text-[11px] h-9 px-4 tracking-wider">
                   שיוך ארגוני
                 </TableHead>
-                <TableHead className="text-right font-black text-muted-foreground uppercase text-[10px] h-16 px-6 tracking-widest">
+                <TableHead className="text-right font-bold text-slate-500 uppercase text-[11px] h-9 px-4 tracking-wider">
                   מעמד
                 </TableHead>
-                <TableHead className="text-center font-black text-muted-foreground uppercase text-[10px] h-16 px-6 tracking-widest">
+                <TableHead className="text-center font-bold text-slate-500 uppercase text-[11px] h-9 px-4 tracking-wider">
                   פעולות
                 </TableHead>
               </TableRow>
@@ -387,18 +367,19 @@ export const EmployeeTable = ({
                 <TableRow>
                   <TableCell
                     colSpan={7}
-                    className="h-32 text-center text-muted-foreground"
+                    className="h-24 text-center text-muted-foreground text-xs"
                   >
                     טוען נתונים...
                   </TableCell>
                 </TableRow>
               ) : paginatedEmployees.length === 0 ? (
                 <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="h-32 text-center text-muted-foreground"
-                  >
-                    לא נמצאו שוטרים התואמים את החיפוש והסינון
+                  <TableCell colSpan={7} className="py-6 text-center">
+                    <EmptyState
+                      compact={true}
+                      title="לא נמצאו שוטרים"
+                      description="לא נמצאו שוטרים התואמים את החיפוש והסינון שהוגדרו."
+                    />
                   </TableCell>
                 </TableRow>
               ) : (
@@ -413,15 +394,15 @@ export const EmployeeTable = ({
                         "border-r-4 border-r-primary/30 hover:border-r-primary transition-all",
                     )}
                   >
-                    <TableCell className="px-6 py-5 text-right">
-                      <div className="flex items-center gap-4">
+                    <TableCell className="px-4 py-2.5 text-right">
+                      <div className="flex items-center gap-3">
                         <div className="relative">
                           <div
                             className={cn(
-                              "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm group-hover/row:scale-110 transition-all",
+                              "w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs group-hover/row:scale-105 transition-all shrink-0",
                               emp.is_active
-                                ? "bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 text-slate-600 dark:text-slate-400 border border-border/50"
-                                : "bg-muted text-muted-foreground ",
+                                ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-border/50"
+                                : "bg-muted text-muted-foreground",
                             )}
                           >
                             {emp.is_admin ? "💬" : `${emp.first_name[0]}${emp.last_name[0]}`}
@@ -431,7 +412,7 @@ export const EmployeeTable = ({
                           <EmployeeLink
                             employee={emp}
                             className={cn(
-                              "text-base font-black truncate tracking-tight group-hover/row:text-primary transition-colors",
+                              "text-xs font-bold truncate tracking-tight group-hover/row:text-primary transition-colors",
                               emp.is_active
                                 ? "text-foreground"
                                 : "text-muted-foreground",
@@ -440,14 +421,14 @@ export const EmployeeTable = ({
                           {!emp.is_active && (
                             <Badge
                               variant="destructive"
-                              className="w-fit h-4 text-[8px] px-1.5 font-black uppercase leading-none bg-destructive/10 text-destructive border-destructive/20 mt-1"
+                              className="w-fit h-4 text-[8px] px-1.5 font-bold uppercase leading-none bg-destructive/10 text-destructive border-destructive/20 mt-0.5"
                             >
                               לא פעיל
                             </Badge>
                           )}
                           {emp.is_active && (emp.is_commander || emp.is_admin) && (
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] font-black text-muted-foreground/50 tracking-[0.1em]">
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className="text-[9px] font-mono text-muted-foreground/60">
                                 #{emp.username}
                               </span>
                             </div>
@@ -456,11 +437,11 @@ export const EmployeeTable = ({
                       </div>
                     </TableCell>
 
-                    <TableCell className="px-6 py-4 text-right">
+                    <TableCell className="px-4 py-2.5 text-right">
                       {emp.phone_number ? (
                         <a
                           href={`tel:${emp.phone_number}`}
-                          className="font-mono text-xs text-primary hover:text-primary transition-colors hover:brightness-75 inline-flex items-center gap-2"
+                          className="font-mono text-xs text-primary hover:text-primary transition-colors hover:brightness-75 inline-flex items-center gap-1.5"
                         >
                           <Phone className="w-3 h-3" />
                           {emp.phone_number}
@@ -471,24 +452,24 @@ export const EmployeeTable = ({
                         </span>
                       )}
                     </TableCell>
-                    <TableCell className="px-6 py-4 text-right text-xs text-muted-foreground">
+                    <TableCell className="px-4 py-2.5 text-right text-xs text-muted-foreground">
                       {emp.birth_date
                         ? new Date(emp.birth_date).toLocaleDateString("he-IL")
                         : "-"}
                     </TableCell>
-                    <TableCell className="px-6 py-4 text-right">
+                    <TableCell className="px-4 py-2.5 text-right">
                       <Badge
                         variant="outline"
-                        className="font-medium text-[10px] border-none px-2.5 py-1 bg-muted text-muted-foreground"
+                        className="font-bold text-[10px] border-none px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                       >
                         {getProfessionalTitle(emp)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="px-6 py-5 text-right">
+                    <TableCell className="px-4 py-2.5 text-right">
                       {emp.department_name && emp.department_name !== "מטה" ? (
                         <div className="flex flex-col text-right">
                           <span
-                            className="text-[11px] font-black text-foreground cursor-pointer hover:text-primary transition-colors"
+                            className="text-[11px] font-bold text-foreground cursor-pointer hover:text-primary transition-colors"
                             onClick={() => {
                               const isSelected =
                                 activeFilters.departments?.includes(
@@ -507,9 +488,9 @@ export const EmployeeTable = ({
                           </span>
                           {((emp.section_name && emp.section_name !== "מטה") ||
                             (emp.team_name && emp.team_name !== "מטה")) && (
-                            <div className="flex items-center gap-1.5 mt-1">
+                            <div className="flex items-center gap-1 mt-0.5">
                               <span
-                                className="text-[10px] font-black text-primary/60 truncate bg-primary/5 px-2 py-0.5 rounded-lg border border-primary/10 cursor-pointer hover:bg-primary/10 transition-all"
+                                className="text-[10px] font-bold text-primary/70 truncate bg-primary/5 px-1.5 py-0.2 rounded-md border border-primary/10 cursor-pointer hover:bg-primary/10 transition-all"
                                 onClick={() => {
                                   if (
                                     emp.team_name &&
@@ -549,18 +530,18 @@ export const EmployeeTable = ({
                           )}
                         </div>
                       ) : (
-                        <span className="text-[10px] font-black text-muted-foreground/30">
+                        <span className="text-[10px] font-bold text-muted-foreground/40">
                           מטה / ללא שיוך
                         </span>
                       )}
                     </TableCell>
-                    <TableCell className="px-6 py-4 text-right">
+                    <TableCell className="px-4 py-2.5 text-right">
                       <span className="text-xs font-medium text-muted-foreground">
                         {emp.service_type_name || "-"}
                       </span>
                     </TableCell>
 
-                    <TableCell className="px-6 py-4">
+                    <TableCell className="px-4 py-2.5">
                       <div className="flex items-center justify-center gap-2">
                         {((user?.is_admin &&
                           (emp.is_commander || emp.is_admin)) ||

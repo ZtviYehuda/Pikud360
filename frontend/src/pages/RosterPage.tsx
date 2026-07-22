@@ -30,8 +30,20 @@ import {
   RotateCcw,
 } from "lucide-react";
 
+import {
+  PageToolbar,
+  SearchInput,
+  ClearFiltersButton,
+  FilterTriggerButton,
+  FilterDialog,
+} from "@/components/shared/page-toolbar";
+
 import { ShabbatIcon } from "@/components/common/ShabbatIcon";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -65,8 +77,10 @@ const StatusCard = ({
   <button
     onClick={onClick}
     className={cn(
-      "flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl border-2 transition-all text-center h-full group relative bg-background hover:bg-muted/30 border-border/40 hover:border-primary/40",
-      isSub ? "opacity-90 scale-[1.0] min-h-[72px] sm:min-h-[85px]" : "min-h-[82px] sm:min-h-[95px]",
+      "flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl border-2 transition-all duration-200 text-center h-full group relative bg-card border-border/50 hover:-translate-y-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-primary/50 hover:shadow-md active:translate-y-0 active:scale-[0.98] active:bg-slate-200 dark:active:bg-slate-700",
+      isSub
+        ? "opacity-90 scale-[1.0] min-h-[72px] sm:min-h-[85px]"
+        : "min-h-[82px] sm:min-h-[95px]",
       large &&
         "col-span-3 flex-row gap-4 min-h-[60px] sm:min-h-[80px] px-4 sm:px-8 bg-slate-100/50 dark:bg-slate-800/50 border-primary/20",
     )}
@@ -80,7 +94,11 @@ const StatusCard = ({
       )}
     >
       <div
-        className={large ? "w-4 h-4 sm:w-5 sm:h-5 rounded-full" : "w-3 h-3 sm:w-4 sm:h-4 rounded-full"}
+        className={
+          large
+            ? "w-4 h-4 sm:w-5 sm:h-5 rounded-full"
+            : "w-3 h-3 sm:w-4 sm:h-4 rounded-full"
+        }
         style={{
           backgroundColor: type.color,
           boxShadow: `0 0 10px ${type.color}40`,
@@ -115,7 +133,6 @@ const StatusCard = ({
   </button>
 );
 
-
 export default function RosterPage() {
   const { getRosterMatrix, getStatusTypes, getStructure, logBulkStatus } =
     useEmployees();
@@ -132,13 +149,14 @@ export default function RosterPage() {
   const [loadingMatrix, setLoadingMatrix] = useState(false);
   const [saving, setSaving] = useState(false);
 
-
   // Filters
   const [selectedDept, setSelectedDept] = useState<string>("all");
   const [selectedSection, setSelectedSection] = useState<string>("all");
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [activeFilterTab, setActiveFilterTab] = useState("org");
 
   // Pending Changes State
   const [pendingUpdates, setPendingUpdates] = useState<any[]>([]);
@@ -193,8 +211,8 @@ export default function RosterPage() {
   }, [weekStart]);
 
   // Tour Guide State Integration
-  const [currentTourStepId, setCurrentTourStepId] = useState<string | null>(() =>
-    localStorage.getItem("active_tour_step_id")
+  const [currentTourStepId, setCurrentTourStepId] = useState<string | null>(
+    () => localStorage.getItem("active_tour_step_id"),
   );
   const openedByTour = useRef(false);
 
@@ -211,7 +229,10 @@ export default function RosterPage() {
   useEffect(() => {
     if (currentTourStepId === "roster_status_change") {
       setSelectedDayMobile(weekDays[0]);
-      if (employees.length > 0 && (!isDialogOpen || !selectedCell || selectedCell.date !== weekDays[0])) {
+      if (
+        employees.length > 0 &&
+        (!isDialogOpen || !selectedCell || selectedCell.date !== weekDays[0])
+      ) {
         setSelectedCell({
           empId: employees[0].id,
           date: weekDays[0],
@@ -221,7 +242,10 @@ export default function RosterPage() {
       }
     } else if (currentTourStepId === "roster_weekend_holidays") {
       setSelectedDayMobile(weekDays[5]);
-      if (employees.length > 0 && (!isDialogOpen || !selectedCell || selectedCell.date !== weekDays[5])) {
+      if (
+        employees.length > 0 &&
+        (!isDialogOpen || !selectedCell || selectedCell.date !== weekDays[5])
+      ) {
         setSelectedCell({
           empId: employees[0].id,
           date: weekDays[5],
@@ -254,15 +278,18 @@ export default function RosterPage() {
   // Default org filters based on permissions
   useEffect(() => {
     if (!user || user.is_admin) return;
-    
+
     if (user.commands_department_id) {
       setSelectedDept(user.commands_department_id.toString());
     } else if (user.commands_section_id) {
-      if (user.assigned_department_id) setSelectedDept(user.assigned_department_id.toString());
+      if (user.assigned_department_id)
+        setSelectedDept(user.assigned_department_id.toString());
       setSelectedSection(user.commands_section_id.toString());
     } else if (user.commands_team_id) {
-      if (user.assigned_department_id) setSelectedDept(user.assigned_department_id.toString());
-      if (user.assigned_section_id) setSelectedSection(user.assigned_section_id.toString());
+      if (user.assigned_department_id)
+        setSelectedDept(user.assigned_department_id.toString());
+      if (user.assigned_section_id)
+        setSelectedSection(user.assigned_section_id.toString());
       setSelectedTeam(user.commands_team_id.toString());
     }
   }, [user]);
@@ -462,19 +489,37 @@ export default function RosterPage() {
   const hasActiveFilters = useMemo(() => {
     if (statusFilter !== "all" || searchTerm !== "") return true;
     if (user?.is_admin) {
-      return selectedDept !== "all" || selectedSection !== "all" || selectedTeam !== "all";
+      return (
+        selectedDept !== "all" ||
+        selectedSection !== "all" ||
+        selectedTeam !== "all"
+      );
     }
     if (user?.commands_department_id) {
-      return selectedDept !== user.commands_department_id.toString() || selectedSection !== "all" || selectedTeam !== "all";
+      return (
+        selectedDept !== user.commands_department_id.toString() ||
+        selectedSection !== "all" ||
+        selectedTeam !== "all"
+      );
     }
     if (user?.commands_section_id) {
-      return selectedSection !== user.commands_section_id.toString() || selectedTeam !== "all";
+      return (
+        selectedSection !== user.commands_section_id.toString() ||
+        selectedTeam !== "all"
+      );
     }
     if (user?.commands_team_id) {
       return selectedTeam !== user.commands_team_id.toString();
     }
     return false;
-  }, [selectedDept, selectedSection, selectedTeam, statusFilter, searchTerm, user]);
+  }, [
+    selectedDept,
+    selectedSection,
+    selectedTeam,
+    statusFilter,
+    searchTerm,
+    user,
+  ]);
 
   const handleResetFilters = () => {
     if (!user || user.is_admin) {
@@ -487,12 +532,15 @@ export default function RosterPage() {
         setSelectedSection("all");
         setSelectedTeam("all");
       } else if (user.commands_section_id) {
-        if (user.assigned_department_id) setSelectedDept(user.assigned_department_id.toString());
+        if (user.assigned_department_id)
+          setSelectedDept(user.assigned_department_id.toString());
         setSelectedSection(user.commands_section_id.toString());
         setSelectedTeam("all");
       } else if (user.commands_team_id) {
-        if (user.assigned_department_id) setSelectedDept(user.assigned_department_id.toString());
-        if (user.assigned_section_id) setSelectedSection(user.assigned_section_id.toString());
+        if (user.assigned_department_id)
+          setSelectedDept(user.assigned_department_id.toString());
+        if (user.assigned_section_id)
+          setSelectedSection(user.assigned_section_id.toString());
         setSelectedTeam(user.commands_team_id.toString());
       } else {
         setSelectedDept("all");
@@ -505,13 +553,14 @@ export default function RosterPage() {
   };
 
   const filterButtonLabel = useMemo(() => {
-    const activeUnitName = activeTeam?.name || activeSection?.name || activeDepartment?.name;
+    const activeUnitName =
+      activeTeam?.name || activeSection?.name || activeDepartment?.name;
     const activeStatusName =
       statusFilter === "none"
         ? "לא דווח"
         : statusFilter !== "all"
-        ? statusTypes.find((s) => s.id.toString() === statusFilter)?.name
-        : null;
+          ? statusTypes.find((s) => s.id.toString() === statusFilter)?.name
+          : null;
 
     const parts = [activeUnitName, activeStatusName].filter(Boolean);
     return parts.length > 0 ? parts.join(" • ") : null;
@@ -521,8 +570,7 @@ export default function RosterPage() {
     return employees.filter((emp) => {
       const fullName = `${emp.first_name} ${emp.last_name}`.toLowerCase();
       const matchesSearch =
-        fullName.includes(searchTerm.toLowerCase()) ||
-        false;
+        fullName.includes(searchTerm.toLowerCase()) || false;
 
       if (!matchesSearch) return false;
       if (statusFilter === "all") return true;
@@ -576,7 +624,7 @@ export default function RosterPage() {
     });
     if (workDayEntries.length === 0 || filteredEmployees.length === 0) return 0;
     const sum = workDayEntries.reduce(
-      (acc, [, v]) => acc + (v.present / filteredEmployees.length),
+      (acc, [, v]) => acc + v.present / filteredEmployees.length,
       0,
     );
     return Math.round((sum / workDayEntries.length) * 100);
@@ -606,7 +654,7 @@ export default function RosterPage() {
       <div className="flex flex-col h-full">
         {/* Unified Page Header - Premium Layout Style */}
         {/* Unified Page Header - Hyper Minimalist */}
-        <div className="pt-6 pb-2 shrink-0 transition-all px-4 sm:px-6">
+        <div className="pt-4 pb-2 shrink-0 transition-all px-4 sm:px-6">
           <PageHeader
             icon={CalendarRange}
             title="סידור עבודה שבועי"
@@ -615,7 +663,6 @@ export default function RosterPage() {
             hideMobile={true}
             badge={
               <div className="flex flex-col sm:flex-row items-center gap-3 mt-4 lg:mt-0 w-full sm:w-auto">
-                
                 {/* Save/Undo Actions */}
                 <AnimatePresence>
                   {pendingUpdates.length > 0 && (
@@ -651,237 +698,191 @@ export default function RosterPage() {
                   )}
                 </AnimatePresence>
 
-                {/* Filters & Search - Minimalist Right Side */}
-                  {/* Mobile Search & Filter Row - Merged */}
-                  <div className="lg:hidden flex items-center gap-2 w-full">
-                    <div className="relative flex-1 group/search">
-                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50 group-focus-within/search:text-primary transition-colors z-10" />
-                      <Input
-                        placeholder="חיפוש..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="h-10 w-full pr-9 pl-4 bg-muted/30 border-transparent focus:bg-background focus:border-primary/30 rounded-xl font-bold text-xs transition-all duration-300"
-                      />
-                    </div>
-                    
-                    <Popover>
-                      <div className="relative group">
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className={cn("h-10 w-10 p-0 rounded-xl border-border/40 hover:bg-muted/30 shrink-0 shadow-sm transition-all bg-background", hasActiveFilters ? "text-primary border-primary/30 bg-primary/5" : "")}>
-                            <Filter className="w-4 h-4" />
-                            {hasActiveFilters && (
-                              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary shadow-sm border border-background" />
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        {hasActiveFilters && (
+                {/* Unified Filter Trigger Button & Modal */}
+                <div className="flex items-center gap-2">
+                  <FilterTriggerButton
+                    label="סינון"
+                    hasActiveFilters={hasActiveFilters}
+                    onReset={handleResetFilters}
+                    onClick={() => setIsFilterModalOpen(true)}
+                  />
+                  <FilterDialog
+                    open={isFilterModalOpen}
+                    onOpenChange={setIsFilterModalOpen}
+                    title="סינון"
+                    description="סינון סידור עבודה"
+                    onApply={() => setIsFilterModalOpen(false)}
+                    onReset={handleResetFilters}
+                    hasActiveFilters={hasActiveFilters}
+                    headerContent={
+                      <div className="flex gap-6 overflow-x-auto no-scrollbar pt-2">
+                        {[
+                          { id: "org", label: "יחידות ארגוניות" },
+                          { id: "status", label: "סטטוס משמרת" },
+                        ].map((tab) => (
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleResetFilters();
-                            }}
-                            className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center border-2 border-background transition-all hover:scale-110 active:scale-90 z-20 shadow-sm"
-                            title="נקה הכל"
+                            key={tab.id}
+                            onClick={() => setActiveFilterTab(tab.id)}
+                            className={cn(
+                              "text-sm font-black whitespace-nowrap pb-2 border-b-2 transition-all relative cursor-pointer",
+                              activeFilterTab === tab.id
+                                ? "text-foreground border-primary"
+                                : "text-muted-foreground border-transparent"
+                            )}
                           >
-                            <RotateCcw className="w-2.5 h-2.5" />
+                            {tab.label}
                           </button>
-                        )}
+                        ))}
                       </div>
-                      <PopoverContent align="end" className="w-80 rounded-3xl border-border/40 p-5 shadow-2xl bg-card/95 backdrop-blur-xl">
-                        <div className="space-y-5">
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between px-1">
-                              <span className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">סינון יחידה</span>
-                              {hasActiveFilters && (
-                                <button onClick={handleResetFilters} className="text-[10px] font-bold text-primary hover:text-primary/80">נקה הכל</button>
-                              )}
-                            </div>
-                            <Select value={selectedDept} onValueChange={(val) => { setSelectedDept(val); setSelectedSection("all"); setSelectedTeam("all"); }} disabled={!user?.is_admin}>
-                              <SelectTrigger className="w-full rounded-2xl bg-background border border-border/40 hover:border-border/80 font-bold text-xs h-10 transition-colors">
-                                <SelectValue placeholder="כל היחידה" />
+                    }
+                  >
+                    {activeFilterTab === "org" && (
+                      <div className="space-y-4 py-2">
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-muted-foreground">
+                            מחלקה
+                          </label>
+                          <Select
+                            value={selectedDept}
+                            onValueChange={(val) => {
+                              setSelectedDept(val);
+                              setSelectedSection("all");
+                              setSelectedTeam("all");
+                            }}
+                            disabled={!user?.is_admin}
+                          >
+                            <SelectTrigger className="w-full rounded-xl bg-background border border-border/40 font-bold text-xs h-10">
+                              <SelectValue placeholder="כל היחידה" />
+                            </SelectTrigger>
+                            <SelectContent dir="rtl" className="rounded-xl font-bold">
+                              {user?.is_admin && <SelectItem value="all">כל היחידה</SelectItem>}
+                              {departments.map((d: any) => (
+                                <SelectItem key={d.id} value={d.id.toString()}>
+                                  {d.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {selectedDept !== "all" && sections.length > 0 && (
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold text-muted-foreground">
+                              מדור
+                            </label>
+                            <Select
+                              value={selectedSection}
+                              onValueChange={(val) => {
+                                setSelectedSection(val);
+                                setSelectedTeam("all");
+                              }}
+                              disabled={!(user?.is_admin || user?.commands_department_id)}
+                            >
+                              <SelectTrigger className="w-full rounded-xl bg-background border border-border/40 font-bold text-xs h-10">
+                                <SelectValue placeholder="כל המדורים" />
                               </SelectTrigger>
-                              <SelectContent dir="rtl" className="rounded-2xl font-bold border-border/40">
-                                {user?.is_admin && <SelectItem value="all">כל היחידה</SelectItem>}
-                                {departments.map((d: any) => (<SelectItem key={d.id} value={d.id.toString()}>{d.name}</SelectItem>))}
-                              </SelectContent>
-                            </Select>
-                            {selectedDept !== "all" && sections.length > 0 && (
-                              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-                                <Select value={selectedSection} onValueChange={(val) => { setSelectedSection(val); setSelectedTeam("all"); }} disabled={!(user?.is_admin || user?.commands_department_id)}>
-                                  <SelectTrigger className="w-full rounded-2xl bg-background border border-border/40 hover:border-border/80 font-bold text-xs h-10 transition-colors">
-                                    <SelectValue placeholder="כל המדורים" />
-                                  </SelectTrigger>
-                                  <SelectContent dir="rtl" className="rounded-2xl font-bold border-border/40">
-                                    {(user?.is_admin || user?.commands_department_id) && <SelectItem value="all">כל המדורים</SelectItem>}
-                                    {sections.map((s: any) => (<SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>))}
-                                  </SelectContent>
-                                </Select>
-                              </motion.div>
-                            )}
-                            {selectedSection !== "all" && teams.length > 0 && (
-                              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-                                <Select value={selectedTeam} onValueChange={setSelectedTeam} disabled={!(user?.is_admin || user?.commands_department_id || user?.commands_section_id)}>
-                                  <SelectTrigger className="w-full rounded-2xl bg-background border border-border/40 hover:border-border/80 font-bold text-xs h-10 transition-colors">
-                                    <SelectValue placeholder="כל החוליות" />
-                                  </SelectTrigger>
-                                  <SelectContent dir="rtl" className="rounded-2xl font-bold border-border/40">
-                                    {(user?.is_admin || user?.commands_department_id || user?.commands_section_id) && <SelectItem value="all">כל החוליות</SelectItem>}
-                                    {teams.map((t: any) => (<SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>))}
-                                  </SelectContent>
-                                </Select>
-                              </motion.div>
-                            )}
-                          </div>
-                          
-                          <div className="space-y-3 pt-4 border-t border-border/20">
-                            <span className="text-[11px] font-black text-muted-foreground uppercase tracking-widest px-1">סטטוס משמרת</span>
-                            <Select value={statusFilter} onValueChange={setStatusFilter}>
-                              <SelectTrigger className="w-full rounded-2xl bg-background border border-border/40 hover:border-border/80 font-bold text-xs h-10 transition-colors">
-                                <SelectValue placeholder="סטטוס: הכל" />
-                              </SelectTrigger>
-                              <SelectContent dir="rtl" className="rounded-2xl font-bold border-border/40">
-                                <SelectItem value="all">סטטוס: הכל</SelectItem>
-                                <SelectItem value="none" className="text-rose-500">לא דווח</SelectItem>
-                                {rosterParentStatuses.map((st: any) => (
-                                  <SelectItem key={st.id} value={st.id.toString()}>
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-2.5 h-2.5 rounded-full shadow-sm border border-black/10" style={{ backgroundColor: st.color }} />
-                                      {st.name}
-                                    </div>
+                              <SelectContent dir="rtl" className="rounded-xl font-bold">
+                                {(user?.is_admin || user?.commands_department_id) && (
+                                  <SelectItem value="all">כל המדורים</SelectItem>
+                                )}
+                                {sections.map((s: any) => (
+                                  <SelectItem key={s.id} value={s.id.toString()}>
+                                    {s.name}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                           </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  {/* Desktop Only Filter/Search */}
-                  <div className="hidden lg:flex items-center gap-2">
-                    <Popover>
-                      <div className="relative group">
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className={cn("h-9 rounded-full px-4 border-border/40 hover:bg-muted/30 font-bold text-xs gap-2 shrink-0 shadow-sm transition-all bg-background", hasActiveFilters ? "text-primary border-primary/30 bg-primary/5" : "")}>
-                            <Filter className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">{filterButtonLabel || "סינון נתונים"}</span>
-                            <span className="sm:hidden">{filterButtonLabel || "סינון"}</span>
-                            {hasActiveFilters && (
-                              <span className="w-2 h-2 rounded-full bg-primary relative -right-1 shadow-sm" />
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        {hasActiveFilters && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleResetFilters();
-                            }}
-                            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center border-2 border-background transition-all hover:scale-110 active:scale-90 z-20 shadow-sm"
-                            title="נקה הכל"
-                          >
-                            <RotateCcw className="w-2.5 h-2.5" />
-                          </button>
                         )}
-                      </div>
-                      <PopoverContent align="start" className="w-80 rounded-3xl border-border/40 p-5 shadow-2xl bg-card/95 backdrop-blur-xl">
-                        {/* Same Popover Content as Mobile */}
-                        <div className="space-y-5">
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between px-1">
-                              <span className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">סינון יחידה</span>
-                              {hasActiveFilters && (
-                                <button onClick={handleResetFilters} className="text-[10px] font-bold text-primary hover:text-primary/80">נקה הכל</button>
-                              )}
-                            </div>
-                            <Select value={selectedDept} onValueChange={(val) => { setSelectedDept(val); setSelectedSection("all"); setSelectedTeam("all"); }} disabled={!user?.is_admin}>
-                              <SelectTrigger className="w-full rounded-2xl bg-background border border-border/40 hover:border-border/80 font-bold text-xs h-10 transition-colors">
-                                <SelectValue placeholder="כל היחידה" />
+
+                        {selectedSection !== "all" && teams.length > 0 && (
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold text-muted-foreground">
+                              חוליה
+                            </label>
+                            <Select
+                              value={selectedTeam}
+                              onValueChange={setSelectedTeam}
+                              disabled={
+                                !(
+                                  user?.is_admin ||
+                                  user?.commands_department_id ||
+                                  user?.commands_section_id
+                                )
+                              }
+                            >
+                              <SelectTrigger className="w-full rounded-xl bg-background border border-border/40 font-bold text-xs h-10">
+                                <SelectValue placeholder="כל החוליות" />
                               </SelectTrigger>
-                              <SelectContent dir="rtl" className="rounded-2xl font-bold border-border/40">
-                                {user?.is_admin && <SelectItem value="all">כל היחידה</SelectItem>}
-                                {departments.map((d: any) => (<SelectItem key={d.id} value={d.id.toString()}>{d.name}</SelectItem>))}
-                              </SelectContent>
-                            </Select>
-                            {selectedDept !== "all" && sections.length > 0 && (
-                              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-                                <Select value={selectedSection} onValueChange={(val) => { setSelectedSection(val); setSelectedTeam("all"); }} disabled={!(user?.is_admin || user?.commands_department_id)}>
-                                  <SelectTrigger className="w-full rounded-2xl bg-background border border-border/40 hover:border-border/80 font-bold text-xs h-10 transition-colors">
-                                    <SelectValue placeholder="כל המדורים" />
-                                  </SelectTrigger>
-                                  <SelectContent dir="rtl" className="rounded-2xl font-bold border-border/40">
-                                    {(user?.is_admin || user?.commands_department_id) && <SelectItem value="all">כל המדורים</SelectItem>}
-                                    {sections.map((s: any) => (<SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>))}
-                                  </SelectContent>
-                                </Select>
-                              </motion.div>
-                            )}
-                            {selectedSection !== "all" && teams.length > 0 && (
-                              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-                                <Select value={selectedTeam} onValueChange={setSelectedTeam} disabled={!(user?.is_admin || user?.commands_department_id || user?.commands_section_id)}>
-                                  <SelectTrigger className="w-full rounded-2xl bg-background border border-border/40 hover:border-border/80 font-bold text-xs h-10 transition-colors">
-                                    <SelectValue placeholder="כל החוליות" />
-                                  </SelectTrigger>
-                                  <SelectContent dir="rtl" className="rounded-2xl font-bold border-border/40">
-                                    {(user?.is_admin || user?.commands_department_id || user?.commands_section_id) && <SelectItem value="all">כל החוליות</SelectItem>}
-                                    {teams.map((t: any) => (<SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>))}
-                                  </SelectContent>
-                                </Select>
-                              </motion.div>
-                            )}
-                          </div>
-                          
-                          <div className="space-y-3 pt-4 border-t border-border/20">
-                            <span className="text-[11px] font-black text-muted-foreground uppercase tracking-widest px-1">סטטוס משמרת</span>
-                            <Select value={statusFilter} onValueChange={setStatusFilter}>
-                              <SelectTrigger className="w-full rounded-2xl bg-background border border-border/40 hover:border-border/80 font-bold text-xs h-10 transition-colors">
-                                <SelectValue placeholder="סטטוס: הכל" />
-                              </SelectTrigger>
-                              <SelectContent dir="rtl" className="rounded-2xl font-bold border-border/40">
-                                <SelectItem value="all">סטטוס: הכל</SelectItem>
-                                <SelectItem value="none" className="text-rose-500">לא דווח</SelectItem>
-                                {rosterParentStatuses.map((st: any) => (
-                                  <SelectItem key={st.id} value={st.id.toString()}>
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-2.5 h-2.5 rounded-full shadow-sm border border-black/10" style={{ backgroundColor: st.color }} />
-                                      {st.name}
-                                    </div>
+                              <SelectContent dir="rtl" className="rounded-xl font-bold">
+                                {(user?.is_admin ||
+                                  user?.commands_department_id ||
+                                  user?.commands_section_id) && (
+                                  <SelectItem value="all">כל החוליות</SelectItem>
+                                )}
+                                {teams.map((t: any) => (
+                                  <SelectItem key={t.id} value={t.id.toString()}>
+                                    {t.name}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                           </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                        )}
+                      </div>
+                    )}
 
-                    <div className="relative group/search">
-                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50 group-focus-within/search:text-primary transition-colors z-10" />
-                      <Input
-                        placeholder="חיפוש..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="h-9 w-full sm:w-32 lg:w-40 pr-9 pl-4 bg-background border-border/40 hover:bg-muted/20 focus:bg-background focus:border-primary/30 focus:sm:w-48 focus:lg:w-56 rounded-full font-bold text-xs transition-all duration-300 shadow-sm"
-                      />
-                    </div>
-                  </div>
+                    {activeFilterTab === "status" && (
+                      <div className="space-y-2 py-2">
+                        <label className="text-xs font-bold text-muted-foreground">
+                          סטטוס משמרת
+                        </label>
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                          <SelectTrigger className="w-full rounded-xl bg-background border border-border/40 font-bold text-xs h-10">
+                            <SelectValue placeholder="סטטוס: הכל" />
+                          </SelectTrigger>
+                          <SelectContent dir="rtl" className="rounded-xl font-bold">
+                            <SelectItem value="all">סטטוס: הכל</SelectItem>
+                            <SelectItem value="none" className="text-rose-500">
+                              לא דווח
+                            </SelectItem>
+                            {rosterParentStatuses.map((st: any) => (
+                              <SelectItem key={st.id} value={st.id.toString()}>
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="w-2.5 h-2.5 rounded-full border border-black/10"
+                                    style={{ backgroundColor: st.color }}
+                                  />
+                                  {st.name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </FilterDialog>
+                  <SearchInput
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                    placeholder="חיפוש..."
+                    className="w-40 sm:w-48"
+                  />
                 </div>
-              }
-            />
-          </div>
+              </div>
+            }
+          />
+        </div>
 
         <div className="flex-1 overflow-auto py-3 sm:py-4 md:py-6 custom-scrollbar relative">
-          
-          
           {/* Mobile Calendar & Stats - Refactored */}
           <div className="lg:hidden bg-background/95 backdrop-blur-xl sticky top-0 z-40 mb-3 -mx-4 border-b border-border/20 px-4 pt-2 pb-3">
             {/* Month & Year Indicator */}
             <div className="flex items-center justify-between mb-2 px-1">
-               <span className="text-[11px] font-black text-primary/80 uppercase tracking-[0.2em]">
-                  {format(selectedDayMobile, "MMMM yyyy", { locale: he })}
-                </span>
-                <div className="h-px flex-1 bg-gradient-to-l from-primary/20 to-transparent mr-4" />
+              <span className="text-[11px] font-black text-primary/80 uppercase tracking-[0.2em]">
+                {format(selectedDayMobile, "MMMM yyyy", { locale: he })}
+              </span>
+              <div className="h-px flex-1 bg-gradient-to-l from-primary/20 to-transparent mr-4" />
             </div>
 
             {/* Horizontal Date Picker - 7 Column Grid with Animated Selection */}
@@ -890,19 +891,20 @@ export default function RosterPage() {
                 const isSelected = isSameDay(day, selectedDayMobile);
                 const isToday = isSameDay(day, today);
                 const weekend = getDay(day) === 5 || getDay(day) === 6;
-                
+
                 return (
                   <button
                     key={i}
                     onClick={() => {
                       setSelectedDayMobile(day);
-                      if (window.navigator.vibrate) window.navigator.vibrate(10);
+                      if (window.navigator.vibrate)
+                        window.navigator.vibrate(10);
                     }}
                     className={cn(
                       "h-13 flex flex-col items-center justify-center rounded-xl transition-colors relative outline-none",
                       isSelected
                         ? "text-white z-10"
-                        : "bg-muted/30 text-foreground hover:bg-muted/50"
+                        : "bg-muted/30 text-foreground hover:bg-muted/50",
                     )}
                   >
                     {isSelected && (
@@ -910,20 +912,28 @@ export default function RosterPage() {
                         layoutId="activeDayMobile"
                         className="absolute inset-0 bg-primary rounded-xl shadow-[0_8px_16px_-4px_rgba(59,130,246,0.4)]"
                         initial={false}
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 30,
+                        }}
                       />
                     )}
-                    
-                    <span className={cn(
-                      "text-[10px] font-black mb-0.5 relative z-10",
-                      isSelected ? "text-white/80" : "text-muted-foreground/60"
-                    )}>
+
+                    <span
+                      className={cn(
+                        "text-[10px] font-black mb-0.5 relative z-10",
+                        isSelected
+                          ? "text-white/80"
+                          : "text-muted-foreground/60",
+                      )}
+                    >
                       {format(day, "EEE", { locale: he })}
                     </span>
                     <span className="text-sm font-black tabular-nums relative z-10 leading-tight">
                       {format(day, "dd")}
                     </span>
-                    
+
                     {weekend && !isSelected && (
                       <ShabbatIcon className="w-2.5 h-2.5 text-amber-500/60 absolute bottom-0.5 left-1/2 -translate-x-1/2 z-10" />
                     )}
@@ -937,26 +947,34 @@ export default function RosterPage() {
 
             {/* Interactive Stats Pills */}
             <div className="flex items-center gap-2 mt-2 px-1">
-              <button 
+              <button
                 onClick={() => setStatusFilter("all")}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg transition-all font-black text-[11px]",
-                  "bg-emerald-500/10 text-emerald-600 border border-emerald-500/10 active:scale-95"
+                  "bg-emerald-500/10 text-emerald-600 border border-emerald-500/10 active:scale-95",
                 )}
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                <span>נוכחים: {dailyTotals[format(selectedDayMobile, "yyyy-MM-dd")]?.present || 0}</span>
+                <span>
+                  נוכחים:{" "}
+                  {dailyTotals[format(selectedDayMobile, "yyyy-MM-dd")]
+                    ?.present || 0}
+                </span>
               </button>
-              
-              <button 
+
+              <button
                 onClick={() => setStatusFilter("none")}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg transition-all font-black text-[11px]",
-                  "bg-rose-500/10 text-rose-600 border border-rose-500/10 active:scale-95"
+                  "bg-rose-500/10 text-rose-600 border border-rose-500/10 active:scale-95",
                 )}
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
-                <span>נעדרים: {dailyTotals[format(selectedDayMobile, "yyyy-MM-dd")]?.absent || 0}</span>
+                <span>
+                  נעדרים:{" "}
+                  {dailyTotals[format(selectedDayMobile, "yyyy-MM-dd")]
+                    ?.absent || 0}
+                </span>
               </button>
             </div>
           </div>
@@ -976,7 +994,9 @@ export default function RosterPage() {
                       <span className="text-[10px] text-muted-foreground font-bold mt-0.5 flex items-center gap-1.5">
                         <span>{filteredEmployees.length} שוטרים בסינון</span>
                         <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-                        <span className="text-primary">{weekdayAverageAttendance}% ממוצע נוכחות</span>
+                        <span className="text-primary">
+                          {weekdayAverageAttendance}% ממוצע נוכחות
+                        </span>
                       </span>
                     </div>
                   </div>
@@ -1032,9 +1052,15 @@ export default function RosterPage() {
                         )}
                         {!weekend && dailyTotal.total > 0 && (
                           <div className="flex items-center gap-1.5 mt-1">
-                            <span className="text-[9px] font-black text-emerald-600 tabular-nums">{dailyTotal.present}</span>
-                            <span className="text-[9px] text-muted-foreground/40">/</span>
-                            <span className="text-[9px] font-black text-rose-600 tabular-nums">{dailyTotal.absent}</span>
+                            <span className="text-[9px] font-black text-emerald-600 tabular-nums">
+                              {dailyTotal.present}
+                            </span>
+                            <span className="text-[9px] text-muted-foreground/40">
+                              /
+                            </span>
+                            <span className="text-[9px] font-black text-rose-600 tabular-nums">
+                              {dailyTotal.absent}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -1115,16 +1141,26 @@ export default function RosterPage() {
                           const weekend =
                             getDay(day) === 5 || getDay(day) === 6;
                           const isPending = log?.is_pending;
-                          const isSundayTourCell = empIdx === 0 && getDay(day) === 0;
-                          const isFridayTourCell = empIdx === 0 && getDay(day) === 5;
-                          const forceShowPlus = 
-                            (isSundayTourCell && currentTourStepId === "roster_status_change") ||
-                            (isFridayTourCell && currentTourStepId === "roster_weekend_holidays");
+                          const isSundayTourCell =
+                            empIdx === 0 && getDay(day) === 0;
+                          const isFridayTourCell =
+                            empIdx === 0 && getDay(day) === 5;
+                          const forceShowPlus =
+                            (isSundayTourCell &&
+                              currentTourStepId === "roster_status_change") ||
+                            (isFridayTourCell &&
+                              currentTourStepId === "roster_weekend_holidays");
 
                           return (
                             <div
                               key={i}
-                              id={isSundayTourCell ? "tour-roster-cell" : isFridayTourCell ? "tour-roster-weekend-cell" : undefined}
+                              id={
+                                isSundayTourCell
+                                  ? "tour-roster-cell"
+                                  : isFridayTourCell
+                                    ? "tour-roster-weekend-cell"
+                                    : undefined
+                              }
                               onClick={() => handleCellClick(emp.id, day)}
                               className={cn(
                                 "p-2 border-l border-border/30 flex items-center justify-center cursor-pointer transition-all relative group/cell min-h-[72px]",
@@ -1133,10 +1169,14 @@ export default function RosterPage() {
                               )}
                             >
                               {!log || forceShowPlus ? (
-                                <div className={cn(
-                                  "group-hover/cell:opacity-100 transition-all transform scale-75 group-hover/cell:scale-100 w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground/40 hover:bg-primary/10 hover:text-primary",
-                                  forceShowPlus ? "opacity-100 scale-100 bg-primary/10 text-primary border border-primary/20" : "opacity-0"
-                                )}>
+                                <div
+                                  className={cn(
+                                    "group-hover/cell:opacity-100 transition-all transform scale-75 group-hover/cell:scale-100 w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground/40 hover:bg-primary/10 hover:text-primary",
+                                    forceShowPlus
+                                      ? "opacity-100 scale-100 bg-primary/10 text-primary border border-primary/20"
+                                      : "opacity-0",
+                                  )}
+                                >
                                   <Plus className="w-4 h-4" />
                                 </div>
                               ) : (
@@ -1205,8 +1245,8 @@ export default function RosterPage() {
                   <p className="text-sm text-muted-foreground/60 font-bold mb-8">
                     נסה לשנות את המסננים או מילת החיפוש
                   </p>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => {
                       setSearchTerm("");
                       setStatusFilter("all");
@@ -1220,7 +1260,9 @@ export default function RosterPage() {
               ) : (
                 filteredEmployees.map((emp, idx) => {
                   const log = getLogForCell(emp.id, selectedDayMobile);
-                  const isWeekend = getDay(selectedDayMobile) === 5 || getDay(selectedDayMobile) === 6;
+                  const isWeekend =
+                    getDay(selectedDayMobile) === 5 ||
+                    getDay(selectedDayMobile) === 6;
                   const mobileForceShowPlus =
                     idx === 0 &&
                     (currentTourStepId === "roster_status_change" ||
@@ -1236,16 +1278,17 @@ export default function RosterPage() {
                     >
                       {/* Left status accent line */}
                       {log && (
-                         <div 
-                          className="absolute left-0 top-0 bottom-0 w-1.5" 
+                        <div
+                          className="absolute left-0 top-0 bottom-0 w-1.5"
                           style={{ backgroundColor: log.status_color }}
                         />
                       )}
-                      
+
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="w-9.5 h-9.5 rounded-lg bg-gradient-to-br from-muted/50 to-muted flex items-center justify-center font-black text-[11px] shrink-0 text-muted-foreground border border-border/20">
-                            {emp.first_name[0]}{emp.last_name[0]}
+                            {emp.first_name[0]}
+                            {emp.last_name[0]}
                           </div>
                           <div className="flex flex-col min-w-0">
                             <span className="text-[14px] font-black text-foreground truncate tracking-tight leading-tight">
@@ -1268,9 +1311,9 @@ export default function RosterPage() {
                           className="shrink-0"
                           id={
                             idx === 0
-                              ? (currentTourStepId === "roster_weekend_holidays"
+                              ? currentTourStepId === "roster_weekend_holidays"
                                 ? "mobile-tour-roster-weekend-cell"
-                                : "mobile-tour-roster-cell")
+                                : "mobile-tour-roster-cell"
                               : undefined
                           }
                         >
@@ -1305,7 +1348,10 @@ export default function RosterPage() {
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent id="tour-roster-dialog" className="max-w-xl p-0 overflow-hidden bg-background border-border rounded-3xl sm:rounded-[2rem]">
+          <DialogContent
+            id="tour-roster-dialog"
+            className="max-w-xl p-0 overflow-hidden bg-background border-border rounded-3xl sm:rounded-[2rem]"
+          >
             <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border bg-muted/20">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
@@ -1568,4 +1614,3 @@ export default function RosterPage() {
     </div>
   );
 }
-

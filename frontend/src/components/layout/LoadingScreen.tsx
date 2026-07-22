@@ -124,7 +124,7 @@ export const LoadingScreen = () => {
           <h1
             className="text-4xl font-black tracking-tight"
             style={{
-              background: isDark
+              backgroundImage: isDark
                 ? `linear-gradient(135deg, #ffffff 0%, rgba(${primaryRgb}, 0.9) 60%, #c4b5fd 100%)`
                 : `linear-gradient(135deg, #0f172a 0%, ${primaryColor} 60%, #4f46e5 100%)`,
               WebkitBackgroundClip: "text",

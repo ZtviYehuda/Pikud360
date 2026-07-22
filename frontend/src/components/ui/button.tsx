@@ -1,80 +1,69 @@
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
-import { Loader2 } from "lucide-react";
-import { cn } from "../../lib/utils";
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-enterprise-component-gap whitespace-nowrap text-enterprise-btn-label font-weight-enterprise-bold transition-all duration-enterprise-fast ease-enterprise-standard focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-enterprise-primary disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer active:scale-[0.98] select-none",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
   {
     variants: {
       variant: {
-        primary: "bg-enterprise-primary text-white shadow-enterprise-card hover:bg-enterprise-primary/95 active:bg-enterprise-primary/90 border border-transparent",
-        default: "bg-enterprise-primary text-white shadow-enterprise-card hover:bg-enterprise-primary/95 active:bg-enterprise-primary/90 border border-transparent",
-        secondary: "bg-enterprise-border/40 text-enterprise-neutral hover:bg-enterprise-border/70 active:bg-enterprise-border/80 border border-enterprise-border/20",
-        outline: "border border-enterprise-border bg-enterprise-surface text-enterprise-neutral hover:bg-enterprise-background",
-        ghost: "text-enterprise-neutral hover:bg-enterprise-background",
-        danger: "bg-enterprise-danger text-white shadow-enterprise-card hover:bg-enterprise-danger/95 active:bg-enterprise-danger/90 border border-transparent",
-        destructive: "bg-enterprise-danger text-white shadow-enterprise-card hover:bg-enterprise-danger/95 active:bg-enterprise-danger/90 border border-transparent",
-        link: "text-enterprise-primary underline-offset-4 hover:underline",
+        default: "bg-[color-mix(in_srgb,var(--primary)_12%,transparent)] text-primary border border-[color-mix(in_srgb,var(--primary)_25%,transparent)] hover:bg-primary hover:text-white dark:hover:text-slate-900 transition-all shadow-none",
+        destructive:
+          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+        outline:
+          "border bg-background  hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost:
+          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        link: "text-primary underline-offset-4 hover:underline",
+        primary: "bg-primary text-white hover:bg-primary/90 border border-transparent shadow-xs",
+        success: "bg-emerald-600 text-white hover:bg-emerald-700 border border-transparent shadow-xs",
+        warning: "bg-amber-600 text-white hover:bg-amber-700 border border-transparent shadow-xs",
+        info: "bg-sky-600 text-white hover:bg-sky-700 border border-transparent shadow-xs",
+        danger: "bg-destructive text-white hover:bg-destructive/90 border border-transparent shadow-xs",
       },
       size: {
-        default: "h-enterprise-btn-h-md px-4 rounded-enterprise-md text-enterprise-btn-label",
-        sm: "h-enterprise-btn-h-sm px-3 rounded-enterprise-sm text-enterprise-caption",
-        lg: "h-enterprise-btn-h-lg px-6 rounded-enterprise-lg text-enterprise-body",
-        icon: "h-enterprise-btn-h-md w-enterprise-btn-h-md rounded-enterprise-md flex items-center justify-center",
+        default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
+        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
+        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        icon: "size-9",
+        "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
+        "icon-sm": "size-8",
+        "icon-lg": "size-10",
       },
     },
     defaultVariants: {
-      variant: "primary",
+      variant: "default",
       size: "default",
     },
   }
-);
+)
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  loading?: boolean;
-  fullWidth?: boolean;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
+function Button({
+  className,
+  variant = "default",
+  size = "default",
+  asChild = false,
+  ...props
+}: React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean
+  }) {
+  const Comp = asChild ? Slot : "button"
+
+  return (
+    <Comp
+      data-slot="button"
+      data-variant={variant}
+      data-size={size}
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    {
-      className,
-      variant,
-      size,
-      loading = false,
-      fullWidth = false,
-      leftIcon,
-      rightIcon,
-      disabled,
-      children,
-      ...props
-    },
-    ref
-  ) => {
-    return (
-      <button
-        className={cn(
-          buttonVariants({ variant, size, className }),
-          fullWidth && "w-full",
-          loading && "opacity-85 pointer-events-none"
-        )}
-        ref={ref}
-        disabled={disabled || loading}
-        {...props}
-      >
-        {loading && <Loader2 className="h-4 w-4 animate-spin shrink-0" />}
-        {!loading && leftIcon && <span className="inline-flex shrink-0">{leftIcon}</span>}
-        {children}
-        {!loading && rightIcon && <span className="inline-flex shrink-0">{rightIcon}</span>}
-      </button>
-    );
-  }
-);
-Button.displayName = "Button";
-
-export { Button, buttonVariants };
+export { Button, buttonVariants }

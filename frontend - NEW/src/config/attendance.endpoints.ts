@@ -1,0 +1,10 @@
+export const ATTENDANCE_STATUS_TYPES_ENDPOINT = "/attendance/status-types";
+export const ATTENDANCE_STATS_ENDPOINT = "/attendance/stats";
+export const ATTENDANCE_LOG_ENDPOINT = "/attendance/log";
+export const ATTENDANCE_BULK_LOG_ENDPOINT = "/attendance/bulk-log";
+export const ATTENDANCE_CALENDAR_ENDPOINT = "/attendance/calendar";
+export const ATTENDANCE_ROSTER_MATRIX_ENDPOINT = "/attendance/roster-matrix";
+export const ATTENDANCE_ROSTER_UPDATE_ENDPOINT = "/attendance/roster-update";
+export const ATTENDANCE_ROSTER_VERIFY_ENDPOINT = "/attendance/roster-verify";
+export const ATTENDANCE_BULK_SCOPE_ENDPOINT = "/attendance/bulk-scope";
+export const ATTENDANCE_BASE_ENDPOINT = "/attendance";

@@ -29,7 +29,7 @@ export default function EmployeesPage() {
 
   return (
     <div className="flex flex-col">
-      <div className="pt-6 pb-4 px-4 sm:px-6 shrink-0 transition-all">
+      <div className="pt-4 pb-2 px-4 sm:px-6 shrink-0 transition-all">
         <PageHeader
           icon={Users}
           title="ניהול מצבת כוח אדם"
@@ -37,7 +37,7 @@ export default function EmployeesPage() {
           hideMobile={true}/>
       </div>
 
-      <div className="space-y-4 pb-6">
+      <div className="space-y-3 px-4 sm:px-6 pb-4">
         <EmployeeTable
           employees={employees}
           loading={loading}

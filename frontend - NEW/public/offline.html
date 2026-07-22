@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>אין חיבור לאינטרנט - Toren</title>
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+  <script>
+    (function() {
+      try {
+        // Theme synchronization
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else if (theme === 'light') {
+          document.documentElement.classList.remove('dark');
+        } else {
+          // Fallback to system OS preferences
+          if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+          }
+        }
+
+        // Accent color synchronization
+        const accent = localStorage.getItem('accentColor');
+        if (accent) {
+          const root = document.documentElement;
+          if (accent.startsWith('#')) {
+            root.style.setProperty('--primary', accent);
+            
+            // Hex to RGB for glow effect
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(accent);
+            if (result) {
+              const rgb = `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`;
+              root.style.setProperty('--accent-glow', `rgba(${rgb}, 0.15)`);
+            }
+          } else if (accent === 'emerald') {
+            root.style.setProperty('--primary', '#10b981');
+            root.style.setProperty('--accent-glow', 'rgba(16, 185, 129, 0.15)');
+          } else if (accent === 'blue') {
+            root.style.setProperty('--primary', '#3b82f6');
+            root.style.setProperty('--accent-glow', 'rgba(59, 130, 246, 0.15)');
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+  </script>
+
+  <style>
+    :root {
+      /* Default: Light Mode */
+      --bg-color: #f8fafc;
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+      --primary: #3b82f6; /* Default system blue */
+      --accent: var(--primary);
+      --accent-hover: #2563eb;
+      --accent-glow: rgba(59, 130, 246, 0.15);
+      --flash-opacity: 1;
+      --flash-mix: 12%;
+      --beam-bg: var(--primary);
+      --beam-opacity: 0.55;
+      --beam-shadow: drop-shadow(0 0 5px var(--primary));
+    }
+
+    html.dark {
+      --bg-color: #090d16;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --accent-glow: rgba(59, 130, 246, 0.35);
+      --flash-mix: 22%;
+      --beam-bg: #ffffff;
+      --beam-opacity: 0.8;
+      --beam-shadow: drop-shadow(0 0 8px rgba(255, 255, 255, 0.45));
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      text-align: center;
+      overflow: hidden;
+      padding: 1.5rem;
+      position: relative;
+      transition: background-color 0.3s ease;
+    }
+
+    /* Full-screen lighthouse sweep flash effect */
+    .toren-lighthouse-flash {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--primary) var(--flash-mix), transparent) 0%, transparent 75%);
+      opacity: 0;
+      pointer-events: none;
+      animation: toren-flash-glow 6s ease-in-out infinite;
+    }
+
+    /* Outer Wrapper - No floating card border, completely clean and transparent */
+    .content-wrapper {
+      position: relative;
+      z-index: 10;
+      max-width: 440px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Reusable Toren Spinning Lighthouse Light Beam Styles */
+    .toren-spin-container {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 2.5rem;
+      perspective: 1000px;
+    }
+
+    .toren-spin-logo {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      position: relative;
+      z-index: 5;
+    }
+
+    .toren-spin-logo,
+    img[src*="/toren_logo_base.png"],
+    img[src*="/toren_logo.png"] {
+      filter: drop-shadow(0 4px 12px rgba(15, 23, 42, 0.06));
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      .toren-spin-logo,
+      img[src*="/toren_logo_base.png"],
+      img[src*="/toren_logo.png"] {
+        filter: invert(0.86) brightness(1.18) sepia(0.08) saturate(1.4) hue-rotate(192deg) drop-shadow(0 0 10px rgba(59, 130, 246, 0.16));
+      }
+    }
+
+    .toren-spin-beam-original {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100px;
+      height: 100px;
+      margin-top: -50px;
+      margin-left: -50px;
+      z-index: 4;
+      pointer-events: none;
+      animation: toren-rotate-beam-3d 6s linear infinite;
+      transform-origin: 50% 24%;
+      transform-style: preserve-3d;
+      
+      /* Dynamic Mask Coloring */
+      background-color: var(--beam-bg);
+      -webkit-mask-image: url('/toren_logo_beam.png');
+      mask-image: url('/toren_logo_beam.png');
+      -webkit-mask-size: contain;
+      mask-size: contain;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      opacity: var(--beam-opacity);
+      filter: var(--beam-shadow);
+    }
+
+    .toren-lantern-flare {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      margin-top: -66px; /* -26px offset + -40px half-height */
+      margin-left: -40px;
+      width: 80px;
+      height: 80px;
+      background: radial-gradient(circle, #ffffff 0%, color-mix(in srgb, var(--primary) 70%, transparent) 40%, transparent 70%);
+      z-index: 6;
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(0.5);
+      animation: toren-flare-pulse 6s ease-in-out infinite;
+    }
+
+    @keyframes toren-rotate-beam-3d {
+      0% {
+        transform: rotateX(20deg) rotateY(0deg);
+      }
+      100% {
+        transform: rotateX(20deg) rotateY(360deg);
+      }
+    }
+
+    @keyframes toren-flare-pulse {
+      0% { opacity: 0; transform: scale(0.5); }
+      18% { opacity: 0; transform: scale(0.5); }
+      25% { opacity: 1; transform: scale(1.4); } /* Lens flare peak! */
+      31% { opacity: 0; transform: scale(0.5); }
+      100% { opacity: 0; transform: scale(0.5); }
+    }
+
+    @keyframes toren-flash-glow {
+      0% { opacity: 0; }
+      17% { opacity: 0; }
+      25% { opacity: var(--flash-opacity); } /* Flash peak! */
+      33% { opacity: 0; }
+      100% { opacity: 0; }
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2rem;
+      font-weight: 900;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--text-primary) 60%, var(--text-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 2.5rem;
+      max-width: 340px;
+    }
+
+    .btn-reconnect {
+      position: relative;
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 1rem 2.2rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 1.25rem;
+      cursor: pointer;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 20px var(--accent-glow);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-reconnect:hover {
+      background-color: var(--accent-hover);
+      box-shadow: 0 8px 30px rgba(37, 99, 235, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .btn-reconnect:active {
+      transform: translateY(1px);
+    }
+
+    .btn-reconnect svg {
+      width: 18px;
+      height: 18px;
+      transition: transform 0.6s ease;
+    }
+
+    .btn-reconnect:hover svg {
+      transform: rotate(360deg);
+    }
+  </style>
+</head>
+<body>
+  <div class="toren-lighthouse-flash"></div>
+  
+  <div class="content-wrapper">
+    <!-- Spinning Toren Lighthouse using original beam with horizontal tilt -->
+    <div class="toren-spin-container">
+      <img src="/toren_logo_base.png" alt="Toren" class="toren-spin-logo">
+      <div class="toren-spin-beam-original"></div>
+      <div class="toren-lantern-flare"></div>
+    </div>
+
+    <!-- Title and Description -->
+    <h1>חיבור הרשת אבד</h1>
+    <p>המערכת לא הצליחה להתחבר לשרת. אנא ודא שאתה מחובר לרשת אלחוטית או סלולרית תקינה ונסה שוב.</p>
+
+    <!-- Reconnect Button -->
+    <button class="btn-reconnect" onclick="window.location.reload()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+      </svg>
+      נסה להתחבר מחדש
+    </button>
+  </div>
+</body>
+</html>

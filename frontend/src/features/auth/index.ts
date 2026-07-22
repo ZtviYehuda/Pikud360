@@ -1,7 +1,7 @@
-// Auth Feature Module Barrel Export
-export * from "./types";
-export * from "./services";
-export * from "./hooks";
-export * from "./store";
-export * from "./components";
-export * from "./pages";
+export * from "./types/auth.types";
+export * from "./services/auth.service";
+export * from "./store/useAuthStore";
+export * from "./components/LoginForm";
+export * from "./components/QuickLoginSelector";
+export * from "./components/AuthGuard";
+export * from "./pages/LoginPage";

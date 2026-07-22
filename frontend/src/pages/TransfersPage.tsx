@@ -382,7 +382,7 @@ export default function TransfersPage() {
 
   return (
     <div className="flex flex-col" dir="rtl">
-      <div className="pt-6 pb-4 px-4 sm:px-6 shrink-0 transition-all">
+      <div className="pt-4 pb-2 px-4 sm:px-6 shrink-0 transition-all">
         <PageHeader
           icon={ArrowLeftRight}
           title="בקשות העברה ושיבוץ"
@@ -391,7 +391,7 @@ export default function TransfersPage() {
         />
       </div>
 
-      <div className="space-y-4 sm:space-y-6 pb-6">
+      <div className="space-y-3 px-4 sm:px-6 pb-4">
         {/* Stats Overview - Compact Grid (No Scroll) */}
         <div className="grid grid-cols-3 gap-1.5 sm:gap-6 mb-4 sm:mb-6">
           <div

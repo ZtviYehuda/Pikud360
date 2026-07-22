@@ -6,6 +6,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
+import { ClearFiltersButton, FilterTriggerButton, FilterDialog } from "@/components/shared/page-toolbar";
 import { RotateCcw, Cake, Briefcase, Filter, X, Users, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -96,6 +97,7 @@ export const DashboardFilters = ({
   pillsOnly = false,
   className,
 }: DashboardFiltersProps) => {
+  const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("org");
   const [stagedFilters, setStagedFilters] = useState({
     deptId: selectedDeptId,
@@ -142,6 +144,8 @@ export const DashboardFilters = ({
       ageRange: {}
     });
   };
+
+  const departments = structure;
 
   const sections = useMemo(() => {
     const deptId = stagedFilters.deptId || selectedDeptId;
@@ -218,12 +222,7 @@ export const DashboardFilters = ({
         <div className="text-xl font-black text-foreground">
           סינון
         </div>
-        <button
-          onClick={handleLocalReset}
-          className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors"
-        >
-          אפס הכל
-        </button>
+        <ClearFiltersButton onClick={handleLocalReset} className="ml-10" />
       </div>
 
       {/* Tabs Strip */}
@@ -579,40 +578,273 @@ export const DashboardFilters = ({
         </AnimatePresence>
       ) : (
         <div className={cn("flex flex-wrap items-center justify-end gap-2 w-full", className)}>
-            <Popover>
-              <div className="relative group">
-                <PopoverTrigger asChild>
-                  <Button
-                    id="dashboard-filter-trigger"
-                    variant="ghost"
-                    className="h-9 rounded-xl flex-col gap-0.5 font-black transition-all px-2 xl:px-3.5 text-primary hover:bg-primary/5 text-sm min-w-[60px] py-1 relative border-none bg-transparent"
-                  >
-                    <Filter className="w-3.5 h-3.5" />
-                    <span className="text-[8.5px] xl:text-[9.5px] leading-tight">סינון נתונים</span>
-                  </Button>
-                </PopoverTrigger>
-
-                {hasActiveFilters && (
+          <FilterTriggerButton
+            id="dashboard-filter-trigger"
+            hasActiveFilters={hasActiveFilters}
+            onReset={() => onFilterChange("reset")}
+            onClick={() => setOpen(true)}
+          />
+          <FilterDialog
+            open={open}
+            onOpenChange={setOpen}
+            title="סינון"
+            description="סינון לוח בקרה"
+            onApply={handleApply}
+            onReset={handleLocalReset}
+            hasActiveFilters={hasActiveFilters}
+            headerContent={
+              <div className="flex gap-6 overflow-x-auto no-scrollbar pt-2">
+                {[
+                  { id: "org", label: "יחידות ארגוניות" },
+                  { id: "status", label: "סטטוסים" },
+                  { id: "service", label: "מעמד" },
+                  { id: "age", label: "גילאים" },
+                ].map((tab) => (
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onFilterChange("reset");
-                    }}
-                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center transition-all hover:scale-125 active:scale-90 z-20 text-primary/70 hover:text-destructive"
-                    title="נקה הכל"
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={cn(
+                      "text-sm font-black whitespace-nowrap pb-2 border-b-2 transition-all relative cursor-pointer",
+                      activeTab === tab.id
+                        ? "text-foreground border-primary"
+                        : "text-muted-foreground border-transparent"
+                    )}
                   >
-                    <RotateCcw className="w-3.5 h-3.5" />
+                    {tab.label}
                   </button>
-                )}
+                ))}
               </div>
-              <PopoverContent
-                align="end"
-                sideOffset={12}
-                className="w-[95vw] md:w-[500px] p-0 rounded-[2.5rem] border-none bg-background shadow-2xl z-50 flex flex-col overflow-hidden"
-              >
-                 {FilterContent}
-              </PopoverContent>
-            </Popover>
+            }
+          >
+            {activeTab === "org" && (
+              <div className="space-y-3" dir="rtl">
+                <div className={cn(
+                  "flex items-center gap-3 p-3 rounded-xl border transition-all",
+                  stagedFilters.deptId && stagedFilters.deptId !== "all"
+                    ? "border-primary/30 bg-primary/5"
+                    : "border-border/40 bg-muted/20"
+                )}>
+                  <div className={cn(
+                    "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base",
+                    stagedFilters.deptId && stagedFilters.deptId !== "all"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    🏢
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">מחלקה</span>
+                    <Select
+                      value={stagedFilters.deptId || "all"}
+                      onValueChange={(val) => {
+                        setStagedFilters((prev) => ({
+                          ...prev,
+                          deptId: val === "all" ? undefined : val,
+                          sectionId: undefined,
+                          teamId: undefined,
+                        }));
+                      }}
+                      disabled={!canSelectDept}
+                    >
+                      <SelectTrigger className="h-9 bg-background/80 border-border/40 font-bold text-xs rounded-lg">
+                        <SelectValue placeholder="כל המחלקות" />
+                      </SelectTrigger>
+                      <SelectContent dir="rtl">
+                        <SelectItem value="all">כל המחלקות</SelectItem>
+                        {departments.map((d: any) => (
+                          <SelectItem key={d.id} value={d.id.toString()}>
+                            {d.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className={cn(
+                  "flex items-center gap-3 p-3 rounded-xl border transition-all",
+                  stagedFilters.sectionId && stagedFilters.sectionId !== "all"
+                    ? "border-primary/30 bg-primary/5"
+                    : "border-border/40 bg-muted/20"
+                )}>
+                  <div className={cn(
+                    "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base",
+                    stagedFilters.sectionId && stagedFilters.sectionId !== "all"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    📂
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">מדור</span>
+                    <Select
+                      value={stagedFilters.sectionId || "all"}
+                      onValueChange={(val) => {
+                        setStagedFilters((prev) => ({
+                          ...prev,
+                          sectionId: val === "all" ? undefined : val,
+                          teamId: undefined,
+                        }));
+                      }}
+                      disabled={!canSelectSection}
+                    >
+                      <SelectTrigger className="h-9 bg-background/80 border-border/40 font-bold text-xs rounded-lg">
+                        <SelectValue placeholder="כל המדורים" />
+                      </SelectTrigger>
+                      <SelectContent dir="rtl">
+                        <SelectItem value="all">כל המדורים</SelectItem>
+                        {sections.map((s: any) => (
+                          <SelectItem key={s.id} value={s.id.toString()}>
+                            {s.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className={cn(
+                  "flex items-center gap-3 p-3 rounded-xl border transition-all",
+                  stagedFilters.teamId && stagedFilters.teamId !== "all"
+                    ? "border-primary/30 bg-primary/5"
+                    : "border-border/40 bg-muted/20"
+                )}>
+                  <div className={cn(
+                    "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base",
+                    stagedFilters.teamId && stagedFilters.teamId !== "all"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    👥
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">חוליה</span>
+                    <Select
+                      value={stagedFilters.teamId || "all"}
+                      onValueChange={(val) => {
+                        setStagedFilters((prev) => ({
+                          ...prev,
+                          teamId: val === "all" ? undefined : val,
+                        }));
+                      }}
+                      disabled={!canSelectTeam}
+                    >
+                      <SelectTrigger className="h-9 bg-background/80 border-border/40 font-bold text-xs rounded-lg">
+                        <SelectValue placeholder="כל החוליות" />
+                      </SelectTrigger>
+                      <SelectContent dir="rtl">
+                        <SelectItem value="all">כל החוליות</SelectItem>
+                        {teams.map((t: any) => (
+                          <SelectItem key={t.id} value={t.id.toString()}>
+                            {t.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "status" && (
+              <div className="space-y-3" dir="rtl">
+                <Select
+                  value={stagedFilters.statusId || "all"}
+                  onValueChange={(val) => {
+                    setStagedFilters((prev) => ({
+                      ...prev,
+                      statusId: val === "all" ? undefined : val,
+                    }));
+                  }}
+                >
+                  <SelectTrigger className="h-10 bg-background border-border/40 font-bold text-xs rounded-xl">
+                    <SelectValue placeholder="כל הסטטוסים" />
+                  </SelectTrigger>
+                  <SelectContent dir="rtl">
+                    <SelectItem value="all">כל הסטטוסים</SelectItem>
+                    {allStatusTypes.map((st: any) => (
+                      <SelectItem key={st.id} value={st.id.toString()}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-2.5 h-2.5 rounded-full border border-black/10"
+                            style={{ backgroundColor: st.color || "currentColor" }}
+                          />
+                          {st.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {activeTab === "service" && (
+              <div className="space-y-3" dir="rtl">
+                <div className="grid grid-cols-2 gap-2">
+                  {serviceTypes.map((st: any) => {
+                    const isSelected = stagedFilters.serviceTypes.includes(st.name);
+                    return (
+                      <button
+                        key={st.id}
+                        onClick={() => {
+                          setStagedFilters((prev) => ({
+                            ...prev,
+                            serviceTypes: isSelected
+                              ? prev.serviceTypes.filter((s) => s !== st.name)
+                              : [...prev.serviceTypes, st.name],
+                          }));
+                        }}
+                        className={cn(
+                          "p-3 rounded-xl border text-right transition-all font-bold text-xs flex items-center justify-between cursor-pointer",
+                          isSelected
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border/40 bg-muted/20 text-muted-foreground hover:border-border"
+                        )}
+                      >
+                        <span>{st.name}</span>
+                        {isSelected && <div className="w-2 h-2 rounded-full bg-primary" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "age" && (
+              <div className="space-y-3" dir="rtl">
+                <Select
+                  value={
+                    !stagedFilters.ageRange?.min && !stagedFilters.ageRange?.max
+                      ? "all"
+                      : `${stagedFilters.ageRange?.min || ""}-${stagedFilters.ageRange?.max || ""}`
+                  }
+                  onValueChange={(val) => {
+                    if (val === "all") {
+                      setStagedFilters((prev) => ({ ...prev, ageRange: undefined }));
+                    } else {
+                      const [min, max] = val.split("-").map(Number);
+                      setStagedFilters((prev) => ({
+                        ...prev,
+                        ageRange: { min: min || undefined, max: max || undefined },
+                      }));
+                    }
+                  }}
+                >
+                  <SelectTrigger className="h-10 bg-background border-border/40 font-bold text-xs rounded-xl">
+                    <SelectValue placeholder="כל הגילאים" />
+                  </SelectTrigger>
+                  <SelectContent dir="rtl">
+                    <SelectItem value="all">כל הגילאים</SelectItem>
+                    <SelectItem value="18-25">18-25</SelectItem>
+                    <SelectItem value="26-35">26-35</SelectItem>
+                    <SelectItem value="36-45">36-45</SelectItem>
+                    <SelectItem value="46-55">46-55</SelectItem>
+                    <SelectItem value="56-120">56+</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </FilterDialog>
         </div>
       )}
     </div>

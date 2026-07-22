@@ -170,8 +170,8 @@ export const BirthdaysCard = forwardRef<any, BirthdaysCardProps>(
                             // Cool Vertical Stretch Layout
                             "w-[110px] h-[160px] sm:w-[150px] sm:h-[220px] p-4 sm:p-6", 
                             isToday
-                              ? "bg-primary/[0.04] border-primary/20 ring-8 ring-primary/5 shadow-xl shadow-primary/5"
-                              : "bg-background/40 border-border/40 hover:border-primary/30 hover:bg-background/60 hover:shadow-lg hover:shadow-primary/5"
+                              ? "bg-primary/10 border-primary/40 ring-4 ring-primary/10 shadow-lg shadow-primary/10 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
+                              : "bg-card border-border/50 hover:-translate-y-0.5 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:border-primary/40 hover:shadow-md dark:hover:shadow-slate-950/40 active:translate-y-0 active:scale-[0.98] active:bg-slate-200/80 dark:active:bg-slate-750"
                           )}
                         >
                           {/* Decorative Background */}

@@ -1,81 +1,51 @@
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "../../lib/utils";
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1 border font-weight-enterprise-bold select-none whitespace-nowrap rounded-full transition-colors",
+  "inline-flex items-center justify-center rounded-full border border-transparent px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-] overflow-hidden",
   {
     variants: {
       variant: {
-        success: "bg-enterprise-success/15 border-enterprise-success/30 text-enterprise-success",
-        warning: "bg-enterprise-warning/15 border-enterprise-warning/30 text-enterprise-warning",
-        danger: "bg-enterprise-danger/15 border-enterprise-danger/30 text-enterprise-danger",
-        info: "bg-enterprise-info/15 border-enterprise-info/30 text-enterprise-info",
-        neutral: "bg-enterprise-border/50 border-enterprise-border/80 text-enterprise-neutral",
-        outline: "border-enterprise-border bg-transparent text-enterprise-neutral",
-        // Backward compatibility mappings
-        default: "bg-enterprise-border/50 border-enterprise-border/80 text-enterprise-neutral",
-        secondary: "bg-enterprise-info/15 border-enterprise-info/30 text-enterprise-info",
-        destructive: "bg-enterprise-danger/15 border-enterprise-danger/30 text-enterprise-danger",
+        default: "bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
+        secondary:
+          "bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
+        destructive:
+          "bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+        outline:
+          "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+        ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 [a&]:hover:underline",
+        success: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+        warning: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+        info: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20",
       },
-      size: {
-        sm: "px-1.5 py-0.5 text-enterprise-overline [&_svg]:size-2.5",
-        md: "px-2.5 py-0.5 text-enterprise-caption [&_svg]:size-3.5",
-      }
     },
     defaultVariants: {
-      variant: "neutral",
-      size: "md"
-    }
+      variant: "default",
+    },
   }
-);
-
-const dotColors: Record<string, string> = {
-  success: "bg-enterprise-success",
-  warning: "bg-enterprise-warning",
-  danger: "bg-enterprise-danger",
-  info: "bg-enterprise-info",
-  neutral: "bg-enterprise-neutral",
-  outline: "bg-enterprise-neutral",
-  default: "bg-enterprise-neutral",
-  secondary: "bg-enterprise-info",
-  destructive: "bg-enterprise-danger"
-};
-
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {
-  icon?: React.ReactNode;
-  showDot?: boolean;
-}
+)
 
 function Badge({
   className,
-  variant = "neutral",
-  size = "md",
-  icon,
-  showDot = false,
-  children,
+  variant = "default",
+  asChild = false,
   ...props
-}: BadgeProps) {
-  const dotColor = dotColors[variant || "neutral"] || "bg-enterprise-neutral";
+}: React.ComponentProps<"span"> &
+  VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
+  const Comp = asChild ? Slot : "span"
 
   return (
-    <div className={cn(badgeVariants({ variant, size }), className)} {...props}>
-      {showDot && (
-        <span
-          className={cn("inline-block rounded-full w-1.5 h-1.5 shrink-0", dotColor)}
-          aria-hidden="true"
-        />
-      )}
-      {icon && (
-        <span className="inline-flex shrink-0" aria-hidden="true">
-          {icon}
-        </span>
-      )}
-      {children}
-    </div>
-  );
+    <Comp
+      data-slot="badge"
+      data-variant={variant}
+      className={cn(badgeVariants({ variant }), className)}
+      {...props}
+    />
+  )
 }
 
-export { Badge, badgeVariants };
+export { Badge, badgeVariants }

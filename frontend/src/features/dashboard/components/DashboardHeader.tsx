@@ -90,7 +90,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           className="text-xs font-bold border-slate-200 dark:border-slate-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30"
           rightIcon={<Filter className="h-4 w-4" />}
         >
-          סינון נתונים
+          סינון
         </Button>
         <Button
           variant="outline"

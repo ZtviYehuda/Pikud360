@@ -16,7 +16,6 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
 }) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
-  // Checks if any nested item matches active state recursively
   const hasActiveSub = React.useMemo(() => {
     const checkActive = (navItem: NavigationItem): boolean => {
       if (navItem.href === isActive.toString()) return true;
@@ -47,14 +46,14 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
         onClick={handleTriggerClick}
         disabled={item.disabled}
         className={cn(
-          "flex items-center gap-3 px-3 py-2 rounded-enterprise-md text-enterprise-body-sm transition-all focus:outline-hidden focus:ring-2 focus:ring-enterprise-primary disabled:opacity-50 disabled:cursor-not-allowed select-none text-right cursor-pointer",
+          "flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all focus:outline-hidden disabled:opacity-50 disabled:cursor-not-allowed select-none text-right cursor-pointer relative",
           isActive && !hasSubItems
-            ? "bg-enterprise-primary/10 text-enterprise-primary font-bold border-l-2 border-enterprise-primary rounded-l-none"
-            : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 font-semibold"
+            ? "bg-primary/10 text-primary border-r-4 border-primary rounded-r-none font-extrabold"
+            : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/60 font-semibold"
         )}
       >
         {item.icon && (
-          <span className="shrink-0 text-slate-450 dark:text-slate-500" aria-hidden="true">
+          <span className={cn("shrink-0", isActive ? "text-primary" : "text-slate-400 dark:text-slate-500")} aria-hidden="true">
             {item.icon}
           </span>
         )}
@@ -74,7 +73,7 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
 
       {/* Recursive rendering of children sub-items */}
       {hasSubItems && isOpen && !isCollapsed && (
-        <div className="flex flex-col pr-6 pl-2 mt-1 border-r border-enterprise-border gap-1 animate-in fade-in slide-in-from-top-1 duration-150">
+        <div className="flex flex-col pr-6 pl-2 mt-1 border-r border-border gap-1 animate-in fade-in slide-in-from-top-1 duration-150">
           {item.items?.map((sub) => (
             <SidebarItem
               key={sub.id}
@@ -102,7 +101,7 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
   return (
     <div className="flex flex-col w-full gap-1">
       {heading && !isCollapsed && (
-        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-555 uppercase tracking-wider px-3 py-1.5 select-none text-right">
+        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 py-1.5 select-none text-right">
           {heading}
         </span>
       )}
@@ -129,7 +128,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   sidebarTop,
   sidebarBottom,
 }) => {
-  // Group navigation items by group header
   const groups = React.useMemo(() => {
     const list: Record<string, NavigationItem[]> = {};
     navigationItems.forEach((item) => {
@@ -146,12 +144,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   return (
     <aside
       className={cn(
-        "h-full border-l border-enterprise-border bg-enterprise-surface flex flex-col transition-all duration-300 select-none relative z-40 shrink-0",
+        "h-full border-l border-border bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-2xl flex flex-col transition-all duration-300 select-none relative z-40 shrink-0 shadow-xs",
         isCollapsed ? "w-16" : "w-64"
       )}
     >
       {/* Sidebar Header Block */}
-      <div className="flex items-center gap-3 px-4 py-4 border-b border-enterprise-border shrink-0 select-none">
+      <div className="flex items-center gap-3 px-4 py-4 border-b border-border shrink-0 select-none">
         {logo && <div className="shrink-0">{logo}</div>}
         {!isCollapsed && (
           <div className="text-right flex flex-col justify-center">
@@ -164,14 +162,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
       {/* Top Sidebar Slot */}
       {sidebarTop && !isCollapsed && (
-        <div className="p-3 border-b border-enterprise-border shrink-0">
+        <div className="p-3 border-b border-border shrink-0">
           {sidebarTop}
         </div>
       )}
 
       {/* Workspace Switcher */}
       {!isCollapsed && workspaces.length > 0 && (
-        <div className="p-3 border-b border-enterprise-border shrink-0 select-none flex justify-center">
+        <div className="p-3 border-b border-border shrink-0 select-none flex justify-center">
           <WorkspaceSwitcher
             currentWorkspace={currentWorkspace}
             workspaces={workspaces}
@@ -199,14 +197,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
       {/* Bottom Sidebar Slot */}
       {sidebarBottom && !isCollapsed && (
-        <div className="p-3 border-t border-enterprise-border shrink-0">
+        <div className="p-3 border-t border-border shrink-0">
           {sidebarBottom}
         </div>
       )}
 
       {/* Sidebar collapse toggle button */}
       {onCollapseChange && (
-        <div className="p-3 border-t border-enterprise-border shrink-0 select-none">
+        <div className="p-3 border-t border-border shrink-0 select-none">
           <Button
             variant="ghost"
             size="sm"

@@ -21,6 +21,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import type { Employee } from "@/types/employee.types";
+import { FilterDialog } from "@/components/shared/FilterDialog";
 import { cn, calculateAge } from "@/lib/utils";
 import { useAuthContext } from "@/context/AuthContext";
 
@@ -280,307 +281,260 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   }, 0);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="sm:max-w-md max-h-[88vh] sm:max-h-[80vh] p-0 border-none bg-background flex flex-col overflow-hidden !gap-0 pointer-events-auto rounded-t-[2.5rem] sm:rounded-3xl"
-        dir="rtl"
-      >
-        <DialogDragHandle />
-        
-        {/* Header */}
-        <div className="px-6 pt-2 pb-4 border-b border-border/30 flex items-center justify-between shrink-0">
-          <DialogTitle className="text-xl font-black text-foreground">
-            סינון
-          </DialogTitle>
-          <button
-            onClick={handleReset}
-            className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors sm:pl-12"
-          >
-            אפס הכל
-          </button>
+    <FilterDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="סינון"
+      description="סינון שוטרים ועובדים"
+      onApply={handleApply}
+      onReset={handleReset}
+      hasActiveFilters={activeFiltersCount > 0}
+      activeFiltersCount={activeFiltersCount}
+      resultCount={filteredCount}
+      headerContent={
+        <div className="flex gap-6 overflow-x-auto no-scrollbar pt-2">
+          {[
+            { id: "org", label: "יחידות ארגוניות" },
+            { id: "statuses", label: "סטטוסים" },
+            { id: "service", label: "מעמד" },
+            { id: "ages", label: "גילאים" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "text-sm font-black whitespace-nowrap pb-2 border-b-2 transition-all relative cursor-pointer",
+                activeTab === tab.id
+                  ? "text-foreground border-primary"
+                  : "text-muted-foreground border-transparent"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
-
-        {/* Tabs Scrollable Strip */}
-        <div className="px-4 border-b border-border/30 shrink-0">
-          <div className="flex gap-6 overflow-x-auto no-scrollbar py-3">
-            {[
-              { id: "org", label: "יחידות ארגוניות" },
-              { id: "statuses", label: "סטטוסים" },
-              { id: "service", label: "מעמד" },
-              { id: "ages", label: "גילאים" },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "text-sm font-black whitespace-nowrap pb-2 border-b-2 transition-all relative",
-                  activeTab === tab.id
-                    ? "text-foreground border-primary"
-                    : "text-muted-foreground border-transparent"
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
-          {activeTab === "org" && (
-            <div className="space-y-8">
-              {/* Departments */}
-              <div className="space-y-4">
-                <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                  מחלקות
-                </Label>
-                <div className="flex flex-wrap gap-2.5">
-                  {availableDepts.map((dept) => (
-                    <Button
-                      key={dept}
-                      variant="ghost"
-                      onClick={() => toggleFilter("departments", dept)}
-                      className={cn(
-                        "h-10 px-4 rounded-xl text-xs font-black transition-all border",
-                        filters.departments?.includes(dept)
-                          ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-                          : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
-                      )}
-                    >
-                      {dept}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Sections */}
-              <div className="space-y-4">
-                <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                  מדורים
-                </Label>
-                <div className="flex flex-wrap gap-2.5">
-                  {availableSections.length > 0 ? availableSections.map((sect) => (
-                    <Button
-                      key={sect}
-                      variant="ghost"
-                      onClick={() => toggleFilter("sections", sect)}
-                      className={cn(
-                        "h-10 px-4 rounded-xl text-xs font-black transition-all border",
-                        filters.sections?.includes(sect)
-                          ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-                          : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
-                      )}
-                    >
-                      {sect}
-                    </Button>
-                  )) : (
-                    <span className="text-xs text-muted-foreground/40 italic">בחר מחלקה תחילה</span>
+      }
+    >
+      {activeTab === "org" && (
+        <div className="space-y-8">
+          {/* Departments */}
+          <div className="space-y-4">
+            <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+              מחלקות
+            </Label>
+            <div className="flex flex-wrap gap-2.5">
+              {availableDepts.map((dept) => (
+                <Button
+                  key={dept}
+                  variant="ghost"
+                  onClick={() => toggleFilter("departments", dept)}
+                  className={cn(
+                    "h-10 px-4 rounded-xl text-xs font-black transition-all border cursor-pointer",
+                    filters.departments?.includes(dept)
+                      ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                      : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
                   )}
-                </div>
-              </div>
+                >
+                  {dept}
+                </Button>
+              ))}
+            </div>
+          </div>
 
-              {/* Teams */}
-              {availableTeams.length > 0 && (
-                <div className="space-y-4">
-                  <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                    חוליות / צוותים
-                  </Label>
-                  <div className="flex flex-wrap gap-2.5">
-                    {availableTeams.map((team) => (
-                      <Button
-                        key={team}
-                        variant="ghost"
-                        onClick={() => toggleFilter("teams", team)}
-                        className={cn(
-                          "h-10 px-4 rounded-xl text-xs font-black transition-all border",
-                          filters.teams?.includes(team)
-                            ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-                            : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
-                        )}
-                      >
-                        {team}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
+          {/* Sections */}
+          <div className="space-y-4">
+            <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+              מדורים
+            </Label>
+            <div className="flex flex-wrap gap-2.5">
+              {availableSections.length > 0 ? availableSections.map((sect) => (
+                <Button
+                  key={sect}
+                  variant="ghost"
+                  onClick={() => toggleFilter("sections", sect)}
+                  className={cn(
+                    "h-10 px-4 rounded-xl text-xs font-black transition-all border cursor-pointer",
+                    filters.sections?.includes(sect)
+                      ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                      : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
+                  )}
+                >
+                  {sect}
+                </Button>
+              )) : (
+                <span className="text-xs text-muted-foreground/40 italic">בחר מחלקה תחילה</span>
               )}
             </div>
-          )}
+          </div>
 
-          {activeTab === "statuses" && (
+          {/* Teams */}
+          {availableTeams.length > 0 && (
             <div className="space-y-4">
               <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                סטטוסים נוכחיים
+                חוליות / צוותים
               </Label>
               <div className="flex flex-wrap gap-2.5">
-                {hierarchyData.statuses.map((status) => (
+                {availableTeams.map((team) => (
                   <Button
-                    key={status}
+                    key={team}
                     variant="ghost"
-                    onClick={() => toggleFilter("statuses", status)}
+                    onClick={() => toggleFilter("teams", team)}
                     className={cn(
-                      "h-10 px-4 rounded-xl text-xs font-black transition-all border",
-                      filters.statuses?.includes(status)
+                      "h-10 px-4 rounded-xl text-xs font-black transition-all border cursor-pointer",
+                      filters.teams?.includes(team)
                         ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
                         : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
                     )}
                   >
-                    {status}
+                    {team}
                   </Button>
                 ))}
               </div>
             </div>
           )}
+        </div>
+      )}
 
-          {activeTab === "service" && (
-            <div className="space-y-8">
-              <div className="space-y-4">
-                <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                  מעמד שוטר
-                </Label>
-                <div className="flex flex-wrap gap-2.5">
-                  {hierarchyData.serviceTypes.map((type) => (
-                    <Button
-                      key={type}
-                      variant="ghost"
-                      onClick={() => toggleFilter("serviceTypes", type)}
-                      className={cn(
-                        "h-10 px-4 rounded-xl text-xs font-black transition-all border",
-                        filters.serviceTypes?.includes(type)
-                          ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-                          : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
-                      )}
-                    >
-                      {type}
-                    </Button>
-                  ))}
-                </div>
-              </div>
+      {activeTab === "statuses" && (
+        <div className="space-y-4">
+          <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+            סטטוסים נוכחיים
+          </Label>
+          <div className="flex flex-wrap gap-2.5">
+            {hierarchyData.statuses.map((status) => (
+              <Button
+                key={status}
+                variant="ghost"
+                onClick={() => toggleFilter("statuses", status)}
+                className={cn(
+                  "h-10 px-4 rounded-xl text-xs font-black transition-all border cursor-pointer",
+                  filters.statuses?.includes(status)
+                    ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                    : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
+                )}
+              >
+                {status}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
 
-              <div className="space-y-4">
-                <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                  מאפיינים נוספים
-                </Label>
-                <div className="grid grid-cols-1 gap-3">
-                  {[
-                    { id: "isCommander", label: "מפקדים בלבד" },
-                    { id: "hasSecurityClearance", label: "בעלי סיווג ביטחוני" },
-                    { id: "hasPoliceRicense", label: "רישיון נהיגה משטרתי" },
-                    { id: "showInactive", label: "הצג שוטרים שאינם פעילים" },
-                  ].map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => toggleFilter(item.id as any, !filters[item.id as keyof EmployeeFilters])}
-                      className={cn(
-                        "flex items-center justify-between p-4 rounded-2xl border-2 transition-all",
-                        filters[item.id as keyof EmployeeFilters]
-                          ? "border-primary bg-primary/5"
-                          : "border-transparent bg-muted/30"
-                      )}
-                    >
-                      <span className={cn(
-                        "text-sm font-black",
-                        filters[item.id as keyof EmployeeFilters] ? "text-primary" : "text-muted-foreground"
-                      )}>
-                        {item.label}
-                      </span>
-                      <div className={cn(
-                        "w-6 h-6 rounded-md flex items-center justify-center border-2 transition-all",
-                        filters[item.id as keyof EmployeeFilters]
-                          ? "bg-primary border-primary"
-                          : "border-muted-foreground/30"
-                      )}>
-                        {filters[item.id as keyof EmployeeFilters] && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
+      {activeTab === "service" && (
+        <div className="space-y-8">
+          <div className="space-y-4">
+            <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+              מעמד שוטר
+            </Label>
+            <div className="flex flex-wrap gap-2.5">
+              {hierarchyData.serviceTypes.map((type) => (
+                <Button
+                  key={type}
+                  variant="ghost"
+                  onClick={() => toggleFilter("serviceTypes", type)}
+                  className={cn(
+                    "h-10 px-4 rounded-xl text-xs font-black transition-all border cursor-pointer",
+                    filters.serviceTypes?.includes(type)
+                      ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                      : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
+                  )}
+                >
+                  {type}
+                </Button>
+              ))}
             </div>
-          )}
+          </div>
 
-          {activeTab === "ages" && (
-            <div className="space-y-8 py-4">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                    טווח גילאים
-                  </Label>
-                  <span className="text-lg font-black text-primary">
-                    {filters.ageRange?.[0] || 18} - {filters.ageRange?.[1] || 67}
+          <div className="space-y-4">
+            <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+              מאפיינים נוספים
+            </Label>
+            <div className="grid grid-cols-1 gap-3">
+              {[
+                { id: "isCommander", label: "מפקדים בלבד" },
+                { id: "hasSecurityClearance", label: "בעלי סיווג ביטחוני" },
+                { id: "hasPoliceRicense", label: "רישיון נהיגה משטרתי" },
+                { id: "showInactive", label: "הצג שוטרים שאינם פעילים" },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => toggleFilter(item.id as any, !filters[item.id as keyof EmployeeFilters])}
+                  className={cn(
+                    "flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer",
+                    filters[item.id as keyof EmployeeFilters]
+                      ? "border-primary bg-primary/5"
+                      : "border-transparent bg-muted/30"
+                  )}
+                >
+                  <span className={cn(
+                    "text-sm font-black",
+                    filters[item.id as keyof EmployeeFilters] ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    {item.label}
                   </span>
-                </div>
-
-                <div className="relative h-10 flex items-center px-2">
-                  {/* Track Background */}
-                  <div className="absolute left-2 right-2 h-1.5 bg-muted rounded-full" />
-                  
-                  {/* Active Range Highlight */}
-                  <div 
-                    className="absolute h-1.5 bg-primary rounded-full transition-all"
-                    style={{
-                      right: `calc(2px + ${((filters.ageRange?.[0] || 18) - 18) / (67 - 18) * 100}%)`,
-                      left: `calc(2px + ${100 - ((filters.ageRange?.[1] || 67) - 18) / (67 - 18) * 100}%)`,
-                    }}
-                  />
-
-                  {/* Dual Inputs */}
-                  <input
-                    type="range"
-                    min="18"
-                    max="67"
-                    value={filters.ageRange?.[0] || 18}
-                    onChange={(e) => {
-                      const val = Math.min(parseInt(e.target.value), (filters.ageRange?.[1] || 67) - 1);
-                      setFilters({ ...filters, ageRange: [val, filters.ageRange?.[1] || 67] });
-                    }}
-                    className="absolute inset-0 w-full h-1.5 bg-transparent appearance-none pointer-events-none z-20 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-lg"
-                  />
-                  <input
-                    type="range"
-                    min="18"
-                    max="67"
-                    value={filters.ageRange?.[1] || 67}
-                    onChange={(e) => {
-                      const val = Math.max(parseInt(e.target.value), (filters.ageRange?.[0] || 18) + 1);
-                      setFilters({ ...filters, ageRange: [filters.ageRange?.[0] || 18, val] });
-                    }}
-                    className="absolute inset-0 w-full h-1.5 bg-transparent appearance-none pointer-events-none z-20 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-lg"
-                  />
-
-                  <div className="absolute -bottom-6 left-0 right-0 flex justify-between px-2 text-[10px] font-bold text-muted-foreground">
-                    <span>18</span>
-                    <span>67</span>
+                  <div className={cn(
+                    "w-6 h-6 rounded-md flex items-center justify-center border-2 transition-all",
+                    filters[item.id as keyof EmployeeFilters]
+                      ? "bg-primary border-primary"
+                      : "border-muted-foreground/30"
+                  )}>
+                    {filters[item.id as keyof EmployeeFilters] && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
                   </div>
-                </div>
-              </div>
-              
-              <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
-                <p className="text-xs font-medium text-muted-foreground leading-relaxed">
-                  ניתן לסנן שוטרים לפי גילם הנוכחי כפי שחושב מתאריך הלידה המעודכן במערכת.
-                </p>
-              </div>
+                </button>
+              ))}
             </div>
-          )}
+          </div>
         </div>
+      )}
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-border/30 shrink-0">
-          <Button
-            onClick={handleApply}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-xl h-12 transition-all active:scale-[0.98] text-sm gap-2 shadow-none"
-          >
-            <Filter className="w-4 h-4 shrink-0" />
-            הצג {filteredCount} תוצאות
-            {activeFiltersCount > 0 && (
-              <span className="bg-primary-foreground/20 px-2 py-0.5 rounded-full text-[10px] font-black">
-                {activeFiltersCount}
+      {activeTab === "ages" && (
+        <div className="space-y-8 py-4">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+                טווח גילאים
+              </Label>
+              <span className="text-lg font-black text-primary">
+                {filters.ageRange?.[0] || 18} - {filters.ageRange?.[1] || 67}
               </span>
-            )}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+            </div>
 
+            <div className="relative h-10 flex items-center px-2">
+              <div className="absolute left-2 right-2 h-1.5 bg-muted rounded-full" />
+              <div 
+                className="absolute h-1.5 bg-primary rounded-full transition-all"
+                style={{
+                  right: `calc(2px + ${((filters.ageRange?.[0] || 18) - 18) / (67 - 18) * 100}%)`,
+                  left: `calc(2px + ${100 - ((filters.ageRange?.[1] || 67) - 18) / (67 - 18) * 100}%)`,
+                }}
+              />
+              <input
+                type="range"
+                min="18"
+                max="67"
+                value={filters.ageRange?.[0] || 18}
+                onChange={(e) => {
+                  const val = Math.min(parseInt(e.target.value), (filters.ageRange?.[1] || 67) - 1);
+                  setFilters({ ...filters, ageRange: [val, filters.ageRange?.[1] || 67] });
+                }}
+                className="absolute inset-0 w-full h-1.5 bg-transparent appearance-none pointer-events-none z-20 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-lg"
+              />
+              <input
+                type="range"
+                min="18"
+                max="67"
+                value={filters.ageRange?.[1] || 67}
+                onChange={(e) => {
+                  const val = Math.max(parseInt(e.target.value), (filters.ageRange?.[0] || 18) + 1);
+                  setFilters({ ...filters, ageRange: [filters.ageRange?.[0] || 18, val] });
+                }}
+                className="absolute inset-0 w-full h-1.5 bg-transparent appearance-none pointer-events-none z-20 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-lg"
+              />
+            </div>
+          </div>
+        
+        </div>
+      )}
+    </FilterDialog>
   );
 };

@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useAuthContext } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { PinVerificationModal } from "@/components/auth/PinVerificationModal";
@@ -251,11 +251,20 @@ export default function LoginPage() {
   };
   const [lockedUser, setLockedUser] = useState<LockedUser | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user, login, refreshUser } = useAuthContext();
+  const fromPath = (location.state as any)?.from?.pathname || "/";
+
+  useEffect(() => {
+    if (user) {
+      navigate(fromPath, { replace: true });
+    }
+  }, [user, navigate, fromPath]);
+
   const { theme, setTheme, accentColor } = useTheme();
   const [isBiometricAvailable, setIsBiometricAvailable] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinUsername, setPinUsername] = useState("");
-  const { login, refreshUser } = useAuthContext();
 
   // WebAuthn Helpers (Matching ProfileSettings)
   const base64urlToBytes = (base64url: string): Uint8Array => {
@@ -394,7 +403,7 @@ export default function LoginPage() {
           localStorage.setItem("biometric_last_user", targetUsername);
 
           await refreshUser(); // Essential to update context state
-          navigate("/", { replace: true });
+          navigate(fromPath, { replace: true });
           return;
         }
       } catch (e: any) {
@@ -492,7 +501,7 @@ export default function LoginPage() {
 
       await refreshUser();
       setShowPinModal(false);
-      navigate("/", { replace: true });
+      navigate(fromPath, { replace: true });
       return true;
     } catch (err: any) {
       console.error("PIN verification error:", err);
@@ -556,7 +565,7 @@ export default function LoginPage() {
       if (success) {
         // Save credentials for biometric login next time
         await saveCredentials(trimmedUser, trimmedPass);
-        navigate("/", { replace: true });
+        navigate(fromPath, { replace: true });
       } else {
         setError("שם משתמש או סיסמה שגויים.");
         setPassword("");

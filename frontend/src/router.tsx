@@ -24,7 +24,7 @@ const TermsPage          = lazy(() => import("@/pages/TermsPage"));
 const PrivacyPage        = lazy(() => import("@/pages/PrivacyPage"));
 const EmployeesPage      = lazy(() => import("@/pages/EmployeesPage"));
 const CreateEmployeePage = lazy(() => import("@/pages/CreateEmployeePage"));
-const EmployeeViewPage   = lazy(() => import("@/pages/EmployeeViewPage"));
+const EmployeeProfile    = lazy(() => import("@/pages/EmployeeProfile"));
 const TransfersPage      = lazy(() => import("@/pages/TransfersPage"));
 const AttendancePage     = lazy(() => import("@/pages/AttendancePage"));
 const RosterPage         = lazy(() => import("@/pages/RosterPage"));
@@ -91,11 +91,15 @@ const ProtectedRoute = () => {
   const { user, loading } = useAuthContext();
   const location = useLocation();
 
-  // If loading AND there's a token, show the loading screen while validating
-  // If no token at all, skip loading screen and go straight to login
   const hasToken = !!localStorage.getItem("token");
-  if (loading && hasToken) return <LoadingScreen />;
-  if (!user) return <Navigate to="/login" replace />;
+
+  // Show loading screen only if loading AND there's a token AND we don't have user yet
+  if (loading && !user && hasToken) return <LoadingScreen />;
+
+  // If no user and not loading, redirect to login while preserving target route in state
+  if (!user && !loading) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
   if (user.must_change_password && location.pathname !== "/change-password") {
     return <Navigate to="/change-password" replace />;
@@ -141,8 +145,8 @@ const router = createBrowserRouter([
           { path: "/change-password",     element: <PageSuspense><ChangePasswordPage /></PageSuspense> },
           { path: "/employees",           element: <PageSuspense><EmployeesPage /></PageSuspense> },
           { path: "/employees/new",       element: <PageSuspense><CreateEmployeePage /></PageSuspense> },
-          { path: "/employees/:id",       element: <PageSuspense><EmployeeViewPage /></PageSuspense> },
-          { path: "/employees/edit/:id",  element: <PageSuspense><EmployeeViewPage /></PageSuspense> },
+          { path: "/employees/:id",       element: <PageSuspense><EmployeeProfile /></PageSuspense> },
+          { path: "/employees/edit/:id",  element: <PageSuspense><EmployeeProfile /></PageSuspense> },
           { path: "/transfers",           element: <PageSuspense><TransfersPage /></PageSuspense> },
           { path: "/attendance",          element: <PageSuspense><AttendancePage /></PageSuspense> },
           { path: "/roster",              element: <PageSuspense><RosterPage /></PageSuspense> },

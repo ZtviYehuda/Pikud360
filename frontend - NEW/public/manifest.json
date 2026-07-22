@@ -1,0 +1,21 @@
+{
+  "short_name": "Toren",
+  "name": "מערכת ניהול משמרות - Toren",
+  "icons": [
+    {
+      "src": "/toren_logo.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/toren_logo.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "display": "standalone",
+  "orientation": "portrait"
+}

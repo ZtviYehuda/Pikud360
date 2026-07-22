@@ -101,10 +101,10 @@ export const StatCards = ({
             key={idx}
             onClick={() => onCardSelect?.(isActive ? null : card.id, card.label, card.colorHex)}
             className={cn(
-              "group relative overflow-hidden p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-all flex items-center justify-between cursor-pointer select-none",
+              "group relative overflow-hidden p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-all duration-200 flex items-center justify-between cursor-pointer select-none",
               isActive 
-                ? "bg-primary/[0.03] border-primary/50! shadow-inner!" 
-                : "bg-card/80 border-border/40 hover:bg-accent/30 hover:border-primary/20",
+                ? "bg-primary/10 border-primary shadow-sm" 
+                : "bg-card border-border/50 hover:-translate-y-0.5 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:border-primary/40 hover:shadow-md dark:hover:shadow-slate-950/40 active:translate-y-0 active:scale-[0.98] active:bg-slate-200/80 dark:active:bg-slate-750",
               card.hideOnMobile ? "hidden md:flex" : "flex"
             )}
           >

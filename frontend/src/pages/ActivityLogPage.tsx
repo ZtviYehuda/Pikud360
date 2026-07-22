@@ -40,6 +40,14 @@ import { Input } from "@/components/ui/input";
 import { useAuthContext } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
+import {
+  PageToolbar,
+  SearchInput,
+  FilterSelect,
+  ClearFiltersButton,
+  RefreshButton,
+  ExportButton,
+} from "@/components/shared/page-toolbar";
 import { Card } from "@/components/ui/card";
 
 // Mapping action types to Hebrew labels and icons
@@ -249,7 +257,7 @@ export default function ActivityLogPage() {
 
   return (
     <div className="flex flex-col h-full bg-background/50 overflow-hidden" dir="rtl">
-      <div className="pt-5 pb-3 px-4 sm:px-6 shrink-0 transition-all">
+      <div className="pt-4 pb-2 px-4 sm:px-6 shrink-0 transition-all">
         <PageHeader 
           id="activity-log-header"
           title="מרכז ניטור וביקורת"
@@ -329,51 +337,35 @@ export default function ActivityLogPage() {
              )}
           </div>
 
-          {/* Toolbar & Advanced Filters */}
-          <div className="p-4 border-b border-border/40 space-y-3 bg-background/20">
-            <div className="flex flex-col lg:flex-row items-center gap-3">
-                <div className="relative w-full lg:flex-1">
-                    <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
-                    <Input 
-                        placeholder={activeTab === "archives" ? "חפש לפי תאריך ארכיון..." : "חיפוש חופשי (משתמש, IP, תיאור)..."} 
-                        value={activeTab === "archives" ? archiveSearch : searchTerm}
-                        onChange={(e) => activeTab === "archives" ? setArchiveSearch(e.target.value) : setSearchTerm(e.target.value)}
-                        className="pr-10 h-10 rounded-xl bg-background border-border/40 focus:ring-primary/20 transition-all font-bold text-sm"
-                    />
-                </div>
-                
-                <div className="flex items-center gap-2 w-full lg:w-auto">
-                    <Button 
-                        variant="outline" 
-                        onClick={() => setShowFilters(!showFilters)}
-                        className={cn(
-                            "rounded-xl h-10 px-4 text-xs font-bold flex-1 lg:flex-none border-border/40",
-                            showFilters || hasActiveFilters ? "bg-primary/5 text-primary border-primary/20" : "bg-background"
-                        )}
-                    >
-                        <FilterIcon className="w-3.5 h-3.5 ml-2" />
-                        מסננים מתקדמים
-                        {hasActiveFilters && <div className="mr-1.5 w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />}
-                    </Button>
-                    
-                    {activeTab === "all" && (
-                        <div className="hidden sm:flex items-center bg-background border border-border/40 rounded-xl p-0.5">
-                            {[50, 100, 250].map((v) => (
-                                <button
-                                    key={v}
-                                    onClick={() => setLimit(v)}
-                                    className={cn(
-                                        "px-3 py-1 rounded-lg text-[9px] font-black transition-all",
-                                        limit === v ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted"
-                                    )}
-                                >
-                                    {v}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </div>
+          {/* Shared Page Toolbar & Advanced Filters */}
+          <div className="p-3 border-b border-border/40">
+            <PageToolbar className="shadow-none border-none p-0 bg-transparent">
+              <SearchInput
+                placeholder={activeTab === "archives" ? "חפש לפי תאריך ארכיון..." : "חיפוש חופשי (משתמש, IP, תיאור)..."}
+                value={activeTab === "archives" ? archiveSearch : searchTerm}
+                onChange={(val) => activeTab === "archives" ? setArchiveSearch(val) : setSearchTerm(val)}
+                className="max-w-md flex-1"
+              />
+
+              <Button 
+                variant="outline" 
+                onClick={() => setShowFilters(!showFilters)}
+                className={cn(
+                  "rounded-xl h-9 px-3 text-xs font-bold border-border/50 shadow-2xs transition-all cursor-pointer",
+                  showFilters || hasActiveFilters ? "bg-primary/10 text-primary border-primary/40" : "bg-card"
+                )}
+              >
+                <FilterIcon className="w-3.5 h-3.5 ml-1.5" />
+                <span>מסננים מתקדמים</span>
+                {hasActiveFilters && <div className="mr-1.5 w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />}
+              </Button>
+
+              <ClearFiltersButton
+                hasActiveFilters={Boolean(hasActiveFilters)}
+                onClick={clearFilters}
+              />
+            </PageToolbar>
+          </div>
 
             {/* Expandable Filter Panel */}
             <AnimatePresence>
@@ -561,7 +553,7 @@ export default function ActivityLogPage() {
 
 function StatItem({ label, value, sub, color, className }: any) {
   return (
-    <Card className={cn("group relative overflow-hidden p-3 rounded-xl transition-all flex items-center justify-between bg-card border-border/40 hover:border-primary/20 shadow-sm", className)}>
+    <Card className={cn("group relative overflow-hidden p-3 rounded-xl transition-all duration-200 flex items-center justify-between bg-card border-border/50 hover:-translate-y-0.5 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:border-primary/40 hover:shadow-md active:translate-y-0 active:scale-[0.98]", className)}>
       <div className="flex items-center justify-between w-full gap-2">
         <div className="space-y-0.5 text-right min-w-0 flex-1">
           <p className="text-[9px] sm:text-[10px] font-black text-muted-foreground/70 uppercase tracking-wider leading-none">
@@ -602,7 +594,7 @@ function ArchiveCard({ archive, onDownload, index }: any) {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: index * 0.03 }}
     >
-        <Card className="group relative overflow-hidden rounded-2xl border-border/40 bg-card hover:border-primary/40 hover: transition-all p-4">
+        <Card className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card hover:-translate-y-0.5 hover:bg-slate-100/90 dark:hover:bg-slate-800/80 hover:border-primary/40 hover:shadow-md active:translate-y-0 active:scale-[0.98] transition-all duration-200 p-4">
             {/* Background Accent */}
             <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-[2.5rem] -mr-6 -mt-6 group-hover:bg-primary/10 transition-colors" />
             

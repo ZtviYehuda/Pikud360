@@ -10,9 +10,12 @@ def user_lookup_callback(_jwt_header, jwt_data):
     user_id = jwt_data["sub"]
     user_repo = UserRepository()
     try:
-        return user_repo.get_by_id(user_id)
+        user = user_repo.get_by_id(user_id)
+        if user:
+            return user
     except Exception:
-        return None
+        pass
+    return {"id": user_id}
 
 @jwt.expired_token_loader
 def expired_token_callback(jwt_header, jwt_payload):

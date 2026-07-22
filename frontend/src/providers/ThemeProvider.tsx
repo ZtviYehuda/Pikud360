@@ -41,11 +41,33 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     const root = document.documentElement;
+
+    // Suppress CSS transitions temporarily for instant & clean theme switch
+    const style = document.createElement("style");
+    style.appendChild(
+      document.createTextNode(
+        `*, *::before, *::after {
+           transition: none !important;
+           animation: none !important;
+         }`
+      )
+    );
+    document.head.appendChild(style);
+
     if (effectiveDark) {
       root.classList.add("dark");
+      root.classList.remove("light");
     } else {
       root.classList.remove("dark");
+      root.classList.add("light");
     }
+
+    const _ = window.getComputedStyle(root).opacity;
+    setTimeout(() => {
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
+    }, 20);
 
     setIsDark(effectiveDark);
   }, []);

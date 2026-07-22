@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../stores/authStore';
+import { useAuthContext } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { 
   ArrowRight, ArrowLeft, Calendar, Clock, GitFork, Edit, 
@@ -11,7 +11,7 @@ import {
 import { useUIStore } from '../stores/uiStore';
 import KpiCard from '../components/dashboard/KpiCard';
 import { EmptyState } from '../components/ui/empty-state';
-import EmployeeInfoRow from '../components/ui/EmployeeInfoRow';
+import EmployeeInfoRow from '../components/employees/EmployeeInfoRow';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';

@@ -19,7 +19,8 @@ export const ProgressCard: React.FC = () => {
   return (
     <motion.div
       whileHover={{ y: -2 }}
-      className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-6 shadow-xs flex flex-col justify-between h-full select-none text-right"
+      whileTap={{ scale: 0.99, y: 0 }}
+      className="bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md dark:hover:shadow-slate-950/40 transition-all duration-200 rounded-2xl p-6 shadow-xs flex flex-col justify-between h-full select-none text-right"
     >
       {/* Card Header */}
       <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
