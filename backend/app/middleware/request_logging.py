@@ -2,7 +2,7 @@ import time
 import logging
 from flask import Flask, request, g
 
-logger = logging.getLogger("pikud360.request")
+logger = logging.getLogger("matzevet.request")
 
 def register_request_logging(app: Flask) -> None:
     """Registers before and after request hooks to measure performance and log details."""

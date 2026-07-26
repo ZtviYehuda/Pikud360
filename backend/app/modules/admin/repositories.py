@@ -14,7 +14,7 @@ from app.modules.admin.models import (
     NotificationTemplate, AuditLogEntry
 )
 
-logger = logging.getLogger("pikud360.modules.admin.repositories")
+logger = logging.getLogger("matzevet.modules.admin.repositories")
 
 
 class SystemSettingsRepository:

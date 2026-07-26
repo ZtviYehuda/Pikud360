@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-The Organization domain is the structural backbone of Pikud360. It models the **organization hierarchy tree**, defining how units relate to one another (e.g. Brigade ➔ Department ➔ Section ➔ Cell) and providing the foundation for all scope-based security, dashboard roll-ups, and workforce assignment rules.
+The Organization domain is the structural backbone of Matzevet. It models the **organization hierarchy tree**, defining how units relate to one another (e.g. Brigade ➔ Department ➔ Section ➔ Cell) and providing the foundation for all scope-based security, dashboard roll-ups, and workforce assignment rules.
 
 While the Employee domain tracks individual people, the Organization domain tracks the structural *positions and containers* where those people are scheduled.
 

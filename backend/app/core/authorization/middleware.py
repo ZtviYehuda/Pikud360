@@ -4,7 +4,7 @@ from flask_jwt_extended import get_jwt_identity, get_jwt
 
 from app.core.authorization.scopes import resolve_access_scope
 
-logger = logging.getLogger("pikud360.core.authorization.middleware")
+logger = logging.getLogger("matzevet.core.authorization.middleware")
 
 def init_authorization_middleware(app):
     """

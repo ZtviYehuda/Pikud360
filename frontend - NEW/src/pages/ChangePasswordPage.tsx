@@ -118,7 +118,7 @@ export default function ChangePasswordPage() {
           <ShieldCheck className="w-5 h-5 text-primary" />
         </div>
         <span className="text-lg font-black tracking-tight text-foreground bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
-          Toren
+          Matzevet
         </span>
       </div>
 
@@ -339,7 +339,7 @@ export default function ChangePasswordPage() {
           
           <div className="text-center">
             <p className="text-[10px] text-muted-foreground/40 font-bold uppercase tracking-widest leading-tight">
-              Toren Security System
+              Matzevet Security System
             </p>
           </div>
         </motion.div>

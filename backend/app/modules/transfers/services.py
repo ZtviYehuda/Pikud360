@@ -13,7 +13,7 @@ from app.modules.security.repositories import AuditLogRepository
 from app.core.authorization import resolve_access_scope, check_authorization, ScopeType, AccessDeniedError
 from app.database.connection import get_db_connection
 
-logger = logging.getLogger("pikud360.modules.transfers.services")
+logger = logging.getLogger("matzevet.modules.transfers.services")
 
 class TransfersService:
     """Service class executing employee unit transfer workflows."""

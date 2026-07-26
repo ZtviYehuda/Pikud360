@@ -154,7 +154,7 @@ export default function SettingsPage() {
       const link = document.createElement("a");
       link.href = url;
       const date = new Date().toISOString().split("T")[0];
-      link.setAttribute("download", `toren_backup_${date}.sql`);
+      link.setAttribute("download", `matzevet_backup_${date}.sql`);
       document.body.appendChild(link);
       link.click();
       link.remove();

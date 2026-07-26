@@ -6,7 +6,7 @@ from app.repositories.base import BaseRepository
 from app.database.connection import get_db_connection
 from app.modules.security.models import User, UserSession, UserLoginHistory
 
-logger = logging.getLogger("pikud360.security.repositories")
+logger = logging.getLogger("matzevet.security.repositories")
 
 def _safe_rowcount_check(rowcount) -> bool:
     """Helper to safely evaluate rowcount checking, resilient against MagicMock types in testing."""

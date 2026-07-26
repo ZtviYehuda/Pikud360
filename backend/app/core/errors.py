@@ -5,7 +5,7 @@ from app.core.responses import ApiResponse
 from app.core.authorization.exceptions import AccessDeniedError
 
 
-logger = logging.getLogger("pikud360.errors")
+logger = logging.getLogger("matzevet.errors")
 
 class AppError(Exception):
     """Base Application Exception for known domain errors."""

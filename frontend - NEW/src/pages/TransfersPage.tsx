@@ -1074,8 +1074,8 @@ export default function TransfersPage() {
                                 }}
                               >
                                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs sm:text-sm group-hover:scale-110 transition-transform">
-                                  {emp.first_name[0]}
-                                  {emp.last_name[0]}
+                                  {emp.first_name?.[0] || ""}
+                                  {emp.last_name?.[0] || ""}
                                 </div>
                                 <div className="flex flex-col">
                                   <span className="text-xs sm:text-sm font-bold text-foreground">
@@ -1095,8 +1095,8 @@ export default function TransfersPage() {
                       <div className="p-3 sm:p-4 border border-primary/20 bg-primary/5 rounded-xl sm:rounded-2xl flex items-center justify-between">
                         <div className="flex items-center gap-3 sm:gap-4">
                           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-base sm:text-lg ">
-                            {selectedEmployee.first_name[0]}
-                            {selectedEmployee.last_name[0]}
+                            {selectedEmployee.first_name?.[0] || ""}
+                            {selectedEmployee.last_name?.[0] || ""}
                           </div>
                           <div className="flex flex-col text-right">
                             <span className="font-bold text-xs sm:text-base text-foreground">

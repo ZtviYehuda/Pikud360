@@ -9,7 +9,7 @@ from app.api.v1 import health_bp
 from app.modules.security.auth import jwt
 from app.modules.security.routes import security_bp
 
-logger = logging.getLogger("pikud360.app")
+logger = logging.getLogger("matzevet.app")
 
 def create_app() -> Flask:
     """Application factory for Flask configuration."""

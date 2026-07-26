@@ -25,7 +25,7 @@ from app.modules.analytics.models import TrendPeriod
 from app.modules.analytics.scheduler import SchedulerEngine, JobAlreadyRunningException
 from app.modules.analytics.repositories import JobRepository
 
-logger = logging.getLogger("pikud360.modules.analytics.routes")
+logger = logging.getLogger("matzevet.modules.analytics.routes")
 analytics_bp = Blueprint("analytics", __name__)
 scheduler_engine = SchedulerEngine()
 scheduler_engine.start()  # Start engine state

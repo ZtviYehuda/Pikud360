@@ -3,7 +3,7 @@ from flask import g, request
 from flask_jwt_extended import verify_jwt_in_request, get_jwt
 import uuid
 
-logger = logging.getLogger("pikud360.middleware.tenant_context")
+logger = logging.getLogger("matzevet.middleware.tenant_context")
 
 def init_tenant_context_middleware(app):
     """Hooks into before_request to resolve and bind the tenant context."""

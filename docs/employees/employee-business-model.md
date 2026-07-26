@@ -8,7 +8,7 @@
 
 ## Overview
 
-This document defines all business information that belongs to an employee in Pikud360.
+This document defines all business information that belongs to an employee in Matzevet.
 
 Fields are grouped by their business purpose. Each group is a cohesive set of information that has a single operational reason to change together.
 
@@ -119,7 +119,7 @@ Information that describes the employee's general availability for scheduling an
 | **Restriction Expiry Date** | Date when a medical limitation is expected to be cleared | No |
 
 **Notes:**
-- Leave balance is typically managed by an HR system and synchronized into Pikud360. It does not originate in the scheduling module.
+- Leave balance is typically managed by an HR system and synchronized into Matzevet. It does not originate in the scheduling module.
 - Medical limitations define scheduling constraints — they determine which shift types and roles the employee cannot be assigned to.
 - Medical limitation descriptions should not contain clinical detail. The system records the functional constraint (e.g., "restricted from night shifts"), not the diagnosis.
 
@@ -180,7 +180,7 @@ Information that governs how the system behaves for and around this employee. Th
 
 | Field | Business Purpose | Required |
 |---|---|---|
-| **Interface Language** | Preferred language for the Pikud360 user interface | No |
+| **Interface Language** | Preferred language for the Matzevet user interface | No |
 | **Notification Preferences** | Which types of notifications the employee wants to receive (scheduling alerts, transfer updates, system announcements) | No |
 | **Notification Channel** | Preferred delivery method (in-app, email, SMS) for notifications | No |
 | **Dashboard Layout** | Saved layout configuration for the commander dashboard | No |

@@ -5,7 +5,7 @@ from datetime import datetime
 from app.database.connection import get_db_connection
 from app.modules.notifications.models import Notification
 
-logger = logging.getLogger("pikud360.modules.notifications.repositories")
+logger = logging.getLogger("matzevet.modules.notifications.repositories")
 
 class NotificationRepository:
     """Repository mapping operations for core.notifications table."""

@@ -1,6 +1,6 @@
-# Pikud360 - Enterprise Workforce Management System (Foundation)
+# Matzevet - Enterprise Workforce Management System (Foundation)
 
-This is the architectural foundation of Pikud360, a large-scale enterprise Workforce Management System (WFM) built for employee tracking, shifts, scheduling, and live operations management. 
+This is the architectural foundation of Matzevet, a large-scale enterprise Workforce Management System (WFM) built for employee tracking, shifts, scheduling, and live operations management. 
 
 At this stage, the project contains no business logic or database tables. It serves as a production-ready clean architecture boilerplate.
 
@@ -34,8 +34,8 @@ At this stage, the project contains no business logic or database tables. It ser
 ## Documentation Directory
 All detailed systems specifications are located under the `docs/` folder:
 
-* **[Installation Guide](file:///c:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/installation_guide.md)**: Setup and run the project locally or via Docker Compose.
-* **[Folder Structure](file:///c:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/folder_structure.md)**: Directory details, file rules, and layer organization.
-* **[System Architecture](file:///c:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/architecture.md)**: Details on Clean Architecture rules, SOLID principles, Dependency Injection, and Repository patterns.
-* **[API Documentation](file:///c:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/api_documentation.md)**: Root HTTP endpoints, parameters, and success/error envelope shapes.
-* **[Developer Guide](file:///c:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/developer_guide.md)**: Coding standards, formatting guidelines, and scaling feature sets.
+* **[Installation Guide](file:///c:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/installation_guide.md)**: Setup and run the project locally or via Docker Compose.
+* **[Folder Structure](file:///c:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/folder_structure.md)**: Directory details, file rules, and layer organization.
+* **[System Architecture](file:///c:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/architecture.md)**: Details on Clean Architecture rules, SOLID principles, Dependency Injection, and Repository patterns.
+* **[API Documentation](file:///c:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/api_documentation.md)**: Root HTTP endpoints, parameters, and success/error envelope shapes.
+* **[Developer Guide](file:///c:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/developer_guide.md)**: Coding standards, formatting guidelines, and scaling feature sets.

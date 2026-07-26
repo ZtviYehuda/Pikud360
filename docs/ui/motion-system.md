@@ -1,20 +1,20 @@
-# Pikud360 UI Foundation — Motion System Spec
+# Matzevet UI Foundation — Motion System Spec
 
 **Domain:** UI Component Specifications  
 **Phase:** Sprint 32 — Motion System  
-**Target Path:** [motion-system.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/docs/ui/motion-system.md)
+**Target Path:** [motion-system.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/docs/ui/motion-system.md)
 
 ---
 
 ## 1. Overview & Design Philosophy
 
-Pikud360 enforces a purposeful animation language — every motion communicates a state change and never distracts from operational decision-making. All animations respect `prefers-reduced-motion`.
+Matzevet enforces a purposeful animation language — every motion communicates a state change and never distracts from operational decision-making. All animations respect `prefers-reduced-motion`.
 
 ---
 
 ## 2. Duration Scale
 
-Mapped as CSS custom variables in [index.css](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/frontend/src/styles/index.css):
+Mapped as CSS custom variables in [index.css](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/frontend/src/styles/index.css):
 
 | Token | Value | Use |
 |---|---|---|

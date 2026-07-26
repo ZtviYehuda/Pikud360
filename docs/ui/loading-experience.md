@@ -1,8 +1,8 @@
-# Pikud360 UI Foundation — Loading Experience Spec
+# Matzevet UI Foundation — Loading Experience Spec
 
 **Domain:** UI Component Specifications  
 **Phase:** Sprint 34 — Loading Experience  
-**Target Path:** [loading-experience.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/docs/ui/loading-experience.md)
+**Target Path:** [loading-experience.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/docs/ui/loading-experience.md)
 
 ---
 

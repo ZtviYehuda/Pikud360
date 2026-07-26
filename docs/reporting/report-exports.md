@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document specifies the format structures, metadata headers, naming conventions, and authorization limits applied to downloadable files (PDF, Excel, CSV) exported by the Pikud360 reporting engine.
+This document specifies the format structures, metadata headers, naming conventions, and authorization limits applied to downloadable files (PDF, Excel, CSV) exported by the Matzevet reporting engine.
 
 ---
 
@@ -48,7 +48,7 @@ This document specifies the format structures, metadata headers, naming conventi
   - Number fields formatted as integers; dates formatted as local dates (`YYYY-MM-DD`).
 - **Included Metadata:**
   - **Summary Sheet Header**: Row 1-4 contains the report title, author metadata, extraction timestamp, and query parameters summary table.
-  - **Author Properties**: Excel document properties (Author, Created By) are set to "Pikud360 Reporting Engine".
+  - **Author Properties**: Excel document properties (Author, Created By) are set to "Matzevet Reporting Engine".
 - **File Naming Convention:**
   - Pattern: `[ReportCode]_[ScopeCode]_[DateUTC].[Extension]`
   - Example: `ATTEND_GD-51_2026-07-19.xlsx`

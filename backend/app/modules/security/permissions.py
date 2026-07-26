@@ -2,7 +2,7 @@ import logging
 from typing import Any, List, Optional, Tuple
 from app.database.connection import get_db_connection
 
-logger = logging.getLogger("pikud360.security.permissions")
+logger = logging.getLogger("matzevet.security.permissions")
 
 def get_user_permissions_and_scopes(user_id: str) -> List[Tuple[str, str]]:
     """Fetches list of tuples containing (permission_code, permission_scope_type) for the user."""

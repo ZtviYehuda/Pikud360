@@ -1,14 +1,14 @@
-# Pikud360 UI Foundation — Visual Density Spec
+# Matzevet UI Foundation — Visual Density Spec
 
 **Domain:** UI Component Specifications  
 **Phase:** Sprint 22 — Visual Density  
-**Target Path:** [visual-density.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/docs/ui/visual-density.md)
+**Target Path:** [visual-density.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/docs/ui/visual-density.md)
 
 ---
 
 ## 1. Overview & Redesign Strategy
 
-Pikud360 maximizes visual density to support complex command actions without cluttering layouts. Every layout pixel is configured to convey relevant data points.
+Matzevet maximizes visual density to support complex command actions without cluttering layouts. Every layout pixel is configured to convey relevant data points.
 
 ---
 

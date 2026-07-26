@@ -1,14 +1,14 @@
-# Pikud360 UI Foundation — Command Palette Spec
+# Matzevet UI Foundation — Command Palette Spec
 
 **Domain:** UI Component Specifications  
 **Phase:** Sprint 27 — Command Palette  
-**Target Path:** [command-palette.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/docs/ui/command-palette.md)
+**Target Path:** [command-palette.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/docs/ui/command-palette.md)
 
 ---
 
 ## 1. Overview & Redesign Strategy
 
-Pikud360 standardises the command palette structure, integrating executable commands directly within the `GlobalSearch` overlay.
+Matzevet standardises the command palette structure, integrating executable commands directly within the `GlobalSearch` overlay.
 
 ---
 

@@ -1,6 +1,6 @@
 # Commander Dashboard Architecture Specification
 
-This document details the operational architecture, widget profiles, key performance indicators (KPIs), user flows, and states of the **Commander Dashboard** in the Pikud360 application.
+This document details the operational architecture, widget profiles, key performance indicators (KPIs), user flows, and states of the **Commander Dashboard** in the Matzevet application.
 
 ---
 

@@ -10,7 +10,7 @@ from app.modules.workforce.schemas import EmployeeCreateRequest, EmployeeUpdateR
 from app.core.authorization import require_permission, ScopeType, AccessDeniedError
 from app.core.responses import ApiResponse
 
-logger = logging.getLogger("pikud360.modules.workforce.routes")
+logger = logging.getLogger("matzevet.modules.workforce.routes")
 
 workforce_bp = Blueprint("workforce", __name__)
 

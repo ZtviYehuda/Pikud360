@@ -1,9 +1,9 @@
-# Pikud360 UI Foundation — Icon System Spec
+# Matzevet UI Foundation — Icon System Spec
 
 **Domain:** UI Component Specifications  
 **Phase:** Sprint 33 — Iconography  
 **Icon Library:** [Lucide React](https://lucide.dev)  
-**Target Path:** [icon-system.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/docs/ui/icon-system.md)
+**Target Path:** [icon-system.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/docs/ui/icon-system.md)
 
 ---
 
@@ -44,7 +44,7 @@ A codebase scan revealed **6 inconsistent icon sizes** across components with no
 
 ## 3. Stroke Weight
 
-Lucide icons default to `strokeWidth={2}`. Pikud360 enforces:
+Lucide icons default to `strokeWidth={2}`. Matzevet enforces:
 
 | Context | Stroke Width | Reason |
 |---|---|---|

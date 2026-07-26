@@ -6,8 +6,8 @@ import { defineConfig } from "vite";
 
 export default defineConfig(({ mode }) => {
   const useHttps = mode === "https" || process.env.VITE_USE_HTTPS === "true";
-  const keyPath = path.resolve(__dirname, "toren.tail44b7c4.ts.net.key");
-  const certPath = path.resolve(__dirname, "toren.tail44b7c4.ts.net.crt");
+  const keyPath = path.resolve(__dirname, "matzevet.tail44b7c4.ts.net.key");
+  const certPath = path.resolve(__dirname, "matzevet.tail44b7c4.ts.net.crt");
   const httpsConfig = useHttps && fs.existsSync(keyPath) && fs.existsSync(certPath)
     ? {
         key: fs.readFileSync(keyPath),
@@ -82,8 +82,6 @@ export default defineConfig(({ mode }) => {
       https: httpsConfig,
       allowedHosts: true,
       host: "0.0.0.0",
-      port: 5174,
-      strictPort: false,
       hmr: {
         overlay: false,
       },

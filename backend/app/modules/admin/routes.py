@@ -23,7 +23,7 @@ from app.modules.admin.schemas import (
     NotificationTemplateResponse, SystemSettingResponse
 )
 
-logger = logging.getLogger("pikud360.modules.admin.routes")
+logger = logging.getLogger("matzevet.modules.admin.routes")
 admin_bp = Blueprint("admin", __name__)
 
 

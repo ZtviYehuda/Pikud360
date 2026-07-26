@@ -1,20 +1,20 @@
-# Pikud360 UI Foundation — Semantic Color System Spec
+# Matzevet UI Foundation — Semantic Color System Spec
 
 **Domain:** UI Component Specifications  
 **Phase:** Sprint 30 — Semantic Color System  
-**Target Path:** [semantic-colors.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/docs/ui/semantic-colors.md)
+**Target Path:** [semantic-colors.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/docs/ui/semantic-colors.md)
 
 ---
 
 ## 1. Overview & Redesign Strategy
 
-Pikud360 enforces a semantic color token system to guarantee readable color contrast ratios across Light, obsidian Dark, and High Contrast environments.
+Matzevet enforces a semantic color token system to guarantee readable color contrast ratios across Light, obsidian Dark, and High Contrast environments.
 
 ---
 
 ## 2. Reusable Semantic Color Mappings
 
-All colors are mapped to CSS custom variables in [index.css](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/frontend/src/styles/index.css):
+All colors are mapped to CSS custom variables in [index.css](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/frontend/src/styles/index.css):
 
 ### Base Palette Tokens
 - **Primary:** `--enterprise-primary` (Blue: `#0052cc` / `#3b82f6`) - primary accents, links, active nodes.

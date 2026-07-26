@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document specifies the reusable filtering schema used across the Pikud360 reporting engine. 
+This document specifies the reusable filtering schema used across the Matzevet reporting engine. 
 
 Filter components are defined once at the API schema and UI layer, allowing reports in the catalog to bind parameters dynamically.
 

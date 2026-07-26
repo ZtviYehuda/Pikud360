@@ -1,12 +1,12 @@
 # buttons.md
 
-This document specifies the Enterprise Button API defined in [button.tsx](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/frontend/src/components/ui/button.tsx).
+This document specifies the Enterprise Button API defined in [button.tsx](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/frontend/src/components/ui/button.tsx).
 
 ---
 
 ## 1. Button API Specification
 
-Every button in Pikud360 uses `<Button>`. We avoid separate layout wrappers (e.g. `PrimaryButton` or `IconButton`) and instead parameterize features through props.
+Every button in Matzevet uses `<Button>`. We avoid separate layout wrappers (e.g. `PrimaryButton` or `IconButton`) and instead parameterize features through props.
 
 ### Props Definition
 

@@ -1,5 +1,5 @@
 -- ============================================================================
--- Pikud360 Database Schema - Indexing Strategy
+-- Matzevet Database Schema - Indexing Strategy
 -- ============================================================================
 
 -- 1. Foreign Key Indexes (Optimize joins and cascade checks)

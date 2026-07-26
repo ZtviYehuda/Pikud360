@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document specifies the routing, filtering, escalation, quiet hours, and deduplication rules for the Pikud360 notification engine. 
+This document specifies the routing, filtering, escalation, quiet hours, and deduplication rules for the Matzevet notification engine. 
 
 These rules map incoming events from the global event catalog to target recipients and delivery channels, ensuring critical alerts are delivered promptly while non-urgent alerts are aggregated or held.
 

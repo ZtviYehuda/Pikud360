@@ -1375,8 +1375,8 @@ export default function RosterPage() {
                         <div className="p-4 border-l border-border/30 sticky right-0 z-20 bg-background/90 backdrop-blur-xl transition-all border-r-2 border-r-transparent group-hover/row:border-r-primary">
                           <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border border-border/40 flex items-center justify-center text-slate-500 font-black text-xs group-hover/row:scale-105 transition-all">
-                              {emp.first_name[0]}
-                              {emp.last_name[0]}
+                              {emp.first_name?.[0] || ""}
+                              {emp.last_name?.[0] || ""}
                             </div>
                             <div className="flex flex-col min-w-0">
                               <EmployeeLink
@@ -1551,8 +1551,8 @@ export default function RosterPage() {
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="w-9.5 h-9.5 rounded-lg bg-gradient-to-br from-muted/50 to-muted flex items-center justify-center font-black text-[11px] shrink-0 text-muted-foreground border border-border/20">
-                            {emp.first_name[0]}
-                            {emp.last_name[0]}
+                            {emp.first_name?.[0] || ""}
+                            {emp.last_name?.[0] || ""}
                           </div>
                           <div className="flex flex-col min-w-0">
                             <span className="text-[14px] font-black text-foreground truncate tracking-tight leading-tight">

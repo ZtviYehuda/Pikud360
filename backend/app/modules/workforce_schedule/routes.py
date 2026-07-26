@@ -24,7 +24,7 @@ from app.modules.workforce_schedule.schemas import (
 from app.core.authorization import require_permission, ScopeType, AccessDeniedError, can_view_schedule
 from app.core.responses import ApiResponse
 
-logger = logging.getLogger("pikud360.modules.workforce_schedule.routes")
+logger = logging.getLogger("matzevet.modules.workforce_schedule.routes")
 
 # Unified Blueprint registered at url_prefix /api/scheduling
 scheduling_bp = Blueprint("scheduling", __name__)

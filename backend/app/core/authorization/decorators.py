@@ -9,7 +9,7 @@ from app.core.authorization.policies import check_authorization
 from app.core.authorization.exceptions import AccessDeniedError
 from app.modules.security.repositories import AuditLogRepository
 
-logger = logging.getLogger("pikud360.core.authorization.decorators")
+logger = logging.getLogger("matzevet.core.authorization.decorators")
 
 audit_repo = AuditLogRepository()
 

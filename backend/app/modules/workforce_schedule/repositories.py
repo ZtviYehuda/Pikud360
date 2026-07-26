@@ -11,7 +11,7 @@ from app.modules.workforce_schedule.models import (
     EmployeeDailySchedule
 )
 
-logger = logging.getLogger("pikud360.modules.workforce_schedule.repositories")
+logger = logging.getLogger("matzevet.modules.workforce_schedule.repositories")
 
 class WorkforceScheduleRepository:
     """Repository managing workforce.schedule_settings, shift_types, schedule_statuses, and employee_daily_schedule."""

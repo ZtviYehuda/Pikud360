@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document specifies the communication channels and delivery rules supported by the Pikud360 notification engine. 
+This document specifies the communication channels and delivery rules supported by the Matzevet notification engine. 
 
 The system uses 6 primary channels: In-App, Email, SMS, WhatsApp, Push Notification, and Webhook.
 
@@ -20,7 +20,7 @@ The system uses 6 primary channels: In-App, Email, SMS, WhatsApp, Push Notificat
 
 ### 2.1 In-App Notifications (התראות במערכת)
 
-- **Purpose:** Delivers real-time notifications directly inside the Pikud360 web and desktop application interface (e.g. transfer approvals, roster warnings).
+- **Purpose:** Delivers real-time notifications directly inside the Matzevet web and desktop application interface (e.g. transfer approvals, roster warnings).
 - **Priority:** `MEDIUM`
 - **Retry Policy:** 
   - Standard retries are not required. Since the message is written directly to the database notification log table, it is loaded when the client next queries the notification store.
@@ -86,7 +86,7 @@ The system uses 6 primary channels: In-App, Email, SMS, WhatsApp, Push Notificat
 
 ### 3.5 Push Notifications (התראות דחיפה לנייד)
 
-- **Purpose:** Sends real-time alerts to the Pikud360 mobile app (e.g. shift reminder alerts, emergency call-ups).
+- **Purpose:** Sends real-time alerts to the Matzevet mobile app (e.g. shift reminder alerts, emergency call-ups).
 - **Priority:** `HIGH`
 - **Retry Policy:**
   - Rapid linear backoff: `[10s, 45s]`
@@ -113,7 +113,7 @@ The system uses 6 primary channels: In-App, Email, SMS, WhatsApp, Push Notificat
   - After 5 failed attempts, the webhook message is routed to `notification.webhook.dlq` and the endpoint's error counter is incremented.
 - **Configuration Requirements:**
   - Destination URL (must be HTTPS).
-  - Shared secret token to generate signature headers (`X-Pikud360-Signature` using HMAC-SHA256) for payload validation.
+  - Shared secret token to generate signature headers (`X-Matzevet-Signature` using HMAC-SHA256) for payload validation.
   - Admin configuration screen to select which events from the event catalog trigger the webhook.
 
 ---

@@ -6,7 +6,7 @@
 ---
 
 ## 1. Purpose
-The Status system provides a single reusable `StatusBadge` component that standardizes all operational status indicators across Pikud360.
+The Status system provides a single reusable `StatusBadge` component that standardizes all operational status indicators across Matzevet.
 
 ---
 

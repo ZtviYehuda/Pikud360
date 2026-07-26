@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document specifies the validation rules, status flags, and reporting deadlines governing the daily attendance cycle in Pikud360. 
+This document specifies the validation rules, status flags, and reporting deadlines governing the daily attendance cycle in Matzevet. 
 
 These rules are enforced by the `AttendanceService` on the backend and mapped to warning indicators in the frontend UI.
 

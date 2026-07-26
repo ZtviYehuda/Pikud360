@@ -12,7 +12,7 @@ from app.modules.analytics.repositories import AnalyticsRepository, SnapshotRepo
 from app.modules.analytics.models import AlertRule, DashboardSnapshot, TrendPeriod
 from app.core.authorization import resolve_access_scope, AccessDeniedError
 
-logger = logging.getLogger("pikud360.modules.analytics.services")
+logger = logging.getLogger("matzevet.modules.analytics.services")
 
 # Python Operator mapping for AlertEvaluator
 OPERATORS = {

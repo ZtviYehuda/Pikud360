@@ -21,7 +21,7 @@ class Settings:
     # PostgreSQL configuration
     DB_USER: str = os.getenv("POSTGRES_USER", "postgres")
     DB_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "postgres_secure_pass_123")
-    DB_NAME: str = os.getenv("POSTGRES_DB", "pikud360_db")
+    DB_NAME: str = os.getenv("POSTGRES_DB", "matzevet_db")
     DB_HOST: str = os.getenv("POSTGRES_HOST", "localhost")
     DB_PORT: int = int(os.getenv("POSTGRES_PORT", 5432))
     
@@ -42,7 +42,7 @@ class TestingSettings(Settings):
     ENV: str = "testing"
     TESTING: bool = True
     DEBUG: bool = True
-    DB_NAME: str = f"{os.getenv('POSTGRES_DB', 'pikud360_db')}_test"
+    DB_NAME: str = f"{os.getenv('POSTGRES_DB', 'matzevet_db')}_test"
 
 class ProductionSettings(Settings):
     ENV: str = "production"

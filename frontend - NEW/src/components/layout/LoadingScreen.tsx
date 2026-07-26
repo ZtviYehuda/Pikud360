@@ -106,7 +106,7 @@ export const LoadingScreen = () => {
           <div className="toren-spin-container">
             <img
               src="/toren_logo_base.png"
-              alt="Toren"
+              alt="Matzevet"
               className="w-20 h-20 object-contain relative z-10 toren-spin-logo"
             />
             <div className="toren-spin-beam-original" />
@@ -140,7 +140,7 @@ export const LoadingScreen = () => {
               color: isDark ? `rgba(${primaryRgb}, 0.7)` : "rgba(71, 85, 105, 0.8)",
             }}
           >
-            TOREN · COMMAND CONTROL
+            MATZEVET · COMMAND & ATTENDANCE CONTROL
           </p>
         </motion.div>
 

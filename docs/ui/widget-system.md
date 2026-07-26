@@ -1,20 +1,20 @@
-# Pikud360 UI Foundation — Widget System Spec
+# Matzevet UI Foundation — Widget System Spec
 
 **Domain:** UI Component Specifications  
 **Phase:** Sprint 23 — Widget System  
-**Target Path:** [widget-system.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/docs/ui/widget-system.md)
+**Target Path:** [widget-system.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/docs/ui/widget-system.md)
 
 ---
 
 ## 1. Overview & Redesign Strategy
 
-Pikud360 standardises the dashboard widgets component wrapper to manage control buttons, live update status markers, permission access checking logic, and visual loaders.
+Matzevet standardises the dashboard widgets component wrapper to manage control buttons, live update status markers, permission access checking logic, and visual loaders.
 
 ---
 
 ## 2. Dashboard Widget Component Details
 
-The [dashboard-widget.tsx](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/frontend/src/components/ui/dashboard-widget.tsx) component implements:
+The [dashboard-widget.tsx](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/frontend/src/components/ui/dashboard-widget.tsx) component implements:
 
 - **Unified Header Banner:** Renders bold titles, icons, status badges, and dynamic timestamps indicating update delays.
 - **Actions Toolbar:**

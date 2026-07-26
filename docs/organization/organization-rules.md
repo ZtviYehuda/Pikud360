@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document specifies the validation rules, security behaviors, transfer controls, and naming constraints governing the organization hierarchy tree in Pikud360. 
+This document specifies the validation rules, security behaviors, transfer controls, and naming constraints governing the organization hierarchy tree in Matzevet. 
 
 These rules are enforced by the `OrganizationService` at the core boundary layer.
 

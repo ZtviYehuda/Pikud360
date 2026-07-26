@@ -19,7 +19,7 @@ from app.modules.reports.schemas import (
     ReportRequestResponse, ReportHistoryResponse
 )
 
-logger = logging.getLogger("pikud360.modules.reports.routes")
+logger = logging.getLogger("matzevet.modules.reports.routes")
 reports_bp = Blueprint("reports", __name__)
 report_service = ReportService()
 

@@ -1,6 +1,6 @@
 # command-palette.md
 
-This document specifies the Enterprise Command Palette & Global Shortcut System defined in [command.tsx](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/frontend/src/components/ui/command.tsx).
+This document specifies the Enterprise Command Palette & Global Shortcut System defined in [command.tsx](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/frontend/src/components/ui/command.tsx).
 
 ---
 

@@ -36,7 +36,7 @@ def version_check():
     """Returns application version information."""
     return ApiResponse.success(
         data={
-            "name": "Pikud360 Workforce Management System",
+            "name": "Matzevet Workforce Management System",
             "version": "1.0.0-beta",
             "api_version": "v1"
         },

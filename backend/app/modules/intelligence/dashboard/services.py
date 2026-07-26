@@ -6,7 +6,7 @@ from app.core.authorization import resolve_access_scope, AccessDeniedError
 from app.modules.workforce_schedule.repositories import WorkforceScheduleRepository
 from app.modules.intelligence.alerts.services import AlertsService
 
-logger = logging.getLogger("pikud360.modules.intelligence.dashboard.services")
+logger = logging.getLogger("matzevet.modules.intelligence.dashboard.services")
 
 class DashboardService:
     def __init__(self):

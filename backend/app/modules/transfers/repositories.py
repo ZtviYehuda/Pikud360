@@ -5,7 +5,7 @@ from datetime import datetime
 from app.database.connection import get_db_connection
 from app.modules.transfers.models import EmployeeTransfer
 
-logger = logging.getLogger("pikud360.modules.transfers.repositories")
+logger = logging.getLogger("matzevet.modules.transfers.repositories")
 
 class TransferRepository:
     """Repository mapping data operations for workforce.employee_transfers table."""

@@ -26,17 +26,10 @@ createRoot(document.getElementById("root")!).render(
   </ErrorBoundary>
 );
 
-// Register Service Worker for PWA
-if ("serviceWorker" in navigator) {
+// Register Service Worker for PWA (production only to avoid dev console log noise and HMR caching)
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then((reg) => {
-        console.log("Service Worker registered successfully with scope:", reg.scope);
-      })
-      .catch((err) => {
-        console.error("Service Worker registration failed:", err);
-      });
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
   });
 }
 

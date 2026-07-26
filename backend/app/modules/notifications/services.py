@@ -7,7 +7,7 @@ from app.modules.notifications.models import Notification
 from app.modules.notifications.repositories import NotificationRepository
 from app.core.authorization import resolve_access_scope, AccessDeniedError
 
-logger = logging.getLogger("pikud360.modules.notifications.services")
+logger = logging.getLogger("matzevet.modules.notifications.services")
 
 class NotificationService:
     """Service class managing commander alerts and system alerts."""

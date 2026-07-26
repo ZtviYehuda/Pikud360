@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document specifies the core operational constraints, safety policies, and manager override workflows that govern the assignment of personnel to shifts in Pikud360. 
+This document specifies the core operational constraints, safety policies, and manager override workflows that govern the assignment of personnel to shifts in Matzevet. 
 
 These rules are evaluated by the backend scheduling validation engine and surfaced as error alerts or override prompts in the scheduling interface.
 

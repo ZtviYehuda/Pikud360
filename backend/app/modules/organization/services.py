@@ -12,7 +12,7 @@ from app.modules.organization.schemas import (
     CommanderAssignRequest
 )
 
-logger = logging.getLogger("pikud360.modules.organization.services")
+logger = logging.getLogger("matzevet.modules.organization.services")
 
 class OrganizationTreeService:
     """Service handling organization structures, command trees, and unit movements."""

@@ -1,5 +1,5 @@
 -- ============================================================================
--- Pikud360 Database Schema - Row-Level Security (RLS) Policies
+-- Matzevet Database Schema - Row-Level Security (RLS) Policies
 -- ============================================================================
 
 -- Enable RLS on core tenant-direct tables

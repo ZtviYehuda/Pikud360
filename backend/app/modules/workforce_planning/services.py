@@ -20,7 +20,7 @@ from app.modules.workforce_planning.schemas import (
 )
 from app.core.authorization import can_view_employee, can_manage_unit, AccessDeniedError
 
-logger = logging.getLogger("pikud360.modules.workforce_planning.services")
+logger = logging.getLogger("matzevet.modules.workforce_planning.services")
 
 class WorkforcePlanningService:
     """Service class handling daily workforce planning, shift configurations, and statistics."""

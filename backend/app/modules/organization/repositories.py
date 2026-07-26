@@ -5,7 +5,7 @@ from datetime import datetime
 from app.database.connection import get_db_connection
 from app.modules.organization.models import OrganizationUnit, OrganizationUnitCommander
 
-logger = logging.getLogger("pikud360.modules.organization.repositories")
+logger = logging.getLogger("matzevet.modules.organization.repositories")
 
 class OrganizationRepository:
     """Repository managing core.organization_units table CRUD and closures."""

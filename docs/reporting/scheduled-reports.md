@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document specifies the automated, cron-triggered reporting pipeline in Pikud360. 
+This document specifies the automated, cron-triggered reporting pipeline in Matzevet. 
 
 The system compiles and distributes Daily, Weekly, and Monthly reports to specific roles within the organization tree, utilizing predefined delivery channels and enforcing failover protocols in case of generation or provider outages.
 

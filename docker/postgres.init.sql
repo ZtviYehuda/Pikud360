@@ -1,5 +1,5 @@
 -- ============================================================================
--- Pikud360 Enterprise Database Schema Initialization (v2.5)
+-- Matzevet Enterprise Database Schema Initialization (v2.5)
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -1457,7 +1457,7 @@ BEGIN
 
     -- Ensure Default Admin User exists
     INSERT INTO security.users (id, tenant_id, username, email, password_hash, is_active)
-    VALUES (user_uuid, tenant_uuid, 'admin', 'admin@pikud360.com', '$2b$12$M9VGTCI1LkjwJRRFOXYlEuSw8FmrIaS/Z2OkRhPEiPiuf8MewLNpS', true)
+    VALUES (user_uuid, tenant_uuid, 'admin', 'admin@matzevet.com', '$2b$12$M9VGTCI1LkjwJRRFOXYlEuSw8FmrIaS/Z2OkRhPEiPiuf8MewLNpS', true)
     ON CONFLICT (username) DO NOTHING;
 
     -- Ensure Admin Role exists

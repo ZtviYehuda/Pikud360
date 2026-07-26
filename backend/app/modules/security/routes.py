@@ -22,7 +22,7 @@ from app.modules.security.services import SecurityService
 from app.modules.security.schemas import LoginRequest, TokenResponse
 from app.modules.security.permissions import get_user_permissions_and_scopes, get_user_roles
 
-logger = logging.getLogger("pikud360.security.routes")
+logger = logging.getLogger("matzevet.security.routes")
 
 security_bp = Blueprint("security", __name__)
 
@@ -110,7 +110,7 @@ def login():
                 "last_name": "ישראלי" if username == "commander" else ("מערכת" if username == "admin" else "כהן"),
                 "username": username,
                 "phone_number": "0501234567",
-                "email": f"{username}@pikud360.gov.il",
+                "email": f"{username}@matzevet.gov.il",
                 "must_change_password": False,
                 "is_admin": username == "admin",
                 "is_commander": username in ["commander", "admin"],
@@ -169,7 +169,7 @@ def login():
         "last_name": mock_last_name,
         "username": username,
         "phone_number": "0501234567",
-        "email": f"{username}@pikud360.gov.il",
+        "email": f"{username}@matzevet.gov.il",
         "must_change_password": False,
         "is_admin": is_admin,
         "is_commander": is_commander,
@@ -310,7 +310,7 @@ def get_current_user():
             "last_name": user.last_name,
             "username": user.username,
             "phone_number": getattr(user, 'phone_number', None),
-            "email": getattr(user, 'email', f"{user.username}@pikud360.gov.il"),
+            "email": getattr(user, 'email', f"{user.username}@matzevet.gov.il"),
             "must_change_password": getattr(user, 'must_change_password', False),
             "is_admin": getattr(user, 'is_admin', False) or 'ADMIN' in user_roles,
             "is_commander": getattr(user, 'is_commander', False) or 'COMMANDER' in user_roles,
@@ -340,7 +340,7 @@ def get_current_user():
         "last_name": "מערכת" if is_admin else ("ישראלי" if mock_id == 101 else "כהן"),
         "username": username,
         "phone_number": "0501234567",
-        "email": f"{username}@pikud360.gov.il",
+        "email": f"{username}@matzevet.gov.il",
         "must_change_password": False,
         "is_admin": is_admin,
         "is_commander": is_commander,

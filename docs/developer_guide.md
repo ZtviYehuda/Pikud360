@@ -1,6 +1,6 @@
 # Developer Guide
 
-Welcome to the Pikud360 developer guide. This document details our engineering requirements, naming standards, typings, and guidelines for extending the system.
+Welcome to the Matzevet developer guide. This document details our engineering requirements, naming standards, typings, and guidelines for extending the system.
 
 ---
 

@@ -1,6 +1,6 @@
 # dialogs.md
 
-This document specifies the Enterprise Modal & Dialog System components defined in [dialog.tsx](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/frontend/src/components/ui/dialog.tsx).
+This document specifies the Enterprise Modal & Dialog System components defined in [dialog.tsx](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/frontend/src/components/ui/dialog.tsx).
 
 ---
 

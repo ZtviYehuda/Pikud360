@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document specifies the user preference model governing how notification alerts are routed, scheduled, and delivered to individuals in Pikud360. 
+This document specifies the user preference model governing how notification alerts are routed, scheduled, and delivered to individuals in Matzevet. 
 
 Users access these parameters through the `/settings/notifications` settings tab in the React client, writing mutations to their user profile settings block.
 

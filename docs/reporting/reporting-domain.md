@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-The Reporting domain in Pikud360 provides the capabilities to query, aggregate, and export system data. It consolidates information from the Workforce (Employee), Organization, Attendance, Scheduling, and Audit domains to generate dashboards, compliance matrices, and downloadable CSV/PDF files.
+The Reporting domain in Matzevet provides the capabilities to query, aggregate, and export system data. It consolidates information from the Workforce (Employee), Organization, Attendance, Scheduling, and Audit domains to generate dashboards, compliance matrices, and downloadable CSV/PDF files.
 
 The domain is decoupled from transactional data capture modules; it is read-only against primary tables but owns its report configurations, scheduler logs, and compiled static assets.
 

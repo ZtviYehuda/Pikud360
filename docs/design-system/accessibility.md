@@ -1,6 +1,6 @@
 # accessibility.md
 
-This document outlines the core accessibility principles and rules to follow across all frontend components of the Pikud360 application.
+This document outlines the core accessibility principles and rules to follow across all frontend components of the Matzevet application.
 
 ---
 

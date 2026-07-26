@@ -1,21 +1,21 @@
-# Pikud360 Enterprise System Architecture Documentation
+# Matzevet Enterprise System Architecture Documentation
 
-**System Title:** Pikud360 Enterprise Workforce & Operation Control Platform  
+**System Title:** Matzevet Enterprise Workforce & Operation Control Platform  
 **Architecture Version:** 2.0.0  
 **Classification:** Official Enterprise Software Documentation  
-**Branding:** Pikud360 Design System & Enterprise Architecture  
+**Branding:** Matzevet Design System & Enterprise Architecture  
 
 ---
 
 ## Executive Summary
 
-**Pikud360** is a next-generation, high-performance enterprise workforce management, presence tracking, operational scheduling, and personnel administration platform built for mission-critical organizations. Designed with a clean feature-based modular architecture, full Hebrew RTL support, glassmorphic UI aesthetics, and resilient RESTful micro-service ready APIs, Pikud360 provides real-time visibility and command over organizational hierarchy, daily presence, shift rosters, and audit event streams.
+**Matzevet** is a next-generation, high-performance enterprise workforce management, presence tracking, operational scheduling, and personnel administration platform built for mission-critical organizations. Designed with a clean feature-based modular architecture, full Hebrew RTL support, glassmorphic UI aesthetics, and resilient RESTful micro-service ready APIs, Matzevet provides real-time visibility and command over organizational hierarchy, daily presence, shift rosters, and audit event streams.
 
 ---
 
 # 1. High Level Architecture
 
-The Pikud360 platform adheres to a strictly decoupled, multi-tier enterprise architecture. Separation of concerns is enforced between the visual presentation tier, API gateway layer, business logic engine, data repository layer, and infrastructure persistence tier.
+The Matzevet platform adheres to a strictly decoupled, multi-tier enterprise architecture. Separation of concerns is enforced between the visual presentation tier, API gateway layer, business logic engine, data repository layer, and infrastructure persistence tier.
 
 ```mermaid
 graph TD
@@ -132,7 +132,7 @@ src/
 3. **Vite:** High-speed development server with lightning-fast HMR and optimized production Rollup bundling.
 4. **Tailwind CSS v4:** Modern CSS engine using native CSS custom properties for instant theme switching and responsive design tokens.
 5. **Radix UI Primitives:** Unstyled, accessible (WAI-ARIA compliant) headless primitives for dialogs, dropdown menus, popovers, tooltips, and tabs.
-6. **shadcn/ui Design System:** Curated atomic UI primitive suite customized with Pikud360 design tokens (`rounded-xl`, glassmorphic backdrops, compact enterprise padding).
+6. **shadcn/ui Design System:** Curated atomic UI primitive suite customized with Matzevet design tokens (`rounded-xl`, glassmorphic backdrops, compact enterprise padding).
 7. **Framer Motion:** Micro-animations for modal dialog slide-ins, tab transitions, drawer expansions, and toast alerts.
 8. **React Router v6:** Declarative client-side routing with protected route guards (`ProtectedRoute`), nested layouts, and search param bindings.
 9. **TanStack Query (React Query):** Asynchronous server-state management with automatic background refetching, query caching, and optimistic mutations.
@@ -179,7 +179,7 @@ backend/
 
 # 4. Database Architecture
 
-Pikud360 utilizes **PostgreSQL** as its enterprise relational database system. The database schema enforces strict referential integrity, performance indexing, soft deletion, and comprehensive audit trail metadata.
+Matzevet utilizes **PostgreSQL** as its enterprise relational database system. The database schema enforces strict referential integrity, performance indexing, soft deletion, and comprehensive audit trail metadata.
 
 ### Data Model & Entity Relationship Overview
 
@@ -283,7 +283,7 @@ erDiagram
 
 # 5. Authentication Flow
 
-Authentication in Pikud360 is powered by stateless **JSON Web Tokens (JWT)** with HTTP-Only cookie and Bearer Authorization header support.
+Authentication in Matzevet is powered by stateless **JSON Web Tokens (JWT)** with HTTP-Only cookie and Bearer Authorization header support.
 
 ```mermaid
 sequenceDiagram
@@ -360,7 +360,7 @@ sequenceDiagram
 
 # 7. Feature Modules
 
-Pikud360 is organized into self-contained feature modules. Each module maintains its own domain components, custom hooks, API calls, and types.
+Matzevet is organized into self-contained feature modules. Each module maintains its own domain components, custom hooks, API calls, and types.
 
 | Feature Module | Core Responsibility | Key Components & Services |
 | :--- | :--- | :--- |
@@ -381,7 +381,7 @@ Pikud360 is organized into self-contained feature modules. Each module maintains
 
 # 8. Shared Component Architecture
 
-To prevent duplication and guarantee 100% visual consistency across all pages, Pikud360 strictly enforces a 5-tier component reuse hierarchy.
+To prevent duplication and guarantee 100% visual consistency across all pages, Matzevet strictly enforces a 5-tier component reuse hierarchy.
 
 ```mermaid
 graph TD
@@ -407,7 +407,7 @@ graph TD
 
 # 9. State Management
 
-Pikud360 employs a hybrid state management model to ensure clear boundaries between global application state, server state, and transient UI state.
+Matzevet employs a hybrid state management model to ensure clear boundaries between global application state, server state, and transient UI state.
 
 ```mermaid
 graph LR
@@ -482,7 +482,7 @@ The system includes pre-reserved architectural extension points for enterprise t
 
 ```mermaid
 graph LR
-    PikudCore["Pikud360 Core Backend Engine"]
+    PikudCore["Matzevet Core Backend Engine"]
     
     PikudCore -.->|Connector A| WhatsApp["WhatsApp Business API (Alerts & Reminders)"]
     PikudCore -.->|Connector B| SMTP["Email SMTP Gateway (Weekly Summaries)"]
@@ -495,7 +495,7 @@ graph LR
 
 # 12. Security Architecture
 
-Pikud360 enforces enterprise-grade defense-in-depth security mechanisms across all layers.
+Matzevet enforces enterprise-grade defense-in-depth security mechanisms across all layers.
 
 - **HTTPS Transmission Security:** All client-server communications are encrypted via TLS 1.3.
 - **JWT Authentication Security:** Tokens signed with HMAC-SHA256 algorithms containing strict expiration timestamps.
@@ -527,7 +527,7 @@ Pikud360 enforces enterprise-grade defense-in-depth security mechanisms across a
 
 # 14. Development Standards
 
-All software development within Pikud360 adheres strictly to standardized development guidelines:
+All software development within Matzevet adheres strictly to standardized development guidelines:
 
 1. **Feature-Based Architecture:** Code is organized by domain features (`features/attendance`, `features/employees`), keeping business logic self-contained.
 2. **Mandatory UI Standardization:** Pages **must** reuse approved shared components (`PageHeader`, `PageToolbar`, `DataTable`, `EmptyState`, `StatusBadge`). Page-specific duplicates are strictly prohibited.
@@ -539,11 +539,11 @@ All software development within Pikud360 adheres strictly to standardized develo
 
 # 15. Future Architecture Roadmap
 
-The Pikud360 system architecture is prepared for high-scale enterprise expansion through the following reserved modules:
+The Matzevet system architecture is prepared for high-scale enterprise expansion through the following reserved modules:
 
 ```mermaid
 graph TD
-    subgraph CoreSystem["Pikud360 Current Monolith"]
+    subgraph CoreSystem["Matzevet Current Monolith"]
         CoreAPI["Flask Core REST API"]
         CoreDB[("PostgreSQL Master DB")]
     end
@@ -569,4 +569,4 @@ graph TD
 - **Analytics & BI Engine:** High-performance data warehouse connector for historical attendance trend analysis and predictive scheduling.
 
 ---
-*End of Enterprise Architecture Documentation — Pikud360 Platform*
+*End of Enterprise Architecture Documentation — Matzevet Platform*

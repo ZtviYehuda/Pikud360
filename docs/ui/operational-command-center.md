@@ -1,14 +1,14 @@
-# Pikud360 UI Foundation — Operational Command Center Spec
+# Matzevet UI Foundation — Operational Command Center Spec
 
 **Domain:** UI Component Specifications  
 **Phase:** Sprint 21 — Operational Command Center  
-**Target Path:** [operational-command-center.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/docs/ui/operational-command-center.md)
+**Target Path:** [operational-command-center.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/docs/ui/operational-command-center.md)
 
 ---
 
 ## 1. Overview & Redesign Strategy
 
-Pikud360 redesigns the main dashboard page as a high-density, decision-oriented operational command cockpit. It answers four core questions:
+Matzevet redesigns the main dashboard page as a high-density, decision-oriented operational command cockpit. It answers four core questions:
 - **What happened?** (Timeline logs, recent transfers, and updates streams)
 - **What is happening now?** (Staffing levels, shift assignments, and readiness metrics)
 - **What needs attention?** (Critical alerts and missing workforce warnings)

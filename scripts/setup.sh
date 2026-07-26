@@ -1,9 +1,9 @@
 #!/bin/bash
-# Unix/macOS setup script for Pikud360 WFM System
+# Unix/macOS setup script for Matzevet WFM System
 
 set -e
 
-echo -e "\033[0;36m=== Starting Pikud360 Environment Setup ===\033[0m"
+echo -e "\033[0;36m=== Starting Matzevet Environment Setup ===\033[0m"
 
 # 1. Check Python installation
 if command -v python3 &>/dev/null; then

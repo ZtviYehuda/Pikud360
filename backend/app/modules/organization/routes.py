@@ -16,7 +16,7 @@ from app.modules.organization.schemas import (
 from app.core.authorization import require_permission, ScopeType
 from app.core.responses import ApiResponse
 
-logger = logging.getLogger("pikud360.modules.organization.routes")
+logger = logging.getLogger("matzevet.modules.organization.routes")
 
 org_bp = Blueprint("organization", __name__)
 

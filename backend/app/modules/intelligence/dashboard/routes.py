@@ -6,7 +6,7 @@ from app.modules.intelligence.dashboard.services import DashboardService
 from app.core.responses import ApiResponse
 from app.core.authorization import require_permission, ScopeType, AccessDeniedError
 
-logger = logging.getLogger("pikud360.modules.intelligence.dashboard.routes")
+logger = logging.getLogger("matzevet.modules.intelligence.dashboard.routes")
 
 dashboard_bp = Blueprint("intelligence_dashboard", __name__)
 dashboard_service = DashboardService()

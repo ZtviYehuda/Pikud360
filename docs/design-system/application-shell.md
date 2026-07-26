@@ -1,6 +1,6 @@
 # application-shell.md
 
-This document specifies the Enterprise Application Shell layout defined in [src/components/ui/app-shell/](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/frontend/src/components/ui/app-shell).
+This document specifies the Enterprise Application Shell layout defined in [src/components/ui/app-shell/](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/frontend/src/components/ui/app-shell).
 
 ---
 

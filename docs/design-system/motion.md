@@ -1,6 +1,6 @@
 # motion.md
 
-This document specifies the Enterprise Motion & Animation System defined in [index.css](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/frontend/src/styles/index.css).
+This document specifies the Enterprise Motion & Animation System defined in [index.css](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/frontend/src/styles/index.css).
 
 ---
 

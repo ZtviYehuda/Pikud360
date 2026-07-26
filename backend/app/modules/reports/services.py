@@ -15,7 +15,7 @@ from app.modules.reports.models import (
 )
 from app.modules.reports.repositories import TemplateRepository, ReportRepository
 
-logger = logging.getLogger("pikud360.modules.reports.services")
+logger = logging.getLogger("matzevet.modules.reports.services")
 
 
 class ReportProcessor(ABC):

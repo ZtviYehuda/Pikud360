@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document specifies the reusable notification template system for Pikud360. Templates support variable injection (using standard `{{variableName}}` formatting) and built-in localization mappings for Hebrew (RTL, default) and English fallbacks.
+This document specifies the reusable notification template system for Matzevet. Templates support variable injection (using standard `{{variableName}}` formatting) and built-in localization mappings for Hebrew (RTL, default) and English fallbacks.
 
 ---
 
@@ -48,7 +48,7 @@ Every template compiles using parameters from this dictionary. Emitters must sup
     - **Body:** `צוות פיקוד360 מאחל לך יום הולדת שמח, בריאות, הצלחה ושפע ברכות ביום חגך!`
   - **English (LTR):**
     - **Title:** `Happy Birthday, {{employeeRank}} {{employeeName}}! 🎉`
-    - **Body:** `The Pikud360 team wishes you a happy birthday, good health, and success!`
+    - **Body:** `The Matzevet team wishes you a happy birthday, good health, and success!`
 
 ---
 

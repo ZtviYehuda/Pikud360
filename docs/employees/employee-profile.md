@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-The Employee Profile page serves as the complete digital file for an individual within Pikud360. It aggregates administrative, operational, qualification, and timeline records into a single page.
+The Employee Profile page serves as the complete digital file for an individual within Matzevet. It aggregates administrative, operational, qualification, and timeline records into a single page.
 
 This document defines the layout, responsibilities, visible fields, role-based restrictions, and interactive behaviors for all **nine sections** of the Employee Profile.
 

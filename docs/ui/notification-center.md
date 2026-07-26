@@ -1,20 +1,20 @@
-# Pikud360 UI Foundation — Notification Center Spec
+# Matzevet UI Foundation — Notification Center Spec
 
 **Domain:** UI Component Specifications  
 **Phase:** Sprint 25 — Notification Center  
-**Target Path:** [notification-center.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/docs/ui/notification-center.md)
+**Target Path:** [notification-center.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/docs/ui/notification-center.md)
 
 ---
 
 ## 1. Overview & Redesign Strategy
 
-Pikud360 standardises notifications into a unified, high-density, action-oriented Notification Center interface.
+Matzevet standardises notifications into a unified, high-density, action-oriented Notification Center interface.
 
 ---
 
 ## 2. Notification Center Component Details
 
-The [notification-center.tsx](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/frontend/src/components/ui/notification-center.tsx) component implements:
+The [notification-center.tsx](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/frontend/src/components/ui/notification-center.tsx) component implements:
 
 - **Filter Toolbar:** Contains search input text blocks, category dropdowns (`system`, `workforce`, `operations`, `access`), and priority selectors (`critical`, `high`, `normal`, `info`).
 - **Notification Cards:**

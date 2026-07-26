@@ -282,22 +282,28 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-md max-h-[88vh] sm:max-h-[80vh] p-0 border-none bg-background flex flex-col overflow-hidden !gap-0 pointer-events-auto rounded-t-[2.5rem] sm:rounded-3xl"
+        className="sm:max-w-[560px] md:max-w-[620px] max-h-[92vh] sm:max-h-[85vh] p-0 border-none bg-background flex flex-col overflow-hidden !gap-0 pointer-events-auto rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl"
         dir="rtl"
       >
         <DialogDragHandle />
         
         {/* Header */}
-        <div className="px-6 pt-2 pb-4 border-b border-border/30 flex items-center justify-between shrink-0">
+        <div className="px-6 pt-4 pb-4 border-b border-border/30 flex items-center justify-between shrink-0 relative">
           <DialogTitle className="text-xl font-black text-foreground">
             סינון
           </DialogTitle>
-          <button
-            onClick={handleReset}
-            className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors sm:pl-12"
-          >
-            אפס הכל
-          </button>
+
+          {/* Reset Action (aligned perfectly at top-4 h-9 w-9 beside Close X button) */}
+          {activeFiltersCount > 0 && (
+            <button
+              onClick={handleReset}
+              title="אפס את כל המסננים"
+              aria-label="אפס את כל המסננים"
+              className="absolute left-4 sm:left-[3.75rem] top-4 h-9 w-9 rounded-full bg-white/80 dark:bg-black/40 backdrop-blur-md border border-black/5 dark:border-white/10 hover:bg-destructive/15 hover:border-destructive/30 text-muted-foreground hover:text-destructive flex items-center justify-center transition-all z-[50] active:scale-95 group/reset shadow-2xs"
+            >
+              <RotateCcw className="w-4 h-4 transition-transform group-hover/reset:-rotate-90" />
+            </button>
+          )}
         </div>
 
         {/* Tabs Scrollable Strip */}

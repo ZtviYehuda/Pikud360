@@ -3,11 +3,11 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: pikud360-db
+    container_name: matzevet-db
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_secure_pass_123}
-      POSTGRES_DB: ${POSTGRES_DB:-pikud360_db}
+      POSTGRES_DB: ${POSTGRES_DB:-matzevet_db}
     ports:
       - "5432:5432"
     volumes:
@@ -19,13 +19,13 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - pikud360-network
+      - matzevet-network
 
   backend:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
-    container_name: pikud360-backend
+    container_name: matzevet-backend
     environment:
       - FLASK_APP=run.py
       - FLASK_ENV=${FLASK_ENV:-development}
@@ -33,7 +33,7 @@ services:
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change_this_to_another_secure_random_hex_key_in_production}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres_secure_pass_123}
-      - POSTGRES_DB=${POSTGRES_DB:-pikud360_db}
+      - POSTGRES_DB=${POSTGRES_DB:-matzevet_db}
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - DB_MIN_CONNECTIONS=${DB_MIN_CONNECTIONS:-1}
@@ -52,13 +52,13 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - pikud360-network
+      - matzevet-network
 
   frontend:
     build:
       context: .
       dockerfile: docker/frontend.Dockerfile
-    container_name: pikud360-frontend
+    container_name: matzevet-frontend
     ports:
       - "5173:5173"
     environment:
@@ -69,11 +69,11 @@ services:
     depends_on:
       - backend
     networks:
-      - pikud360-network
+      - matzevet-network
 
 volumes:
   postgres_data:
 
 networks:
-  pikud360-network:
+  matzevet-network:
     driver: bridge

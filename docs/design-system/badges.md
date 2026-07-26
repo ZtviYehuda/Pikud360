@@ -1,6 +1,6 @@
 # badges.md
 
-This document specifies the Enterprise Badge API defined in [badge.tsx](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/frontend/src/components/ui/badge.tsx).
+This document specifies the Enterprise Badge API defined in [badge.tsx](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/frontend/src/components/ui/badge.tsx).
 
 ---
 

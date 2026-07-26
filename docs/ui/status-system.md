@@ -1,20 +1,20 @@
-# Pikud360 UI Foundation — Status System Spec
+# Matzevet UI Foundation — Status System Spec
 
 **Domain:** UI Component Specifications  
 **Phase:** Sprint 24 — Status System  
-**Target Path:** [status-system.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/docs/ui/status-system.md)
+**Target Path:** [status-system.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/docs/ui/status-system.md)
 
 ---
 
 ## 1. Overview & Redesign Strategy
 
-Pikud360 standardises statuses across lists, rosters, and profiles, mapping states (approved, pending, sick, reserve-duty, remote) to unified colors, text translations, and icons.
+Matzevet standardises statuses across lists, rosters, and profiles, mapping states (approved, pending, sick, reserve-duty, remote) to unified colors, text translations, and icons.
 
 ---
 
 ## 2. Reusable Status Badge Mappings
 
-The new [status-badge.tsx](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/frontend/src/components/ui/status-badge.tsx) component implements:
+The new [status-badge.tsx](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/frontend/src/components/ui/status-badge.tsx) component implements:
 
 - **Workforce Presets:**
   - `online` / `approved`: emerald green background with checkmarks/thumbs-up icons.

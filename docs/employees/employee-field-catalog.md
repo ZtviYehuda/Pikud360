@@ -812,7 +812,7 @@ Fields are organized by the same groups defined in the Business Model (Phase 12.
 | Property | Value |
 |---|---|
 | **Name** | Interface Language |
-| **Description** | The employee's preferred language for the Pikud360 user interface. Applied when the employee logs into the system. Does not affect data stored in the system. |
+| **Description** | The employee's preferred language for the Matzevet user interface. Applied when the employee logs into the system. Does not affect data stored in the system. |
 | **Required** | No |
 | **Editable** | Employee self-service |
 | **Validation** | One of the system's supported locales: `he` (Hebrew), `ar` (Arabic), `en` (English) |

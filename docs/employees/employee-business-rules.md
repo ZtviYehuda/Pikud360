@@ -483,7 +483,7 @@ Editing rules govern who may modify employee data, when, and under what conditio
 
 **Statement:** No operator may read or write employee records that belong to a different tenant. Tenant isolation is absolute.
 
-**Reason:** Pikud360 is a multi-tenant system. Each tenant (military unit, organization) is an independent operational entity. Cross-tenant data access would violate confidentiality.
+**Reason:** Matzevet is a multi-tenant system. Each tenant (military unit, organization) is an independent operational entity. Cross-tenant data access would violate confidentiality.
 
 **Scope:** All operations
 

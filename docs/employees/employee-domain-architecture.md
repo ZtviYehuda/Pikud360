@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-The Employee domain is the **central business entity** of Pikud360. Every module in the system either reads from, writes to, or reacts to changes in the Employee aggregate.
+The Employee domain is the **central business entity** of Matzevet. Every module in the system either reads from, writes to, or reacts to changes in the Employee aggregate.
 
 An Employee represents a real person serving in the organization — a soldier, officer, or civilian staff member. The Employee domain owns all persistent facts about that person that exist independently of any module.
 

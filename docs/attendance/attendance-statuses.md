@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-Pikud360 uses a standardized catalog of **11 attendance statuses** to categorize the operational availability of personnel on any calendar date. 
+Matzevet uses a standardized catalog of **11 attendance statuses** to categorize the operational availability of personnel on any calendar date. 
 
 Each status defines a specific business state, has a designated visual style (color and icon), specifies permitted transitions, and carries operational business rules.
 

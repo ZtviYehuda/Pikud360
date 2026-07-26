@@ -10,7 +10,7 @@ from app.modules.workforce_planning.models import (
     EmployeeDailyAssignment
 )
 
-logger = logging.getLogger("pikud360.modules.workforce_planning.repositories")
+logger = logging.getLogger("matzevet.modules.workforce_planning.repositories")
 
 class WorkforcePlanningRepository:
     """Repository managing settings, optional shift definitions, daily plans, and daily employee assignments."""

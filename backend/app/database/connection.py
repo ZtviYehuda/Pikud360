@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from typing import Generator, Optional
 from app.config import get_settings
 
-logger = logging.getLogger("pikud360.database")
+logger = logging.getLogger("matzevet.database")
 
 class DatabaseConnectionManager:
     """Manages thread-safe PostgreSQL connection pooling."""

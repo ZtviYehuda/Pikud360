@@ -5,7 +5,7 @@ from app.core.authorization.scopes import AuthorizationContext, ScopeType, resol
 from app.database.connection import get_db_connection
 
 
-logger = logging.getLogger("pikud360.core.authorization.policies")
+logger = logging.getLogger("matzevet.core.authorization.policies")
 
 def match_permission(user_perms: List[str], required_perm: str) -> bool:
     """Matches permission codes supporting exact matches and trailing wildcard patterns (e.g. employees.*)."""

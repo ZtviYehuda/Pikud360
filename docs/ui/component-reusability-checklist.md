@@ -1,8 +1,8 @@
-# Pikud360 UI — Component Reusability Checklist
+# Matzevet UI — Component Reusability Checklist
 
 **Domain:** UI Quality Standards  
 **Applies To:** Every component in `frontend/src/components/ui/`  
-**Target Path:** [component-reusability-checklist.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/docs/ui/component-reusability-checklist.md)
+**Target Path:** [component-reusability-checklist.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/docs/ui/component-reusability-checklist.md)
 
 ---
 

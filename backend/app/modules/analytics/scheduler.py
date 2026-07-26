@@ -12,7 +12,7 @@ from app.modules.analytics.repositories import AnalyticsRepository, SnapshotRepo
 from app.modules.analytics.services import SnapshotGenerator, SummaryCalculator, AlertEvaluator
 from app.modules.reports.models import ReportStatus
 
-logger = logging.getLogger("pikud360.modules.analytics.scheduler")
+logger = logging.getLogger("matzevet.modules.analytics.scheduler")
 
 
 class JobAlreadyRunningException(Exception):

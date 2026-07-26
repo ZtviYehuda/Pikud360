@@ -1,5 +1,5 @@
 -- ============================================================================
--- Pikud360 Database Initialization - Schemas & Extensions
+-- Matzevet Database Initialization - Schemas & Extensions
 -- ============================================================================
 
 -- 1. Create Required Extensions

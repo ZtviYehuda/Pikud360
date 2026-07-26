@@ -362,9 +362,9 @@ export default function ForgotPasswordPage() {
           <div className="text-center mb-4 md:mb-6 relative flex flex-col items-center">
             <div className="flex justify-center mb-2">
               <img 
-                src="/toren_logo.png" 
-                alt="Toren Logo" 
-                className="w-28 h-auto md:w-32 object-contain toren-logo-img" 
+                src="/matzevet_logo.png" 
+                alt="Matzevet Logo" 
+                className="w-32 h-auto md:w-36 object-contain toren-logo-img" 
               />
             </div>
             

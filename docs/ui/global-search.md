@@ -1,14 +1,14 @@
-# Pikud360 UI Foundation — Global Search Spec
+# Matzevet UI Foundation — Global Search Spec
 
 **Domain:** UI Component Specifications  
 **Phase:** Sprint 26 — Global Search  
-**Target Path:** [global-search.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/docs/ui/global-search.md)
+**Target Path:** [global-search.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/docs/ui/global-search.md)
 
 ---
 
 ## 1. Overview & Redesign Strategy
 
-Pikud360 standardises the global search modal to act as a fast, keyboard-navigable command center.
+Matzevet standardises the global search modal to act as a fast, keyboard-navigable command center.
 
 ---
 

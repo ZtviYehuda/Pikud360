@@ -18,9 +18,9 @@ The following pages already exist and will be extended to conform to this archit
 
 | Existing File | Role in Architecture |
 |---|---|
-| [`Employees.tsx`](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/frontend/src/pages/Employees.tsx) | Employee List page — currently uses mock data |
-| [`EmployeeProfile.tsx`](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/frontend/src/pages/EmployeeProfile.tsx) | Employee Details page — partially implemented |
-| [`EmployeeHistory.tsx`](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/frontend/src/pages/EmployeeHistory.tsx) | History tab, embedded in Details page |
+| [`Employees.tsx`](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/frontend/src/pages/Employees.tsx) | Employee List page — currently uses mock data |
+| [`EmployeeProfile.tsx`](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/frontend/src/pages/EmployeeProfile.tsx) | Employee Details page — partially implemented |
+| [`EmployeeHistory.tsx`](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/frontend/src/pages/EmployeeHistory.tsx) | History tab, embedded in Details page |
 
 Create Employee and Edit Employee do not yet exist as pages. They will be created as part of implementation.
 

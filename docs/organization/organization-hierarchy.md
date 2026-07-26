@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-Pikud360 structures its tenant organization charts into a standardized **5-level strict tree hierarchy**. 
+Matzevet structures its tenant organization charts into a standardized **5-level strict tree hierarchy**. 
 
 This document defines the purpose, valid parent-child relationships, leadership roles, and validation rules for each level.
 

@@ -1,12 +1,12 @@
 # states.md
 
-This document specifies the Enterprise State System components defined in [states.tsx](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/frontend/src/components/ui/states.tsx) and [skeleton.tsx](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/frontend/src/components/ui/skeleton.tsx).
+This document specifies the Enterprise State System components defined in [states.tsx](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/frontend/src/components/ui/states.tsx) and [skeleton.tsx](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/frontend/src/components/ui/skeleton.tsx).
 
 ---
 
 ## 1. Design Principles
 
-- **Four States Completeness**: Every screen or page in Pikud360 must support and be able to render four states cleanly: **Loading**, **Empty**, **Error**, and **Success**.
+- **Four States Completeness**: Every screen or page in Matzevet must support and be able to render four states cleanly: **Loading**, **Empty**, **Error**, and **Success**.
 - **Pure Presentation**: State components are stateless and independent of data fetching or business logic. Content parameters and callbacks are passed exclusively via props.
 - **Composition-Based Loading**: Rather than creating monolithic feature-specific loading mockups, loading layouts compose standard visual mockup skeletons from reusable **Skeleton Primitives**.
 - **Accessible State Mapping**: Icons and status indicators are marked with `aria-hidden="true"`. We never rely on color alone to communicate system states.
@@ -15,7 +15,7 @@ This document specifies the Enterprise State System components defined in [state
 
 ## 2. Skeleton Primitives
 
-Standard block lines and avatar mocks defined in [skeleton.tsx](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/frontend/src/components/ui/skeleton.tsx):
+Standard block lines and avatar mocks defined in [skeleton.tsx](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/frontend/src/components/ui/skeleton.tsx):
 
 - **`<Skeleton>`**: Base animation block.
 - **`<SkeletonLine>`**: Text line mockup wrapper.

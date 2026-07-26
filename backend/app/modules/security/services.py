@@ -13,7 +13,7 @@ from app.modules.security.repositories import (
     AuditLogRepository
 )
 
-logger = logging.getLogger("pikud360.security.services")
+logger = logging.getLogger("matzevet.security.services")
 
 class SecurityService:
     """Authentication and session management controller layer."""

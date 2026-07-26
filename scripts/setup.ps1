@@ -1,5 +1,5 @@
-# Windows PowerShell setup script for Pikud360 WFM System
-Write-Host "=== Starting Pikud360 Environment Setup ===" -ForegroundColor Cyan
+# Windows PowerShell setup script for Matzevet WFM System
+Write-Host "=== Starting Matzevet Environment Setup ===" -ForegroundColor Cyan
 
 # 1. Check Python installation
 if (Get-Command python -ErrorAction SilentlyContinue) {

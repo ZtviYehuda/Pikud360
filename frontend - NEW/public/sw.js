@@ -1,4 +1,4 @@
-const CACHE_NAME = 'toren-cache-v1';
+const CACHE_NAME = 'matzevet-cache-v1';
 const OFFLINE_URL = '/offline.html';
 
 // Core assets to pre-cache immediately

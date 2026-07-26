@@ -1,6 +1,6 @@
 # API Documentation Template
 
-This document catalogs the available root endpoints and JSON payloads for the Pikud360 Backend REST API.
+This document catalogs the available root endpoints and JSON payloads for the Matzevet Backend REST API.
 
 ---
 
@@ -78,7 +78,7 @@ Status: `400 Bad Request`, `401 Unauthorized`, `500 Internal Server Error`
   {
     "success": true,
     "data": {
-      "name": "Pikud360 Workforce Management System",
+      "name": "Matzevet Workforce Management System",
       "version": "1.0.0-beta",
       "api_version": "v1"
     },

@@ -8,7 +8,7 @@ from app.modules.notifications.schemas import NotificationResponse
 from app.core.authorization import require_permission, ScopeType, AccessDeniedError
 from app.core.responses import ApiResponse
 
-logger = logging.getLogger("pikud360.modules.notifications.routes")
+logger = logging.getLogger("matzevet.modules.notifications.routes")
 
 notifications_bp = Blueprint("notifications", __name__)
 

@@ -7,7 +7,7 @@
 
 ## 1. Overview
 
-The Employee is the central entity of Pikud360. Every major module depends on employee data in some capacity. This document defines exactly how each module interacts with the Employee domain — what data flows in which direction, what triggers the interaction, and who owns what.
+The Employee is the central entity of Matzevet. Every major module depends on employee data in some capacity. This document defines exactly how each module interacts with the Employee domain — what data flows in which direction, what triggers the interaction, and who owns what.
 
 ### Interaction Principles
 

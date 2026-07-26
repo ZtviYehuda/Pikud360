@@ -20,7 +20,7 @@ from app.modules.workforce_planning.schemas import (
 from app.core.authorization import require_permission, ScopeType, AccessDeniedError
 from app.core.responses import ApiResponse
 
-logger = logging.getLogger("pikud360.modules.workforce_planning.routes")
+logger = logging.getLogger("matzevet.modules.workforce_planning.routes")
 
 planning_bp = Blueprint("workforce_planning", __name__)
 

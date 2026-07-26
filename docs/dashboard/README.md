@@ -1,28 +1,28 @@
-# Pikud360 Commander Dashboard Specifications
+# Matzevet Commander Dashboard Specifications
 
-This directory contains the complete operational design, structural wireframes, data contracts, and component architecture for the **Commander Dashboard** in Pikud360.
+This directory contains the complete operational design, structural wireframes, data contracts, and component architecture for the **Commander Dashboard** in Matzevet.
 
 ---
 
 ## 1. Documentation Index
 
-1. **[commander-dashboard-architecture.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/dashboard/commander-dashboard-architecture.md)**:
+1. **[commander-dashboard-architecture.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/dashboard/commander-dashboard-architecture.md)**:
    - *Purpose*: Core operational principles, information hierarchies, widget profiles, daily operational KPIs, user workflows, and dashboard states.
-2. **[commander-dashboard-wireframes.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/dashboard/commander-dashboard-wireframes.md)**:
+2. **[commander-dashboard-wireframes.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/dashboard/commander-dashboard-wireframes.md)**:
    - *Purpose*: Low-fidelity wireframe blueprints showing structural layouts and grid placements for Desktop, Tablet, and Mobile viewports without visual styling.
-3. **[commander-dashboard-data-contracts.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/dashboard/commander-dashboard-data-contracts.md)**:
+3. **[commander-dashboard-data-contracts.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/dashboard/commander-dashboard-data-contracts.md)**:
    - *Purpose*: Mappings between UI widgets and data scopes, loading phases, and handling errors/empty scenarios.
-4. **[commander-dashboard-dtos.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/dashboard/commander-dashboard-dtos.md)**:
+4. **[commander-dashboard-dtos.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/dashboard/commander-dashboard-dtos.md)**:
    - *Purpose*: Schema blueprints (TypeScript interfaces & JSON objects) for workforce, attendance, alerts, and activity logs.
-5. **[commander-dashboard-api-contract.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/dashboard/commander-dashboard-api-contract.md)**:
+5. **[commander-dashboard-api-contract.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/dashboard/commander-dashboard-api-contract.md)**:
    - *Purpose*: Design of REST API endpoints, query structures, parameter definitions, caching policies, and authentication scopes.
-6. **[commander-dashboard-components.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/dashboard/commander-dashboard-components.md)**:
+6. **[commander-dashboard-components.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/dashboard/commander-dashboard-components.md)**:
    - *Purpose*: React component tree configurations, parent-child flows, slot structures, and feature folder trees.
-7. **[commander-dashboard-hooks.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/dashboard/commander-dashboard-hooks.md)**:
+7. **[commander-dashboard-hooks.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/dashboard/commander-dashboard-hooks.md)**:
    - *Purpose*: Custom React hook signatures (inputs, outputs, loading, error handlers, polling cycles).
-8. **[commander-dashboard-state.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/dashboard/commander-dashboard-state.md)**:
+8. **[commander-dashboard-state.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/dashboard/commander-dashboard-state.md)**:
    - *Purpose*: State categorization (local vs shared vs derived vs server states) and boundary layouts.
-9. **[commander-dashboard-review.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/dashboard/commander-dashboard-review.md)**:
+9. **[commander-dashboard-review.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/dashboard/commander-dashboard-review.md)**:
    - *Purpose*: Architecture choices, design decisions, trade-offs, and open questions.
 
 ---

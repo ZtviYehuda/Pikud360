@@ -1,6 +1,6 @@
 # Commander Dashboard Component Architecture
 
-This document defines the component hierarchy, parent-child flows, and folder structure for the Commander Dashboard in the Pikud360 application.
+This document defines the component hierarchy, parent-child flows, and folder structure for the Commander Dashboard in the Matzevet application.
 
 ---
 
@@ -39,12 +39,12 @@ DashboardPage (Container - Coordinates data queries & contexts)
 ## 2. Shared UI Components Candidates
 
 The dashboard composition reuses the following core shared presentation components from `src/components/ui/`:
-- `<Card>`, `<CardHeader>`, `<CardContent>` (from [cards.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/cards.md))
-- `<Button>` (from [buttons.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/buttons.md))
-- `<Badge>` (from [badges.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/badges.md))
-- `<Drawer>`, `<DrawerContent>` (from [drawers.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/drawers.md))
-- `<Dialog>`, `<DialogContent>` (from [dialogs.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/dialogs.md))
-- `<PageContainer>` (from [application-shell.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/docs/design-system/application-shell.md))
+- `<Card>`, `<CardHeader>`, `<CardContent>` (from [cards.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/design-system/cards.md))
+- `<Button>` (from [buttons.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/design-system/buttons.md))
+- `<Badge>` (from [badges.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/design-system/badges.md))
+- `<Drawer>`, `<DrawerContent>` (from [drawers.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/design-system/drawers.md))
+- `<Dialog>`, `<DialogContent>` (from [dialogs.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/design-system/dialogs.md))
+- `<PageContainer>` (from [application-shell.md](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/docs/design-system/application-shell.md))
 
 ---
 

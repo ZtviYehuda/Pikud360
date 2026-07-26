@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document specifies the global business event catalog for Pikud360. Every state mutation, security action, and administrative bypass emits an event following the standard naming convention:
+This document specifies the global business event catalog for Matzevet. Every state mutation, security action, and administrative bypass emits an event following the standard naming convention:
 
 `domain.entity.action` (e.g. `workforce.employee.status_changed`)
 

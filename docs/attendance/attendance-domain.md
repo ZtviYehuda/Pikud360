@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-The Attendance domain is the operational engine of Pikud360 that tracks the **daily presence and physical status** of all active personnel. It records *where* an employee is and *what* their operational status is for any given calendar date.
+The Attendance domain is the operational engine of Matzevet that tracks the **daily presence and physical status** of all active personnel. It records *where* an employee is and *what* their operational status is for any given calendar date.
 
 While the Employee domain owns *who* the person is, the Attendance domain owns *where they are stationed* and *their availability to execute tasks* day-by-day.
 

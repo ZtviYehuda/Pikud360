@@ -26,7 +26,7 @@ from app.core.authorization import (
     AccessDeniedError
 )
 
-logger = logging.getLogger("pikud360.modules.workforce_schedule.services")
+logger = logging.getLogger("matzevet.modules.workforce_schedule.services")
 
 class WorkforceScheduleService:
     """Service handling daily commander workforce planning, dynamic statuses, and dashboard aggregates."""

@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document specifies the internal Event Bus architecture for Pikud360. 
+This document specifies the internal Event Bus architecture for Matzevet. 
 
 To ensure high reliability, transaction consistency, and loose coupling between domains (Workforce, Scheduling, Attendance, Notifications), the system uses an asynchronous event-driven model based on the **Transactional Outbox Pattern**.
 

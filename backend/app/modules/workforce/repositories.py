@@ -8,7 +8,7 @@ from app.database.connection import get_db_connection
 from app.modules.workforce.models import Employee, EmployeeHistory
 from app.modules.workforce.encryption import encrypt_value, decrypt_value, generate_blind_index
 
-logger = logging.getLogger("pikud360.modules.workforce.repositories")
+logger = logging.getLogger("matzevet.modules.workforce.repositories")
 
 class EmployeeRepository:
     """Repository handling database operations for the workforce.employees table under RLS policies."""

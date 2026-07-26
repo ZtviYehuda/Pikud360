@@ -37,7 +37,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <div className="toren-spin-container">
                 <img
                   src="/toren_logo_base.png"
-                  alt="סמל Toren"
+                  alt="סמל Matzevet"
                   className="toren-spin-logo"
                 />
                 <div className="toren-spin-beam-original" />

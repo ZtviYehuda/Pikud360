@@ -1,6 +1,6 @@
 # Installation Guide
 
-Follow these instructions to configure and run the Pikud360 WFM System in your local development environment.
+Follow these instructions to configure and run the Matzevet WFM System in your local development environment.
 
 ---
 

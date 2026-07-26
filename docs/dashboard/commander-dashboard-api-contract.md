@@ -1,6 +1,6 @@
 # Commander Dashboard API Contract
 
-This document outlines the logical REST API endpoints supporting the Commander Dashboard in the Pikud360 application.
+This document outlines the logical REST API endpoints supporting the Commander Dashboard in the Matzevet application.
 
 ---
 

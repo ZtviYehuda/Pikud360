@@ -1,20 +1,20 @@
-# Pikud360 UI Foundation — Typography System Spec
+# Matzevet UI Foundation — Typography System Spec
 
 **Domain:** UI Component Specifications  
 **Phase:** Sprint 29 — Typography System  
-**Target Path:** [typography-system.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/docs/ui/typography-system.md)
+**Target Path:** [typography-system.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/docs/ui/typography-system.md)
 
 ---
 
 ## 1. Overview & Redesign Strategy
 
-Pikud360 standardises typographic sizes to ensure that headings, table columns, and form fields look visually balanced and are readable under different themes.
+Matzevet standardises typographic sizes to ensure that headings, table columns, and form fields look visually balanced and are readable under different themes.
 
 ---
 
 ## 2. Reusable Typography Levels
 
-The typography scale maps variables in [index.css](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/frontend/src/styles/index.css):
+The typography scale maps variables in [index.css](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/frontend/src/styles/index.css):
 
 - **Display (`text-enterprise-display` - 2.25rem):** Used for landing titles and metrics overview.
 - **H1 / Page title (`text-enterprise-page-title` - 1.25rem):** Used for primary route title headers.

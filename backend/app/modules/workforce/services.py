@@ -11,7 +11,7 @@ from app.modules.security.repositories import AuditLogRepository
 from app.modules.workforce.schemas import EmployeeCreateRequest, EmployeeUpdateRequest
 from app.core.authorization import can_view_employee, can_manage_unit, AccessDeniedError
 
-logger = logging.getLogger("pikud360.modules.workforce.services")
+logger = logging.getLogger("matzevet.modules.workforce.services")
 
 class WorkforceService:
     """Service class encapsulating employee management domains."""

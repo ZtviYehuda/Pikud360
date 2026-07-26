@@ -1,6 +1,6 @@
 # cards.md
 
-This document specifies the Enterprise Card visual surfaces and variants configured in [card.tsx](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Pikud360/frontend/src/components/ui/card.tsx).
+This document specifies the Enterprise Card visual surfaces and variants configured in [card.tsx](file:///C:/Users/nafta/OneDrive/שולחן%20העבודה/Matzevet/frontend/src/components/ui/card.tsx).
 
 ---
 

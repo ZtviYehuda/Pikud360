@@ -1,20 +1,20 @@
-# Pikud360 UI Foundation — Elevation System Spec
+# Matzevet UI Foundation — Elevation System Spec
 
 **Domain:** UI Component Specifications  
 **Phase:** Sprint 31 — Elevation System  
-**Target Path:** [elevation-system.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/docs/ui/elevation-system.md)
+**Target Path:** [elevation-system.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/docs/ui/elevation-system.md)
 
 ---
 
 ## 1. Overview & Redesign Strategy
 
-Pikud360 defines a strict vertical depth scale mapping components to custom shadows, blurs, borders, and Z-index layers to ensure interfaces stack naturally.
+Matzevet defines a strict vertical depth scale mapping components to custom shadows, blurs, borders, and Z-index layers to ensure interfaces stack naturally.
 
 ---
 
 ## 2. Reusable Elevation Levels Spec
 
-Variables mapped in [index.css](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/frontend/src/styles/index.css) include:
+Variables mapped in [index.css](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/frontend/src/styles/index.css) include:
 
 - **Flat (Level 0):** Renders no shadow borders. Used for card inner lists.
 - **Raised (Level 1):** Soft ambient grey shadow (`--shadow-enterprise-card`). Used for dashboard cards.

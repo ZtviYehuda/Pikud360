@@ -1,10 +1,10 @@
 # Folder Structure Documentation
 
-This document describes the directory tree and file architecture of the Pikud360 enterprise Workforce Management System.
+This document describes the directory tree and file architecture of the Matzevet enterprise Workforce Management System.
 
 ## Project Root Layout
 ```
-Pikud360/
+Matzevet/
 ├── backend/             # Python Flask application source and test suites
 ├── frontend/            # React 19 / Vite 7 / Tailwind CSS v4 source
 ├── docker/              # Docker configuration files and database initialization scripts

@@ -81,10 +81,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const root = window.document.documentElement;
 
-    // Theme class
+    root.classList.add("theme-transition");
     root.classList.remove("light", "dark");
     root.classList.add(theme);
     localStorage.setItem("theme", theme);
+
+    const transitionTimer = setTimeout(() => {
+      root.classList.remove("theme-transition");
+    }, 350);
 
     // Accent Color class or Dynamic Variable
     root.classList.forEach((cls) => {
@@ -155,6 +159,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         });
       }
     }
+
+    return () => clearTimeout(transitionTimer);
   }, [theme, accentColor, fontSize, user, updatePreferences, refreshUser]);
 
   const toggleTheme = () => {

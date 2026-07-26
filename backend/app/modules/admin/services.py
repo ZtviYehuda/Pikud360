@@ -22,7 +22,7 @@ from app.modules.admin.schemas import (
     SystemSettingsUpdateRequest
 )
 
-logger = logging.getLogger("pikud360.modules.admin.services")
+logger = logging.getLogger("matzevet.modules.admin.services")
 
 
 class AdminService:

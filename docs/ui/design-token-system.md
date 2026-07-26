@@ -1,14 +1,14 @@
-# Pikud360 UI Foundation — Design Token System Spec
+# Matzevet UI Foundation — Design Token System Spec
 
 **Domain:** UI Component Specifications  
 **Phase:** Sprint 28 — Design Token System  
-**Target Path:** [design-token-system.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/docs/ui/design-token-system.md)
+**Target Path:** [design-token-system.md](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/docs/ui/design-token-system.md)
 
 ---
 
 ## 1. Overview & Redesign Strategy
 
-Pikud360 standardises global layout parameters (colors, margins, borders, shadows, and timings) into a centralized token system inside [index.css](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Pikud360/frontend/src/styles/index.css).
+Matzevet standardises global layout parameters (colors, margins, borders, shadows, and timings) into a centralized token system inside [index.css](file:///C:/Users/nafta/OneDrive/שולחן%2520העבודה/Matzevet/frontend/src/styles/index.css).
 
 ---
 

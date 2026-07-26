@@ -6,8 +6,8 @@ from typing import Tuple, Optional
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 # Deriving secure keys from environment variables using SHA-256
-_enc_raw = os.environ.get("ENCRYPTION_KEY", "dev-pikud360-default-encryption-key-aes-256-gcm-tag")
-_hmac_raw = os.environ.get("HMAC_KEY", "dev-pikud360-default-hmac-sha-256-blind-indexing")
+_enc_raw = os.environ.get("ENCRYPTION_KEY", "dev-matzevet-default-encryption-key-aes-256-gcm-tag")
+_hmac_raw = os.environ.get("HMAC_KEY", "dev-matzevet-default-hmac-sha-256-blind-indexing")
 
 AES_KEY = hashlib.sha256(_enc_raw.encode("utf-8")).digest()
 HMAC_KEY = hashlib.sha256(_hmac_raw.encode("utf-8")).digest()

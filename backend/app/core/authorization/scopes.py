@@ -6,7 +6,7 @@ import json
 
 from app.database.connection import get_db_connection
 
-logger = logging.getLogger("pikud360.core.authorization.scopes")
+logger = logging.getLogger("matzevet.core.authorization.scopes")
 
 class ScopeType(str, Enum):
     GLOBAL = "GLOBAL"

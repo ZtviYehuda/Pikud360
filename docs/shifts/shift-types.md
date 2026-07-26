@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document specifies the standard catalog of **7 shift types** supported in Pikud360. 
+This document specifies the standard catalog of **7 shift types** supported in Matzevet. 
 
 These shift structures define default durations, operational roles, eligibility profiles, and rest buffers. Individual units reference these types when creating active weekly templates.
 

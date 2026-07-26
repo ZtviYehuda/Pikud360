@@ -13,7 +13,7 @@ from app.core.authorization import require_permission, ScopeType, AccessDeniedEr
 from app.core.responses import ApiResponse
 from app.modules.notifications.services import NotificationService # Resolve dependency
 
-logger = logging.getLogger("pikud360.modules.transfers.routes")
+logger = logging.getLogger("matzevet.modules.transfers.routes")
 
 transfers_bp = Blueprint("transfers", __name__)
 

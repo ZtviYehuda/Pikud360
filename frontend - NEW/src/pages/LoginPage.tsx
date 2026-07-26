@@ -513,8 +513,14 @@ export default function LoginPage() {
     if (savedLockedUser) {
       try {
         const user = JSON.parse(savedLockedUser);
-        setLockedUser(user);
-        setUsername(user.username || "");
+        if (user && typeof user === "object") {
+          setLockedUser({
+            username: user.username || "",
+            first_name: user.first_name || user.username || "",
+            last_name: user.last_name || "",
+          });
+          setUsername(user.username || "");
+        }
       } catch (e) {
         console.error("Failed to parse locked user", e);
         localStorage.removeItem("locked_user");
@@ -622,34 +628,63 @@ export default function LoginPage() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="w-full max-w-[440px] px-4"
         >
-          {/* Logo / Header Section */}
-          <div className="text-center mb-4 md:mb-6 relative flex flex-col items-center">
-            {/* User's provided TOREN logo */}
-            <div className="flex justify-center mb-2">
+          {/* Logo / Header Section - Theme Adaptive (Light & Dark Mode) */}
+          <div className="text-center mb-5 relative flex flex-col items-center select-none group">
+            {/* Shield Emblem Icon */}
+            <motion.div 
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="relative flex items-center justify-center -mb-1"
+            >
               <img 
-                src="/toren_logo.png" 
-                alt="Toren Logo" 
-                className="w-28 h-auto md:w-32 object-contain toren-logo-img" 
+                src="/matzevet_icon.png" 
+                alt="Matzevet Shield Emblem" 
+                className={cn(
+                  "w-24 h-24 md:w-28 md:h-28 object-contain transition-all duration-300 hover:scale-105",
+                  isDark
+                    ? "filter drop-shadow-[0_4px_24px_rgba(56,189,248,0.5)]"
+                    : "filter drop-shadow-[0_4px_16px_rgba(37,99,235,0.25)]"
+                )} 
               />
-            </div>
+            </motion.div>
             
-            {/* Subtitle */}
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <div className="h-px w-6 md:w-8 bg-[var(--primary)]/50" />
-              <span className="text-[10px] md:text-xs font-bold text-[var(--primary)] tracking-[0.2em] md:tracking-[0.3em] uppercase">
+            {/* Large, Bold & Theme-Adaptive System Name Typography */}
+            <div className="flex flex-col items-center justify-center">
+              <h1 className={cn(
+                "text-3xl md:text-4xl font-black tracking-[0.2em] uppercase bg-clip-text text-transparent font-mono leading-none transition-all duration-300",
+                isDark
+                  ? "bg-gradient-to-r from-sky-200 via-white to-cyan-300 drop-shadow-[0_2px_16px_rgba(56,189,248,0.6)]"
+                  : "bg-gradient-to-r from-slate-900 via-blue-950 to-slate-800 drop-shadow-[0_2px_8px_rgba(30,58,138,0.15)]"
+              )}>
+                MATZEVET
+              </h1>
+              <div className={cn(
+                "h-0.5 w-14 bg-gradient-to-r from-transparent mt-1.5 mb-2 rounded-full transition-colors",
+                isDark ? "via-cyan-400 to-transparent opacity-90" : "via-blue-600 to-transparent opacity-80"
+              )} />
+            </div>
+
+            {/* Subtitle - Theme Adaptive */}
+            <div className="flex items-center justify-center gap-2">
+              <div className={cn("h-px w-6 md:w-8 transition-colors", isDark ? "bg-cyan-500/40" : "bg-blue-600/30")} />
+              <span className={cn(
+                "text-[10px] md:text-xs font-bold tracking-[0.25em] uppercase transition-colors",
+                isDark ? "text-cyan-400" : "text-blue-700"
+              )}>
                 Operational Control Center
               </span>
-              <div className="h-px w-6 md:w-8 bg-[var(--primary)]/50" />
+              <div className={cn("h-px w-6 md:w-8 transition-colors", isDark ? "bg-cyan-500/40" : "bg-blue-600/30")} />
             </div>
           </div>
 
           {/* Login Card */}
           <div
             className={cn(
-              "backdrop-blur-xl border rounded-[2rem] md:rounded-[2.5rem] overflow-hidden ring-1 transition-all",
+              "backdrop-blur-xl border rounded-[2rem] md:rounded-[2.5rem] overflow-hidden ring-1 transition-colors duration-300 ease-in-out shadow-2xl",
               isDark
-                ? "bg-slate-900/60 border-white/10  ring-white/5"
-                : "bg-white/70 border-white/50  ring-black/5",
+                ? "bg-slate-900/80 border-slate-800/80 ring-slate-800/50 text-slate-100"
+                : "bg-white/90 border-slate-200/80 ring-slate-200/50 text-slate-900",
             )}
           >
             <div className="p-6 md:p-10">
@@ -664,8 +699,8 @@ export default function LoginPage() {
                         : "bg-slate-100 border-slate-200 text-[var(--primary)]",
                     )}
                   >
-                    {lockedUser.first_name[0]}
-                    {lockedUser.last_name[0]}
+                    {lockedUser.first_name?.[0] || lockedUser.username?.[0] || "U"}
+                    {lockedUser.last_name?.[0] || ""}
                     <div className="absolute bottom-0 right-0 w-5 h-5 bg-green-500 rounded-full border-2 border-white dark:border-slate-900 " />
                   </div>
                   <div
@@ -702,10 +737,10 @@ export default function LoginPage() {
                             setError("");
                           }}
                           className={cn(
-                            "h-13 border rounded-2xl pr-12 pl-12 transition-all text-lg tracking-widest font-mono",
+                            "h-13 border rounded-2xl pr-12 pl-12 transition-colors duration-300 ease-in-out text-lg tracking-widest font-mono",
                             isDark
-                              ? "border-slate-700 bg-slate-950/50 focus:bg-slate-900 text-slate-100 placeholder:text-slate-600 focus:border-[var(--primary)] focus:ring-[var(--primary)]/50"
-                              : "border-slate-200 bg-white/50 focus:bg-white text-slate-900 placeholder:text-slate-400 focus:border-[var(--primary)] focus:ring-[var(--primary)]/20",
+                              ? "border-slate-800 bg-slate-950/80 focus:bg-slate-900 text-slate-100 placeholder:text-slate-500 focus:border-cyan-500 focus:ring-cyan-500/20"
+                              : "border-slate-200 bg-slate-50/80 focus:bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:ring-blue-600/20",
                           )}
                           placeholder="••••••••"
                           disabled={isLoading}

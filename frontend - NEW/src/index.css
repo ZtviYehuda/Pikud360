@@ -540,6 +540,19 @@ body.tour-active [data-radix-portal] > [class*="bg-black/50"] {
   perspective: 1000px;
 }
 
+/* Seamless, Buttery-Smooth Theme Transitions (No visual flashing or segmented steps) */
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition: background-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              fill 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              stroke 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
 .toren-spin-logo {
   width: 100px;
   height: 100px;
@@ -551,16 +564,17 @@ body.tour-active [data-radix-portal] > [class*="bg-black/50"] {
 .toren-spin-logo,
 img[src*="/toren_logo_base.png"],
 img[src*="/toren_logo.png"],
+img[src*="/matzevet_logo.png"],
 .toren-logo-img {
-  filter: drop-shadow(0 4px 12px rgba(15, 23, 42, 0.06));
+  filter: drop-shadow(0 4px 16px rgba(59, 130, 246, 0.25));
 }
 
 .dark .toren-spin-logo,
 .dark img[src*="/toren_logo_base.png"],
 .dark img[src*="/toren_logo.png"],
+.dark img[src*="/matzevet_logo.png"],
 .dark .toren-logo-img {
-  /* Soft, silver-blue tint that matches dark theme and is easy on the eyes */
-  filter: invert(0.86) brightness(1.18) sepia(0.08) saturate(1.4) hue-rotate(192deg) drop-shadow(0 0 10px rgba(59, 130, 246, 0.16));
+  filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.35));
 }
 
 .toren-spin-beam-original {

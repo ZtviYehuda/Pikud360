@@ -1,6 +1,6 @@
 # System Architecture Documentation
 
-This document describes the design principles, architectural patterns, and engineering choices implemented in the Pikud360 Workforce Management System.
+This document describes the design principles, architectural patterns, and engineering choices implemented in the Matzevet Workforce Management System.
 
 ---
 

@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document specifies the global report catalog for Pikud360. It defines the business purpose, database queries sources, filter inputs, and available download outputs (CSV, PDF) for the 8 core reports in the system.
+This document specifies the global report catalog for Matzevet. It defines the business purpose, database queries sources, filter inputs, and available download outputs (CSV, PDF) for the 8 core reports in the system.
 
 ---
 
