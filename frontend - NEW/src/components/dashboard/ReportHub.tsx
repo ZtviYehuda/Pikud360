@@ -247,37 +247,43 @@ export const ReportHub: React.FC<ReportHubProps> = ({
     if (ref.current && ref.current.share) await ref.current.share();
   };
 
-  // Clean, minimal report card - no borders, just subtle hover
-  const ReportCard = ({ icon: Icon, title, subtitle, onDownload, onWhatsApp, hasDownload = true, onClick, colorClass = "bg-primary/10 text-primary" }: any) => (
+  // Distinct, card-like container with rounded square action buttons
+  const ReportCard = ({ icon: Icon, title, subtitle, onDownload, onWhatsApp, onClick, colorClass = "bg-primary/10 text-primary" }: any) => (
     <div
       onClick={onClick}
-      className="group flex justify-between items-center py-3.5 px-2 transition-all active:scale-[0.99] cursor-pointer hover:bg-muted/40 rounded-xl"
+      className="group flex justify-between items-center p-3.5 sm:p-4 bg-slate-100/70 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/50 rounded-2xl transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer gap-3"
     >
-      <div className="flex items-center gap-3">
-        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105", colorClass)}>
-          <Icon className="w-[18px] h-[18px]" />
+      {/* Right Side: Icon & Title */}
+      <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+        <div className={cn("w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-sm", colorClass)}>
+          <Icon className="w-5 h-5" />
         </div>
-        <div className="flex flex-col">
-          <span className="text-[13px] sm:text-sm font-bold text-foreground group-hover:text-primary transition-colors">{title}</span>
-          {subtitle && <span className="text-[10px] font-medium text-muted-foreground/50 leading-none mt-0.5">{subtitle}</span>}
+        <div className="flex flex-col text-right min-w-0">
+          <span className="text-sm sm:text-base font-bold text-foreground group-hover:text-primary transition-colors truncate">{title}</span>
+          {subtitle && <span className="text-[11px] font-medium text-muted-foreground/60 leading-tight mt-0.5 truncate">{subtitle}</span>}
         </div>
       </div>
-      <div className="flex items-center gap-1 no-export" onClick={(e) => e.stopPropagation()}>
-        {hasDownload ? (
-          <>
-            <button onClick={(e) => { e.stopPropagation(); onWhatsApp(); }} className="p-2 rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-all active:scale-90" aria-label="share">
-              <FaWhatsapp className="w-[18px] h-[18px]" />
-            </button>
-            <button onClick={(e) => { e.stopPropagation(); onDownload(); }} className="p-2 rounded-xl text-muted-foreground/40 hover:bg-primary/10 hover:text-primary transition-all active:scale-90" aria-label="download">
-              <Download className="w-[18px] h-[18px]" />
-            </button>
-          </>
-        ) : (
-          <button onClick={(e) => { e.stopPropagation(); onWhatsApp(); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-all active:scale-90">
-            <FaWhatsapp className="w-4 h-4" />
-            שיתוף
-          </button>
-        )}
+
+      {/* Left Side: Uniform Action Buttons (Download & WhatsApp - Min 44x44px Tappable Area) */}
+      <div className="flex items-center gap-2 shrink-0 no-export" onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onWhatsApp(); }}
+          className="w-11 h-11 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-[#25D366] border border-emerald-500/20 flex items-center justify-center transition-all active:scale-95 shadow-sm shrink-0"
+          title="שיתוף לוואטסאפ"
+          aria-label="whatsapp"
+        >
+          <FaWhatsapp className="w-5 h-5 text-[#25D366]" />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onDownload(); }}
+          className="w-11 h-11 rounded-xl bg-slate-200/60 dark:bg-slate-700/60 hover:bg-slate-300/60 dark:hover:bg-slate-600/60 text-slate-600 dark:text-slate-200 border border-slate-300/50 dark:border-slate-600/50 flex items-center justify-center transition-all active:scale-95 shadow-sm shrink-0"
+          title="הורדת דוח"
+          aria-label="download"
+        >
+          <Download className="w-5 h-5" />
+        </button>
       </div>
     </div>
   );
@@ -313,9 +319,9 @@ export const ReportHub: React.FC<ReportHubProps> = ({
         </DialogTrigger>
 
         <DialogContent className={cn(
-          "p-0 overflow-hidden border-0 bg-background/97 backdrop-blur-3xl sm:rounded-[2rem] flex flex-col transition-all duration-300 shadow-2xl",
-          "h-auto max-h-[92svh] sm:max-h-[88vh]",
-          "sm:max-w-3xl w-full sm:w-[95vw] sm:mx-auto"
+          "p-0 overflow-hidden border-0 bg-background/97 backdrop-blur-3xl rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col transition-all duration-300 shadow-2xl",
+          "h-auto max-h-[82vh] sm:max-h-[88vh]",
+          "sm:max-w-2xl w-full sm:w-[95vw] sm:mx-auto"
         )}>
           <DialogDragHandle />
 
@@ -325,19 +331,19 @@ export const ReportHub: React.FC<ReportHubProps> = ({
               <div className="px-5 pt-4 pb-3 sm:px-7 sm:pt-6 sm:pb-4 text-right shrink-0">
                 <DialogHeader className="text-right">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                      <FileText className="w-4 h-4" />
+                    <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-sm">
+                      <FileText className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0 text-right">
-                      <DialogTitle className="text-base font-black text-foreground tracking-tight leading-none mb-0.5">מרכז הפקת דוחות</DialogTitle>
-                      <DialogDescription className="text-[11px] font-medium text-muted-foreground/70 leading-none">הפקה ושיתוף נתונים מבצעיים</DialogDescription>
+                      <DialogTitle className="text-lg font-black text-foreground tracking-tight leading-none mb-1">מרכז הפקת דוחות</DialogTitle>
+                      <DialogDescription className="text-xs font-medium text-muted-foreground/70 leading-none">הפקה ושיתוף נתונים מבצעיים</DialogDescription>
                     </div>
                   </div>
                 </DialogHeader>
               </div>
 
               {/* Menu Toolbar */}
-              <div className="px-4 sm:px-7 pb-3 shrink-0 overflow-x-auto no-scrollbar border-b border-border/10 pl-10 sm:pl-12">
+              <div className="px-5 sm:px-7 pb-4 shrink-0 border-b border-border/10">
                 <ReportToolbar viewMode={localViewMode} onViewModeChange={setLocalViewMode} date={localDate} onDateChange={setLocalDate} dateRange={dateRange} onDateRangeChange={setDateRange} maxDate={maxDate} />
               </div>
             </>
@@ -380,7 +386,7 @@ export const ReportHub: React.FC<ReportHubProps> = ({
             </div>
           )}
 
-          <div className="px-3 sm:px-5 py-4 overflow-y-auto custom-scrollbar flex-1 min-h-0 relative">
+          <div className="px-4 sm:px-6 py-4 overflow-y-auto custom-scrollbar flex-1 min-h-0 relative">
             {(isOldDate && !hasArchiveAccess) ? (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md rounded-b-[1.5rem] sm:rounded-b-[2rem]">
                 <div className="bg-card border border-border/50 rounded-[2rem] p-8 max-w-md text-center space-y-4 m-4">
@@ -402,11 +408,43 @@ export const ReportHub: React.FC<ReportHubProps> = ({
             ) : null}
 
             {previewType === null ? (
-              <div id="report-hub-content" className="flex flex-col divide-y divide-border/20 animate-in fade-in duration-300">
-                <ReportCard icon={Users} title="מצבת כוח אדם" subtitle="פילוח סטטוסים בזמן אמת" colorClass="bg-blue-500/10 text-blue-600 dark:text-blue-400" onClick={() => setPreviewType('snapshot')} onDownload={() => downloadCard(snapshotRef)} onWhatsApp={() => shareCard(snapshotRef)} />
-                <ReportCard icon={TrendingUp} title="מגמות וזמינות" subtitle="גרף מגמת נוכחות לאורך זמן" colorClass="bg-amber-500/10 text-amber-600 dark:text-amber-400" onClick={() => setPreviewType('trend')} onDownload={() => downloadCard(trendRef)} onWhatsApp={() => shareCard(trendRef)} />
-                <ReportCard icon={BarChart2} title="השוואת תת-יחידות" subtitle="השוואת זמינות בין מחלקות" colorClass="bg-purple-500/10 text-purple-600 dark:text-purple-400" onClick={() => setPreviewType('comparison')} onDownload={() => downloadCard(comparisonRef)} onWhatsApp={() => shareCard(comparisonRef)} />
-                <ReportCard icon={Gift} title="ריכוז ימי הולדת" subtitle="חוגגים בתקופה הנבחרת" colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400" onClick={() => setPreviewType('birthdays')} hasDownload={false} onWhatsApp={() => onShareBirthdays()} />
+              <div id="report-hub-content" className="flex flex-col gap-3 sm:gap-3.5 animate-in fade-in duration-300">
+                <ReportCard 
+                  icon={Users} 
+                  title="מצבת כוח אדם" 
+                  subtitle="פילוח סטטוסים בזמן אמת" 
+                  colorClass="bg-blue-500/10 text-blue-600 dark:text-blue-400" 
+                  onClick={() => setPreviewType('snapshot')} 
+                  onDownload={() => downloadCard(snapshotRef)} 
+                  onWhatsApp={() => shareCard(snapshotRef)} 
+                />
+                <ReportCard 
+                  icon={TrendingUp} 
+                  title="מגמות וזמינות" 
+                  subtitle="גרף מגמת נוכחות לאורך זמן" 
+                  colorClass="bg-amber-500/10 text-amber-600 dark:text-amber-400" 
+                  onClick={() => setPreviewType('trend')} 
+                  onDownload={() => downloadCard(trendRef)} 
+                  onWhatsApp={() => shareCard(trendRef)} 
+                />
+                <ReportCard 
+                  icon={BarChart2} 
+                  title="השוואת תת-יחידות" 
+                  subtitle="השוואת זמינות בין מחלקות" 
+                  colorClass="bg-purple-500/10 text-purple-600 dark:text-purple-400" 
+                  onClick={() => setPreviewType('comparison')} 
+                  onDownload={() => downloadCard(comparisonRef)} 
+                  onWhatsApp={() => shareCard(comparisonRef)} 
+                />
+                <ReportCard 
+                  icon={Gift} 
+                  title="ריכוז ימי הולדת" 
+                  subtitle="חוגגים בתקופה הנבחרת" 
+                  colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400" 
+                  onClick={() => setPreviewType('birthdays')} 
+                  onDownload={() => downloadCard(snapshotRef)} 
+                  onWhatsApp={() => onShareBirthdays()} 
+                />
               </div>
             ) : (
               <div className="flex flex-col h-full animate-in fade-in duration-500">
