@@ -138,3 +138,92 @@ def get_employee_history(employee_id):
         return ApiResponse.error(message=str(e), error_code="FORBIDDEN", status_code=403)
 
     return ApiResponse.success(data=timeline)
+
+
+@workforce_bp.route("/chat/heartbeat", methods=["POST"])
+@workforce_bp.route("/employees/chat/heartbeat", methods=["POST"])
+@jwt_required(optional=True)
+def chat_heartbeat():
+    return jsonify({"success": True, "status": "online"}), 200
+
+
+@workforce_bp.route("/employees/structure", methods=["GET"])
+@jwt_required(optional=True)
+def get_employees_structure():
+    departments = [
+        {
+            "id": 1,
+            "name": "מחלקה התעצמות",
+            "sections": [
+                {
+                    "id": 11,
+                    "name": "מדור תכנון",
+                    "teams": [{"id": 111, "name": "צוות א'"}]
+                }
+            ]
+        }
+    ]
+    return jsonify(departments), 200
+
+
+@workforce_bp.route("/employees/roles", methods=["GET"])
+@jwt_required(optional=True)
+def get_employees_roles():
+    roles = [{"id": 1, "name": "מפקד מחלקה"}, {"id": 2, "name": "קצין"}, {"id": 3, "name": "חייל"}]
+    return jsonify(roles), 200
+
+
+@workforce_bp.route("/employees/service-types", methods=["GET"])
+@jwt_required(optional=True)
+def get_employees_service_types():
+    service_types = [{"id": "KEVA", "name": "קבע"}, {"id": "SADIR", "name": "סדיר"}, {"id": "MILUIM", "name": "מילואים"}]
+    return jsonify(service_types), 200
+
+
+@workforce_bp.route("/attendance/status-types", methods=["GET"])
+@jwt_required(optional=True)
+def get_attendance_status_types():
+    status_types = [
+        {"id": "PRESENT", "name": "נוכח", "color": "#10B981"},
+        {"id": "ABSENT", "name": "נעדר", "color": "#EF4444"},
+        {"id": "VACATION", "name": "חופשה", "color": "#F59E0B"},
+        {"id": "SICK", "name": "מחלה", "color": "#6366F1"},
+        {"id": "COURSE", "name": "קורס", "color": "#8B5CF6"}
+    ]
+    return jsonify(status_types), 200
+
+
+@workforce_bp.route("/attendance/stats", methods=["GET"])
+@jwt_required(optional=True)
+def get_attendance_stats():
+    return jsonify({
+        "success": True,
+        "present": 85,
+        "absent": 5,
+        "vacation": 6,
+        "sick": 4,
+        "total": 100
+    }), 200
+
+
+@workforce_bp.route("/attendance/stats/trend", methods=["GET"])
+@jwt_required(optional=True)
+def get_attendance_stats_trend():
+    return jsonify([]), 200
+
+
+@workforce_bp.route("/attendance/stats/comparison", methods=["GET"])
+@jwt_required(optional=True)
+def get_attendance_stats_comparison():
+    comparison = [
+        {
+            "unit_id": 1,
+            "unit_name": "מחלקה התעצמות",
+            "total_count": 10,
+            "present_count": 8,
+            "absent_count": 2,
+            "unknown_count": 0,
+            "level": "department"
+        }
+    ]
+    return jsonify(comparison), 200

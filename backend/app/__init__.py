@@ -65,6 +65,7 @@ def create_app() -> Flask:
 
     from app.modules.workforce.routes import workforce_bp
     app.register_blueprint(workforce_bp, url_prefix="/api/workforce")
+    app.register_blueprint(workforce_bp, url_prefix="/api", name="workforce_api")
 
     from app.modules.organization.routes import org_bp
     app.register_blueprint(org_bp, url_prefix="/api/organization")

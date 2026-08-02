@@ -349,130 +349,144 @@ export const StatsComparisonCard = forwardRef<any, StatsComparisonCardProps>(
         )}
 
         <CardContent className={cn("flex-1 overflow-y-auto no-scrollbar p-0", !hideHeader && "px-4 sm:px-6", compact && "max-h-[420px] sm:max-h-none")}>
-          {!data || data.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-48 text-center bg-muted/20 rounded-xl border border-dashed border-border/50">
-              <Info className="w-8 h-8 text-muted-foreground/50 mb-2" />
-              <p className="text-sm font-bold text-muted-foreground">
-                אין נתונים להשוואה
-              </p>
-              <p className="text-xs text-muted-foreground">
-                לא נמצאו יחידות להשוואה בחתך הנבחר
-              </p>
-            </div>
-          ) : (
-            <div className={compact ? "flex flex-col gap-3 max-w-xl mx-auto w-full py-2" : "space-y-5 sm:space-y-7 py-4"}>
-              {data.map((item) => {
-                const availability =
-                  item.total_count > 0
-                    ? Math.round((item.present_count / item.total_count) * 100)
-                    : 0;
+          {(() => {
+            const safeData = Array.isArray(data)
+              ? data
+              : (data && Array.isArray((data as any).comparison)
+                  ? (data as any).comparison
+                  : (data && Array.isArray((data as any).data)
+                      ? (data as any).data
+                      : []));
 
-                // Color thresholds aligned with system palette
-                const barColor =
-                  availability >= 70
-                    ? "#22c55e"   // green-500
-                    : availability >= 50
-                    ? "#f59e0b"   // amber-500
-                    : availability >= 30
-                    ? "#f97316"   // orange-500
-                    : "#ef4444";  // red-500
+            if (!safeData || safeData.length === 0) {
+              return (
+                <div className="flex flex-col items-center justify-center h-48 text-center bg-muted/20 rounded-xl border border-dashed border-border/50">
+                  <Info className="w-8 h-8 text-muted-foreground/50 mb-2" />
+                  <p className="text-sm font-bold text-muted-foreground">
+                    אין נתונים להשוואה
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    לא נמצאו יחידות להשוואה בחתך הנבחר
+                  </p>
+                </div>
+              );
+            }
 
-                const trackBg =
-                  availability >= 70
-                    ? "#dcfce7"   // green-100
-                    : availability >= 50
-                    ? "#fef9c3"   // yellow-100
-                    : availability >= 30
-                    ? "#ffedd5"   // orange-100
-                    : "#fee2e2";  // red-100
+            return (
+              <div className={compact ? "flex flex-col gap-3 max-w-xl mx-auto w-full py-2" : "space-y-5 sm:space-y-7 py-4"}>
+                {safeData.map((item: ComparisonStat) => {
+                  const availability =
+                    item.total_count > 0
+                      ? Math.round((item.present_count / item.total_count) * 100)
+                      : 0;
 
-                const pctTextColor =
-                  availability >= 70
-                    ? "text-emerald-700 dark:text-emerald-400"
-                    : availability >= 50
-                    ? "text-amber-600 dark:text-amber-400"
-                    : availability >= 30
-                    ? "text-orange-600 dark:text-orange-400"
-                    : "text-red-600 dark:text-red-400";
+                  // Color thresholds aligned with system palette
+                  const barColor =
+                    availability >= 70
+                      ? "#22c55e"   // green-500
+                      : availability >= 50
+                      ? "#f59e0b"   // amber-500
+                      : availability >= 30
+                      ? "#f97316"   // orange-500
+                      : "#ef4444";  // red-500
 
-                const isSelected = item.unit_id === selectedUnitId;
+                  const trackBg =
+                    availability >= 70
+                      ? "#dcfce7"   // green-100
+                      : availability >= 50
+                      ? "#fef9c3"   // yellow-100
+                      : availability >= 30
+                      ? "#ffedd5"   // orange-100
+                      : "#fee2e2";  // red-100
 
-                return (
-                  <div
-                    key={item.unit_id}
-                    className={cn(
-                      compact
-                        ? cn(
-                            "py-3 px-2.5 flex flex-col gap-1.5 transition-all w-full border-b border-border/10 last:border-0 hover:bg-slate-500/5 dark:hover:bg-white/5 rounded-lg",
-                            isSelected && "bg-primary/5 dark:bg-primary/10 border-r-2 border-primary rounded-r-none"
-                          )
-                        : cn(
-                            "px-5 py-4 sm:py-5 rounded-2xl transition-all duration-300 border shadow-sm",
-                            isSelected
-                              ? "border-primary/30 bg-primary/5 dark:border-primary/30 dark:bg-primary/10"
-                              : "border-border/40 bg-card hover:border-slate-200 hover:shadow-md hover:scale-[1.01] dark:hover:border-slate-700/60 dark:hover:bg-slate-800/40"
-                          ),
-                      onUnitClick ? "cursor-pointer" : ""
-                    )}
-                    onClick={() => {
-                      if (item.level === "employee") {
-                        openProfile(item.unit_id);
-                      } else if (onUnitClick) {
-                        onUnitClick(item.unit_id, item.level);
-                      }
-                    }}
-                  >
-                    {/* Row: name / count / percentage */}
-                    <div className="flex items-center justify-between mb-1.5 gap-3">
-                      <span
-                        className="text-xs sm:text-[13.5px] font-bold text-foreground truncate flex-1 min-w-0"
-                        title={item.unit_name}
-                        dir="rtl"
-                      >
-                        {item.unit_name}
-                      </span>
+                  const pctTextColor =
+                    availability >= 70
+                      ? "text-emerald-700 dark:text-emerald-400"
+                      : availability >= 50
+                      ? "text-amber-600 dark:text-amber-400"
+                      : availability >= 30
+                      ? "text-orange-600 dark:text-orange-400"
+                      : "text-red-600 dark:text-red-400";
 
-                      <div className="flex items-center gap-3 shrink-0">
-                        {item.level !== "employee" && (
-                          <span className="text-[10px] sm:text-xs font-bold text-muted-foreground/60 tabular-nums">
-                            <span className="font-extrabold" style={{ color: barColor }}>
-                              {Math.round(item.present_count)}
-                            </span>
-                            <span className="text-muted-foreground/30 mx-0.5">/</span>
-                            <span>{Math.round(item.total_count)}</span>
-                          </span>
-                        )}
-                        <span className={cn("text-xs sm:text-[13px] font-black tabular-nums min-w-9 text-left", pctTextColor)}>
-                          {item.level === "employee"
-                            ? (item.present_count > 0 ? "נוכח/ת" : "חסר/ת")
-                            : `${availability}%`}
+                  const isSelected = item.unit_id === selectedUnitId;
+
+                  return (
+                    <div
+                      key={item.unit_id}
+                      className={cn(
+                        compact
+                          ? cn(
+                              "py-3 px-2.5 flex flex-col gap-1.5 transition-all w-full border-b border-border/10 last:border-0 hover:bg-slate-500/5 dark:hover:bg-white/5 rounded-lg",
+                              isSelected && "bg-primary/5 dark:bg-primary/10 border-r-2 border-primary rounded-r-none"
+                            )
+                          : cn(
+                              "px-5 py-4 sm:py-5 rounded-2xl transition-all duration-300 border shadow-sm",
+                              isSelected
+                                ? "border-primary/30 bg-primary/5 dark:border-primary/30 dark:bg-primary/10"
+                                : "border-border/40 bg-card hover:border-slate-200 hover:shadow-md hover:scale-[1.01] dark:hover:border-slate-700/60 dark:hover:bg-slate-800/40"
+                            ),
+                        onUnitClick ? "cursor-pointer" : ""
+                      )}
+                      onClick={() => {
+                        if (item.level === "employee") {
+                          openProfile(item.unit_id);
+                        } else if (onUnitClick) {
+                          onUnitClick(item.unit_id, item.level);
+                        }
+                      }}
+                    >
+                      {/* Row: name / count / percentage */}
+                      <div className="flex items-center justify-between mb-1.5 gap-3">
+                        <span
+                          className="text-xs sm:text-[13.5px] font-bold text-foreground truncate flex-1 min-w-0"
+                          title={item.unit_name}
+                          dir="rtl"
+                        >
+                          {item.unit_name}
                         </span>
-                      </div>
-                    </div>
 
-                    {/* Progress bar — clean, no floating badge */}
-                    {item.level !== "employee" && (
-                      <div
-                        className="w-full rounded-full overflow-hidden"
-                        style={{
-                          height: compact ? "4px" : "9px",
-                          backgroundColor: trackBg,
-                        }}
-                      >
-                        <div
-                          className="h-full rounded-full transition-all duration-700"
-                          style={{
-                            width: `${Math.max(availability, availability > 0 ? 3 : 0)}%`,
-                            backgroundColor: barColor,
-                          }}
-                        />
+                        <div className="flex items-center gap-3 shrink-0">
+                          {item.level !== "employee" && (
+                            <span className="text-[10px] sm:text-xs font-bold text-muted-foreground/60 tabular-nums">
+                              <span className="font-extrabold" style={{ color: barColor }}>
+                                {Math.round(item.present_count)}
+                              </span>
+                              <span className="text-muted-foreground/30 mx-0.5">/</span>
+                              <span>{Math.round(item.total_count)}</span>
+                            </span>
+                          )}
+                          <span className={cn("text-xs sm:text-[13px] font-black tabular-nums min-w-9 text-left", pctTextColor)}>
+                            {item.level === "employee"
+                              ? (item.present_count > 0 ? "נוכח/ת" : "חסר/ת")
+                              : `${availability}%`}
+                          </span>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+
+                      {/* Progress bar — clean, no floating badge */}
+                      {item.level !== "employee" && (
+                        <div
+                          className="w-full rounded-full overflow-hidden"
+                          style={{
+                            height: compact ? "4px" : "9px",
+                            backgroundColor: trackBg,
+                          }}
+                        >
+                          <div
+                            className="h-full rounded-full transition-all duration-700"
+                            style={{
+                              width: `${Math.max(availability, availability > 0 ? 3 : 0)}%`,
+                              backgroundColor: barColor,
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
           <div className="export-date-hidden absolute opacity-0 -z-50 text-center mt-4 pt-2 border-t border-border/50 text-sm font-bold text-muted-foreground">
             תאריך דוח: {format(selectedDate, "dd/MM/yyyy")}
           </div>

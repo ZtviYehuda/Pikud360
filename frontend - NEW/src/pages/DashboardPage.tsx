@@ -523,11 +523,12 @@ export default function DashboardPage() {
     }
   };
 
-  const currentDept = structure.find((d) => d.id.toString() === selectedDeptId);
-  const currentSection = currentDept?.sections.find(
+  const safeStructure = Array.isArray(structure) ? structure : [];
+  const currentDept = safeStructure.find((d) => d.id.toString() === selectedDeptId);
+  const currentSection = currentDept?.sections?.find(
     (s) => s.id.toString() === selectedSectionId,
   );
-  const currentTeam = currentSection?.teams.find(
+  const currentTeam = currentSection?.teams?.find(
     (t) => t.id.toString() === selectedTeamId,
   );
 

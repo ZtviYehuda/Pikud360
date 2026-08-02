@@ -155,18 +155,29 @@ export const useEmployees = () => {
     }
   };
 
+  const extractArray = (res: any, key?: string) => {
+    if (Array.isArray(res)) return res;
+    if (res && key && Array.isArray(res[key])) return res[key];
+    if (res && Array.isArray(res.data)) return res.data;
+    if (res && Array.isArray(res.departments)) return res.departments;
+    if (res && Array.isArray(res.status_types)) return res.status_types;
+    if (res && Array.isArray(res.service_types)) return res.service_types;
+    return [];
+  };
+
   // Get Organization Structure (cached 30s)
   const getStructure = useCallback(async (full = false) => {
     const cacheKey = full ? "structure_full" : "structure";
     const cached = getCached(cacheKey);
-    if (cached) return cached;
+    if (cached) return extractArray(cached, "departments");
     try {
       const url = full
         ? `${endpoints.EMPLOYEES_STRUCTURE_ENDPOINT}?full=true`
         : endpoints.EMPLOYEES_STRUCTURE_ENDPOINT;
       const { data } = await apiClient.get(url);
-      setCache(cacheKey, data);
-      return data;
+      const arr = extractArray(data, "departments");
+      setCache(cacheKey, arr);
+      return arr;
     } catch (err: any) {
       console.error("Failed to fetch structure", err);
       return [];
@@ -176,11 +187,12 @@ export const useEmployees = () => {
   // Get Service Types (cached 30s)
   const getServiceTypes = useCallback(async () => {
     const cached = getCached("serviceTypes");
-    if (cached) return cached;
+    if (cached) return extractArray(cached, "service_types");
     try {
       const { data } = await apiClient.get(endpoints.EMPLOYEES_SERVICE_TYPES_ENDPOINT);
-      setCache("serviceTypes", data);
-      return data;
+      const arr = extractArray(data, "service_types");
+      setCache("serviceTypes", arr);
+      return arr;
     } catch (err: any) {
       console.error("Failed to fetch service types", err);
       return [];
@@ -190,11 +202,12 @@ export const useEmployees = () => {
   // Get Status Types (Attendance) — cached 30s
   const getStatusTypes = useCallback(async () => {
     const cached = getCached("statusTypes");
-    if (cached) return cached;
+    if (cached) return extractArray(cached, "status_types");
     try {
       const { data } = await apiClient.get(attEndpoints.ATTENDANCE_STATUS_TYPES_ENDPOINT);
-      setCache("statusTypes", data);
-      return data;
+      const arr = extractArray(data, "status_types");
+      setCache("statusTypes", arr);
+      return arr;
     } catch (err: any) {
       console.error("Failed to fetch status types", err);
       return [];
@@ -387,7 +400,7 @@ export const useEmployees = () => {
           const { data } = await apiClient.get(
             `${attEndpoints.ATTENDANCE_STATS_ENDPOINT}/comparison?${params}`,
           );
-          return data;
+          return extractArray(data, "comparison");
         } catch (err: any) {
           console.error("Failed to fetch comparison stats", err);
           return [];
@@ -429,7 +442,7 @@ export const useEmployees = () => {
           const { data } = await apiClient.get(
             `${attEndpoints.ATTENDANCE_STATS_ENDPOINT}/trend?${params}`,
           );
-          return data;
+          return extractArray(data, "trend");
         } catch (err: any) {
           console.error("Failed to fetch trend stats", err);
           return [];
