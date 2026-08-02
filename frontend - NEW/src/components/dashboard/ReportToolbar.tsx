@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -34,6 +35,16 @@ export function ReportToolbar({
   onDateRangeChange,
   maxDate,
 }: ReportToolbarProps) {
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 640
+  );
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   return (
     <div className="w-full flex flex-col items-stretch gap-2.5 sm:gap-3 p-1">
       {/* Row 1: Clean, uniform segmented control bar (יומי, שבועי, חודשי, טווח) */}
@@ -93,8 +104,10 @@ export function ReportToolbar({
               </Button>
             </PopoverTrigger>
             <PopoverContent
-              className="w-auto p-0 rounded-2xl border-border/60 shadow-xl"
-              align="start"
+              className="w-auto max-w-[94vw] sm:max-w-none p-0 rounded-2xl border-border/60 shadow-2xl overflow-y-auto max-h-[75vh] z-[100]"
+              align={isMobile ? "center" : "start"}
+              side={isMobile ? "top" : "bottom"}
+              sideOffset={8}
             >
               {viewMode === "monthly" ? (
                 <MonthPicker current={date} onSelect={onDateChange} />
@@ -105,9 +118,9 @@ export function ReportToolbar({
                   onSelect={onDateRangeChange}
                   locale={he}
                   initialFocus
-                  numberOfMonths={2}
+                  numberOfMonths={isMobile ? 1 : 2}
                   disabled={(d) => (maxDate ? d > maxDate : false)}
-                  className="p-3 bg-background rounded-2xl"
+                  className="p-2 sm:p-3 bg-background rounded-2xl"
                 />
               ) : (
                 <CalendarComponent
@@ -117,7 +130,7 @@ export function ReportToolbar({
                   locale={he}
                   initialFocus
                   disabled={(d) => (maxDate ? d > maxDate : false)}
-                  className="p-3 bg-background rounded-2xl"
+                  className="p-2 sm:p-3 bg-background rounded-2xl"
                 />
               )}
             </PopoverContent>
