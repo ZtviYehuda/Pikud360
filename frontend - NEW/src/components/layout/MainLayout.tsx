@@ -288,33 +288,45 @@ export default function MainLayout() {
         {/* Sidebar Header */}
         <div
           className={cn(
-            "h-16 flex-none flex items-center border-b border-border/40 transition-none",
-            isSidebarOpen ? "px-4 justify-between" : "justify-center",
+            "h-16 flex-none flex items-center border-b border-border/40 transition-all duration-300",
+            isSidebarOpen ? "px-4 justify-between" : "px-0 justify-center"
           )}
         >
-          {/* Menu Toggle Button — logo floats freely, no box */}
+          {/* Brand Logo & Title Group */}
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="flex items-center justify-center shrink-0 transition-all active:scale-90"
+            className="flex items-center gap-2.5 shrink-0 transition-all active:scale-95 group focus:outline-none"
             aria-label="תפריט ניווט"
+            title={isSidebarOpen ? "כווץ תפריט" : "הרחב תפריט"}
           >
-            <img
-              src="/matzevet_logo.png"
-              alt="לוגו Matzevet"
-              className={cn(
-                "object-contain transition-all toren-logo-img",
-                // Collapsed sidebar: larger floating logo; open: slightly smaller
-                isSidebarOpen ? "w-12 h-12" : "w-14 h-14",
-              )}
-            />
+            {/* Pure Shield Emblem Icon - Aspect Square (Never Squished) */}
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden relative">
+              <img
+                src="/matzevet_icon.png"
+                alt="סמל מצבת"
+                className="w-9 h-9 object-contain filter drop-shadow-[0_2px_8px_rgba(56,189,248,0.35)] group-hover:scale-110 transition-transform duration-300"
+              />
+            </div>
+
+            {/* System Title (Visible when Sidebar is Open) */}
+            {isSidebarOpen && (
+              <div className="flex flex-col text-right transition-all">
+                <span className="font-black text-lg tracking-tight text-foreground font-sans leading-none">
+                  מצבת
+                </span>
+                <span className="text-[9px] font-bold text-muted-foreground tracking-widest uppercase mt-0.5 font-mono">
+                  MATZEVET
+                </span>
+              </div>
+            )}
           </button>
 
           {/* Left Side Actions (Theme Toggle & Mobile Close Button) */}
           {isSidebarOpen && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <ThemeToggle variant="minimal" />
               <button
-                className="lg:hidden p-1 text-muted-foreground hover:text-foreground"
+                className="lg:hidden p-1 text-muted-foreground hover:text-foreground rounded-lg"
                 onClick={() => setIsSidebarOpen(false)}
               >
                 <X className="w-5 h-5" />
