@@ -321,10 +321,10 @@ export default function MainLayout() {
             )}
           </button>
 
-          {/* Left Side Actions (Theme Toggle & Mobile Close Button) */}
+          {/* Left Side Actions (Desktop Theme Toggle & Mobile Close Button) */}
           {isSidebarOpen && (
             <div className="flex items-center gap-1">
-              <ThemeToggle variant="minimal" />
+              <ThemeToggle variant="minimal" className="hidden lg:flex" />
               <button
                 className="lg:hidden p-1 text-muted-foreground hover:text-foreground rounded-lg"
                 onClick={() => setIsSidebarOpen(false)}
@@ -396,10 +396,17 @@ export default function MainLayout() {
         {/* Sidebar Footer */}
         <div
           className={cn(
-            "p-3 border-t border-border/40 flex flex-col gap-3",
+            "p-3 border-t border-border/40 flex flex-col gap-2.5",
             isSidebarOpen ? "" : "items-center",
           )}
         >
+          {/* Mobile Only: Theme Toggle at bottom of sidebar */}
+          {isSidebarOpen && (
+            <div className="lg:hidden w-full flex items-center justify-between px-3 py-2 rounded-xl bg-muted/40 border border-border/40 select-none mb-0.5">
+              <span className="text-xs font-bold text-foreground">מצב תצוגה</span>
+              <ThemeToggle variant="minimal" />
+            </div>
+          )}
           {/* User Profile Area */}
           {isSidebarOpen ? (
             <div
