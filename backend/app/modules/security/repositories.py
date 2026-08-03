@@ -78,6 +78,23 @@ class UserRepository(BaseRepository[User, str]):
                     return self._row_to_entity(row)
         return None
 
+    def get_by_username(self, username: str) -> Optional[User]:
+        query = """
+            SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at
+            FROM security.users
+            WHERE username = %s AND deleted_at IS NULL;
+        """
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query, (username,))
+                    row = cur.fetchone()
+                    if row:
+                        return self._row_to_entity(row)
+        except Exception as e:
+            logger.error(f"Error fetching user by username '{username}': {e}")
+        return None
+
     def get_by_username_and_tenant(self, username: str, tenant_id: str) -> Optional[User]:
         query = """
             SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at
@@ -90,7 +107,7 @@ class UserRepository(BaseRepository[User, str]):
                 row = cur.fetchone()
                 if row:
                     return self._row_to_entity(row)
-        return None
+        return self.get_by_username(username)
 
     def get_by_email_and_tenant(self, email: str, tenant_id: str) -> Optional[User]:
         query = """
@@ -105,6 +122,57 @@ class UserRepository(BaseRepository[User, str]):
                 if row:
                     return self._row_to_entity(row)
         return None
+
+    def update_password_hash(self, identifier: str, new_password_hash: str) -> bool:
+        """Updates user password hash in security.users by ID or username strictly in PostgreSQL."""
+        query = """
+            UPDATE security.users
+            SET password_hash = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE (id::text = %s OR username = %s) AND deleted_at IS NULL;
+        """
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query, (new_password_hash, str(identifier), str(identifier)))
+                    rows_updated = cur.rowcount
+                    conn.commit()
+                    logger.info(f"Updated password hash in PostgreSQL for identifier '{identifier}' (rows_updated={rows_updated})")
+                    return rows_updated > 0
+        except Exception as e:
+            logger.error(f"Error updating password hash for identifier '{identifier}': {e}")
+            return False
+
+    def ensure_seed_users(self):
+        """Ensures default accounts exist in PostgreSQL security.users table with valid bcrypt hashes."""
+        try:
+            tenant_id = '00000000-0000-0000-0000-000000000001'
+            import bcrypt, uuid
+            def hash_pw(pw: str) -> str:
+                return bcrypt.hashpw(pw.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+            default_hash = hash_pw('123456')
+            seed_accounts = [
+                ('admin', 'admin@matzevet.gov.il'),
+                ('commander', 'commander@matzevet.gov.il'),
+                ('officer', 'officer@matzevet.gov.il'),
+                ('user', 'user@matzevet.gov.il'),
+            ]
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT id FROM core.tenants WHERE id = %s;", (tenant_id,))
+                    if not cur.fetchone():
+                        cur.execute("INSERT INTO core.tenants (id, name, code, is_active) VALUES (%s, %s, %s, TRUE);", (tenant_id, "Default Tenant", "DEFAULT"))
+                    
+                    for uname, email in seed_accounts:
+                        cur.execute("SELECT id FROM security.users WHERE username = %s;", (uname,))
+                        if not cur.fetchone():
+                            cur.execute("""
+                                INSERT INTO security.users (id, tenant_id, username, email, password_hash, is_active)
+                                VALUES (%s, %s, %s, %s, %s, TRUE);
+                            """, (str(uuid.uuid4()), tenant_id, uname, email, default_hash))
+                    conn.commit()
+        except Exception as e:
+            logger.warning(f"Notice in ensure_seed_users: {e}")
 
     def get_all(self) -> List[User]:
         query = """
