@@ -38,13 +38,14 @@ import {
   ShieldCheck,
   User,
   Phone,
-
   XCircle,
   CheckCircle,
   Calendar,
   MoreHorizontal,
   FileText,
   CornerDownLeft,
+  Filter,
+  X,
 } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
@@ -238,9 +239,7 @@ export default function TransfersPage() {
     if (searchTerm && activeTab === "history") {
       const lowerSearch = searchTerm.toLowerCase();
       result = result.filter(
-        (h) =>
-          h.employee_name?.toLowerCase().includes(lowerSearch) ||
-          false,
+        (h) => h.employee_name?.toLowerCase().includes(lowerSearch) || false,
       );
     }
     return result;
@@ -392,55 +391,98 @@ export default function TransfersPage() {
       </div>
 
       <div className="space-y-4 sm:space-y-6 pb-6">
-        {/* Stats Overview - Compact Grid (No Scroll) */}
-        <div className="grid grid-cols-3 gap-1.5 sm:gap-6 mb-4 sm:mb-6">
-          <div
-            className="bg-card rounded-xl sm:rounded-[20px] p-2 sm:p-6 border border-border flex flex-col items-center sm:flex-row sm:justify-between transition-all"
+        {/* Stats Overview - Ultra Compact Bar */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-3 sm:mb-4">
+          <button
+            type="button"
+            onClick={() => {
+              if (activeTab === "pending" && !historyFilter) {
+                setActiveTab("history");
+                setHistoryFilter(null);
+              } else {
+                setActiveTab("pending");
+                setHistoryFilter(null);
+              }
+            }}
+            className={cn(
+              "bg-card rounded-xl sm:rounded-2xl p-2.5 sm:py-3 sm:px-4 border flex items-center justify-between transition-all text-right w-full cursor-pointer active:scale-[0.98]",
+              activeTab === "pending" && !historyFilter
+                ? "border-amber-500/80 bg-amber-500/10 shadow-md shadow-amber-500/10 ring-2 ring-amber-500/20"
+                : "border-border hover:border-amber-500/40 hover:bg-amber-500/5 hover:scale-[1.01]",
+            )}
           >
-            <div className="flex flex-col items-center sm:items-start text-center sm:text-right w-full mb-1 sm:mb-0">
-              <span className="text-[8px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-0.5 sm:mb-1">
+            <div className="flex flex-col text-right">
+              <span className="text-[9px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">
                 ממתינות
               </span>
-              <span className="text-lg sm:text-4xl font-black text-amber-500 leading-none">
+              <span className="text-sm sm:text-xl font-black text-amber-500 leading-tight">
                 {stats.pending}
               </span>
             </div>
-            <div className="w-7 h-7 sm:w-12 sm:h-12 rounded-lg sm:rounded-full bg-amber-500/10 dark:bg-amber-400/10 flex items-center justify-center shrink-0">
-              <Clock className="w-3.5 h-3.5 sm:w-6 sm:h-6 text-amber-500 dark:text-amber-400" />
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-amber-500/10 dark:bg-amber-400/10 flex items-center justify-center shrink-0">
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 dark:text-amber-400" />
             </div>
-          </div>
+          </button>
 
-          <div
-            className="bg-card rounded-xl sm:rounded-[20px] p-2 sm:p-6 border border-border flex flex-col items-center sm:flex-row sm:justify-between transition-all"
+          <button
+            type="button"
+            onClick={() => {
+              if (activeTab === "history" && historyFilter === "approved") {
+                setHistoryFilter(null);
+              } else {
+                setActiveTab("history");
+                setHistoryFilter("approved");
+              }
+            }}
+            className={cn(
+              "bg-card rounded-xl sm:rounded-2xl p-2.5 sm:py-3 sm:px-4 border flex items-center justify-between transition-all text-right w-full cursor-pointer active:scale-[0.98]",
+              activeTab === "history" && historyFilter === "approved"
+                ? "border-emerald-500/80 bg-emerald-500/10 shadow-md shadow-emerald-500/10 ring-2 ring-emerald-500/20"
+                : "border-border hover:border-emerald-500/40 hover:bg-emerald-500/5 hover:scale-[1.01]",
+            )}
           >
-            <div className="flex flex-col items-center sm:items-start text-center sm:text-right w-full mb-1 sm:mb-0">
-              <span className="text-[8px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-0.5 sm:mb-1">
+            <div className="flex flex-col text-right">
+              <span className="text-[9px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">
                 אושרו
               </span>
-              <span className="text-lg sm:text-4xl font-black text-emerald-500 leading-none">
+              <span className="text-sm sm:text-xl font-black text-emerald-500 leading-tight">
                 {stats.approved}
               </span>
             </div>
-            <div className="w-7 h-7 sm:w-12 sm:h-12 rounded-lg sm:rounded-full bg-emerald-500/10 dark:bg-emerald-400/10 flex items-center justify-center shrink-0">
-              <CheckCircle className="w-3.5 h-3.5 sm:w-6 sm:h-6 text-emerald-500 dark:text-emerald-400" />
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/10 dark:bg-emerald-400/10 flex items-center justify-center shrink-0">
+              <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 dark:text-emerald-400" />
             </div>
-          </div>
+          </button>
 
-          <div
-            className="bg-card rounded-xl sm:rounded-[20px] p-2 sm:p-6 border border-border flex flex-col items-center sm:flex-row sm:justify-between transition-all"
+          <button
+            type="button"
+            onClick={() => {
+              if (activeTab === "history" && historyFilter === "rejected") {
+                setHistoryFilter(null);
+              } else {
+                setActiveTab("history");
+                setHistoryFilter("rejected");
+              }
+            }}
+            className={cn(
+              "bg-card rounded-xl sm:rounded-2xl p-2.5 sm:py-3 sm:px-4 border flex items-center justify-between transition-all text-right w-full cursor-pointer active:scale-[0.98]",
+              activeTab === "history" && historyFilter === "rejected"
+                ? "border-rose-500/80 bg-rose-500/10 shadow-md shadow-rose-500/10 ring-2 ring-rose-500/20"
+                : "border-border hover:border-rose-500/40 hover:bg-rose-500/5 hover:scale-[1.01]",
+            )}
           >
-            <div className="flex flex-col items-center sm:items-start text-center sm:text-right w-full mb-1 sm:mb-0">
-              <span className="text-[8px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest mb-0.5 sm:mb-1">
+            <div className="flex flex-col text-right">
+              <span className="text-[9px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">
                 נדחו
               </span>
-              <span className="text-lg sm:text-4xl font-black text-rose-500 leading-none">
+              <span className="text-sm sm:text-xl font-black text-rose-500 leading-tight">
                 {stats.rejected}
               </span>
             </div>
-            <div className="w-7 h-7 sm:w-12 sm:h-12 rounded-lg sm:rounded-full bg-rose-500/10 dark:bg-rose-400/10 flex items-center justify-center shrink-0">
-              <XCircle className="w-3.5 h-3.5 sm:w-6 sm:h-6 text-rose-500 dark:text-rose-400" />
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-rose-500/10 dark:bg-rose-400/10 flex items-center justify-center shrink-0">
+              <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-500 dark:text-rose-400" />
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Main Toolbar */}
@@ -453,7 +495,7 @@ export default function TransfersPage() {
                 "h-11 px-4 sm:px-6 rounded-xl font-bold flex items-center gap-1.5 sm:gap-2 transition-all active:scale-[0.98] shadow-sm shrink-0 text-xs sm:text-sm",
                 activeTab === "new"
                   ? "bg-primary text-primary-foreground shadow-primary/20"
-                  : "bg-primary/10 text-primary hover:bg-primary/20"
+                  : "bg-primary/10 text-primary hover:bg-primary/20",
               )}
             >
               <Plus className="w-4 h-4 sm:w-4.5 sm:h-4.5" strokeWidth={2.5} />
@@ -488,13 +530,13 @@ export default function TransfersPage() {
                   "md:hidden w-11 h-11 rounded-xl flex items-center justify-center p-0 shrink-0",
                   activeTab === "history"
                     ? "bg-primary/15 text-primary border border-primary/25"
-                    : "bg-muted/40 text-muted-foreground/75 hover:bg-muted/60"
+                    : "bg-muted/40 text-muted-foreground/75 hover:bg-muted/60",
                 )}
               >
                 <History className="w-4 h-4" />
               </Button>
             )}
-            
+
             {/* Vertical Divider */}
             <div className="hidden md:block w-px h-6 bg-border/60 mx-1" />
           </div>
@@ -512,46 +554,6 @@ export default function TransfersPage() {
                 />
               </div>
             )}
-
-            {/* Segmented Control / Navigation */}
-            <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-xl border border-border/30 w-full md:w-auto">
-              <div className="flex items-center gap-2 px-3 border-l border-border/40 ml-1">
-                <History className="w-4 h-4 text-muted-foreground/40" strokeWidth={1.5} />
-                <span className="text-[11px] font-bold text-muted-foreground/50 hidden lg:inline">תצוגה</span>
-              </div>
-              
-              <div className="flex gap-1 flex-1 sm:flex-none">
-                <button
-                  onClick={() => {
-                    setActiveTab("pending");
-                    setHistoryFilter(null);
-                  }}
-                  className={cn(
-                    "flex-1 sm:flex-none h-9 px-4 sm:px-5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2",
-                    activeTab === "pending"
-                      ? "bg-background text-primary shadow-sm border border-border/50"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  )}
-                >
-                  <Clock className="w-3.5 h-3.5" strokeWidth={2} />
-                  <span>פעיל</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setActiveTab("history");
-                  }}
-                  className={cn(
-                    "flex-1 sm:flex-none h-9 px-4 sm:px-5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2",
-                    activeTab === "history"
-                      ? "bg-background text-primary shadow-sm border border-border/50"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  )}
-                >
-                  <History className="w-3.5 h-3.5" strokeWidth={2} />
-                  <span>היסטוריה</span>
-                </button>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -588,9 +590,7 @@ export default function TransfersPage() {
                           <span className="text-sm font-black text-foreground">
                             {req.employee_name}
                           </span>
-                          <span className="text-[10px] text-muted-foreground font-mono">
-                            
-                          </span>
+                          <span className="text-[10px] text-muted-foreground font-mono"></span>
                         </div>
                       </div>
                       <Badge
@@ -723,9 +723,7 @@ export default function TransfersPage() {
                                 <span className="font-bold text-xs text-foreground truncate block max-w-[120px]">
                                   {req.employee_name}
                                 </span>
-                                <span className="text-[10px] text-muted-foreground font-mono truncate">
-                                  
-                                </span>
+                                <span className="text-[10px] text-muted-foreground font-mono truncate"></span>
                               </div>
                             </button>
                           </TableCell>
@@ -831,6 +829,38 @@ export default function TransfersPage() {
         {/* History Table */}
         {activeTab === "history" && (
           <>
+            {historyFilter && (
+              <div className="flex items-center justify-between bg-card/80 backdrop-blur border border-border/50 p-3 px-4 rounded-2xl mb-4 shadow-sm transition-all">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                    <Filter className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-bold text-foreground">
+                    מציג בקשות בסטטוס:{" "}
+                    <span
+                      className={cn(
+                        "font-black text-sm mr-1",
+                        historyFilter === "approved"
+                          ? "text-emerald-500"
+                          : "text-rose-500",
+                      )}
+                    >
+                      {historyFilter === "approved" ? "אושרו" : "נדחו"}
+                    </span>
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setHistoryFilter(null)}
+                  className="h-8 px-3 text-xs font-bold text-muted-foreground hover:text-foreground bg-muted/30 hover:bg-muted/60 border-border/60 rounded-xl flex items-center gap-1.5 transition-all"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>הצג את כל ההיסטוריה</span>
+                </Button>
+              </div>
+            )}
+
             {/* Mobile View - History Cards */}
             <div className="md:hidden space-y-3">
               {filteredHistory.length === 0 ? (
@@ -856,9 +886,7 @@ export default function TransfersPage() {
                           <span className="text-xs font-bold text-foreground truncate max-w-[120px]">
                             {req.employee_name}
                           </span>
-                          <span className="text-[10px] text-muted-foreground font-mono">
-                            
-                          </span>
+                          <span className="text-[10px] text-muted-foreground font-mono"></span>
                         </div>
                       </div>
                       {statusBadge(req.status)}
@@ -969,9 +997,7 @@ export default function TransfersPage() {
                                 <span className="text-xs font-bold text-foreground truncate block max-w-[120px]">
                                   {req.employee_name}
                                 </span>
-                                <span className="text-[10px] text-muted-foreground font-mono truncate">
-                                  
-                                </span>
+                                <span className="text-[10px] text-muted-foreground font-mono truncate"></span>
                               </div>
                             </button>
                           </TableCell>
@@ -1082,7 +1108,8 @@ export default function TransfersPage() {
                                     {emp.first_name} {emp.last_name}
                                   </span>
                                   <span className="text-[10px] sm:text-xs text-muted-foreground">
-                                    {(emp.is_commander || emp.is_admin) && `שם משתמש: ${emp.username} • `}
+                                    {(emp.is_commander || emp.is_admin) &&
+                                      `שם משתמש: ${emp.username} • `}
                                     {emp.department_name}
                                   </span>
                                 </div>
@@ -1104,7 +1131,6 @@ export default function TransfersPage() {
                               {selectedEmployee.last_name}
                             </span>
                             <span className="text-[10px] sm:text-xs text-muted-foreground">
-                              
                               {selectedEmployee.department_name}
                             </span>
                           </div>
@@ -1340,7 +1366,8 @@ export default function TransfersPage() {
                           {viewingEmployee?.first_name}{" "}
                           {viewingEmployee?.last_name}
                         </h2>
-                        {(viewingEmployee?.is_commander || viewingEmployee?.is_admin) && (
+                        {(viewingEmployee?.is_commander ||
+                          viewingEmployee?.is_admin) && (
                           <span className="text-[11px] font-bold text-muted-foreground mt-1">
                             שם משתמש: {viewingEmployee?.username}
                           </span>
@@ -1364,26 +1391,25 @@ export default function TransfersPage() {
                 <div className="p-6 space-y-3">
                   {/* Personal Info Card */}
 
-
-                    <a
-                      href={`tel:${viewingEmployee?.phone_number}`}
-                      className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-muted/30 transition-all hover:border-primary/50 hover:bg-primary/5 group/phone"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-card flex items-center justify-center border border-border/50 shrink-0 group-hover/phone:border-primary/30 transition-colors">
-                        <Phone className="w-4 h-4 text-muted-foreground group-hover/phone:text-primary transition-colors" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className="text-xs font-bold text-foreground truncate group-hover/phone:text-primary transition-colors"
-                          dir="ltr"
-                        >
-                          {viewingEmployee?.phone_number || "---"}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground font-medium truncate">
-                          טלפון נייד
-                        </p>
-                      </div>
-                    </a>
+                  <a
+                    href={`tel:${viewingEmployee?.phone_number}`}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-muted/30 transition-all hover:border-primary/50 hover:bg-primary/5 group/phone"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-card flex items-center justify-center border border-border/50 shrink-0 group-hover/phone:border-primary/30 transition-colors">
+                      <Phone className="w-4 h-4 text-muted-foreground group-hover/phone:text-primary transition-colors" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className="text-xs font-bold text-foreground truncate group-hover/phone:text-primary transition-colors"
+                        dir="ltr"
+                      >
+                        {viewingEmployee?.phone_number || "---"}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground font-medium truncate">
+                        טלפון נייד
+                      </p>
+                    </div>
+                  </a>
 
                   <div className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-background/40 transition-all hover:border-border">
                     <div className="w-8 h-8 rounded-full bg-card flex items-center justify-center border border-border/50 shrink-0">
@@ -1409,8 +1435,8 @@ export default function TransfersPage() {
                         <span className="text-xs font-bold text-foreground mt-1">
                           {viewingEmployee?.enlistment_date
                             ? new Date(
-                              viewingEmployee.enlistment_date,
-                            ).toLocaleDateString("he-IL")
+                                viewingEmployee.enlistment_date,
+                              ).toLocaleDateString("he-IL")
                             : "---"}
                         </span>
                       </div>
@@ -1421,8 +1447,8 @@ export default function TransfersPage() {
                         <span className="text-xs font-bold text-primary mt-1">
                           {viewingEmployee?.assignment_date
                             ? new Date(
-                              viewingEmployee.assignment_date,
-                            ).toLocaleDateString("he-IL")
+                                viewingEmployee.assignment_date,
+                              ).toLocaleDateString("he-IL")
                             : "---"}
                         </span>
                       </div>
@@ -1820,21 +1846,7 @@ export default function TransfersPage() {
             )}
           </DialogContent>
         </Dialog>
-        {!canManage && (
-          <div className="mt-8 p-4 rounded-xl bg-amber-50 border border-amber-100 flex items-center gap-3">
-            <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0" />
-            <div className="text-right">
-              <p className="text-xs font-black text-amber-900 leading-none">
-                מצב צפייה
-              </p>
-              <p className="text-[10px] font-bold text-amber-800/80 mt-1">
-                חשבונך אינו מוגדר לניהול בקשות אחרים.
-              </p>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
 }
-

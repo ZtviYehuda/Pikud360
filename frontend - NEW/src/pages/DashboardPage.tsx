@@ -194,6 +194,23 @@ export default function DashboardPage() {
     user?.is_impersonated,
   ]);
 
+  // Determine if user has top-level organizational command access (admin, commander, or unassigned top level)
+  const isTopLevelCommander = useMemo(() => {
+    if (!user) return true;
+    if (user.is_admin || user.is_commander) return true;
+    if (
+      !user.commands_department_id &&
+      !user.commands_section_id &&
+      !user.commands_team_id &&
+      !user.assigned_department_id &&
+      !user.assigned_section_id &&
+      !user.assigned_team_id
+    ) {
+      return true;
+    }
+    return false;
+  }, [user]);
+
   // Initialize filters based on user permissions (only if no saved filters AND initialized)
   useEffect(() => {
     if (!isInitialized) return;
@@ -219,22 +236,26 @@ export default function DashboardPage() {
 
     if (hasSavedData) return;
 
-    if (user && !user.is_admin) {
-      if (user.commands_department_id) {
-        setSelectedDeptId(user.commands_department_id.toString());
-      } else if (user.commands_section_id) {
+    if (!isTopLevelCommander && user) {
+      if (user.commands_department_id || user.assigned_department_id) {
+        setSelectedDeptId((user.commands_department_id || user.assigned_department_id).toString());
+      } else if (user.commands_section_id || user.assigned_section_id) {
         if (user.assigned_department_id)
           setSelectedDeptId(user.assigned_department_id.toString());
-        setSelectedSectionId(user.commands_section_id.toString());
-      } else if (user.commands_team_id) {
+        setSelectedSectionId((user.commands_section_id || user.assigned_section_id).toString());
+      } else if (user.commands_team_id || user.assigned_team_id) {
         if (user.assigned_department_id)
           setSelectedDeptId(user.assigned_department_id.toString());
         if (user.assigned_section_id)
           setSelectedSectionId(user.assigned_section_id.toString());
-        setSelectedTeamId(user.commands_team_id.toString());
+        setSelectedTeamId((user.commands_team_id || user.assigned_team_id).toString());
       }
+    } else {
+      setSelectedDeptId("");
+      setSelectedSectionId("");
+      setSelectedTeamId("");
     }
-  }, [user, isInitialized]);
+  }, [user, isInitialized, isTopLevelCommander]);
 
   // Fetch Structure  // Initial Load
   useEffect(() => {
@@ -257,10 +278,12 @@ export default function DashboardPage() {
     init();
   }, [getStructure, getStatusTypes, getServiceTypes]);
 
-  // Fetch Comparison Stats
+  const [comparisonLoading, setComparisonLoading] = useState(false);
+
+  // Fetch Comparison Stats without triggering full page layout shifts
   useEffect(() => {
     const fetchComparison = async () => {
-      setLoadingExtras(true);
+      setComparisonLoading(true);
       const formattedDate = format(selectedDate, "yyyy-MM-dd");
       
       const compData = await getComparisonStats(
@@ -277,7 +300,7 @@ export default function DashboardPage() {
         },
       );
       setComparisonStats(compData);
-      setLoadingExtras(false);
+      setComparisonLoading(false);
     };
     fetchComparison();
   }, [
@@ -382,14 +405,27 @@ export default function DashboardPage() {
   ) => {
     if (type === "reset") {
       localStorage.removeItem("dashboard_filters");
-      if (user?.is_admin) {
+      if (isTopLevelCommander) {
         setSelectedDeptId("");
         setSelectedSectionId("");
         setSelectedTeamId("");
-      } else if (user?.commands_department_id) {
+      } else if (user?.commands_department_id || user?.assigned_department_id) {
+        setSelectedDeptId((user.commands_department_id || user.assigned_department_id).toString());
         setSelectedSectionId("");
         setSelectedTeamId("");
-      } else if (user?.commands_section_id) {
+      } else if (user?.commands_section_id || user?.assigned_section_id) {
+        if (user?.assigned_department_id) {
+          setSelectedDeptId(user.assigned_department_id.toString());
+        }
+        setSelectedSectionId((user.commands_section_id || user.assigned_section_id).toString());
+        setSelectedTeamId("");
+      } else if (user?.commands_team_id || user?.assigned_team_id) {
+        if (user?.assigned_department_id) setSelectedDeptId(user.assigned_department_id.toString());
+        if (user?.assigned_section_id) setSelectedSectionId(user.assigned_section_id.toString());
+        setSelectedTeamId((user.commands_team_id || user.assigned_team_id).toString());
+      } else {
+        setSelectedDeptId("");
+        setSelectedSectionId("");
         setSelectedTeamId("");
       }
       setSelectedStatusData(null);
@@ -492,33 +528,27 @@ export default function DashboardPage() {
   };
 
   const canGoBack = useMemo(() => {
-    // Team commanders are locked to their team and cannot go back
-    if (user && !user.is_admin && user.commands_team_id) {
-      return false;
+    if (isTopLevelCommander) {
+      return !!selectedTeamId || !!selectedSectionId || !!selectedDeptId;
     }
     
-    // Section commanders can only go back if they drilled down to a team
-    if (user && !user.is_admin && user.commands_section_id) {
-      return !!selectedTeamId;
-    }
-    
-    // Department commanders can go back if they drilled down to section or team
-    if (user && !user.is_admin && user.commands_department_id) {
+    if (user?.commands_department_id) {
       return !!selectedTeamId || !!selectedSectionId;
     }
+    
+    if (user?.commands_section_id) {
+      return !!selectedTeamId;
+    }
 
-    if (selectedTeamId) return true;
-    if (selectedSectionId) return true;
-    if (selectedDeptId && (user?.is_admin || !user)) return true;
     return false;
-  }, [selectedTeamId, selectedSectionId, selectedDeptId, user]);
+  }, [selectedTeamId, selectedSectionId, selectedDeptId, isTopLevelCommander, user]);
 
   const handleGoBack = () => {
     if (selectedTeamId) {
       setSelectedTeamId("");
     } else if (selectedSectionId) {
       setSelectedSectionId("");
-    } else if (selectedDeptId && (user?.is_admin || !user)) {
+    } else if (selectedDeptId && isTopLevelCommander) {
       setSelectedDeptId("");
     }
   };
@@ -904,7 +934,7 @@ export default function DashboardPage() {
               <StatsComparisonCard
                 ref={comparisonRef}
                 data={comparisonStats}
-                loading={loadingExtras}
+                loading={comparisonLoading}
                 days={comparisonRange}
                 unitName={unitName}
                 filterTags={activeFilterTags}

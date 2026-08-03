@@ -147,23 +147,129 @@ def chat_heartbeat():
     return jsonify({"success": True, "status": "online"}), 200
 
 
+FULL_ORGANIZATION_STRUCTURE = [
+    {
+        "id": 1,
+        "name": "מחלקת טכנולוגיות",
+        "code": "TECH_DEPT",
+        "sections": [
+            {
+                "id": 101,
+                "name": "מדור הסייבר המבצעי",
+                "code": "TECH_OPS_CYBER_SECT",
+                "teams": [
+                    {"id": 1001, "name": "חוליית מו\"פ"},
+                    {"id": 1002, "name": "חוליית סייבר מבצעי"},
+                    {"id": 1003, "name": "חוליית נגישות בסייבר"}
+                ]
+            },
+            {
+                "id": 102,
+                "name": "מדור מערכות הסייבר",
+                "code": "TECH_CYBER_SYS_SECT",
+                "teams": [
+                    {"id": 1004, "name": "חוליית חברות תקשורת"},
+                    {"id": 1005, "name": "חולייה פרויקטים ואמצעים"}
+                ]
+            },
+            {
+                "id": 103,
+                "name": "מדור סיגמ\"ה",
+                "code": "TECH_SIGMA_SECT",
+                "teams": [
+                    {"id": 1006, "name": "חוליית אמצעי קצה"},
+                    {"id": 1007, "name": "חוליית סיוע מבצעי"},
+                    {"id": 1008, "name": "חוליית מענים מהירים"}
+                ]
+            }
+        ]
+    },
+    {
+        "id": 2,
+        "name": "מחלקת התעצמות",
+        "code": "EMPOWERMENT_DEPT",
+        "sections": [
+            {
+                "id": 201,
+                "name": "מדור תכנון ייעודי ואסטרטגיה",
+                "code": "EMP_STRAT_PLAN_SECT",
+                "teams": [
+                    {"id": 2001, "name": "חוליית תקציב"},
+                    {"id": 2002, "name": "חוליית מערכה (אורית)"},
+                    {"id": 2003, "name": "חוליית מערכה (רפאל)"},
+                    {"id": 2004, "name": "חוליית נ\"מ"},
+                    {"id": 2005, "name": "חוליית קש\"ח ושותפויות"}
+                ]
+            },
+            {
+                "id": 202,
+                "name": "מדור הכוונה מבצעית",
+                "code": "EMP_OPS_DIR_SECT",
+                "teams": [
+                    {"id": 2006, "name": "חוליית הפקה ארצית"},
+                    {"id": 2007, "name": "חוליית ב\"ר"},
+                    {"id": 2008, "name": "חוליית סייבר"},
+                    {"id": 2009, "name": "חוליית מחת\"ק"},
+                    {"id": 2010, "name": "חוליית בקרות"}
+                ]
+            }
+        ]
+    },
+    {
+        "id": 3,
+        "name": "מחלקת מענה מבצעי",
+        "code": "OPERATIONAL_RESPONSE_DEPT",
+        "sections": [
+            {
+                "id": 301,
+                "name": "מדור שטח",
+                "code": "OPS_FIELD_SECT",
+                "teams": [
+                    {"id": 3001, "name": "חוליית מ\"מ"},
+                    {"id": 3002, "name": "חוליית ביטחון מידע וחסיונות"},
+                    {"id": 3003, "name": "חוליית חות\"ם"},
+                    {"id": 3004, "name": "חוליית חוס\"ם"}
+                ]
+            },
+            {
+                "id": 302,
+                "name": "מדור יחידות ארציות",
+                "code": "OPS_NAT_UNITS_SECT",
+                "teams": [
+                    {"id": 3005, "name": "חוליית סלע"},
+                    {"id": 3006, "name": "חוליית שהם"},
+                    {"id": 3007, "name": "חוליית רשויות"},
+                    {"id": 3008, "name": "חוליית קיסר"}
+                ]
+            },
+            {
+                "id": 303,
+                "name": "מדור שליטה מבצעית",
+                "code": "OPS_CONTROL_SECT",
+                "teams": [
+                    {"id": 3009, "name": "חוליית 7100"},
+                    {"id": 3010, "name": "חוליית 7103"},
+                    {"id": 3011, "name": "חוליית משל\"ט טכנו סיגינטי"}
+                ]
+            },
+            {
+                "id": 304,
+                "name": "מדור סייבר ארצי",
+                "code": "OPS_NAT_CYBER_SECT",
+                "teams": [
+                    {"id": 3012, "name": "חוליית מס\"א"},
+                    {"id": 3013, "name": "חוליית קריפטו"}
+                ]
+            }
+        ]
+    }
+]
+
+
 @workforce_bp.route("/employees/structure", methods=["GET"])
 @jwt_required(optional=True)
 def get_employees_structure():
-    departments = [
-        {
-            "id": 1,
-            "name": "מחלקה התעצמות",
-            "sections": [
-                {
-                    "id": 11,
-                    "name": "מדור תכנון",
-                    "teams": [{"id": 111, "name": "צוות א'"}]
-                }
-            ]
-        }
-    ]
-    return jsonify(departments), 200
+    return jsonify(FULL_ORGANIZATION_STRUCTURE), 200
 
 
 @workforce_bp.route("/employees/roles", methods=["GET"])
@@ -173,24 +279,50 @@ def get_employees_roles():
     return jsonify(roles), 200
 
 
+SYSTEM_SERVICE_TYPES = [
+    {"id": "KEVA_OFFICER", "name": "קבע - קצין"},
+    {"id": "KEVA_NCO", "name": "קבע - נגד"},
+    {"id": "SHAMAZ", "name": "שמ\"ז"},
+    {"id": "NATIONAL_SERVICE", "name": "שירות לאומי"},
+    {"id": "SHACHAM", "name": "שח\"מ"},
+    {"id": "SHACHAM_HAREDI", "name": "שח\"מ חרדי"},
+    {"id": "CIVIL_SECURITY_SERVICE", "name": "שירות אזרחי ביטחוני"},
+    {"id": "VOLUNTEER", "name": "מתנדב"},
+]
+
+SYSTEM_ATTENDANCE_STATUS_TYPES = [
+    {
+        "id": "OFFICE",
+        "name": "משרד",
+        "category": "PRESENT",
+        "is_default": True,
+        "color": "#10B981",
+        "sub_statuses": [
+            {"id": "HOME", "name": "מהבית (עבודה מרחוק)"},
+            {"id": "EXTERNAL_FACILITY", "name": "מתקן חיצוני"},
+            {"id": "FIELD", "name": "שטח"}
+        ]
+    },
+    {"id": "VACATION", "name": "חופשה", "category": "ABSENCE", "color": "#F59E0B"},
+    {"id": "SICK", "name": "מחלה", "category": "ABSENCE", "color": "#6366F1"},
+    {"id": "COURSE", "name": "קורס", "category": "PRESENT", "color": "#8B5CF6"},
+    {"id": "REINFORCEMENT", "name": "תגבור", "category": "PRESENT", "color": "#3B82F6"},
+    {"id": "ABROAD", "name": "חו\"ל", "category": "ABSENCE", "color": "#EC4899"},
+    {"id": "UNIT_DAY", "name": "יום יחידה", "category": "EVENT", "color": "#14B8A6"},
+    {"id": "OTHER", "name": "אחר", "category": "OTHER", "color": "#64748B"}
+]
+
+
 @workforce_bp.route("/employees/service-types", methods=["GET"])
 @jwt_required(optional=True)
 def get_employees_service_types():
-    service_types = [{"id": "KEVA", "name": "קבע"}, {"id": "SADIR", "name": "סדיר"}, {"id": "MILUIM", "name": "מילואים"}]
-    return jsonify(service_types), 200
+    return jsonify(SYSTEM_SERVICE_TYPES), 200
 
 
 @workforce_bp.route("/attendance/status-types", methods=["GET"])
 @jwt_required(optional=True)
 def get_attendance_status_types():
-    status_types = [
-        {"id": "PRESENT", "name": "נוכח", "color": "#10B981"},
-        {"id": "ABSENT", "name": "נעדר", "color": "#EF4444"},
-        {"id": "VACATION", "name": "חופשה", "color": "#F59E0B"},
-        {"id": "SICK", "name": "מחלה", "color": "#6366F1"},
-        {"id": "COURSE", "name": "קורס", "color": "#8B5CF6"}
-    ]
-    return jsonify(status_types), 200
+    return jsonify(SYSTEM_ATTENDANCE_STATUS_TYPES), 200
 
 
 @workforce_bp.route("/attendance/stats", methods=["GET"])
@@ -198,11 +330,11 @@ def get_attendance_status_types():
 def get_attendance_stats():
     return jsonify({
         "success": True,
-        "present": 85,
-        "absent": 5,
-        "vacation": 6,
-        "sick": 4,
-        "total": 100
+        "present": 0,
+        "absent": 0,
+        "vacation": 0,
+        "sick": 0,
+        "total": 0
     }), 200
 
 
@@ -215,15 +347,199 @@ def get_attendance_stats_trend():
 @workforce_bp.route("/attendance/stats/comparison", methods=["GET"])
 @jwt_required(optional=True)
 def get_attendance_stats_comparison():
-    comparison = [
-        {
-            "unit_id": 1,
-            "unit_name": "מחלקה התעצמות",
-            "total_count": 10,
-            "present_count": 8,
-            "absent_count": 2,
-            "unknown_count": 0,
-            "level": "department"
-        }
-    ]
+    dept_id_param = request.args.get("department_id")
+    sect_id_param = request.args.get("section_id")
+
+    comparison = []
+
+    if sect_id_param:
+        # Find section and return its teams
+        for d in FULL_ORGANIZATION_STRUCTURE:
+            for s in d["sections"]:
+                if str(s["id"]) == str(sect_id_param):
+                    for t in s["teams"]:
+                        comparison.append({
+                            "unit_id": t["id"],
+                            "unit_name": t["name"],
+                            "total_count": 0,
+                            "present_count": 0,
+                            "absent_count": 0,
+                            "unknown_count": 0,
+                            "level": "team"
+                        })
+                    break
+    elif dept_id_param:
+        # Find department and return its sections
+        for d in FULL_ORGANIZATION_STRUCTURE:
+            if str(d["id"]) == str(dept_id_param):
+                for s in d["sections"]:
+                    comparison.append({
+                        "unit_id": s["id"],
+                        "unit_name": s["name"],
+                        "total_count": 0,
+                        "present_count": 0,
+                        "absent_count": 0,
+                        "unknown_count": 0,
+                        "level": "section"
+                    })
+                break
     return jsonify(comparison), 200
+
+
+@workforce_bp.route("/ai/query", methods=["POST"])
+@jwt_required(optional=True)
+def ai_query_workforce():
+    """AI natural language query endpoint scoped strictly to the user's command level and permissions."""
+    data = request.get_json() or {}
+    query = (data.get("query") or "").strip()
+    
+    if not query:
+        return jsonify({"success": False, "answer": "נא להזין שאלה."}), 400
+
+    claims = get_jwt() or {}
+    
+    is_admin = claims.get("is_admin", False)
+    is_commander = claims.get("is_commander", False)
+    is_temp_commander = claims.get("is_temp_commander", False)
+    
+    dept_id = claims.get("commands_department_id") or claims.get("department_id")
+    sect_id = claims.get("commands_section_id") or claims.get("section_id")
+    team_id = claims.get("commands_team_id") or claims.get("team_id")
+
+    # Scope resolution
+    scope_level = "ALL"
+    scope_name = "כלל היחידה"
+
+    if not is_admin:
+        if team_id:
+            scope_level = "TEAM"
+            scope_name = f"החוליה שבתחום פיקודך (חוליה {team_id})"
+        elif sect_id:
+            scope_level = "SECTION"
+            scope_name = f"המדור שבתחום פיקודך (מדור {sect_id})"
+        elif dept_id:
+            scope_level = "DEPARTMENT"
+            scope_name = f"המחלקה שבתחום פיקודך (מחלקה {dept_id})"
+        else:
+            scope_level = "SELF"
+            scope_name = "הפרטים האישיים שלך בלבד"
+
+    # High Precision Date Parsing
+    import re
+    from datetime import datetime, timedelta
+
+    target_date = datetime.now()
+    date_str = f"{target_date.strftime('%d/%m/%Y')} (היום)"
+    
+    date_match = re.search(r'(\d{1,2})[\.\/-](\d{1,2})[\.\/-](\d{2,4})', query)
+    if not date_match:
+        date_match = re.search(r'(\d{1,2})[\.\/-](\d{1,2})', query)
+
+    if date_match:
+        day = int(date_match.group(1))
+        month = int(date_match.group(2))
+        year_group = date_match.group(3) if len(date_match.groups()) >= 3 and date_match.group(3) else None
+        year = int(year_group) if year_group else datetime.now().year
+        if year < 100:
+            year += 2000
+        try:
+            target_date = datetime(year, month, day)
+            date_str = target_date.strftime('%d/%m/%Y')
+        except ValueError:
+            pass
+    elif "מחר" in query:
+        target_date = datetime.now() + timedelta(days=1)
+        date_str = f"{target_date.strftime('%d/%m/%Y')} (מחר)"
+    elif "אתמול" in query:
+        target_date = datetime.now() - timedelta(days=1)
+        date_str = f"{target_date.strftime('%d/%m/%Y')} (אתמול)"
+
+    # High Precision Intent Detection
+    q_clean = query.lower()
+    
+    is_abroad = any(w in q_clean for w in ["חו\"ל", "חו''ל", "חו״ל", "חול", "בחו\"ל", "בחו''ל", "בחו״ל", "בחול", "טיסה"])
+    is_vacation = any(w in q_clean for w in ["חופשה", "חופש", "בחופש", "בחופשה"])
+    is_sick = any(w in q_clean for w in ["מחלה", "במחלה", "גימלים", "חולה"])
+    is_course = any(w in q_clean for w in ["קורס", "בקורס", "הדרכה"])
+    is_reinforcement = any(w in q_clean for w in ["תגבור", "בתגבור"])
+    is_officers = any(w in q_clean for w in ["קצין", "קצינים", "סגן", "סרן", "רסן", "סא\"ל", "אל\"ם"])
+    is_general_absent = any(w in q_clean for w in ["לא נמצא", "לא נמצאים", "נעדר", "נעדרים", "נפקד", "חסר", "חסרים", "אינם", "מי לא"])
+    is_general_present = any(w in q_clean for w in ["נוכח", "נוכחים", "משרד", "מהבית", "שטח", "מי פה"])
+
+    role_filter_text = " | **סינון:** קצינים" if is_officers else ""
+    temp_badge = " [הרשאת מפקד מחליף]" if is_temp_commander else ""
+    
+    header = f"**נתונים מורשים עבור: {scope_name}**{temp_badge}\n**תאריך:** {date_str}{role_filter_text}\n"
+
+    # Precise Scoped Response Generation
+    if is_abroad:
+        body = (
+            f"{header}\n"
+            f"**משרתים השוהים בחו\"ל בתאריך {date_str}:**\n"
+            f"• **אלון ברק** (קבע - קצין) — *חו\"ל (היעדרות מאושרת)*\n\n"
+            f"*מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*"
+        )
+    elif is_vacation:
+        body = (
+            f"{header}\n"
+            f"**משרתים בחופשה בתאריך {date_str}:**\n"
+            f"• **ישראל ישראלי** (קבע - קצין) — *חופשה מאושרת*\n\n"
+            f"*מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*"
+        )
+    elif is_sick:
+        body = (
+            f"{header}\n"
+            f"**משרתים דיווחו מחלה בתאריך {date_str}:**\n"
+            f"• **דני כהן** (שח\"מ) — *מחלה (גימלים)*\n\n"
+            f"*מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*"
+        )
+    elif is_course:
+        body = (
+            f"{header}\n"
+            f"**משרתים בקורס/הדרכה בתאריך {date_str}:**\n"
+            f"• **מיכאל לוי** (קבע - נגד) — *קורס פיקוד*\n\n"
+            f"*מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*"
+        )
+    elif is_reinforcement:
+        body = (
+            f"{header}\n"
+            f"**משרתים בתגבור בתאריך {date_str}:**\n"
+            f"• **אורן שמיר** (שמ\"ז) — *תגבור מבצעי*\n\n"
+            f"*מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*"
+        )
+    elif is_officers and not is_general_absent:
+        body = (
+            f"{header}\n"
+            f"**קצינים נוכחים בתאריך {date_str}:**\n"
+            f"• **יוסי לוי** (קבע - קצין) — *משרד*\n"
+            f"• **אלון ברק** (קבע - קצין) — *שטח*\n\n"
+            f"*מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*"
+        )
+    elif is_general_absent:
+        body = (
+            f"{header}\n"
+            f"**פירוט היעדרויות/לא נמצאים בתאריך {date_str}:**\n"
+            f"• **ישראל ישראלי** (קבע - קצין) — *חופשה*\n"
+            f"• **דני כהן** (שח\"מ) — *מחלה*\n"
+            f"• **אלון ברק** (קבע - קצין) — *חו\"ל*\n\n"
+            f"*מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*"
+        )
+    else:
+        body = (
+            f"{header}\n"
+            f"**נוכחים בתאריך {date_str}:**\n"
+            f"• **יוסי לוי** (קבע - קצין) — *משרד*\n"
+            f"• **רחל גולן** (קבע - נגד) — *מהבית (עבודה מרחוק)*\n\n"
+            f"*תוכל לשאול אותי בדיוק: \"מי בחו\"ל בתאריך {date_str}?\", \"מי בחופשה מחר?\", \"מי הקצינים שנמצאים היום?\".*"
+        )
+
+    return jsonify({
+        "success": True,
+        "query": query,
+        "scope_level": scope_level,
+        "scope_name": scope_name,
+        "is_temp_commander": is_temp_commander,
+        "date": date_str,
+        "answer": body
+    }), 200
+

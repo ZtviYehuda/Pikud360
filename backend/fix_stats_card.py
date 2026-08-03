@@ -1,4 +1,6 @@
-import { useRef, forwardRef, useImperativeHandle } from "react";
+import os
+
+code = '''import { useRef, forwardRef, useImperativeHandle } from "react";
 import { useEmployeeContext } from "@/context/EmployeeContext";
 import {
   Tooltip,
@@ -153,11 +155,11 @@ export const StatsComparisonCard = forwardRef<any, StatsComparisonCardProps>(
           days === 1 ? "יומית" : days === 7 ? "שבועית" : "חודשית";
         const statsSummary =
           data && data.length > 0
-            ? `\n*סיכום:* ${data.length} יחידות מוצגות.`
+            ? `\\n*סיכום:* ${data.length} יחידות מוצגות.`
             : "";
-        const filterText = subtitle ? `\n*סינון:* ${subtitle}` : "";
+        const filterText = subtitle ? `\\n*סינון:* ${subtitle}` : "";
         const title = `דוח השוואת כוח אדם (${rangeText}) - ${unitName}`;
-        const message = `*${title}*\nתאריך הפקה: ${format(new Date(), "dd/MM/yyyy")}\nתאריך דוח: ${format(selectedDate, "dd/MM/yyyy")}${filterText}${statsSummary}`;
+        const message = `*${title}*\\nתאריך הפקה: ${format(new Date(), "dd/MM/yyyy")}\\nתאריך דוח: ${format(selectedDate, "dd/MM/yyyy")}${filterText}${statsSummary}`;
 
         const file = new File([blob], `comparison-${days}.png`, {
           type: "image/png",
@@ -482,3 +484,10 @@ export const StatsComparisonCard = forwardRef<any, StatsComparisonCardProps>(
     );
   },
 );
+'''
+
+target_path = r'C:\Users\nafta\OneDrive\שולחן העבודה\Pikud360\frontend - NEW\src\components\dashboard\StatsComparisonCard.tsx'
+with open(target_path, 'w', encoding='utf-8') as f:
+    f.write(code)
+
+print('REWRITTEN StatsComparisonCard.tsx WITH CLEAN UTF-8!')

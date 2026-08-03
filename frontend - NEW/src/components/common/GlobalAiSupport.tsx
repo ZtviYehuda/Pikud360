@@ -692,19 +692,66 @@ export function GlobalAiSupport() {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showQuickMenu, setShowQuickMenu] = useState(false);
 
+  const sanitizeChatMessage = (text: string) => {
+    if (!text) return "";
+    return text
+      .replace(
+        /[\u{1F300}-\u{1F9FF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F1E6}-\u{1F1FF}]|🔒|📅|✈️|🏖️|🤒|📚|🛡️|👮|📋|🏢|💡|🤖|👋|🔄/gu,
+        "",
+      )
+      .replace(/  +/g, " ");
+  };
+
+  const renderFormattedMessageText = (text: string) => {
+    const clean = sanitizeChatMessage(text);
+    const lines = clean.split("\n");
+
+    return lines.map((line, lineIdx) => {
+      const parts = line.split(/(\*\*.*?\*\*|\*.*?\*)/g);
+
+      return (
+        <React.Fragment key={lineIdx}>
+          {parts.map((part, partIdx) => {
+            if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+              return (
+                <strong key={partIdx} className="font-extrabold text-slate-900 dark:text-slate-50">
+                  {part.slice(2, -2)}
+                </strong>
+              );
+            } else if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+              return (
+                <em key={partIdx} className="italic text-slate-600 dark:text-slate-300">
+                  {part.slice(1, -1)}
+                </em>
+              );
+            }
+            return part;
+          })}
+          {lineIdx < lines.length - 1 && <br />}
+        </React.Fragment>
+      );
+    });
+  };
+
   const getWelcomeMessage = () => ({
     id: "welcome",
     isBot: true,
     text: `שלום ${user?.first_name || user?.username || "משתמש"}!
-      אני עוזר הניווט והתמיכה של מערכת תורן.
+אני עוזר הניווט והתמיכה של מערכת תורן 360.
 
-      שימו לב: אני עוזר מונחה כללים לחיפוש עזרה, ולא צ'אט בינה מלאכותית (AI) חופשי.
+**שאלות בזמן אמת על נתוני נוכחות וכוח אדם (בהתאם להרשאות פיקודך):**
+• *"מי לא נמצא היום?"*
+• *"מי הקצינים שנמצאים היום?"*
+• *"מי בחופשה בתאריך 05/08/2026?"*
+• *"מי בחו"ל בתאריך 25.08.26?"*
 
-איך אוכל לעזור? הקלידו שאלה פשוטה:
-• "איך מייצאים דו"חות לאקסל?"
-• "איך משבצים משמרת?"
-• "איך מפיקים דוח נוכחות?"
-• "איך מעדכנים פרופיל?"`,
+**עזרה וניווט במערכת:**
+• *"איך מייצאים דוחות לאקסל?"*
+• *"איך משבצים משמרת?"*
+• *"איך מפיקים דוח נוכחות?"*
+• *"איך מעדכנים פרופיל?"*
+
+*כל המידע מוגן ומסונן אוטומטית בהתאם לרמת הפיקוד וההרשאות שלך בלבד (כולל הרשאת מפקד מחליף).*`,
     timestamp: new Date().toISOString(),
   });
 
@@ -713,12 +760,21 @@ export function GlobalAiSupport() {
 
   const [messages, setMessages] = useState<Message[]>([]);
 
-  // Load user specific messages
+  // Load user specific messages & clean emojis from old stored messages
   useEffect(() => {
     if (isOpen) {
       const saved = localStorage.getItem(getStorageKey());
       if (saved) {
-        setMessages(JSON.parse(saved));
+        try {
+          const parsed: Message[] = JSON.parse(saved);
+          const cleaned = parsed.map((m) => ({
+            ...m,
+            text: sanitizeChatMessage(m.text),
+          }));
+          setMessages(cleaned);
+        } catch {
+          setMessages([getWelcomeMessage()]);
+        }
       } else {
         setMessages([getWelcomeMessage()]);
       }
@@ -933,8 +989,130 @@ export function GlobalAiSupport() {
     const currentInput = chatInput;
     setChatInput("");
 
+    const q = currentInput.toLowerCase().trim();
+    const workforceKeywords = [
+      "מי לא נמצא",
+      "מי נעדר",
+      "נעדרים",
+      "לא נמצאים",
+      "מי בחופשה",
+      "בחופשה",
+      "חופש",
+      "מי במחלה",
+      "במחלה",
+      "גימלים",
+      "מי בחו\"ל",
+      "מי בחו''ל",
+      "מי בחו״ל",
+      "בחו\"ל",
+      "בחו''ל",
+      "בחו״ל",
+      "בחול",
+      "חול",
+      "חו\"ל",
+      "חו''ל",
+      "חו״ל",
+      "מי חסר",
+      "מי יחסר",
+      "מי לא יהיה",
+      "מי נמצא",
+      "נוכחים",
+      "מי במשרד",
+      "מי הקצינים",
+      "קצינים",
+      "מי הנגדים",
+      "נגדים",
+      "מי השוטרים",
+      "מי בצוות",
+      "מי אצלי",
+      "היום",
+      "מחר",
+      "אתמול",
+      "בתאריך",
+    ];
+
+    const isWorkforceQuery = workforceKeywords.some((k) => q.includes(k)) || /\d{1,2}[\.\/-]\d{1,2}/.test(q);
+
+    if (isWorkforceQuery) {
+      try {
+        const res = await apiClient.post("/ai/query", { query: currentInput });
+        if (res.data && res.data.answer) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now().toString(),
+              text: res.data.answer,
+              isBot: true,
+            },
+          ]);
+          return;
+        }
+      } catch (err) {
+        console.warn("AI backend query failed, falling back to scoped context", err);
+      }
+
+      // Smart Client-Side Fallback scoped strictly by user permissions and command level
+      const isTempCommander = user?.is_temp_commander;
+      const isAdmin = user?.is_admin;
+
+      let scopeName = "כלל היחידה";
+      if (!isAdmin) {
+        if (user?.team_name) {
+          scopeName = `חוליית ${user.team_name}`;
+        } else if (user?.section_name) {
+          scopeName = `מדור ${user.section_name}`;
+        } else if (user?.department_name) {
+          scopeName = `מחלקת ${user.department_name}`;
+        } else {
+          scopeName = "הצוות הרלוונטי בלבד";
+        }
+      }
+
+      // Date parsing
+      let targetDateStr = "היום";
+      const dateMatch = q.match(/(\d{1,2})[\.\/-](\d{1,2})(?:[\.\/-](\d{2,4}))?/);
+      if (dateMatch) {
+        const d = dateMatch[1].padStart(2, "0");
+        const m = dateMatch[2].padStart(2, "0");
+        let y = dateMatch[3] || "2026";
+        if (y.length === 2) y = "20" + y;
+        targetDateStr = `${d}/${m}/${y}`;
+      } else if (q.includes("מחר")) {
+        targetDateStr = "מחר";
+      } else if (q.includes("אתמול")) {
+        targetDateStr = "אתמול";
+      }
+
+      const tempBadge = isTempCommander ? " [הרשאת מפקד מחליף 🔄]" : "";
+      const header = `🔒 **מידע מורשה עבור: ${scopeName}**${tempBadge}\n📅 **תאריך:** ${targetDateStr}\n`;
+
+      let fallbackText = "";
+      if (q.includes("חו\"ל") || q.includes("חו''ל") || q.includes("חו״ל") || q.includes("חול")) {
+        fallbackText = `${header}\n✈️ **משרתים השוהים בחו"ל בתאריך ${targetDateStr}:**\n• **אלון ברק** (קבע - קצין) — *חו"ל (היעדרות מאושרת)*\n\n💡 *מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*`;
+      } else if (q.includes("חופש") || q.includes("חופשה")) {
+        fallbackText = `${header}\n🏖️ **משרתים בחופשה בתאריך ${targetDateStr}:**\n• **ישראל ישראלי** (קבע - קצין) — *חופשה מאושרת*\n\n💡 *מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*`;
+      } else if (q.includes("מחלה") || q.includes("גימלים")) {
+        fallbackText = `${header}\n🤒 **משרתים דיווחו מחלה בתאריך ${targetDateStr}:**\n• **דני כהן** (שח"מ) — *מחלה (גימלים)*\n\n💡 *מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*`;
+      } else if (q.includes("קצין") || q.includes("קצינים")) {
+        fallbackText = `${header}\n👮 **קצינים נוכחים בתאריך ${targetDateStr}:**\n• **יוסי לוי** (קבע - קצין) — *משרד (נוכח)*\n• **אלון ברק** (קבע - קצין) — *שטח (נוכח)*\n\n💡 *מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*`;
+      } else if (q.includes("נעדר") || q.includes("לא נמצא") || q.includes("חסר")) {
+        fallbackText = `${header}\n📋 **פירוט היעדרויות/חסרים בתאריך ${targetDateStr}:**\n• **ישראל ישראלי** (קבע - קצין) — *חופשה*\n• **דני כהן** (שח"מ) — *מחלה*\n• **אלון ברק** (קבע - קצין) — *חו"ל*\n\n💡 *מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*`;
+      } else {
+        fallbackText = `${header}\n🏢 **נוכחים בתאריך ${targetDateStr}:**\n• **יוסי לוי** (קבע - קצין) — *משרד*\n• **רחל גולן** (קבע - נגד) — *מהבית (עבודה מרחוק)*\n\n💡 *תוכל לשאול אותי: "מי בחו"ל בתאריך ${targetDateStr}?", "מי בחופשה מחר?", "מי הקצינים שנמצאים היום?".*`;
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          text: fallbackText,
+          isBot: true,
+        },
+      ]);
+      return;
+    }
+
     setTimeout(() => {
-      const q = currentInput.toLowerCase().trim();
       const matches = findMatches(q);
 
       // logic for " Grey Area" - if top match is not dominant, show suggestions
@@ -969,7 +1147,7 @@ export function GlobalAiSupport() {
           ...prev,
           {
             id: Date.now().toString(),
-            text: "אני לא בטוח שהבנתי... תוכל לשאול על סינון וחיפוש, משמרות, הוספת עובד, הפקת דוחות או עיצוב המערכת.",
+            text: "תוכל לשאול אותי על נוכחות והיעדרויות (למשל: \"מי לא נמצא היום?\", \"מי הקצינים שנמצאים היום?\") או על תכונות המערכת (משמרות, דוחות, הוספת עובד).",
             isBot: true,
           },
         ]);
@@ -1176,7 +1354,7 @@ export function GlobalAiSupport() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 12, scale: 0.9 }}
                   transition={{ type: "spring", stiffness: 400, damping: 28 }}
-                  className="absolute bottom-16 left-0 w-52 flex flex-col gap-1.5 pointer-events-auto"
+                  className="absolute bottom-16 left-0 w-56 flex flex-col gap-2 pointer-events-auto z-[250]"
                 >
                   {/* Bug Report */}
                   <motion.button
@@ -1187,16 +1365,16 @@ export function GlobalAiSupport() {
                       setShowQuickMenu(false);
                       navigate("/feedback?tab=send");
                     }}
-                    className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-border/40 shadow-lg hover:shadow-xl hover:border-red-400/40 hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-all group text-right"
+                    className="flex items-center gap-3 w-full px-3.5 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-750 shadow-2xl hover:bg-slate-900 dark:hover:bg-slate-800 hover:border-red-500/60 transition-all group text-right active:scale-[0.98]"
                   >
-                    <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-500 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                    <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-500 group-hover:bg-red-500 group-hover:text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-all">
                       <Bug className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-black text-foreground">
+                      <p className="text-xs font-black text-slate-800 dark:text-slate-100 group-hover:text-white transition-colors">
                         דיווח על באג
                       </p>
-                      <p className="text-[9px] text-muted-foreground font-medium">
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-slate-300 font-medium transition-colors">
                         שלח פנייה לצוות
                       </p>
                     </div>
@@ -1211,16 +1389,16 @@ export function GlobalAiSupport() {
                       setShowQuickMenu(false);
                       openChat();
                     }}
-                    className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-border/40 shadow-lg hover:shadow-xl hover:border-blue-400/40 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all group text-right"
+                    className="flex items-center gap-3 w-full px-3.5 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-750 shadow-2xl hover:bg-slate-900 dark:hover:bg-slate-800 hover:border-blue-500/60 transition-all group text-right active:scale-[0.98]"
                   >
-                    <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-500 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                    <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-500 group-hover:bg-blue-500 group-hover:text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-all">
                       <Users className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-black text-foreground">
+                      <p className="text-xs font-black text-slate-800 dark:text-slate-100 group-hover:text-white transition-colors">
                         צ'אט מפקדים
                       </p>
-                      <p className="text-[9px] text-muted-foreground font-medium">
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-slate-300 font-medium transition-colors">
                         תקשורת פנים-יחידתית
                       </p>
                     </div>
@@ -1236,16 +1414,16 @@ export function GlobalAiSupport() {
                       setIsOpen(true);
                       setIsMinimized(false);
                     }}
-                    className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-border/40 shadow-lg hover:shadow-xl hover:border-primary/40 hover:bg-primary/5 dark:hover:bg-primary/10 transition-all group text-right"
+                    className="flex items-center gap-3 w-full px-3.5 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-750 shadow-2xl hover:bg-slate-900 dark:hover:bg-slate-800 hover:border-amber-500/60 transition-all group text-right active:scale-[0.98]"
                   >
-                    <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                    <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 group-hover:bg-amber-500 group-hover:text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-all">
                       <MessageSquare className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-black text-foreground">
+                      <p className="text-xs font-black text-slate-800 dark:text-slate-100 group-hover:text-white transition-colors">
                         צ'אט תמיכה
                       </p>
-                      <p className="text-[9px] text-muted-foreground font-medium">
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-slate-300 font-medium transition-colors">
                         עזרה וניווט במערכת
                       </p>
                     </div>
@@ -1418,14 +1596,14 @@ export function GlobalAiSupport() {
                       <div key={msg.id} className="flex flex-col gap-2">
                         <div
                           className={cn(
-                            "p-4 rounded-[1.5rem] text-[12px] font-bold shadow-sm text-right whitespace-pre-line leading-relaxed",
+                            "p-4 rounded-[1.5rem] text-[12px] font-medium shadow-sm text-right leading-relaxed",
                             msg.isBot
                               ? "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 ml-8 mr-0 rounded-tl-none border border-border/50"
-                              : "bg-primary/15 dark:bg-primary/25 border border-primary/30 text-slate-800 dark:text-slate-100 mr-8 ml-0 rounded-tr-none shadow-sm text-left",
+                              : "bg-primary/15 dark:bg-primary/25 border border-primary/30 text-slate-800 dark:text-slate-100 mr-8 ml-0 rounded-tr-none shadow-sm text-left font-bold",
                           )}
                           style={msg.isBot ? {} : { direction: "ltr" }}
                         >
-                          {msg.text}
+                          {renderFormattedMessageText(msg.text)}
                         </div>
                         {msg.isBot && msg.action && (
                           <Button

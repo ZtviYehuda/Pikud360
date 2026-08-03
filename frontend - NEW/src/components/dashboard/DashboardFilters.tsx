@@ -328,7 +328,7 @@ export const DashboardFilters = ({
                     <SelectValue placeholder="בחר מחלקה..." />
                   </SelectTrigger>
                   <SelectContent dir="rtl">
-                    {user?.is_admin && (
+                    {(user?.is_admin || user?.is_commander || (!user?.commands_department_id && !user?.commands_section_id && !user?.commands_team_id)) && (
                       <SelectItem value="all">כל המחלקות</SelectItem>
                     )}
                     {structure.map((dept) => (
