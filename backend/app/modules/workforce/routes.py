@@ -319,6 +319,24 @@ def get_employees_service_types():
     return jsonify(SYSTEM_SERVICE_TYPES), 200
 
 
+@workforce_bp.route("/notifications/alerts", methods=["GET"])
+@jwt_required(optional=True)
+def get_notifications_alerts():
+    return jsonify([]), 200
+
+
+@workforce_bp.route("/notifications/alerts/history", methods=["GET"])
+@jwt_required(optional=True)
+def get_notifications_alerts_history():
+    return jsonify([]), 200
+
+
+@workforce_bp.route("/notifications/alerts/<alert_id>/read", methods=["POST"])
+@jwt_required(optional=True)
+def mark_notification_alert_read(alert_id):
+    return jsonify({"success": True}), 200
+
+
 @workforce_bp.route("/attendance/status-types", methods=["GET"])
 @jwt_required(optional=True)
 def get_attendance_status_types():
@@ -413,16 +431,89 @@ def ai_query_workforce():
     if not is_admin:
         if team_id:
             scope_level = "TEAM"
-            scope_name = f"החוליה שבתחום פיקודך (חוליה {team_id})"
         elif sect_id:
             scope_level = "SECTION"
-            scope_name = f"המדור שבתחום פיקודך (מדור {sect_id})"
         elif dept_id:
             scope_level = "DEPARTMENT"
-            scope_name = f"המחלקה שבתחום פיקודך (מחלקה {dept_id})"
         else:
             scope_level = "SELF"
-            scope_name = "הפרטים האישיים שלך בלבד"
+
+    # Human-Readable Scope Name Resolution
+    if scope_level == "TEAM":
+        team_name_claim = claims.get("team_name")
+        if team_name_claim:
+            scope_name = f"חוליית {team_name_claim}"
+        else:
+            found = False
+            for d in FULL_ORGANIZATION_STRUCTURE:
+                for s in d.get("sections", []):
+                    for t in s.get("teams", []):
+                        if str(t["id"]) == str(team_id):
+                            scope_name = t["name"]
+                            found = True
+                            break
+            if not found:
+                scope_name = f"חוליה {team_id}"
+    elif scope_level == "SECTION":
+        sect_name_claim = claims.get("section_name")
+        if sect_name_claim:
+            scope_name = f"מדור {sect_name_claim}"
+        else:
+            found = False
+            for d in FULL_ORGANIZATION_STRUCTURE:
+                for s in d.get("sections", []):
+                    if str(s["id"]) == str(sect_id):
+                        scope_name = s["name"]
+                        found = True
+                        break
+            if not found:
+                scope_name = f"מדור {sect_id}"
+    elif scope_level == "DEPARTMENT":
+        dept_name_claim = claims.get("department_name")
+        if dept_name_claim:
+            scope_name = f"מחלקת {dept_name_claim}"
+        else:
+            found = False
+            for d in FULL_ORGANIZATION_STRUCTURE:
+                if str(d["id"]) == str(dept_id):
+                    scope_name = d["name"]
+                    found = True
+                    break
+            if not found:
+                scope_name = f"מחלקה {dept_id}"
+    elif scope_level == "SELF":
+        scope_name = "הפרטים האישיים שלך בלבד"
+
+    q_clean = query.lower()
+
+    # Strict Cross-Unit Access Authorization Enforcement
+    # Block users from querying another department, section, or team outside their assigned scope
+    if not is_admin and scope_level != "ALL":
+        for d in FULL_ORGANIZATION_STRUCTURE:
+            d_name_clean = d["name"].lower()
+            # If user asks about a different department than their assigned department
+            if scope_level in ["DEPARTMENT", "SECTION", "TEAM"] and d_name_clean in q_clean and (scope_level != "DEPARTMENT" or str(d["id"]) != str(dept_id)):
+                return jsonify({
+                    "success": True,
+                    "query": query,
+                    "answer": f"**גישה נדחתה: אין הרשאה לצפייה בנתונים**\n"
+                              f"אין לך הרשאה לצפות בנתוני {d['name']}.\n\n"
+                              f"*תחום הפיקוד המורשה שלך במערכת מוגבל ל: {scope_name} בלבד.*"
+                }), 200
+
+            for s in d.get("sections", []):
+                s_name_clean = s["name"].lower()
+                s_short_clean = s["name"].replace("מדור ", "").lower()
+                # If user asks about a section outside their authorized section
+                if scope_level in ["SECTION", "TEAM"] and (s_name_clean in q_clean or (len(s_short_clean) > 3 and s_short_clean in q_clean)):
+                    if scope_level == "SECTION" and str(s["id"]) != str(sect_id):
+                        return jsonify({
+                            "success": True,
+                            "query": query,
+                            "answer": f"**גישה נדחתה: אין הרשאה לצפייה בנתונים**\n"
+                                      f"אין לך הרשאה לצפות בנתוני {s['name']}.\n\n"
+                                      f"*תחום הפיקוד המורשה שלך במערכת מוגבל ל: {scope_name} בלבד.*"
+                        }), 200
 
     # High Precision Date Parsing
     import re

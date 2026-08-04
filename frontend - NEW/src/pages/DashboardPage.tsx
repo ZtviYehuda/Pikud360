@@ -87,13 +87,31 @@ export default function DashboardPage() {
   const [selectedStatusId, setSelectedStatusId] = useState<number | null>(null);
   const [structure, setStructure] = useState<Department[]>([]);
 
+  // Filters State (must be declared BEFORE any useEffect referencing them)
+  const [selectedDeptId, setSelectedDeptId] = useState<string>("");
+  const [selectedSectionId, setSelectedSectionId] = useState<string>("");
+  const [selectedTeamId, setSelectedTeamId] = useState<string>("");
+  const [selectedStatusData, setSelectedStatusData] = useState<{
+    id: number;
+    name: string;
+    color: string;
+  } | null>(null);
+  const [serviceTypes, setServiceTypes] = useState<any[]>([]);
+  const [selectedServiceTypes, setSelectedServiceTypes] = useState<string[]>(
+    [],
+  );
+  const [selectedAgeRange, setSelectedAgeRange] = useState<{
+    min?: number;
+    max?: number;
+  }>({});
+
   // Filter Modal State
   const [filterOpen, setFilterOpen] = useState(false);
 
   // New Stats
   const [comparisonStats, setComparisonStats] = useState<any[]>([]);
   const [trendStats, setTrendStats] = useState<any[]>([]);
-  const [loadingExtras, setLoadingExtras] = useState(true);
+  const [trendLoading, setTrendLoading] = useState(true);
   const [ageDistribution, setAgeDistribution] = useState<any[]>([]);
   const [averageAge, setAverageAge] = useState(0);
   const [birthdays, setBirthdays] = useState<any[]>([]);
@@ -124,24 +142,6 @@ export default function DashboardPage() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
 
-
-  // Filters
-  const [selectedDeptId, setSelectedDeptId] = useState<string>("");
-  const [selectedSectionId, setSelectedSectionId] = useState<string>("");
-  const [selectedTeamId, setSelectedTeamId] = useState<string>("");
-  const [selectedStatusData, setSelectedStatusData] = useState<{
-    id: number;
-    name: string;
-    color: string;
-  } | null>(null);
-  const [serviceTypes, setServiceTypes] = useState<any[]>([]);
-  const [selectedServiceTypes, setSelectedServiceTypes] = useState<string[]>(
-    [],
-  );
-  const [selectedAgeRange, setSelectedAgeRange] = useState<{
-    min?: number;
-    max?: number;
-  }>({});
   const isOldDate = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -149,6 +149,43 @@ export default function DashboardPage() {
     selected.setHours(0, 0, 0, 0);
     return selected < today;
   }, [selectedDate]);
+
+  // Fetch Trend Stats
+  useEffect(() => {
+    const fetchTrend = async () => {
+      setTrendLoading(true);
+      try {
+        const referenceDate = isOldDate ? selectedDate : new Date();
+        const formattedDate = format(referenceDate, "yyyy-MM-dd");
+        
+        const trendData = await getTrendStats(trendRange, formattedDate, {
+          department_id: selectedDeptId,
+          section_id: selectedSectionId,
+          status_id: (selectedStatusData?.id && selectedStatusData.id > 0) ? selectedStatusData.id.toString() : undefined,
+          serviceTypes: selectedServiceTypes.join(","),
+          min_age: selectedAgeRange.min,
+          max_age: selectedAgeRange.max,
+        });
+        setTrendStats(trendData || []);
+      } catch (err) {
+        console.error("fetchTrend error", err);
+        setTrendStats([]);
+      } finally {
+        setTrendLoading(false);
+      }
+    };
+    fetchTrend();
+  }, [
+    getTrendStats,
+    isOldDate ? format(selectedDate, "yyyy-MM-dd") : "current",
+    trendRange,
+    selectedDeptId,
+    selectedSectionId,
+    selectedTeamId,
+    selectedStatusData?.id,
+    selectedServiceTypes,
+    selectedAgeRange,
+  ]);
 
   // Load filters from localStorage on mount
   useEffect(() => {
@@ -159,7 +196,16 @@ export default function DashboardPage() {
         if (filters.deptId !== undefined) setSelectedDeptId(filters.deptId);
         if (filters.sectionId !== undefined) setSelectedSectionId(filters.sectionId);
         if (filters.teamId !== undefined) setSelectedTeamId(filters.teamId);
-        if (filters.statusData !== undefined) setSelectedStatusData(filters.statusData);
+        if (filters.statusData !== undefined) {
+          // Never restore negative dummy status IDs (-1, -2) as API status filters
+          if (filters.statusData && filters.statusData.id > 0) {
+            setSelectedStatusData(filters.statusData);
+            setSelectedStatusId(filters.statusData.id);
+          } else {
+            setSelectedStatusData(null);
+            setSelectedStatusId(null);
+          }
+        }
         if (filters.serviceTypes !== undefined) setSelectedServiceTypes(filters.serviceTypes);
         if (filters.ageRange !== undefined) setSelectedAgeRange(filters.ageRange);
       } catch (e) {
@@ -178,7 +224,7 @@ export default function DashboardPage() {
       deptId: selectedDeptId,
       sectionId: selectedSectionId,
       teamId: selectedTeamId,
-      statusData: selectedStatusData,
+      statusData: selectedStatusData && selectedStatusData.id > 0 ? selectedStatusData : null,
       serviceTypes: selectedServiceTypes,
       ageRange: selectedAgeRange,
     };
@@ -226,7 +272,7 @@ export default function DashboardPage() {
             f.deptId ||
             f.sectionId ||
             f.teamId ||
-            f.statusData ||
+            (f.statusData && f.statusData.id > 0) ||
             (f.serviceTypes && f.serviceTypes.length > 0)
           );
         } catch (e) {
@@ -293,7 +339,7 @@ export default function DashboardPage() {
           department_id: selectedDeptId,
           section_id: selectedSectionId,
           team_id: selectedTeamId,
-          status_id: selectedStatusData?.id?.toString(),
+          status_id: (selectedStatusData?.id && selectedStatusData.id > 0) ? selectedStatusData.id.toString() : undefined,
           serviceTypes: selectedServiceTypes.join(","),
           min_age: selectedAgeRange.min,
           max_age: selectedAgeRange.max,
@@ -305,7 +351,7 @@ export default function DashboardPage() {
     fetchComparison();
   }, [
     getComparisonStats,
-    selectedDate,
+    format(selectedDate, "yyyy-MM-dd"),
     comparisonRange,
     selectedDeptId,
     selectedSectionId,
@@ -326,7 +372,7 @@ export default function DashboardPage() {
       const trendData = await getTrendStats(trendRange, formattedDate, {
         department_id: selectedDeptId,
         section_id: selectedSectionId,
-        status_id: selectedStatusData?.id?.toString(),
+        status_id: (selectedStatusData?.id && selectedStatusData.id > 0) ? selectedStatusData.id.toString() : undefined,
         serviceTypes: selectedServiceTypes.join(","),
         min_age: selectedAgeRange.min,
         max_age: selectedAgeRange.max,
@@ -359,7 +405,7 @@ export default function DashboardPage() {
           serviceTypes: selectedServiceTypes.join(","),
           min_age: selectedAgeRange.min,
           max_age: selectedAgeRange.max,
-          status_id: selectedStatusId !== null ? selectedStatusId.toString() : undefined,
+          status_id: (selectedStatusId !== null && selectedStatusId > 0) ? selectedStatusId.toString() : undefined,
         });
 
         if (data) {
@@ -869,7 +915,7 @@ export default function DashboardPage() {
             <div className="col-span-2 md:col-span-2 xl:col-span-2 order-3 md:order-1 xl:order-1">
               <AttendanceTrendCard 
                 data={trendStats}
-                loading={loadingExtras}
+                loading={trendLoading}
                 range={trendRange}
                 unitName={unitName}
                 filterTags={activeFilterTags}
@@ -903,7 +949,7 @@ export default function DashboardPage() {
               <BirthdaysCard 
                 id="birthdays-card"
                 birthdays={birthdays}
-                loading={loadingExtras}
+                loading={false}
                 unitName={unitName}
                 className={cn(
                   activeTutorial === "birthdays" && "tutorial-highlight"

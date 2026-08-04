@@ -190,7 +190,7 @@ export const AgeDistributionChart = ({
 
       {/* Chart Container */}
       <div className="flex flex-col flex-1 w-full min-h-[220px] sm:min-h-[240px] md:min-h-[300px] relative mt-0 overflow-visible select-none px-2">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
           <BarChart
             data={chartData}
             margin={{ top: 25, right: 10, left: 10, bottom: 5 }}

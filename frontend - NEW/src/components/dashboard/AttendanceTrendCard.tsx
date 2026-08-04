@@ -255,14 +255,22 @@ export const AttendanceTrendCard = forwardRef<any, AttendanceTrendCardProps>(
 
     if (loading) {
       return (
-        <Card className={cn("h-full", className)}>
+        <Card className={cn("h-full min-h-[300px]", className)}>
           <CardHeader>
             <CardTitle className="text-lg animate-pulse bg-muted h-6 w-32 rounded"></CardTitle>
             <CardDescription className="animate-pulse bg-muted h-4 w-48 rounded mt-2"></CardDescription>
           </CardHeader>
           <CardContent className="h-[300px] flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
           </CardContent>
+        </Card>
+      );
+    }
+
+    if (!data || data.length === 0) {
+      return (
+        <Card className={cn("h-full min-h-[300px] flex flex-col justify-center items-center p-6 text-muted-foreground/40", className)}>
+          <p className="font-bold text-sm text-center">אין נתונים להצגה</p>
         </Card>
       );
     }
