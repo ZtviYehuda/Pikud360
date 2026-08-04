@@ -50,7 +50,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   open,
   onOpenChange,
   onApply,
-  employees,
+  employees = [],
 }) => {
   const { user } = useAuthContext();
   const [filters, setFilters] = useState<EmployeeFilters>({
@@ -58,7 +58,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
     sections: [],
     teams: [],
     serviceTypes: [],
-    statuses: [],
+    statusNames: [],
     isCommander: false,
     isAdmin: false,
     hasSecurityClearance: false,
@@ -78,7 +78,8 @@ export const FilterModal: React.FC<FilterModalProps> = ({
     const srvTypes = new Set<string>();
     const currStatuses = new Set<string>();
 
-    employees.forEach((emp) => {
+    const safeList = Array.isArray(employees) ? employees : [];
+    safeList.forEach((emp) => {
       if (emp.team_name) teams.add(emp.team_name);
       if (emp.service_type_name) srvTypes.add(emp.service_type_name);
       if (emp.status_name) currStatuses.add(emp.status_name);
@@ -196,7 +197,8 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   }, [filters.sections, hierarchyData, user]);
 
   const filteredCount = useMemo(() => {
-    return employees.filter((emp) => {
+    const safeList = Array.isArray(employees) ? employees : [];
+    return safeList.filter((emp) => {
       // Basic search
       if (filters.searchText) {
         const fullName = `${emp.first_name} ${emp.last_name}`.toLowerCase();
@@ -272,6 +274,17 @@ export const FilterModal: React.FC<FilterModalProps> = ({
     onOpenChange(false);
   };
 
+  const toggleSelectAll = (type: keyof EmployeeFilters, allValues: string[]) => {
+    setFilters((prev: any) => {
+      const current = (prev[type] as string[]) || [];
+      const isAllSelected = current.length === allValues.length && allValues.every((v) => current.includes(v));
+      return {
+        ...prev,
+        [type]: isAllSelected ? [] : [...allValues],
+      };
+    });
+  };
+
   const activeFiltersCount = Object.entries(filters).reduce((acc, [_, val]) => {
     if (Array.isArray(val)) return acc + val.length;
     if (typeof val === "boolean" && val) return acc + 1;
@@ -279,10 +292,14 @@ export const FilterModal: React.FC<FilterModalProps> = ({
     return acc;
   }, 0);
 
+  const orgSelectedCount = (filters.departments?.length || 0) + (filters.sections?.length || 0) + (filters.teams?.length || 0);
+  const statusSelectedCount = filters.statuses?.length || 0;
+  const serviceSelectedCount = filters.serviceTypes?.length || 0;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-[560px] md:max-w-[620px] max-h-[92vh] sm:max-h-[85vh] p-0 border-none bg-background flex flex-col overflow-hidden !gap-0 pointer-events-auto rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl"
+        className="sm:max-w-[560px] md:max-w-[620px] max-h-[92vh] sm:max-h-[85vh] p-0 border border-primary/20 dark:border-white/15 bg-card/98 backdrop-blur-2xl flex flex-col overflow-hidden !gap-0 pointer-events-auto rounded-t-[2.5rem] sm:rounded-3xl shadow-[0_20px_70px_rgba(0,0,0,0.18)] dark:shadow-[0_20px_70px_rgba(0,0,0,0.6)] ring-1 ring-black/5 dark:ring-white/10"
         dir="rtl"
       >
         <DialogDragHandle />
@@ -310,16 +327,16 @@ export const FilterModal: React.FC<FilterModalProps> = ({
         <div className="px-4 border-b border-border/30 shrink-0">
           <div className="flex gap-6 overflow-x-auto no-scrollbar py-3">
             {[
-              { id: "org", label: "יחידות ארגוניות" },
-              { id: "statuses", label: "סטטוסים" },
-              { id: "service", label: "מעמד" },
+              { id: "org", label: `יחידות ארגוניות${orgSelectedCount ? ` (${orgSelectedCount})` : ""}` },
+              { id: "statuses", label: `סטטוסים${statusSelectedCount ? ` (${statusSelectedCount})` : ""}` },
+              { id: "service", label: `מעמד${serviceSelectedCount ? ` (${serviceSelectedCount})` : ""}` },
               { id: "ages", label: "גילאים" },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "text-sm font-black whitespace-nowrap pb-2 border-b-2 transition-all relative",
+                  "text-sm font-black whitespace-nowrap pb-2 border-b-2 transition-all relative flex items-center gap-1.5",
                   activeTab === tab.id
                     ? "text-foreground border-primary"
                     : "text-muted-foreground border-transparent"
@@ -337,49 +354,81 @@ export const FilterModal: React.FC<FilterModalProps> = ({
             <div className="space-y-8">
               {/* Departments */}
               <div className="space-y-4">
-                <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                  מחלקות
-                </Label>
-                <div className="flex flex-wrap gap-2.5">
-                  {availableDepts.map((dept) => (
-                    <Button
-                      key={dept}
-                      variant="ghost"
-                      onClick={() => toggleFilter("departments", dept)}
-                      className={cn(
-                        "h-10 px-4 rounded-xl text-xs font-black transition-all border",
-                        filters.departments?.includes(dept)
-                          ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-                          : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
-                      )}
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+                    מחלקות {filters.departments?.length ? `(${filters.departments.length})` : ""}
+                  </Label>
+                  {availableDepts.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => toggleSelectAll("departments", availableDepts)}
+                      className="text-[11px] font-black text-primary hover:underline"
                     >
-                      {dept}
-                    </Button>
-                  ))}
+                      {filters.departments?.length === availableDepts.length ? "בטל הכל" : "בחר הכל"}
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2.5">
+                  {availableDepts.map((dept) => {
+                    const isSelected = filters.departments?.includes(dept);
+                    return (
+                      <Button
+                        key={dept}
+                        variant="ghost"
+                        onClick={() => toggleFilter("departments", dept)}
+                        className={cn(
+                          "h-10 px-4 rounded-xl text-xs font-black transition-all border flex items-center gap-1.5",
+                          isSelected
+                            ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 shadow-xs"
+                            : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
+                        )}
+                      >
+                        {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                        {dept}
+                      </Button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Sections */}
               <div className="space-y-4">
-                <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                  מדורים
-                </Label>
-                <div className="flex flex-wrap gap-2.5">
-                  {availableSections.length > 0 ? availableSections.map((sect) => (
-                    <Button
-                      key={sect}
-                      variant="ghost"
-                      onClick={() => toggleFilter("sections", sect)}
-                      className={cn(
-                        "h-10 px-4 rounded-xl text-xs font-black transition-all border",
-                        filters.sections?.includes(sect)
-                          ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-                          : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
-                      )}
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+                    מדורים {filters.sections?.length ? `(${filters.sections.length})` : ""}
+                  </Label>
+                  {availableSections.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => toggleSelectAll("sections", availableSections)}
+                      className="text-[11px] font-black text-primary hover:underline"
                     >
-                      {sect}
-                    </Button>
-                  )) : (
+                      {filters.sections?.length === availableSections.length ? "בטל הכל" : "בחר הכל"}
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2.5">
+                  {availableSections.length > 0 ? (
+                    availableSections.map((sect) => {
+                      const isSelected = filters.sections?.includes(sect);
+                      return (
+                        <Button
+                          key={sect}
+                          variant="ghost"
+                          onClick={() => toggleFilter("sections", sect)}
+                          className={cn(
+                            "h-10 px-4 rounded-xl text-xs font-black transition-all border flex items-center gap-1.5",
+                            isSelected
+                              ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 shadow-xs"
+                              : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
+                          )}
+                        >
+                          {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                          {sect}
+                        </Button>
+                      );
+                    })
+                  ) : (
                     <span className="text-xs text-muted-foreground/40 italic">בחר מחלקה תחילה</span>
                   )}
                 </div>
@@ -388,25 +437,40 @@ export const FilterModal: React.FC<FilterModalProps> = ({
               {/* Teams */}
               {availableTeams.length > 0 && (
                 <div className="space-y-4">
-                  <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                    חוליות / צוותים
-                  </Label>
-                  <div className="flex flex-wrap gap-2.5">
-                    {availableTeams.map((team) => (
-                      <Button
-                        key={team}
-                        variant="ghost"
-                        onClick={() => toggleFilter("teams", team)}
-                        className={cn(
-                          "h-10 px-4 rounded-xl text-xs font-black transition-all border",
-                          filters.teams?.includes(team)
-                            ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-                            : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
-                        )}
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+                      חוליות / צוותים {filters.teams?.length ? `(${filters.teams.length})` : ""}
+                    </Label>
+                    {availableTeams.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => toggleSelectAll("teams", availableTeams)}
+                        className="text-[11px] font-black text-primary hover:underline"
                       >
-                        {team}
-                      </Button>
-                    ))}
+                        {filters.teams?.length === availableTeams.length ? "בטל הכל" : "בחר הכל"}
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
+                    {availableTeams.map((team) => {
+                      const isSelected = filters.teams?.includes(team);
+                      return (
+                        <Button
+                          key={team}
+                          variant="ghost"
+                          onClick={() => toggleFilter("teams", team)}
+                          className={cn(
+                            "h-10 px-4 rounded-xl text-xs font-black transition-all border flex items-center gap-1.5",
+                            isSelected
+                              ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 shadow-xs"
+                              : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
+                          )}
+                        >
+                          {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                          {team}
+                        </Button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -415,25 +479,40 @@ export const FilterModal: React.FC<FilterModalProps> = ({
 
           {activeTab === "statuses" && (
             <div className="space-y-4">
-              <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                סטטוסים נוכחיים
-              </Label>
-              <div className="flex flex-wrap gap-2.5">
-                {hierarchyData.statuses.map((status) => (
-                  <Button
-                    key={status}
-                    variant="ghost"
-                    onClick={() => toggleFilter("statuses", status)}
-                    className={cn(
-                      "h-10 px-4 rounded-xl text-xs font-black transition-all border",
-                      filters.statuses?.includes(status)
-                        ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-                        : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
-                    )}
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+                  סטטוסים נוכחיים {filters.statuses?.length ? `(${filters.statuses.length})` : ""}
+                </Label>
+                {hierarchyData.statuses.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => toggleSelectAll("statuses", hierarchyData.statuses)}
+                    className="text-[11px] font-black text-primary hover:underline"
                   >
-                    {status}
-                  </Button>
-                ))}
+                    {filters.statuses?.length === hierarchyData.statuses.length ? "בטל הכל" : "בחר הכל"}
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                {hierarchyData.statuses.map((status) => {
+                  const isSelected = filters.statuses?.includes(status);
+                  return (
+                    <Button
+                      key={status}
+                      variant="ghost"
+                      onClick={() => toggleFilter("statuses", status)}
+                      className={cn(
+                        "h-10 px-4 rounded-xl text-xs font-black transition-all border flex items-center gap-1.5",
+                        isSelected
+                          ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 shadow-xs"
+                          : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
+                      )}
+                    >
+                      {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                      {status}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -441,25 +520,40 @@ export const FilterModal: React.FC<FilterModalProps> = ({
           {activeTab === "service" && (
             <div className="space-y-8">
               <div className="space-y-4">
-                <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                  מעמד שוטר
-                </Label>
-                <div className="flex flex-wrap gap-2.5">
-                  {hierarchyData.serviceTypes.map((type) => (
-                    <Button
-                      key={type}
-                      variant="ghost"
-                      onClick={() => toggleFilter("serviceTypes", type)}
-                      className={cn(
-                        "h-10 px-4 rounded-xl text-xs font-black transition-all border",
-                        filters.serviceTypes?.includes(type)
-                          ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-                          : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
-                      )}
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+                    מעמד שוטר {filters.serviceTypes?.length ? `(${filters.serviceTypes.length})` : ""}
+                  </Label>
+                  {hierarchyData.serviceTypes.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => toggleSelectAll("serviceTypes", hierarchyData.serviceTypes)}
+                      className="text-[11px] font-black text-primary hover:underline"
                     >
-                      {type}
-                    </Button>
-                  ))}
+                      {filters.serviceTypes?.length === hierarchyData.serviceTypes.length ? "בטל הכל" : "בחר הכל"}
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2.5">
+                  {hierarchyData.serviceTypes.map((type) => {
+                    const isSelected = filters.serviceTypes?.includes(type);
+                    return (
+                      <Button
+                        key={type}
+                        variant="ghost"
+                        onClick={() => toggleFilter("serviceTypes", type)}
+                        className={cn(
+                          "h-10 px-4 rounded-xl text-xs font-black transition-all border flex items-center gap-1.5",
+                          isSelected
+                            ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 shadow-xs"
+                            : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
+                        )}
+                      >
+                        {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                        {type}
+                      </Button>
+                    );
+                  })}
                 </div>
               </div>
 

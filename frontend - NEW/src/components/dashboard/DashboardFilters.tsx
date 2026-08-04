@@ -237,7 +237,7 @@ export const DashboardFilters = ({
         !!selectedAgeRange?.max;
 
   const FilterContent = (
-    <div className="flex flex-col h-full bg-background overflow-hidden rounded-t-[2.5rem] sm:rounded-3xl">
+    <div className="flex flex-col h-full bg-card/98 backdrop-blur-2xl border-2 border-primary/40 dark:border-primary/50 overflow-hidden rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl ring-1 ring-primary/20">
       <DialogDragHandle />
 
       {/* Header */}
@@ -834,7 +834,7 @@ export const DashboardFilters = ({
             <PopoverContent
               align="end"
               sideOffset={12}
-              className="w-[95vw] sm:w-[560px] md:w-[620px] max-h-[92vh] sm:max-h-[85vh] p-0 rounded-[2.5rem] border-none bg-background shadow-2xl z-50 flex flex-col overflow-hidden"
+              className="w-[95vw] sm:w-[560px] md:w-[620px] max-h-[92vh] sm:max-h-[85vh] p-0 rounded-[2.5rem] sm:rounded-3xl border-2 border-primary/50 dark:border-primary/60 bg-card/98 backdrop-blur-2xl shadow-[0_25px_80px_rgba(0,0,0,0.3)] dark:shadow-[0_25px_80px_rgba(0,0,0,0.8)] ring-2 ring-primary/30 z-50 flex flex-col overflow-hidden"
             >
               {FilterContent}
             </PopoverContent>

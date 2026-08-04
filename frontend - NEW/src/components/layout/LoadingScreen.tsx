@@ -109,7 +109,7 @@ export const LoadingScreen = () => {
           </div>
 
           <span className="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wide">
-            טוען נתונים מבצעיים...
+            טוען נתונים...
           </span>
         </motion.div>
       </div>

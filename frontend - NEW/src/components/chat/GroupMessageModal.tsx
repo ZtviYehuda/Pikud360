@@ -77,12 +77,17 @@ export const GroupMessageModal: React.FC<GroupMessageModalProps> = ({ open, onCl
   }, [structure, searchQuery]);
 
   // Resolve all recipient IDs — from org-unit selections AND individual selections
+  const safeEmployees = useMemo(
+    () => (Array.isArray(employees) ? employees : []),
+    [employees]
+  );
+
   const resolvedRecipients = useMemo(() => {
     const ids = new Set<number>();
 
     // 1. From org-unit targets
     for (const target of selectedTargets) {
-      const matchingEmployees = employees.filter((emp) => {
+      const matchingEmployees = safeEmployees.filter((emp) => {
         if (!emp.is_active) return false;
         if (Number(emp.id) === Number(user?.id)) return false;
         if (target.level === "department") return emp.department_id === target.id;
@@ -95,18 +100,18 @@ export const GroupMessageModal: React.FC<GroupMessageModalProps> = ({ open, onCl
 
     // 2. From individually selected employees
     selectedIndividuals.forEach((id) => {
-      const emp = employees.find((e) => e.id === id);
+      const emp = safeEmployees.find((e) => e.id === id);
       if (emp && emp.is_active && Number(emp.id) !== Number(user?.id)) {
         ids.add(id);
       }
     });
 
     return Array.from(ids);
-  }, [selectedTargets, selectedIndividuals, employees, user]);
+  }, [selectedTargets, selectedIndividuals, safeEmployees, user]);
 
   const recipientEmployees = useMemo(
-    () => employees.filter((e) => resolvedRecipients.includes(e.id)),
-    [employees, resolvedRecipients]
+    () => safeEmployees.filter((e) => resolvedRecipients.includes(e.id)),
+    [safeEmployees, resolvedRecipients]
   );
 
   const isTargetSelected = (level: OrgLevel, id: number) =>

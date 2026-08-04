@@ -225,14 +225,16 @@ export default function TransfersPage() {
 
   // Cloud Stats
   const stats = useMemo(() => {
-    const pending = pendingTransfers.length;
-    const approved = history.filter((h) => h.status === "approved").length;
-    const rejected = history.filter((h) => h.status === "rejected").length;
+    const safePending = Array.isArray(pendingTransfers) ? pendingTransfers : [];
+    const safeHistory = Array.isArray(history) ? history : [];
+    const pending = safePending.length;
+    const approved = safeHistory.filter((h) => h?.status?.toLowerCase() === "approved").length;
+    const rejected = safeHistory.filter((h) => h?.status?.toLowerCase() === "rejected").length;
     return { pending, approved, rejected };
   }, [pendingTransfers, history]);
 
   const filteredHistory = useMemo(() => {
-    let result = history;
+    let result = Array.isArray(history) ? history : [];
     if (historyFilter) {
       result = result.filter((h) => h.status === historyFilter);
     }

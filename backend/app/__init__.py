@@ -91,6 +91,9 @@ def create_app() -> Flask:
     from app.modules.reports.routes import reports_bp
     app.register_blueprint(reports_bp, url_prefix="/api/v1/reports")
 
+    from app.modules.audit.routes import audit_bp
+    app.register_blueprint(audit_bp, url_prefix="/api/audit")
+
 
 
 

@@ -45,8 +45,11 @@ const MONTH_LABELS = [
   "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר",
 ];
 
-export const BirthdaysCard = forwardRef<any, BirthdaysCardProps>(
-  ({ id, birthdays, selectedDate, className, filterTags = [] }, ref) => {
+export const BirthdaysCard = forwardRef(
+  function BirthdaysCard(
+    { id, birthdays, selectedDate, className, filterTags = [] }: BirthdaysCardProps,
+    ref: any
+  ) {
     const { openProfile } = useEmployeeContext();
     const [isGreetingsModalOpen, setIsGreetingsModalOpen] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);

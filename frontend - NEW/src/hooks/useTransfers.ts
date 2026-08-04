@@ -36,12 +36,14 @@ export const useTransfers = () => {
   const fetchPending = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await apiClient.get<TransferRequest[]>(
+      const { data } = await apiClient.get<any>(
         endpoints.TRANSFERS_PENDING_ENDPOINT,
       );
-      setPendingTransfers(data);
+      const list = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+      setPendingTransfers(list);
       setError(null);
     } catch (err: any) {
+      setPendingTransfers([]);
       setError(
         err.response?.data?.error || "Failed to fetch pending transfers",
       );
@@ -53,12 +55,14 @@ export const useTransfers = () => {
   const fetchHistory = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await apiClient.get<TransferRequest[]>(
+      const { data } = await apiClient.get<any>(
         endpoints.TRANSFERS_HISTORY_ENDPOINT,
       );
-      setHistory(data);
+      const list = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+      setHistory(list);
       setError(null);
     } catch (err: any) {
+      setHistory([]);
       setError(err.response?.data?.error || "Failed to fetch transfer history");
     } finally {
       setLoading(false);

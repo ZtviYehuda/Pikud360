@@ -137,3 +137,25 @@ def cancel_transfer(transfer_id):
 
     serialized = TransferResponse.model_validate(cancelled).model_dump()
     return ApiResponse.success(data=serialized)
+
+@transfers_bp.route("/transfers/pending", methods=["GET"])
+@require_permission("transfers.view", ScopeType.ORGANIZATION_UNIT)
+def get_pending_transfers():
+    """Lists pending employee transfer requests."""
+    user_id = get_jwt_identity()
+    claims = get_jwt()
+    tenant_id = claims.get("tenant_id") if claims else "tenant-default"
+    results = transfers_service.list_transfers(tenant_id, user_id)
+    pending = [t for t in results if str(t.get("status", "")).upper() in ["PENDING", "REQUESTED"]] if isinstance(results, list) else []
+    return ApiResponse.success(data=pending)
+
+@transfers_bp.route("/transfers/history", methods=["GET"])
+@require_permission("transfers.view", ScopeType.ORGANIZATION_UNIT)
+def get_transfer_history():
+    """Lists completed / past employee transfers."""
+    user_id = get_jwt_identity()
+    claims = get_jwt()
+    tenant_id = claims.get("tenant_id") if claims else "tenant-default"
+    results = transfers_service.list_transfers(tenant_id, user_id)
+    history = [t for t in results if str(t.get("status", "")).upper() not in ["PENDING", "REQUESTED"]] if isinstance(results, list) else []
+    return ApiResponse.success(data=history)

@@ -107,22 +107,23 @@ export default function ActivityLogPage() {
         if (selectedAction) params.append("action_type", selectedAction);
         
         const { data } = await apiClient.get(`/audit/all-activity?${params.toString()}`);
-        setActivity(data);
+        setActivity(Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []));
       } else if (activeTab === "my") {
         const { data } = await apiClient.get("/audit/my-activity");
-        setActivity(data);
+        setActivity(Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []));
       } else if (activeTab === "suspicious") {
         const { data } = await apiClient.get("/audit/suspicious");
-        setSuspicious(data);
+        setSuspicious(Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []));
       } else if (activeTab === "archives") {
         const { data } = await apiClient.get("/audit/archives");
-        setArchives(data);
+        setArchives(Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []));
       }
 
       // Fetch users for filter if not already fetched and user is admin
       if (user?.is_admin && users.length === 0) {
         const { data: userData } = await apiClient.get("/employees?limit=1000");
-        setUsers(userData.employees || []);
+        const userList = Array.isArray(userData) ? userData : (userData?.employees || userData?.data || []);
+        setUsers(userList);
       }
     } catch (err) {
       console.error("Failed to fetch activity data", err);

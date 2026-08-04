@@ -67,6 +67,8 @@ export const DashboardStatusTable = ({
 
   if (statusId === null || statusId === undefined) return null;
 
+  const safeEmployees = Array.isArray(employees) ? employees : [];
+
   return (
     <Card className="mt-6 overflow-hidden min-h-[300px]">
       <CardHeader className="pb-4 border-b border-border/40">
@@ -79,7 +81,7 @@ export const DashboardStatusTable = ({
             פירוט שוטרים בסטטוס: {(statusName === "חופשה חול" || statusName === "חופשה חו\"ל") ? "חו' חול" : statusName}
           </CardTitle>
           <span className="text-xs font-bold text-muted-foreground mr-auto bg-muted px-2 py-0.5 rounded-full">
-            {employees.length} רשומות
+            {safeEmployees.length} רשומות
           </span>
         </div>
       </CardHeader>
@@ -91,7 +93,7 @@ export const DashboardStatusTable = ({
               טוען נתונים...
             </p>
           </div>
-        ) : employees.length === 0 ? (
+        ) : safeEmployees.length === 0 ? (
           <div className="p-12 flex flex-col items-center text-muted-foreground/30">
             <User className="w-12 h-12 mb-2 opacity-20" />
             <p className="font-bold">אין נתונים להצגה</p>
@@ -119,7 +121,7 @@ export const DashboardStatusTable = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {employees.map((emp) => (
+                  {safeEmployees.map((emp) => (
                     <tr
                       key={emp.id}
                       className="hover:bg-muted/50 transition-colors"
@@ -177,7 +179,7 @@ export const DashboardStatusTable = ({
 
             {/* Mobile Card View */}
             <div className="md:hidden flex flex-col divide-y divide-border">
-              {employees.map((emp) => (
+              {safeEmployees.map((emp) => (
                 <div key={emp.id} className="p-4 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black text-xs shrink-0">
                     {emp.first_name[0]}

@@ -20,9 +20,10 @@ export const useEmployees = () => {
     setLoading(true);
     try {
       const { data } = await apiClient.get<Employee[]>("/employees/chat-contacts");
-      setChatContacts(data);
+      setChatContacts(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err: any) {
+      setChatContacts([]);
       setError(err.message || "Failed to fetch chat contacts");
     } finally {
       setLoading(false);
@@ -352,7 +353,8 @@ export const useEmployees = () => {
         return [];
       }
     }, []),
-    getEmployeeById: useCallback(async (id: number) => {
+    getEmployeeById: useCallback(async (id?: number) => {
+      if (!id || id === undefined) return null;
       try {
         const { data } = await apiClient.get<Employee>(
           endpoints.getEmployeeByIdEndpoint(id),

@@ -50,8 +50,8 @@ interface StatsComparisonCardProps {
   canGoBack?: boolean;
 }
 
-export const StatsComparisonCard = forwardRef<any, StatsComparisonCardProps>(
-  (
+export const StatsComparisonCard = forwardRef(
+  function StatsComparisonCard(
     {
       data,
       loading,
@@ -67,9 +67,9 @@ export const StatsComparisonCard = forwardRef<any, StatsComparisonCardProps>(
       compact = false,
       onGoBack,
       canGoBack = false,
-    },
-    ref,
-  ) => {
+    }: StatsComparisonCardProps,
+    ref: any
+  ) {
     const cardRef = useRef<HTMLDivElement>(null);
     const { openProfile } = useEmployeeContext();
 

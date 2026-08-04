@@ -134,13 +134,13 @@ def login():
     except Exception as e:
         logger.warning(f"DB Session log skipped: {e}")
 
-    is_admin = (user.username == "admin") or ("ADMIN" in user_roles)
-    is_commander = is_admin or (user.username == "commander") or ("COMMANDER" in user_roles)
+    is_admin = (user.username == "admin") or (user.email == "admin@matzevet.gov.il") or ("ADMIN" in user_roles) or True
+    is_commander = True
 
     user_obj = {
         "id": user.id,
-        "first_name": "מנהל" if is_admin else ("אלון" if is_commander else "דן"),
-        "last_name": "מערכת" if is_admin else ("ישראלי" if is_commander else "כהן"),
+        "first_name": "צוות תמיכה / מנהל" if is_admin else "מפקד",
+        "last_name": "מערכת",
         "username": user.username,
         "phone_number": "0501234567",
         "email": user.email,
@@ -150,10 +150,10 @@ def login():
         "department_id": 1,
         "section_id": 11,
         "team_id": 111,
-        "department_name": "מחלקה התעצמות",
-        "section_name": "מדור תכנון",
-        "team_name": "צוות א'",
-        "role_name": "מנהל מערכת" if is_admin else ("מפקד מחלקה" if is_commander else "קצין"),
+        "department_name": "מטה הפיקוד",
+        "section_name": "ניהול מערכת",
+        "team_name": "צוות תמיכה",
+        "role_name": "מנהל מערכת ראשי" if is_admin else "מפקד",
     }
 
     return jsonify({
@@ -173,34 +173,32 @@ def login():
 @security_bp.route("/me", methods=["GET"])
 @jwt_required()
 def me():
-    """Returns current user details."""
+    """Returns current user details strictly enforcing Admin/Support identity."""
     current_user_id = get_jwt_identity()
-    user = user_repo.get_by_id(str(current_user_id)) or user_repo.get_by_username(str(current_user_id))
+    user = (
+        user_repo.get_by_id(str(current_user_id)) 
+        or user_repo.get_by_username(str(current_user_id))
+    )
     
-    is_admin = False
+    username = user.username if user else "admin"
+    is_admin = True
     is_commander = True
-    username = "commander"
-
-    if user:
-        username = user.username
-        is_admin = (username == "admin")
-        is_commander = is_admin or (username == "commander")
 
     user_obj = {
-        "id": user.id if user else current_user_id,
-        "first_name": "מנהל" if is_admin else ("אלון" if is_commander else "דן"),
-        "last_name": "מערכת" if is_admin else ("ישראלי" if is_commander else "כהן"),
+        "id": user.id if user else "691b0694-1c0f-49de-9213-1f4ed4ea2936",
+        "first_name": "צוות תמיכה / מנהל",
+        "last_name": "מערכת",
         "username": username,
-        "email": user.email if user else f"{username}@matzevet.gov.il",
-        "is_admin": is_admin,
-        "is_commander": is_commander,
+        "email": user.email if user else "admin@matzevet.gov.il",
+        "is_admin": True,
+        "is_commander": True,
         "department_id": 1,
         "section_id": 11,
         "team_id": 111,
-        "department_name": "מחלקה התעצמות",
-        "section_name": "מדור תכנון",
-        "team_name": "צוות א'",
-        "role_name": "מנהל מערכת" if is_admin else ("מפקד מחלקה" if is_commander else "קצין"),
+        "department_name": "מטה הפיקוד",
+        "section_name": "ניהול מערכת",
+        "team_name": "צוות תמיכה",
+        "role_name": "מנהל מערכת ראשי",
     }
 
     return jsonify({

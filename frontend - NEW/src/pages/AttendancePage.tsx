@@ -282,8 +282,9 @@ export default function AttendancePage() {
       const sTypes = await getServiceTypes();
       if (sTypes) setServiceTypes(sTypes);
 
-      if (user) {
-        const me = await getEmployeeById(user.id);
+      const empId = user?.employee_id || user?.id;
+      if (empId) {
+        const me = await getEmployeeById(empId);
         setCurrentUserEmp(me);
       }
     };
@@ -357,7 +358,8 @@ export default function AttendancePage() {
 
   // Calculate employees within user's command scope
   const scopeEmployees = useMemo(() => {
-    return employees.filter((emp) => {
+    const safeEmpList = Array.isArray(employees) ? employees : [];
+    return safeEmpList.filter((emp) => {
       if (!user) return true;
       if (user.is_admin) return true;
 
@@ -389,7 +391,8 @@ export default function AttendancePage() {
   }, [employees, user]);
 
   const filteredEmployees = useMemo(() => {
-    return scopeEmployees.filter((emp) => {
+    const safeScope = Array.isArray(scopeEmployees) ? scopeEmployees : [];
+    return safeScope.filter((emp) => {
       // Basic Search
       const fullName = `${emp.first_name} ${emp.last_name}`.toLowerCase();
       const searchMatch = fullName.includes(searchTerm.toLowerCase()) || false;
@@ -440,10 +443,11 @@ export default function AttendancePage() {
   ]);
 
   const employeesForModal = useMemo(() => {
+    const safeEmpList = Array.isArray(employees) ? employees : [];
     if (alertContext && alertContext.missing_ids) {
-      return employees.filter((e) => alertContext.missing_ids.includes(e.id));
+      return safeEmpList.filter((e) => alertContext.missing_ids.includes(e.id));
     }
-    return filteredEmployees;
+    return Array.isArray(filteredEmployees) ? filteredEmployees : [];
   }, [employees, alertContext, filteredEmployees]);
 
   const refreshData = async () => {
@@ -978,7 +982,7 @@ export default function AttendancePage() {
                     transition={{ duration: 0.25, ease: "easeOut" }}
                     className="hidden md:block overflow-hidden w-full"
                   >
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-3 pt-3 border-t border-border/20">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-3 p-4 bg-card/95 border border-primary/20 dark:border-white/15 rounded-2xl shadow-md backdrop-blur-xl">
                       {/* Department Filter */}
                       {(user?.is_admin || !user?.department_id) && (
                         <div className="space-y-1.5 text-right">

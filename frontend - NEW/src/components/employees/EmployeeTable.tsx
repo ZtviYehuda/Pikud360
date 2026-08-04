@@ -95,7 +95,8 @@ export const EmployeeTable = ({
     return "שוטר";
   };
 
-  const filteredEmployees = employees.filter((emp) => {
+  const safeEmployeesList = Array.isArray(employees) ? employees : [];
+  const filteredEmployees = safeEmployeesList.filter((emp) => {
     // Hide current user
     if (user && emp.id === user.id) return false;
 

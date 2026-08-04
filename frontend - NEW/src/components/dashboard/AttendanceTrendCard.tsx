@@ -45,10 +45,10 @@ interface AttendanceTrendCardProps {
   totalEmployees?: number;
 }
 
-export const AttendanceTrendCard = forwardRef<any, AttendanceTrendCardProps>(
-  (
+export const AttendanceTrendCard = forwardRef(
+  function AttendanceTrendCard(
     {
-      data,
+      data = [],
       loading,
       range,
       className,
@@ -61,15 +61,10 @@ export const AttendanceTrendCard = forwardRef<any, AttendanceTrendCardProps>(
       compact = false,
       filterTags = [],
       totalEmployees = 0,
-    },
-    ref,
-  ) => {
+    }: AttendanceTrendCardProps,
+    ref: any
+  ) {
     const cardRef = useRef<HTMLDivElement>(null);
-
-    useImperativeHandle(ref, () => ({
-      download: handleDownload,
-      share: handleWhatsAppShare,
-    }));
 
     const [isMobile, setIsMobile] = useState(false);
     useEffect(() => {
@@ -80,14 +75,14 @@ export const AttendanceTrendCard = forwardRef<any, AttendanceTrendCardProps>(
     }, []);
 
     const chartData = useMemo(() => {
-      if (range < 365) return data;
+      if (!data || range < 365) return data || [];
 
       const monthlyMap = new Map<
         string,
         { month: string; present: number; total: number; count: number }
       >();
 
-      data.forEach((item) => {
+      (data || []).forEach((item) => {
         const date = parseISO(item.date);
         const monthKey = format(startOfMonth(date), "yyyy-MM");
         const existing = monthlyMap.get(monthKey) || {
@@ -113,7 +108,7 @@ export const AttendanceTrendCard = forwardRef<any, AttendanceTrendCardProps>(
     }, [data, range]);
 
     const stats = useMemo(() => {
-      if (!data.length) return null;
+      if (!data || !data.length) return null;
       const avgPresence = Math.round(
         data.reduce((acc, curr) => acc + curr.present_count, 0) / data.length,
       );
@@ -250,6 +245,11 @@ export const AttendanceTrendCard = forwardRef<any, AttendanceTrendCardProps>(
       }
     };
 
+    useImperativeHandle(ref, () => ({
+      download: handleDownload,
+      share: handleWhatsAppShare,
+    }));
+
 
 
 
@@ -263,14 +263,6 @@ export const AttendanceTrendCard = forwardRef<any, AttendanceTrendCardProps>(
           <CardContent className="h-[300px] flex items-center justify-center">
             <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
           </CardContent>
-        </Card>
-      );
-    }
-
-    if (!data || data.length === 0) {
-      return (
-        <Card className={cn("h-full min-h-[300px] flex flex-col justify-center items-center p-6 text-muted-foreground/40", className)}>
-          <p className="font-bold text-sm text-center">אין נתונים להצגה</p>
         </Card>
       );
     }
@@ -346,8 +338,13 @@ export const AttendanceTrendCard = forwardRef<any, AttendanceTrendCardProps>(
           )}
 
           <div className="flex-1 flex flex-col relative p-0 mt-0 min-h-[170px] sm:min-h-[240px] md:min-h-[320px]">
-            <div className="w-full h-full flex-1" style={{ direction: "ltr", minHeight: compact ? "150px" : "200px" }}>
-              <ResponsiveContainer width="100%" height="100%" minHeight={compact ? 150 : 200}>
+            {!data || data.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center py-12 text-center text-muted-foreground font-bold tracking-tight">
+                אין נתונים להצגה
+              </div>
+            ) : (
+              <div className="w-full h-full flex-1" style={{ direction: "ltr", minHeight: compact ? "150px" : "200px" }}>
+                <ResponsiveContainer width="100%" height="100%" minHeight={compact ? 150 : 200}>
                 <AreaChart
                   data={chartData}
                   margin={{ top: 10, right: isMobile ? 5 : 10, left: -25, bottom: isMobile ? 0 : 5 }}
@@ -471,9 +468,10 @@ export const AttendanceTrendCard = forwardRef<any, AttendanceTrendCardProps>(
                 </AreaChart>
               </ResponsiveContainer>
             </div>
+          )}
           </div>
         </div>
       </Card>
     );
-},
+  }
 );
