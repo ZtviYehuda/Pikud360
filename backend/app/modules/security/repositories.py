@@ -471,3 +471,126 @@ class AuditLogRepository:
         except Exception as e:
             logger.error(f"Failed to save audit log: {e}", exc_info=True)
         return False
+
+
+class UserPreferenceRepository:
+    """Repository managing security.user_preferences database records."""
+
+    def __init__(self):
+        self._ensure_table()
+
+    def _ensure_table(self):
+        query = """
+            CREATE TABLE IF NOT EXISTS security.user_preferences (
+                user_id VARCHAR(255) PRIMARY KEY,
+                theme VARCHAR(50) DEFAULT 'dark',
+                language VARCHAR(10) DEFAULT 'he',
+                notification_preferences JSONB DEFAULT '{}'::jsonb,
+                dashboard_layout JSONB DEFAULT '{}'::jsonb,
+                default_page VARCHAR(100) DEFAULT '/dashboard',
+                table_density VARCHAR(50) DEFAULT 'comfortable',
+                accessibility_preferences JSONB DEFAULT '{}'::jsonb,
+                display_preferences JSONB DEFAULT '{}'::jsonb,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query)
+                    conn.commit()
+        except Exception as e:
+            logger.warning(f"Failed ensuring security.user_preferences table: {e}")
+
+    def get_by_user_id(self, user_id: str) -> dict:
+        query = """
+            SELECT user_id, theme, language, notification_preferences, dashboard_layout, default_page, table_density, accessibility_preferences, display_preferences, updated_at
+            FROM security.user_preferences
+            WHERE user_id = %s;
+        """
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query, (str(user_id),))
+                    row = cur.fetchone()
+                    if row:
+                        return {
+                            "user_id": row[0],
+                            "theme": row[1] or "dark",
+                            "language": row[2] or "he",
+                            "notification_preferences": row[3] if isinstance(row[3], dict) else json.loads(row[3]) if isinstance(row[3], str) else {},
+                            "dashboard_layout": row[4] if isinstance(row[4], dict) else json.loads(row[4]) if isinstance(row[4], str) else {},
+                            "default_page": row[5] or "/dashboard",
+                            "table_density": row[6] or "comfortable",
+                            "accessibility_preferences": row[7] if isinstance(row[7], dict) else json.loads(row[7]) if isinstance(row[7], str) else {},
+                            "display_preferences": row[8] if isinstance(row[8], dict) else json.loads(row[8]) if isinstance(row[8], str) else {},
+                            "updated_at": row[9].isoformat() if row[9] else None
+                        }
+        except Exception as e:
+            logger.error(f"Error fetching user preferences for {user_id}: {e}")
+        
+        return {
+            "user_id": str(user_id),
+            "theme": "dark",
+            "language": "he",
+            "notification_preferences": {},
+            "dashboard_layout": {},
+            "default_page": "/dashboard",
+            "table_density": "comfortable",
+            "accessibility_preferences": {},
+            "display_preferences": {}
+        }
+
+    def upsert(self, user_id: str, data: dict) -> dict:
+        query = """
+            INSERT INTO security.user_preferences (
+                user_id, theme, language, notification_preferences, dashboard_layout, default_page, table_density, accessibility_preferences, display_preferences, updated_at
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP
+            )
+            ON CONFLICT (user_id) DO UPDATE SET
+                theme = EXCLUDED.theme,
+                language = EXCLUDED.language,
+                notification_preferences = EXCLUDED.notification_preferences,
+                dashboard_layout = EXCLUDED.dashboard_layout,
+                default_page = EXCLUDED.default_page,
+                table_density = EXCLUDED.table_density,
+                accessibility_preferences = EXCLUDED.accessibility_preferences,
+                display_preferences = EXCLUDED.display_preferences,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING user_id, theme, language, notification_preferences, dashboard_layout, default_page, table_density, accessibility_preferences, display_preferences, updated_at;
+        """
+        try:
+            current = self.get_by_user_id(user_id)
+            merged = {**current, **(data or {})}
+
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query, (
+                        str(user_id),
+                        merged.get("theme", "dark"),
+                        merged.get("language", "he"),
+                        json.dumps(merged.get("notification_preferences", {})),
+                        json.dumps(merged.get("dashboard_layout", {})),
+                        merged.get("default_page", "/dashboard"),
+                        merged.get("table_density", "comfortable"),
+                        json.dumps(merged.get("accessibility_preferences", {})),
+                        json.dumps(merged.get("display_preferences", {})),
+                    ))
+                    row = cur.fetchone()
+                    conn.commit()
+                    if row:
+                        return {
+                            "user_id": row[0],
+                            "theme": row[1],
+                            "language": row[2],
+                            "notification_preferences": row[3] if isinstance(row[3], dict) else json.loads(row[3]) if isinstance(row[3], str) else {},
+                            "dashboard_layout": row[4] if isinstance(row[4], dict) else json.loads(row[4]) if isinstance(row[4], str) else {},
+                            "default_page": row[5],
+                            "table_density": row[6],
+                            "accessibility_preferences": row[7] if isinstance(row[7], dict) else json.loads(row[7]) if isinstance(row[7], str) else {},
+                            "display_preferences": row[8] if isinstance(row[8], dict) else json.loads(row[8]) if isinstance(row[8], str) else {},
+                        }
+        except Exception as e:
+            logger.error(f"Error upserting user preferences for {user_id}: {e}")
+        return self.get_by_user_id(user_id)

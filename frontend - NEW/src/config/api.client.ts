@@ -29,6 +29,7 @@ export function invalidateCache(pattern?: string) {
 // ── Axios instance ────────────────────────────────────────────────────────────
 const apiClient = axios.create({
   baseURL: API_URL,
+  withCredentials: true,
   headers: { 
     "Content-Type": "application/json"
   },
@@ -36,7 +37,7 @@ const apiClient = axios.create({
   timeout: 15_000,
 });
 
-// Request interceptor — attach token (no console.log in production)
+// Request interceptor — attach token
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -46,7 +47,7 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// Response interceptor — handle 401 and refresh token logic
+// Response interceptor — handle 401 and silent refresh via HttpOnly Cookie
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value?: unknown) => void;
@@ -64,22 +65,9 @@ const processQueue = (error: any, token: string | null) => {
   failedQueue = [];
 };
 
-const getStoredRefreshToken = () => {
-  const currentUser = localStorage.getItem("biometric_last_user");
-  if (!currentUser) return null;
-  return localStorage.getItem(`biometric_refresh_${currentUser}`);
-};
-
 const clearAuthState = () => {
-  const currentUser = localStorage.getItem("biometric_last_user");
   localStorage.removeItem("token");
   localStorage.removeItem("locked_user");
-  if (currentUser) {
-    localStorage.removeItem(`biometric_refresh_${currentUser}`);
-    localStorage.removeItem(`biometric_pin_${currentUser}`);
-    localStorage.removeItem(`biometric_registered_${currentUser}`);
-    localStorage.removeItem("biometric_last_user");
-  }
   if (window.location.pathname !== "/login") {
     window.location.href = "/login";
   }
@@ -94,8 +82,8 @@ apiClient.interceptors.response.use(
       error.response?.status === 401 &&
       originalRequest &&
       !originalRequest._retry &&
-      !originalRequest.url?.includes("/auth/login") &&
-      !originalRequest.url?.includes("/auth/refresh-token")
+      !originalRequest.url?.includes("/security/login") &&
+      !originalRequest.url?.includes("/security/refresh")
     ) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -113,32 +101,20 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const refreshToken = getStoredRefreshToken();
-      if (!refreshToken) {
-        clearAuthState();
-        return Promise.reject(error);
-      }
-
       try {
-        const { data } = await apiClient.post("/auth/refresh-token", {
-          refresh_token: refreshToken,
-        });
+        // Attempt silent refresh via HttpOnly Cookie
+        const { data } = await apiClient.post("/security/refresh", {}, { withCredentials: true });
 
-        if (!data || !data.accessToken) {
+        const newToken = data.access_token || data.token;
+        if (!newToken) {
           throw new Error("Refresh token failed");
         }
 
-        localStorage.setItem("token", data.accessToken);
-
-        if (data.refreshToken && localStorage.getItem("biometric_last_user")) {
-          const currentUser = localStorage.getItem("biometric_last_user")!;
-          localStorage.setItem(`biometric_refresh_${currentUser}`, data.refreshToken);
-        }
-
-        processQueue(null, data.accessToken);
+        localStorage.setItem("token", newToken);
+        processQueue(null, newToken);
 
         if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
         }
 
         return apiClient(originalRequest);

@@ -14,6 +14,7 @@ import {
   X,
   Users,
   ChevronDown,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,9 @@ import { DialogTitle, DialogDragHandle } from "@/components/ui/dialog";
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo, useState } from "react";
+
+import { useEmployees } from "@/hooks/useEmployees";
+import { useAuthContext } from "@/context/AuthContext";
 
 interface Team {
   id: number;
@@ -47,17 +51,17 @@ interface Department {
 }
 
 interface DashboardFiltersProps {
-  structure: Department[];
-  statuses: { status_id: number; status_name: string; color: string }[];
-  allStatusTypes: any[];
+  structure?: Department[];
+  statuses?: { status_id: number; status_name: string; color: string }[];
+  allStatusTypes?: any[];
   selectedDeptId?: string;
   selectedSectionId?: string;
   selectedTeamId?: string;
   selectedStatusId?: string;
-  serviceTypes: { id: number; name: string }[];
-  selectedServiceTypes: string[];
+  serviceTypes?: { id: number; name: string }[];
+  selectedServiceTypes?: string[];
   selectedAgeRange?: { min?: number; max?: number };
-  onFilterChange: (
+  onFilterChange?: (
     type:
       | "department"
       | "section"
@@ -68,111 +72,193 @@ interface DashboardFiltersProps {
       | "reset",
     value?: any,
   ) => void;
-  canSelectDept: boolean;
-  canSelectSection: boolean;
-  canSelectTeam: boolean;
+  onApplyModal?: (filters: any) => void;
+  canSelectDept?: boolean;
+  canSelectSection?: boolean;
+  canSelectTeam?: boolean;
   hasActiveFiltersExternal?: boolean;
   activeFilterCountExternal?: number;
   user?: any;
   isMobile?: boolean;
   pillsOnly?: boolean;
+  isDialogContent?: boolean;
   className?: string;
 }
 
 export const DashboardFilters = ({
-  structure,
-  statuses,
-  allStatusTypes,
+  structure: propStructure,
+  statuses: propStatuses,
+  allStatusTypes: propAllStatusTypes,
   selectedDeptId,
   selectedSectionId,
   selectedTeamId,
   selectedStatusId,
-  serviceTypes,
-  selectedServiceTypes,
+  serviceTypes: propServiceTypes,
+  selectedServiceTypes = [],
   selectedAgeRange,
   onFilterChange,
-  canSelectDept,
-  canSelectSection,
-  canSelectTeam,
+  onApplyModal,
+  canSelectDept: propCanSelectDept,
+  canSelectSection: propCanSelectSection,
+  canSelectTeam: propCanSelectTeam,
   hasActiveFiltersExternal,
   activeFilterCountExternal,
-  user,
+  user: propUser,
   isMobile = false,
   pillsOnly = false,
+  isDialogContent = false,
   className,
 }: DashboardFiltersProps) => {
+  const { user: authUser } = useAuthContext();
+  const activeUser = propUser || authUser;
+
+  const [internalStructure, setInternalStructure] = useState<Department[]>([]);
+  const [internalStatuses, setInternalStatuses] = useState<any[]>([]);
+  const [internalServiceTypes, setInternalServiceTypes] = useState<any[]>([]);
+  const { getStructure, getStatusTypes, getServiceTypes } = useEmployees();
+
+  useEffect(() => {
+    let active = true;
+    if (!propStructure || propStructure.length === 0) {
+      getStructure().then((res) => {
+        if (active && res && Array.isArray(res)) setInternalStructure(res);
+      });
+    }
+    if (!propStatuses || propStatuses.length === 0) {
+      getStatusTypes().then((res) => {
+        if (active && res && Array.isArray(res)) setInternalStatuses(res);
+      });
+    }
+    if (!propServiceTypes || propServiceTypes.length === 0) {
+      getServiceTypes().then((res) => {
+        if (active && res && Array.isArray(res)) setInternalServiceTypes(res);
+      });
+    }
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const structure = propStructure && propStructure.length > 0 ? propStructure : internalStructure;
+  const statuses = propStatuses && propStatuses.length > 0 ? propStatuses : internalStatuses;
+  const allStatusTypes = propAllStatusTypes && propAllStatusTypes.length > 0 ? propAllStatusTypes : statuses;
+  const serviceTypes = propServiceTypes && propServiceTypes.length > 0 ? propServiceTypes : internalServiceTypes;
+
+  const canSelectDept = propCanSelectDept !== undefined ? propCanSelectDept : activeUser?.is_admin || !activeUser?.department_id;
+  const canSelectSection = propCanSelectSection !== undefined ? propCanSelectSection : activeUser?.is_admin || !activeUser?.section_id;
+  const canSelectTeam = propCanSelectTeam !== undefined ? propCanSelectTeam : activeUser?.is_admin || !activeUser?.team_id;
+
   const [activeTab, setActiveTab] = useState("org");
-  const [stagedFilters, setStagedFilters] = useState({
-    deptId: selectedDeptId,
-    sectionId: selectedSectionId,
-    teamId: selectedTeamId,
-    statusId: selectedStatusId,
-    serviceTypes: selectedServiceTypes,
-    ageRange: selectedAgeRange,
+  const [stagedFilters, setStagedFilters] = useState<{
+    deptIds: string[];
+    sectionIds: string[];
+    teamIds: string[];
+    statusIds: string[];
+    serviceTypes: string[];
+    ageRange: { min?: number; max?: number };
+  }>(() => {
+    const initDepts = selectedDeptId && selectedDeptId !== "all" ? [selectedDeptId] : [];
+    const initSecs = selectedSectionId && selectedSectionId !== "all" ? [selectedSectionId] : [];
+    const initTeams = selectedTeamId && selectedTeamId !== "all" ? [selectedTeamId] : [];
+    const initStatuses = selectedStatusId && selectedStatusId !== "all" ? [selectedStatusId] : [];
+    return {
+      deptIds: initDepts,
+      sectionIds: initSecs,
+      teamIds: initTeams,
+      statusIds: initStatuses,
+      serviceTypes: selectedServiceTypes || [],
+      ageRange: selectedAgeRange || {},
+    };
   });
 
-  // Sync with props when modal opens or props change
-  useEffect(() => {
-    setStagedFilters({
-      deptId: selectedDeptId,
-      sectionId: selectedSectionId,
-      teamId: selectedTeamId,
-      statusId: selectedStatusId,
-      serviceTypes: selectedServiceTypes,
-      ageRange: selectedAgeRange,
-    });
-  }, [
-    selectedDeptId,
-    selectedSectionId,
-    selectedTeamId,
-    selectedStatusId,
-    selectedServiceTypes,
-    selectedAgeRange,
-  ]);
-
   const handleApply = () => {
-    onFilterChange("department", stagedFilters.deptId);
-    onFilterChange("section", stagedFilters.sectionId);
-    onFilterChange("team", stagedFilters.teamId);
-    onFilterChange("status", stagedFilters.statusId);
-    onFilterChange("serviceType", stagedFilters.serviceTypes);
+    if (onFilterChange) {
+      onFilterChange("department", stagedFilters.deptIds);
+      onFilterChange("section", stagedFilters.sectionIds);
+      onFilterChange("team", stagedFilters.teamIds);
+      onFilterChange("status", stagedFilters.statusIds);
+      onFilterChange("serviceType", stagedFilters.serviceTypes);
 
-    if (stagedFilters.ageRange?.min) {
-      onFilterChange(
-        "ageRange",
-        stagedFilters.ageRange.max
-          ? `${stagedFilters.ageRange.min}-${stagedFilters.ageRange.max}`
-          : `${stagedFilters.ageRange.min}+`,
-      );
-    } else {
-      onFilterChange("ageRange", "all");
+      if (stagedFilters.ageRange?.min) {
+        onFilterChange(
+          "ageRange",
+          stagedFilters.ageRange.max
+            ? `${stagedFilters.ageRange.min}-${stagedFilters.ageRange.max}`
+            : `${stagedFilters.ageRange.min}+`,
+        );
+      } else {
+        onFilterChange("ageRange", "all");
+      }
+    }
+
+    if (onApplyModal) {
+      const modalPayload: any = {};
+      if (stagedFilters.deptIds.length > 0) {
+        const selectedDepts = (structure || []).filter((d) =>
+          stagedFilters.deptIds.includes(String(d?.id ?? ""))
+        );
+        modalPayload.departments = selectedDepts.map((d) => d.name);
+      }
+      if (stagedFilters.sectionIds.length > 0) {
+        const allSections = (structure || []).flatMap((d) => d?.sections || []);
+        const selectedSecs = allSections.filter((s) =>
+          stagedFilters.sectionIds.includes(String(s?.id ?? ""))
+        );
+        modalPayload.sections = selectedSecs.map((s) => s.name);
+      }
+      if (stagedFilters.teamIds.length > 0) {
+        const allTeams = (structure || []).flatMap((d) =>
+          (d?.sections || []).flatMap((s) => s?.teams || [])
+        );
+        const selectedTeams = allTeams.filter((t) =>
+          stagedFilters.teamIds.includes(String(t?.id ?? ""))
+        );
+        modalPayload.teams = selectedTeams.map((t) => t.name);
+      }
+      if (stagedFilters.statusIds.length > 0) {
+        const selectedStatuses = (statuses || []).filter((st: any) =>
+          stagedFilters.statusIds.includes(String(st?.status_id ?? st?.id ?? ""))
+        );
+        modalPayload.statuses = selectedStatuses.map(
+          (st: any) => st.status_name || st.name
+        );
+      }
+      if (stagedFilters.serviceTypes.length > 0) {
+        modalPayload.serviceTypes = stagedFilters.serviceTypes;
+      }
+      onApplyModal(modalPayload);
     }
   };
 
   const handleLocalReset = () => {
     setStagedFilters({
-      deptId: undefined,
-      sectionId: undefined,
-      teamId: undefined,
-      statusId: undefined,
+      deptIds: [],
+      sectionIds: [],
+      teamIds: [],
+      statusIds: [],
       serviceTypes: [],
       ageRange: {},
     });
   };
 
   const sections = useMemo(() => {
-    const deptId = stagedFilters.deptId || selectedDeptId;
-    if (!deptId) return [];
-    const dept = structure.find((d) => d.id.toString() === deptId);
-    return dept ? dept.sections : [];
-  }, [stagedFilters.deptId, selectedDeptId, structure]);
+    if (!stagedFilters.deptIds || stagedFilters.deptIds.length === 0) {
+      return (structure || []).flatMap((d) => d?.sections || []);
+    }
+    return (structure || [])
+      .filter((d) => stagedFilters.deptIds.includes(String(d?.id ?? "")))
+      .flatMap((d) => d?.sections || []);
+  }, [stagedFilters.deptIds, structure]);
 
   const teams = useMemo(() => {
-    const sectionId = stagedFilters.sectionId || selectedSectionId;
-    if (!sectionId) return [];
-    const sec = sections.find((s) => s.id.toString() === sectionId);
-    return sec ? sec.teams : [];
-  }, [stagedFilters.sectionId, selectedSectionId, sections]);
+    if (stagedFilters.sectionIds && stagedFilters.sectionIds.length > 0) {
+      return (sections || [])
+        .filter((s) => stagedFilters.sectionIds.includes(String(s?.id ?? "")))
+        .flatMap((s) => s?.teams || []);
+    }
+    return (sections || []).flatMap((s) => s?.teams || []);
+  }, [stagedFilters.sectionIds, sections]);
 
   const currentAgeValue = selectedAgeRange?.min
     ? selectedAgeRange.max
@@ -180,55 +266,20 @@ export const DashboardFilters = ({
       : `${selectedAgeRange.min}+`
     : "all";
 
-  const selectedStatus = useMemo(() => {
-    if (!selectedStatusId) return null;
-    const s = statuses.find(
-      (st) => st.status_id.toString() === selectedStatusId,
-    );
-    if (s) return { id: s.status_id, name: s.status_name, color: s.color };
-    return null;
-  }, [selectedStatusId, statuses]);
-
-  const selectedDept = structure.find(
-    (d) => d.id.toString() === selectedDeptId,
-  );
-  const selectedSection = sections.find(
-    (s) => s.id.toString() === selectedSectionId,
-  );
-  const selectedTeam = teams.find((t) => t.id.toString() === selectedTeamId);
-
-  const isDeptActive = useMemo(() => {
-    if (!selectedDeptId || selectedDeptId === "all") return false;
-    if (user?.is_admin) return true;
-    if (user?.commands_department_id?.toString() === selectedDeptId)
-      return false;
-    if (user?.assigned_department_id?.toString() === selectedDeptId)
-      return false;
-    return true;
-  }, [selectedDeptId, user]);
-
-  const isSectionActive = useMemo(() => {
-    if (!selectedSectionId || selectedSectionId === "all") return false;
-    if (user?.is_admin) return true;
-    if (user?.commands_section_id?.toString() === selectedSectionId)
-      return false;
-    if (user?.assigned_section_id?.toString() === selectedSectionId)
-      return false;
-    return true;
-  }, [selectedSectionId, user]);
-
-  const isTeamActive = useMemo(() => {
-    if (!selectedTeamId || selectedTeamId === "all") return false;
-    if (user?.is_admin) return true;
-    if (user?.commands_team_id?.toString() === selectedTeamId) return false;
-    if (user?.assigned_team_id?.toString() === selectedTeamId) return false;
-    return true;
-  }, [selectedTeamId, user]);
+  const isDeptActive = stagedFilters.deptIds.length > 0;
+  const isSectionActive = stagedFilters.sectionIds.length > 0;
+  const isTeamActive = stagedFilters.teamIds.length > 0;
 
   const hasActiveFilters =
     hasActiveFiltersExternal !== undefined
       ? hasActiveFiltersExternal
-      : isDeptActive ||
+      : stagedFilters.deptIds.length > 0 ||
+        stagedFilters.sectionIds.length > 0 ||
+        stagedFilters.teamIds.length > 0 ||
+        stagedFilters.statusIds.length > 0 ||
+        stagedFilters.serviceTypes.length > 0 ||
+        !!stagedFilters.ageRange?.min ||
+        !!stagedFilters.ageRange?.max;
         isSectionActive ||
         isTeamActive ||
         !!selectedStatusId ||
@@ -237,7 +288,7 @@ export const DashboardFilters = ({
         !!selectedAgeRange?.max;
 
   const FilterContent = (
-    <div className="flex flex-col h-full bg-card/98 backdrop-blur-2xl border-2 border-primary/40 dark:border-primary/50 overflow-hidden rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl ring-1 ring-primary/20">
+    <div className="flex flex-col h-full bg-card/98 backdrop-blur-2xl border border-border/80 dark:border-white/15 overflow-hidden rounded-t-[2.5rem] sm:rounded-3xl shadow-xl ring-1 ring-black/5 dark:ring-white/10">
       <DialogDragHandle />
 
       {/* Header */}
@@ -288,211 +339,187 @@ export const DashboardFilters = ({
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar max-h-[60vh]">
         {activeTab === "org" && (
-          <div className="space-y-3" dir="rtl">
-            {/* Dept */}
-            <div
-              className={cn(
-                "flex items-center gap-3 p-3 rounded-xl border transition-all",
-                stagedFilters.deptId && stagedFilters.deptId !== "all"
-                  ? "border-primary/30 bg-primary/5"
-                  : "border-border/40 bg-muted/20",
-              )}
-            >
-              <div
-                className={cn(
-                  "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base",
-                  stagedFilters.deptId && stagedFilters.deptId !== "all"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground",
-                )}
-              >
-                🏢
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
-                  מחלקה
-                </span>
-                <Select
-                  value={stagedFilters.deptId || "all"}
-                  onValueChange={(val) =>
-                    setStagedFilters({
-                      ...stagedFilters,
-                      deptId: val === "all" ? undefined : val,
-                      sectionId: undefined,
-                      teamId: undefined,
-                    })
-                  }
-                  disabled={!canSelectDept && !!stagedFilters.deptId}
+          <div className="space-y-6" dir="rtl">
+            {/* Departments Section */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">🏢</span>
+                  <Label className="text-xs font-black text-foreground uppercase tracking-wider">מחלקות</Label>
+                  {stagedFilters.deptIds.length > 0 && (
+                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-black rounded-full">
+                      {stagedFilters.deptIds.length} נבחרו
+                    </Badge>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStagedFilters((prev) => ({ ...prev, deptIds: [], sectionIds: [], teamIds: [] }))}
+                  className={cn(
+                    "text-[11px] font-bold transition-colors",
+                    stagedFilters.deptIds.length === 0 ? "text-primary font-black" : "text-muted-foreground hover:text-foreground"
+                  )}
                 >
-                  <SelectTrigger className="h-8 px-3 rounded-lg border border-border/40 font-bold text-sm bg-background/60 focus:ring-0 focus:ring-offset-0">
-                    <SelectValue placeholder="בחר מחלקה..." />
-                  </SelectTrigger>
-                  <SelectContent dir="rtl">
-                    {(user?.is_admin || user?.is_commander || (!user?.commands_department_id && !user?.commands_section_id && !user?.commands_team_id)) && (
-                      <SelectItem value="all">כל המחלקות</SelectItem>
-                    )}
-                    {structure.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.id.toString()}>
-                        {dept.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  {stagedFilters.deptIds.length === 0 ? "✓ כל המחלקות" : "אפס מחלקות"}
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto custom-scrollbar p-1">
+                {(structure || []).map((dept) => {
+                  const deptIdStr = String(dept?.id ?? "");
+                  const isSelected = stagedFilters.deptIds.includes(deptIdStr);
+                  return (
+                    <Button
+                      key={dept?.id}
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const newDepts = isSelected
+                          ? stagedFilters.deptIds.filter((id) => id !== deptIdStr)
+                          : [...stagedFilters.deptIds, deptIdStr];
+                        setStagedFilters((prev) => ({
+                          ...prev,
+                          deptIds: newDepts,
+                          sectionIds: [],
+                          teamIds: [],
+                        }));
+                      }}
+                      className={cn(
+                        "h-8 px-3 rounded-xl text-xs font-bold transition-all border shadow-2xs flex items-center gap-1.5",
+                        isSelected
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm scale-[1.02]"
+                          : "bg-muted/30 text-foreground/80 border-border/40 hover:bg-muted/70"
+                      )}
+                    >
+                      {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                      <span>{dept?.name}</span>
+                    </Button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Connector line */}
-            <div className="flex items-center gap-3 pr-4 pl-0">
-              <div className="flex flex-col items-center" style={{ width: 36 }}>
-                <div
-                  className={cn(
-                    "w-px flex-1 h-4",
-                    stagedFilters.deptId ? "bg-primary/30" : "bg-border/30",
-                  )}
-                />
-              </div>
-              <span
-                className={cn(
-                  "text-[10px] font-bold",
-                  stagedFilters.deptId
-                    ? "text-primary/60"
-                    : "text-muted-foreground/40",
-                )}
-              >
-                {stagedFilters.deptId ? "↓ בחר מדור" : "בחר קודם מחלקה"}
-              </span>
-            </div>
+            <div className="h-px bg-border/40 my-2" />
 
-            {/* Section */}
-            <div
-              className={cn(
-                "flex items-center gap-3 p-3 rounded-xl border transition-all",
-                !stagedFilters.deptId && "opacity-40 pointer-events-none",
-                stagedFilters.sectionId && stagedFilters.sectionId !== "all"
-                  ? "border-primary/30 bg-primary/5"
-                  : "border-border/40 bg-muted/20",
-              )}
-            >
-              <div
-                className={cn(
-                  "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base",
-                  stagedFilters.sectionId && stagedFilters.sectionId !== "all"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground",
-                )}
-              >
-                🏬
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
-                  מדור
-                </span>
-                <Select
-                  value={stagedFilters.sectionId || "all"}
-                  onValueChange={(val) =>
-                    setStagedFilters({
-                      ...stagedFilters,
-                      sectionId: val === "all" ? undefined : val,
-                      teamId: undefined,
-                    })
-                  }
-                  disabled={
-                    !stagedFilters.deptId ||
-                    (!canSelectSection && !!stagedFilters.sectionId)
-                  }
+            {/* Sections Section */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">🏬</span>
+                  <Label className="text-xs font-black text-foreground uppercase tracking-wider">מדורים</Label>
+                  {stagedFilters.sectionIds.length > 0 && (
+                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-black rounded-full">
+                      {stagedFilters.sectionIds.length} נבחרו
+                    </Badge>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStagedFilters((prev) => ({ ...prev, sectionIds: [], teamIds: [] }))}
+                  className={cn(
+                    "text-[11px] font-bold transition-colors",
+                    stagedFilters.sectionIds.length === 0 ? "text-primary font-black" : "text-muted-foreground hover:text-foreground"
+                  )}
                 >
-                  <SelectTrigger className="h-8 px-3 rounded-lg border border-border/40 font-bold text-sm bg-background/60 focus:ring-0 focus:ring-offset-0">
-                    <SelectValue placeholder="בחר מדור..." />
-                  </SelectTrigger>
-                  <SelectContent dir="rtl">
-                    {(user?.is_admin || user?.commands_department_id) && (
-                      <SelectItem value="all">כל המדורים</SelectItem>
-                    )}
-                    {sections.map((sec) => (
-                      <SelectItem key={sec.id} value={sec.id.toString()}>
-                        {sec.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  {stagedFilters.sectionIds.length === 0 ? "✓ כל המדורים" : "אפס מדורים"}
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto custom-scrollbar p-1">
+                {(sections || []).map((sec) => {
+                  const secIdStr = String(sec?.id ?? "");
+                  const isSelected = stagedFilters.sectionIds.includes(secIdStr);
+                  return (
+                    <Button
+                      key={sec?.id}
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const newSecs = isSelected
+                          ? stagedFilters.sectionIds.filter((id) => id !== secIdStr)
+                          : [...stagedFilters.sectionIds, secIdStr];
+                        setStagedFilters((prev) => ({
+                          ...prev,
+                          sectionIds: newSecs,
+                          teamIds: [],
+                        }));
+                      }}
+                      className={cn(
+                        "h-8 px-3 rounded-xl text-xs font-bold transition-all border shadow-2xs flex items-center gap-1.5",
+                        isSelected
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm scale-[1.02]"
+                          : "bg-muted/30 text-foreground/80 border-border/40 hover:bg-muted/70"
+                      )}
+                    >
+                      {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                      <span>{sec?.name}</span>
+                    </Button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Connector line */}
-            <div className="flex items-center gap-3 pr-4 pl-0">
-              <div className="flex flex-col items-center" style={{ width: 36 }}>
-                <div
-                  className={cn(
-                    "w-px flex-1 h-4",
-                    stagedFilters.sectionId ? "bg-primary/30" : "bg-border/30",
-                  )}
-                />
-              </div>
-              <span
-                className={cn(
-                  "text-[10px] font-bold",
-                  stagedFilters.sectionId
-                    ? "text-primary/60"
-                    : "text-muted-foreground/40",
-                )}
-              >
-                {stagedFilters.sectionId ? "↓ בחר חוליה" : "בחר קודם מדור"}
-              </span>
-            </div>
+            <div className="h-px bg-border/40 my-2" />
 
-            {/* Team */}
-            <div
-              className={cn(
-                "flex items-center gap-3 p-3 rounded-xl border transition-all",
-                !stagedFilters.sectionId && "opacity-40 pointer-events-none",
-                stagedFilters.teamId && stagedFilters.teamId !== "all"
-                  ? "border-primary/30 bg-primary/5"
-                  : "border-border/40 bg-muted/20",
-              )}
-            >
-              <div
-                className={cn(
-                  "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base",
-                  stagedFilters.teamId && stagedFilters.teamId !== "all"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground",
-                )}
-              >
-                👥
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
-                  חוליה
-                </span>
-                <Select
-                  value={stagedFilters.teamId || "all"}
-                  onValueChange={(val) =>
-                    setStagedFilters({
-                      ...stagedFilters,
-                      teamId: val === "all" ? undefined : val,
-                    })
-                  }
-                  disabled={
-                    !stagedFilters.sectionId ||
-                    (!canSelectTeam && !!stagedFilters.teamId)
-                  }
+            {/* Teams Section */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">👥</span>
+                  <Label className="text-xs font-black text-foreground uppercase tracking-wider">חוליות</Label>
+                  {stagedFilters.teamIds.length > 0 && (
+                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-black rounded-full">
+                      {stagedFilters.teamIds.length} נבחרו
+                    </Badge>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStagedFilters((prev) => ({ ...prev, teamIds: [] }))}
+                  className={cn(
+                    "text-[11px] font-bold transition-colors",
+                    stagedFilters.teamIds.length === 0 ? "text-primary font-black" : "text-muted-foreground hover:text-foreground"
+                  )}
                 >
-                  <SelectTrigger className="h-8 px-3 rounded-lg border border-border/40 font-bold text-sm bg-background/60 focus:ring-0 focus:ring-offset-0">
-                    <SelectValue placeholder="בחר חוליה..." />
-                  </SelectTrigger>
-                  <SelectContent dir="rtl">
-                    {(user?.is_admin ||
-                      user?.commands_department_id ||
-                      user?.commands_section_id) && (
-                      <SelectItem value="all">כל החוליות</SelectItem>
-                    )}
-                    {teams.map((team) => (
-                      <SelectItem key={team.id} value={team.id.toString()}>
-                        {team.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  {stagedFilters.teamIds.length === 0 ? "✓ כל החוליות" : "אפס חוליות"}
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto custom-scrollbar p-1">
+                {(teams || []).map((team) => {
+                  const teamIdStr = String(team?.id ?? "");
+                  const isSelected = stagedFilters.teamIds.includes(teamIdStr);
+                  return (
+                    <Button
+                      key={team?.id}
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const newTeams = isSelected
+                          ? stagedFilters.teamIds.filter((id) => id !== teamIdStr)
+                          : [...stagedFilters.teamIds, teamIdStr];
+                        setStagedFilters((prev) => ({
+                          ...prev,
+                          teamIds: newTeams,
+                        }));
+                      }}
+                      className={cn(
+                        "h-8 px-3 rounded-xl text-xs font-bold transition-all border shadow-2xs flex items-center gap-1.5",
+                        isSelected
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm scale-[1.02]"
+                          : "bg-muted/30 text-foreground/80 border-border/40 hover:bg-muted/70"
+                      )}
+                    >
+                      {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                      <span>{team?.name}</span>
+                    </Button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -500,37 +527,56 @@ export const DashboardFilters = ({
 
         {activeTab === "status" && (
           <div className="space-y-4">
-            <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest text-right block">
-              סטטוסים
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest text-right block">
+                סטטוסים
+              </Label>
+              <button
+                type="button"
+                onClick={() => setStagedFilters((prev) => ({ ...prev, statusIds: [] }))}
+                className={cn(
+                  "text-[11px] font-bold transition-colors",
+                  stagedFilters.statusIds.length === 0 ? "text-primary font-black" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {stagedFilters.statusIds.length === 0 ? "✓ כל הסטטוסים" : "אפס סטטוסים"}
+              </button>
+            </div>
+
             <div className="flex flex-wrap gap-2.5">
-              {allStatusTypes.map((type) => (
-                <Button
-                  key={type.id}
-                  variant="ghost"
-                  onClick={() =>
-                    setStagedFilters({
-                      ...stagedFilters,
-                      statusId:
-                        stagedFilters.statusId === type.id.toString()
-                          ? undefined
-                          : type.id.toString(),
-                    })
-                  }
-                  className={cn(
-                    "h-10 px-4 rounded-xl text-xs font-black transition-all border",
-                    stagedFilters.statusId === type.id.toString()
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted",
-                  )}
-                >
-                  <div
-                    className="w-2 h-2 rounded-full ml-2"
-                    style={{ backgroundColor: type.color }}
-                  />
-                  {type.name}
-                </Button>
-              ))}
+              {(allStatusTypes || []).map((type: any) => {
+                const statusIdStr = String(type?.status_id ?? type?.id ?? "");
+                const isSelected = stagedFilters.statusIds.includes(statusIdStr);
+                return (
+                  <Button
+                    key={statusIdStr || type?.name}
+                    variant="ghost"
+                    type="button"
+                    onClick={() => {
+                      const newStatusIds = isSelected
+                        ? stagedFilters.statusIds.filter((id) => id !== statusIdStr)
+                        : [...stagedFilters.statusIds, statusIdStr];
+                      setStagedFilters((prev) => ({
+                        ...prev,
+                        statusIds: newStatusIds,
+                      }));
+                    }}
+                    className={cn(
+                      "h-10 px-4 rounded-xl text-xs font-black transition-all border flex items-center gap-2",
+                      isSelected
+                        ? "bg-primary text-primary-foreground border-primary shadow-sm scale-[1.02]"
+                        : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
+                    )}
+                  >
+                    {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                    <div
+                      className="w-2.5 h-2.5 rounded-full ml-1"
+                      style={{ backgroundColor: type?.color || "#3b82f6" }}
+                    />
+                    <span>{type?.name || type?.status_name}</span>
+                  </Button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -658,7 +704,9 @@ export const DashboardFilters = ({
 
   return (
     <div className="w-full">
-      {isMobile ? (
+      {isDialogContent ? (
+        FilterContent
+      ) : isMobile ? (
         <div className="relative z-10">{FilterContent}</div>
       ) : pillsOnly ? (
         <AnimatePresence>
@@ -669,82 +717,92 @@ export const DashboardFilters = ({
               exit={{ opacity: 0, y: -4 }}
               className="flex flex-wrap items-center gap-2 py-1"
             >
-              {selectedDept && isDeptActive && (
+              {stagedFilters.deptIds.length > 0 && (
                 <Badge
                   variant="outline"
                   className="h-7 gap-1.5 rounded-full pl-2 pr-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-primary/10 font-medium text-[11px] text-muted-foreground"
                 >
-                  מחלקה:{" "}
+                  מחלקות:{" "}
                   <span className="font-bold text-foreground">
-                    {selectedDept.name}
+                    {(structure || [])
+                      .filter((d) => stagedFilters.deptIds.includes(String(d?.id ?? "")))
+                      .map((d) => d.name)
+                      .join(", ")}
                   </span>
-                  {canSelectDept && (
-                    <button
-                      onClick={() => onFilterChange("department")}
-                      className="mr-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full p-0.5 text-foreground/50 hover:text-foreground transition-colors"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
-                </Badge>
-              )}
-              {selectedSection && isSectionActive && (
-                <Badge
-                  variant="outline"
-                  className="h-7 gap-1.5 rounded-full pl-2 pr-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-primary/10 font-medium text-[11px] text-muted-foreground"
-                >
-                  מדור:{" "}
-                  <span className="font-bold text-foreground">
-                    {selectedSection.name}
-                  </span>
-                  {canSelectSection && (
-                    <button
-                      onClick={() => onFilterChange("section")}
-                      className="mr-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full p-0.5 text-foreground/50 hover:text-foreground transition-colors"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
-                </Badge>
-              )}
-              {selectedTeam && isTeamActive && (
-                <Badge
-                  variant="outline"
-                  className="h-7 gap-1.5 rounded-full pl-2 pr-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-primary/10 font-medium text-[11px] text-muted-foreground"
-                >
-                  חולייה:{" "}
-                  <span className="font-bold text-foreground">
-                    {selectedTeam.name}
-                  </span>
-                  {canSelectTeam && (
-                    <button
-                      onClick={() => onFilterChange("team")}
-                      className="mr-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full p-0.5 text-foreground/50 hover:text-foreground transition-colors"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
-                </Badge>
-              )}
-              {selectedStatus && (
-                <Badge
-                  variant="outline"
-                  className="h-7 gap-1.5 rounded-full pl-2 pr-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-primary/10 font-medium text-[11px] text-muted-foreground"
-                >
-                  סטטוס:
-                  <div className="flex items-center gap-1.5">
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{
-                        backgroundColor: selectedStatus.color || "currentColor",
-                      }}
-                    />
-                    <span className="font-bold text-foreground">
-                      {selectedStatus.name}
-                    </span>
-                  </div>
                   <button
-                    onClick={() => onFilterChange("status")}
+                    onClick={() => {
+                      setStagedFilters((prev) => ({ ...prev, deptIds: [], sectionIds: [], teamIds: [] }));
+                      if (onFilterChange) onFilterChange("department", []);
+                    }}
+                    className="mr-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full p-0.5 text-foreground/50 hover:text-foreground transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              )}
+              {stagedFilters.sectionIds.length > 0 && (
+                <Badge
+                  variant="outline"
+                  className="h-7 gap-1.5 rounded-full pl-2 pr-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-primary/10 font-medium text-[11px] text-muted-foreground"
+                >
+                  מדורים:{" "}
+                  <span className="font-bold text-foreground">
+                    {(sections || [])
+                      .filter((s) => stagedFilters.sectionIds.includes(String(s?.id ?? "")))
+                      .map((s) => s.name)
+                      .join(", ")}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setStagedFilters((prev) => ({ ...prev, sectionIds: [], teamIds: [] }));
+                      if (onFilterChange) onFilterChange("section", []);
+                    }}
+                    className="mr-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full p-0.5 text-foreground/50 hover:text-foreground transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              )}
+              {stagedFilters.teamIds.length > 0 && (
+                <Badge
+                  variant="outline"
+                  className="h-7 gap-1.5 rounded-full pl-2 pr-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-primary/10 font-medium text-[11px] text-muted-foreground"
+                >
+                  חוליות:{" "}
+                  <span className="font-bold text-foreground">
+                    {(teams || [])
+                      .filter((t) => stagedFilters.teamIds.includes(String(t?.id ?? "")))
+                      .map((t) => t.name)
+                      .join(", ")}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setStagedFilters((prev) => ({ ...prev, teamIds: [] }));
+                      if (onFilterChange) onFilterChange("team", []);
+                    }}
+                    className="mr-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full p-0.5 text-foreground/50 hover:text-foreground transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              )}
+              {stagedFilters.statusIds.length > 0 && (
+                <Badge
+                  variant="outline"
+                  className="h-7 gap-1.5 rounded-full pl-2 pr-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-primary/10 font-medium text-[11px] text-muted-foreground"
+                >
+                  סטטוסים:{" "}
+                  <span className="font-bold text-foreground">
+                    {(statuses || [])
+                      .filter((st: any) => stagedFilters.statusIds.includes(String(st?.status_id ?? st?.id ?? "")))
+                      .map((st: any) => st.status_name || st.name)
+                      .join(", ")}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setStagedFilters((prev) => ({ ...prev, statusIds: [] }));
+                      if (onFilterChange) onFilterChange("status", []);
+                    }}
                     className="mr-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full p-0.5 text-foreground/50 hover:text-foreground transition-colors"
                   >
                     <X className="w-3 h-3" />
@@ -761,7 +819,7 @@ export const DashboardFilters = ({
                     {currentAgeValue === "all" ? "כל הגילאים" : currentAgeValue}
                   </span>
                   <button
-                    onClick={() => onFilterChange("ageRange", "all")}
+                    onClick={() => onFilterChange && onFilterChange("ageRange", "all")}
                     className="mr-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full p-0.5 text-foreground/50 hover:text-foreground transition-colors"
                   >
                     <X className="w-3 h-3" />
@@ -778,7 +836,7 @@ export const DashboardFilters = ({
                     {selectedServiceTypes.join(", ")}
                   </span>
                   <button
-                    onClick={() => onFilterChange("serviceType", [])}
+                    onClick={() => onFilterChange && onFilterChange("serviceType", [])}
                     className="mr-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full p-0.5 text-foreground/50 hover:text-foreground transition-colors"
                   >
                     <X className="w-3 h-3" />
@@ -834,7 +892,7 @@ export const DashboardFilters = ({
             <PopoverContent
               align="end"
               sideOffset={12}
-              className="w-[95vw] sm:w-[560px] md:w-[620px] max-h-[92vh] sm:max-h-[85vh] p-0 rounded-[2.5rem] sm:rounded-3xl border-2 border-primary/50 dark:border-primary/60 bg-card/98 backdrop-blur-2xl shadow-[0_25px_80px_rgba(0,0,0,0.3)] dark:shadow-[0_25px_80px_rgba(0,0,0,0.8)] ring-2 ring-primary/30 z-50 flex flex-col overflow-hidden"
+              className="w-[95vw] sm:w-[560px] md:w-[620px] max-h-[92vh] sm:max-h-[85vh] p-0 rounded-[2.5rem] sm:rounded-3xl border border-border/80 dark:border-white/15 bg-card/98 backdrop-blur-2xl shadow-xl ring-1 ring-black/5 dark:ring-white/10 z-50 flex flex-col overflow-hidden"
             >
               {FilterContent}
             </PopoverContent>

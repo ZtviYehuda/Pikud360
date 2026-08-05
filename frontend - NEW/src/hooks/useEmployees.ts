@@ -353,11 +353,11 @@ export const useEmployees = () => {
         return [];
       }
     }, []),
-    getEmployeeById: useCallback(async (id?: number) => {
-      if (!id || id === undefined) return null;
+    getEmployeeById: useCallback(async (id?: number | string) => {
+      if (!id || id === "undefined" || id === "null" || (typeof id === "number" && isNaN(id))) return null;
       try {
         const { data } = await apiClient.get<Employee>(
-          endpoints.getEmployeeByIdEndpoint(id),
+          endpoints.getEmployeeByIdEndpoint(id as any),
         );
         return data;
       } catch (err: any) {

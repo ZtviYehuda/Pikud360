@@ -62,6 +62,7 @@ def create_app() -> Flask:
     # 6. Register blueprints
     from app.modules.security.routes import security_bp
     app.register_blueprint(security_bp, url_prefix="/api/auth")
+    app.register_blueprint(security_bp, url_prefix="/api/security", name="security_api")
 
     from app.modules.workforce.routes import workforce_bp
     app.register_blueprint(workforce_bp, url_prefix="/api/workforce")

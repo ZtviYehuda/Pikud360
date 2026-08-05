@@ -16,21 +16,37 @@ import {
 import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
 import SettingsPage from "@/pages/SettingsPage";
+import AttendancePage from "@/pages/AttendancePage";
+import EmployeesPage from "@/pages/EmployeesPage";
+import TransfersPage from "@/pages/TransfersPage";
+import RosterPage from "@/pages/RosterPage";
 
-// ── Lazy-load specific pages so they are still broken into chunks but main ones are static ──────────────────────────
-const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage"));
-const SupportPage        = lazy(() => import("@/pages/SupportPage"));
-const TermsPage          = lazy(() => import("@/pages/TermsPage"));
-const PrivacyPage        = lazy(() => import("@/pages/PrivacyPage"));
-const EmployeesPage      = lazy(() => import("@/pages/EmployeesPage"));
-const CreateEmployeePage = lazy(() => import("@/pages/CreateEmployeePage"));
-const EmployeeViewPage   = lazy(() => import("@/pages/EmployeeViewPage"));
-const TransfersPage      = lazy(() => import("@/pages/TransfersPage"));
-const AttendancePage     = lazy(() => import("@/pages/AttendancePage"));
-const RosterPage         = lazy(() => import("@/pages/RosterPage"));
-const ChangePasswordPage = lazy(() => import("@/pages/ChangePasswordPage"));
-const ActivityLogPage    = lazy(() => import("@/pages/ActivityLogPage"));
-const FeedbackPage       = lazy(() => import("@/pages/FeedbackPage"));
+// Helper for safe lazy-loading with automatic retry/reload on stale HMR cache
+const lazyWithRetry = (importFn: () => Promise<any>) =>
+  lazy(async () => {
+    try {
+      return await importFn();
+    } catch (error: any) {
+      if (
+        typeof window !== "undefined" &&
+        error?.message?.includes("Failed to fetch dynamically imported module")
+      ) {
+        window.location.reload();
+      }
+      throw error;
+    }
+  });
+
+// ── Secondary pages lazy-loaded safely ──────────────────────────
+const ForgotPasswordPage = lazyWithRetry(() => import("@/pages/ForgotPasswordPage"));
+const SupportPage        = lazyWithRetry(() => import("@/pages/SupportPage"));
+const TermsPage          = lazyWithRetry(() => import("@/pages/TermsPage"));
+const PrivacyPage        = lazyWithRetry(() => import("@/pages/PrivacyPage"));
+const CreateEmployeePage = lazyWithRetry(() => import("@/pages/CreateEmployeePage"));
+const EmployeeViewPage   = lazyWithRetry(() => import("@/pages/EmployeeViewPage"));
+const ChangePasswordPage = lazyWithRetry(() => import("@/pages/ChangePasswordPage"));
+const ActivityLogPage    = lazyWithRetry(() => import("@/pages/ActivityLogPage"));
+const FeedbackPage       = lazyWithRetry(() => import("@/pages/FeedbackPage"));
 
 // ── Page-level suspense wrapper ───────────────────────────────────────────────
 // Keeps UX smooth: shows LoadingScreen while the chunk downloads
@@ -139,13 +155,13 @@ const router = createBrowserRouter([
         children: [
           { path: "/",                    element: <DashboardPage /> },
           { path: "/change-password",     element: <PageSuspense><ChangePasswordPage /></PageSuspense> },
-          { path: "/employees",           element: <PageSuspense><EmployeesPage /></PageSuspense> },
+          { path: "/employees",           element: <EmployeesPage /> },
           { path: "/employees/new",       element: <PageSuspense><CreateEmployeePage /></PageSuspense> },
           { path: "/employees/:id",       element: <PageSuspense><EmployeeViewPage /></PageSuspense> },
           { path: "/employees/edit/:id",  element: <PageSuspense><EmployeeViewPage /></PageSuspense> },
-          { path: "/transfers",           element: <PageSuspense><TransfersPage /></PageSuspense> },
-          { path: "/attendance",          element: <PageSuspense><AttendancePage /></PageSuspense> },
-          { path: "/roster",              element: <PageSuspense><RosterPage /></PageSuspense> },
+          { path: "/transfers",           element: <TransfersPage /> },
+          { path: "/attendance",          element: <AttendancePage /> },
+          { path: "/roster",              element: <RosterPage /> },
           { path: "/settings",            element: <SettingsPage /> },
           { path: "/feedback",            element: <PageSuspense><FeedbackPage /></PageSuspense> },
           { path: "/activity-log",        element: <PageSuspense><ActivityLogPage /></PageSuspense> },

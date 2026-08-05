@@ -40,3 +40,16 @@ class UserLoginHistory:
     user_agent: str = ""
     is_successful: bool = False
     failure_reason: Optional[str] = None
+
+@dataclass
+class UserPreference:
+    user_id: str
+    theme: str = "dark"
+    language: str = "he"
+    notification_preferences: Optional[dict] = None
+    dashboard_layout: Optional[dict] = None
+    default_page: str = "/dashboard"
+    table_density: str = "comfortable"
+    accessibility_preferences: Optional[dict] = None
+    display_preferences: Optional[dict] = None
+    updated_at: Optional[datetime] = None

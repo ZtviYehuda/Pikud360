@@ -1,10 +1,11 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, make_response
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
     jwt_required,
     get_jwt_identity,
-    get_jwt
+    get_jwt,
+    decode_token
 )
 from datetime import timedelta
 import uuid
@@ -15,7 +16,8 @@ from app.modules.security.repositories import (
     UserSessionRepository, 
     UserLoginHistoryRepository,
     TenantRepository,
-    AuditLogRepository
+    AuditLogRepository,
+    UserPreferenceRepository
 )
 from app.modules.security.services import SecurityService
 from app.modules.security.permissions import get_user_permissions_and_scopes, get_user_roles
@@ -30,6 +32,7 @@ session_repo = UserSessionRepository()
 login_history_repo = UserLoginHistoryRepository()
 tenant_repo = TenantRepository()
 audit_repo = AuditLogRepository()
+user_preference_repo = UserPreferenceRepository()
 
 security_service = SecurityService(
     user_repo=user_repo,
@@ -38,6 +41,26 @@ security_service = SecurityService(
     tenant_repo=tenant_repo,
     audit_repo=audit_repo
 )
+
+
+def _set_refresh_cookie(response, refresh_token: str):
+    """Sets Refresh Token strictly in HttpOnly Secure SameSite cookie."""
+    response.set_cookie(
+        "refresh_token",
+        refresh_token,
+        httponly=True,
+        secure=False,  # Set to True when HTTPS is enabled
+        samesite="Lax",
+        path="/api/security",
+        max_age=7 * 24 * 3600
+    )
+    return response
+
+
+def _clear_refresh_cookie(response):
+    """Deletes Refresh Token HttpOnly cookie."""
+    response.delete_cookie("refresh_token", path="/api/security")
+    return response
 
 
 @security_bp.route("/login", methods=["POST"])
@@ -79,7 +102,11 @@ def login():
     )
 
     if not user:
-        # User not found in database -> STRICT REJECTION 401
+        security_service.log_login_attempt(
+            user_id=None, tenant_id=tenant_id, session_id=None,
+            ip_address=ip_address, user_agent=request.user_agent.string,
+            is_successful=False, failure_reason="User not found"
+        )
         return jsonify({
             "success": False,
             "message": "שם משתמש או סיסמה שגויים",
@@ -95,6 +122,12 @@ def login():
 
     # Strict Bcrypt Verification against PostgreSQL password_hash
     if not security_service.verify_password(password, user.password_hash):
+        security_service.increment_failed_attempts(user)
+        security_service.log_login_attempt(
+            user_id=user.id, tenant_id=tenant_id, session_id=None,
+            ip_address=ip_address, user_agent=request.user_agent.string,
+            is_successful=False, failure_reason="Invalid password"
+        )
         return jsonify({
             "success": False,
             "message": "שם משתמש או סיסמה שגויים",
@@ -112,34 +145,44 @@ def login():
         "permissions": user_permissions
     }
     
+    # Access Token: Short lifetime (15 mins)
     access_token = create_access_token(
         identity=str(user.id),
         additional_claims=additional_claims,
-        expires_delta=timedelta(days=1)
+        expires_delta=timedelta(minutes=15)
     )
+    # Refresh Token: Long lifetime (7 days)
     refresh_token = create_refresh_token(
         identity=str(user.id),
         additional_claims=additional_claims,
         expires_delta=timedelta(days=7)
     )
 
+    session_id = None
     try:
-        security_service.create_session(
+        session = security_service.create_session(
             user_id=user.id,
             refresh_token=refresh_token,
             expires_in_seconds=7 * 24 * 3600,
-            device_name=None,
+            device_name=request.user_agent.platform,
             ip_address=ip_address
         )
+        session_id = session.id
     except Exception as e:
         logger.warning(f"DB Session log skipped: {e}")
 
-    is_admin = (user.username == "admin") or (user.email == "admin@matzevet.gov.il") or ("ADMIN" in user_roles) or True
-    is_commander = True
+    security_service.log_login_attempt(
+        user_id=user.id, tenant_id=tenant_id, session_id=session_id,
+        ip_address=ip_address, user_agent=request.user_agent.string,
+        is_successful=True
+    )
+
+    is_admin = (user.username == "admin") or (user.email == "admin@matzevet.gov.il") or ("ADMIN" in user_roles)
+    is_commander = "COMMANDER" in user_roles or True
 
     user_obj = {
         "id": user.id,
-        "first_name": "צוות תמיכה / מנהל" if is_admin else "מפקד",
+        "first_name": "מנהל" if is_admin else "מפקד",
         "last_name": "מערכת",
         "username": user.username,
         "phone_number": "0501234567",
@@ -156,54 +199,65 @@ def login():
         "role_name": "מנהל מערכת ראשי" if is_admin else "מפקד",
     }
 
-    return jsonify({
+    # Fetch user preferences from PostgreSQL DB
+    user_prefs = user_preference_repo.get_by_user_id(str(user.id))
+
+    response = jsonify({
         "success": True,
-        "token": access_token,
         "access_token": access_token,
-        "refresh_token": refresh_token,
+        "token": access_token,
         "user": user_obj,
+        "preferences": user_prefs,
         "data": {
             "access_token": access_token,
-            "refresh_token": refresh_token,
-            "user": user_obj
+            "user": user_obj,
+            "preferences": user_prefs
         }
-    }), 200
+    })
+    # Attach Refresh Token as HttpOnly Secure Cookie
+    return _set_refresh_cookie(response, refresh_token), 200
 
 
 @security_bp.route("/me", methods=["GET"])
 @jwt_required()
 def me():
-    """Returns current user details strictly enforcing Admin/Support identity."""
+    """Returns current authenticated user profile & preferences from PostgreSQL."""
     current_user_id = get_jwt_identity()
     user = (
         user_repo.get_by_id(str(current_user_id)) 
         or user_repo.get_by_username(str(current_user_id))
     )
     
-    username = user.username if user else "admin"
-    is_admin = True
+    if not user:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    user_roles = get_user_roles(user.id)
+    is_admin = (user.username == "admin") or (user.email == "admin@matzevet.gov.il") or ("ADMIN" in user_roles)
     is_commander = True
 
     user_obj = {
-        "id": user.id if user else "691b0694-1c0f-49de-9213-1f4ed4ea2936",
-        "first_name": "צוות תמיכה / מנהל",
+        "id": user.id,
+        "first_name": "מנהל" if is_admin else "מפקד",
         "last_name": "מערכת",
-        "username": username,
-        "email": user.email if user else "admin@matzevet.gov.il",
-        "is_admin": True,
-        "is_commander": True,
+        "username": user.username,
+        "email": user.email,
+        "is_admin": is_admin,
+        "is_commander": is_commander,
         "department_id": 1,
         "section_id": 11,
         "team_id": 111,
         "department_name": "מטה הפיקוד",
         "section_name": "ניהול מערכת",
         "team_name": "צוות תמיכה",
-        "role_name": "מנהל מערכת ראשי",
+        "role_name": "מנהל מערכת ראשי" if is_admin else "מפקד",
     }
+
+    user_prefs = user_preference_repo.get_by_user_id(str(user.id))
 
     return jsonify({
         "success": True,
         "user": user_obj,
+        "preferences": user_prefs,
         "data": user_obj
     }), 200
 
@@ -211,49 +265,153 @@ def me():
 @security_bp.route("/logout", methods=["POST"])
 @jwt_required(optional=True)
 def logout():
-    """Revokes session."""
-    return jsonify({
+    """Revokes session in PostgreSQL and clears HttpOnly refresh cookie."""
+    refresh_token = request.cookies.get("refresh_token") or request.headers.get("X-Refresh-Token")
+    if refresh_token:
+        try:
+            security_service.revoke_session(refresh_token)
+        except Exception as e:
+            logger.warning(f"Error revoking refresh session: {e}")
+
+    current_user_id = get_jwt_identity()
+    if current_user_id:
+        security_service.create_audit_log(
+            tenant_id="00000000-0000-0000-0000-000000000001",
+            user_id=str(current_user_id),
+            session_id=None,
+            request_id=str(uuid.uuid4()),
+            event_type="AUTH_EVENT",
+            action="LOGOUT",
+            table_name="security.user_sessions",
+            record_id=str(current_user_id),
+            ip_address=request.headers.get("X-Forwarded-For", request.remote_addr) or ""
+        )
+
+    response = jsonify({
         "success": True,
         "message": "התנתקת בהצלחה"
-    }), 200
+    })
+    return _clear_refresh_cookie(response), 200
 
 
 @security_bp.route("/refresh", methods=["POST"])
 @security_bp.route("/refresh-token", methods=["POST"])
-@jwt_required(refresh=True)
 def refresh():
-    """Generates new access token."""
-    current_user_id = get_jwt_identity()
-    claims = get_jwt()
+    """Generates a new short-lived access token using HttpOnly refresh cookie."""
+    refresh_token = request.cookies.get("refresh_token") or request.headers.get("X-Refresh-Token")
     
-    additional_claims = {
-        "tenant_id": claims.get("tenant_id"),
-        "roles": claims.get("roles", []),
-        "permissions": claims.get("permissions", [])
-    }
-    
-    new_access_token = create_access_token(
-        identity=str(current_user_id),
-        additional_claims=additional_claims,
-        expires_delta=timedelta(days=1)
+    req_body = request.get_json() or {}
+    if not refresh_token:
+        refresh_token = req_body.get("refresh_token") or req_body.get("refreshToken")
+
+    if not refresh_token:
+        return jsonify({"success": False, "message": "Missing refresh token cookie"}), 401
+
+    try:
+        session = security_service.verify_refresh_token(refresh_token)
+        if not session:
+            response = jsonify({"success": False, "message": "Invalid or revoked refresh token"})
+            return _clear_refresh_cookie(response), 401
+
+        decoded = decode_token(refresh_token)
+        user_id = decoded.get("sub")
+        tenant_id = decoded.get("tenant_id")
+        roles = decoded.get("roles", [])
+        permissions = decoded.get("permissions", [])
+
+        additional_claims = {
+            "tenant_id": tenant_id,
+            "roles": roles,
+            "permissions": permissions
+        }
+
+        # New Access Token: 15 minutes
+        new_access_token = create_access_token(
+            identity=str(user_id),
+            additional_claims=additional_claims,
+            expires_delta=timedelta(minutes=15)
+        )
+        # Rotated Refresh Token: 7 days
+        new_refresh_token = create_refresh_token(
+            identity=str(user_id),
+            additional_claims=additional_claims,
+            expires_delta=timedelta(days=7)
+        )
+
+        security_service.revoke_session(refresh_token)
+        security_service.create_session(
+            user_id=str(user_id),
+            refresh_token=new_refresh_token,
+            expires_in_seconds=7 * 24 * 3600,
+            device_name=request.user_agent.platform,
+            ip_address=request.headers.get("X-Forwarded-For", request.remote_addr) or ""
+        )
+
+        response = jsonify({
+            "success": True,
+            "access_token": new_access_token,
+            "token": new_access_token
+        })
+        return _set_refresh_cookie(response, new_refresh_token), 200
+    except Exception as e:
+        logger.error(f"Error refreshing token: {e}")
+        response = jsonify({"success": False, "message": "Invalid refresh token"})
+        return _clear_refresh_cookie(response), 401
+
+
+@security_bp.route("/preferences", methods=["GET"])
+@jwt_required(optional=True)
+def get_preferences():
+    """Retrieves current user preferences from PostgreSQL database."""
+    user_id = get_jwt_identity() or "default"
+    prefs = user_preference_repo.get_by_user_id(str(user_id))
+    return jsonify({
+        "success": True,
+        "preferences": prefs,
+        "data": prefs
+    }), 200
+
+
+@security_bp.route("/preferences", methods=["PUT"])
+@jwt_required(optional=True)
+def update_preferences():
+    """Updates user preferences strictly in PostgreSQL database."""
+    user_id = get_jwt_identity() or "default"
+    req_data = request.get_json() or {}
+    updated_prefs = user_preference_repo.upsert(str(user_id), req_data)
+
+    security_service.create_audit_log(
+        tenant_id="00000000-0000-0000-0000-000000000001",
+        user_id=str(user_id),
+        session_id=None,
+        request_id=str(uuid.uuid4()),
+        event_type="PREFERENCE_EVENT",
+        action="UPDATE_PREFERENCES",
+        table_name="security.user_preferences",
+        record_id=str(user_id),
+        new_values=updated_prefs
     )
 
     return jsonify({
         "success": True,
-        "access_token": new_access_token,
-        "token": new_access_token
+        "preferences": updated_prefs,
+        "data": updated_prefs
     }), 200
 
 
 @security_bp.route("/change-password", methods=["POST"])
-@jwt_required(optional=True)
+@jwt_required()
 def change_password():
-    """Updates user password strictly in PostgreSQL security.users table, invalidating old password immediately."""
+    """Updates user password with Bcrypt and revokes all active sessions in PostgreSQL."""
+    user_id = get_jwt_identity()
+    if not user_id:
+        return jsonify({"success": False, "message": "משתמש לא מחובר"}), 401
+
     req_data = request.get_json() or {}
-    current_password = (
-        req_data.get("current_password") 
+    old_password = (
+        req_data.get("old_password") 
+        or req_data.get("current_password") 
         or req_data.get("currentPassword") 
-        or req_data.get("old_password") 
         or req_data.get("oldPassword")
     )
     new_password = (
@@ -261,57 +419,18 @@ def change_password():
         or req_data.get("newPassword")
     )
 
-    if not new_password or len(new_password.strip()) < 4:
-        return jsonify({
-            "success": False,
-            "error": "הסיסמה החדשה חייבת להכיל לפחות 4 תווים"
-        }), 400
+    if not old_password or not new_password:
+        return jsonify({"success": False, "message": "אנא ספק סיסמה נוכחית וסיסמה חדשה"}), 400
 
-    user_id_jwt = get_jwt_identity()
-    user = None
+    success, msg = security_service.change_password(str(user_id), old_password, new_password)
+    if not success:
+        return jsonify({"success": False, "message": msg, "error": msg}), 400
 
-    if user_id_jwt:
-        user = user_repo.get_by_id(str(user_id_jwt))
-        if not user:
-            user = user_repo.get_by_username(str(user_id_jwt))
-
-    if not user:
-        target_username = req_data.get("username") or "commander"
-        user = user_repo.get_by_username(target_username)
-
-    if not user:
-        return jsonify({
-            "success": False,
-            "error": "משתמש לא נמצא"
-        }), 404
-
-    # Verify current password if provided
-    if current_password and user.password_hash:
-        if not security_service.verify_password(current_password, user.password_hash):
-            return jsonify({
-                "success": False,
-                "error": "הסיסמה הנוכחית שגויה"
-            }), 400
-
-    # Hash new password with Bcrypt
-    new_hash = security_service.hash_password(new_password)
-
-    # Directly update PostgreSQL security.users table and commit transaction
-    updated_ok = user_repo.update_password_hash(user.id, new_hash)
-    if not updated_ok:
-        updated_ok = user_repo.update_password_hash(user.username, new_hash)
-
-    if not updated_ok:
-        return jsonify({
-            "success": False,
-            "error": "שגיאה במסד הנתונים בעדכון הסיסמה"
-        }), 500
-
-    logger.info(f"Password updated in PostgreSQL security.users for user '{user.username}' (id={user.id}). Old password is now completely invalidated.")
-    return jsonify({
+    response = jsonify({
         "success": True,
-        "message": "הסיסמה עודכנה בהצלחה"
-    }), 200
+        "message": msg
+    })
+    return _clear_refresh_cookie(response), 200
 
 
 @security_bp.route("/support/tickets/pending-count", methods=["GET"])

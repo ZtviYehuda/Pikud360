@@ -215,7 +215,6 @@ class SecurityService:
         """Returns standard SHA256 hashed signature of token."""
         return hashlib.sha256(token.encode('utf-8')).hexdigest()
 
-    # User Lockout Wrappers
     def increment_failed_attempts(self, user: User) -> int:
         count = self._user_repo.increment_failed_attempts(user.id)
         if count >= 5:
@@ -227,3 +226,46 @@ class SecurityService:
 
     def reset_failed_attempts(self, user_id: str) -> bool:
         return self._user_repo.reset_failed_attempts(user_id)
+
+    def change_password(self, user_id: str, old_password: str, new_password: str) -> Tuple[bool, str]:
+        """Verifies old password, updates password hash using bcrypt, and invalidates all existing user sessions."""
+        user = self._user_repo.get_by_id(user_id)
+        if not user:
+            return False, "משתמש לא נמצא"
+
+        if not self.verify_password(old_password, user.password_hash):
+            return False, "סיסמה נוכחית שגויה"
+
+        if len(new_password) < 8:
+            return False, "הסיסמה החדשה חייבת להכיל לפחות 8 תווים"
+
+        new_hash = self.hash_password(new_password)
+        
+        # Update user password in DB
+        from app.database.connection import get_db_connection
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE security.users SET password_hash = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s;",
+                    (new_hash, user.id)
+                )
+                # Revoke all existing sessions for user
+                cur.execute(
+                    "UPDATE security.user_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE user_id = %s AND revoked_at IS NULL;",
+                    (user.id,)
+                )
+                conn.commit()
+
+        # Create audit log
+        self.create_audit_log(
+            tenant_id=user.tenant_id,
+            user_id=user.id,
+            session_id=None,
+            request_id=str(uuid.uuid4()),
+            event_type="SECURITY_EVENT",
+            action="PASSWORD_CHANGE",
+            table_name="security.users",
+            record_id=user.id,
+            severity="WARNING"
+        )
+        return True, "הסיסמה שונתה בהצלחה. כל החיבורים הקודמים נותקו."

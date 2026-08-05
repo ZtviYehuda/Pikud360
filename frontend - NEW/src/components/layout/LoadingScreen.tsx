@@ -68,7 +68,7 @@ export const LoadingScreen = () => {
 
           <img
             src="/matzevet_icon.png"
-            alt="סמל מצבת"
+            alt="סמל פיקוד"
             className="w-24 h-24 sm:w-28 sm:h-28 object-contain filter drop-shadow-[0_10px_25px_rgba(59,130,246,0.35)] transition-all duration-300"
           />
         </motion.div>
@@ -81,13 +81,13 @@ export const LoadingScreen = () => {
           className="flex flex-col items-center gap-1.5"
         >
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white font-sans">
-            מצבת
+            פיקוד
           </h1>
           <p className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">
             מערכת שליטה ובקרה מבצעית
           </p>
           <span className="text-[10px] font-mono font-bold tracking-widest text-blue-600 dark:text-blue-400 uppercase mt-0.5">
-            MATZEVET · COMMAND CONTROL
+            PIKUD · COMMAND CONTROL
           </span>
         </motion.div>
 

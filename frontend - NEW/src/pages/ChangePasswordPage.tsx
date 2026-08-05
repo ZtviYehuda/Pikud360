@@ -112,77 +112,34 @@ export default function ChangePasswordPage() {
         />
       </div>
 
-      {/* Standalone Header/Branding */}
       <div className="fixed top-6 right-6 z-50 flex items-center gap-3">
         <div className="w-10 h-10 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 backdrop-blur-md shadow-sm">
           <ShieldCheck className="w-5 h-5 text-primary" />
         </div>
         <span className="text-lg font-black tracking-tight text-foreground bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
-          Matzevet
+          Pikud
         </span>
       </div>
 
-      {/* Main Content Area */}
       <main className="flex-grow flex flex-col items-center justify-center px-4 md:px-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full max-w-[450px] space-y-6"
+          className="w-full max-w-md"
         >
-          {/* Change Password Card */}
-          <div className="bg-card/40 dark:bg-slate-900/35 backdrop-blur-2xl rounded-[2.5rem] border border-border/40 overflow-hidden shadow-2xl p-8 sm:p-10 space-y-6">
-            <div className="text-center space-y-2">
-              <div className="w-14 h-14 bg-amber-500/10 rounded-2xl flex items-center justify-center mx-auto mb-2 border border-amber-500/20">
-                <KeyRound className="w-7 h-7 text-amber-600 dark:text-amber-500" />
-              </div>
-              <h1 className="text-2xl font-black text-foreground tracking-tight">
-                חובה להחליף סיסמה
+          <div className="bg-card/90 backdrop-blur-2xl border border-border/60 shadow-2xl rounded-[2.5rem] p-6 md:p-8 mb-6 relative overflow-hidden">
+            <div className="text-center mb-8">
+              <h1 className="text-2xl font-black tracking-tight text-foreground mb-2">
+                שינוי סיסמה ראשוני
               </h1>
-              <p className="text-muted-foreground text-xs leading-relaxed max-w-[320px] mx-auto font-medium">
-                שלום,{" "}
-                <span className="text-primary font-black">
-                  {user?.first_name} {user?.last_name}
-                </span>
-                . זוהי התחברות ראשונית למערכת. למען אבטחת המידע, עליך לבחור סיסמה אישית חדשה.
+              <p className="text-sm font-bold text-muted-foreground/80 leading-relaxed">
+                מטעמי אבטחה, יש להחליף את הסיסמה הזמנית שקיבלת לסיסמה אישית
+                חדשה.
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-4">
-                {/* New Password */}
-                <div className="space-y-1.5 flex flex-col relative">
-                  <Label
-                    htmlFor="new_password"
-                    className="text-xs font-bold text-slate-400 pr-1 flex items-center gap-2"
-                  >
-                    <Lock className="w-3.5 h-3.5 opacity-60" />
-                    סיסמה חדשה
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="new_password"
-                      type={showNewPassword ? "text" : "password"}
-                      autoFocus
-                      value={newPassword}
-                      onChange={(e) => {
-                        setNewPassword(e.target.value);
-                        setError("");
-                      }}
-                      className="h-12 border-slate-200 dark:border-slate-800 focus:border-primary focus:ring-1 focus:ring-primary/20 rounded-xl bg-background/50 backdrop-blur-sm font-bold text-sm pl-10 text-right"
-                      placeholder="הזן סיסמה חדשה (מינימום 4 תווים)"
-                      disabled={isLoading}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-foreground transition-colors"
-                    >
-                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-
-                  {/* Strength Bar */}
                   {newPassword.length > 0 && (
                     <div className="w-full mt-1.5 space-y-1">
                       <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">

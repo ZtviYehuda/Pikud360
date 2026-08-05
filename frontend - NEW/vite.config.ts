@@ -84,6 +84,7 @@ export default defineConfig(({ mode }) => {
       host: "0.0.0.0",
       hmr: {
         overlay: false,
+        protocol: useHttps ? "wss" : "ws",
       },
       proxy: {
         "/api": {

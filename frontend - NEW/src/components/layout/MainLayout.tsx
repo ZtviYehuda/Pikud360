@@ -303,7 +303,7 @@ export default function MainLayout() {
             <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden relative">
               <img
                 src="/matzevet_icon.png"
-                alt="סמל מצבת"
+                alt="סמל פיקוד"
                 className="w-9 h-9 object-contain filter drop-shadow-[0_2px_8px_rgba(56,189,248,0.35)] group-hover:scale-110 transition-transform duration-300"
               />
             </div>
@@ -312,10 +312,10 @@ export default function MainLayout() {
             {isSidebarOpen && (
               <div className="flex flex-col text-right transition-all">
                 <span className="font-black text-lg tracking-tight text-foreground font-sans leading-none">
-                  מצבת
+                  פיקוד
                 </span>
                 <span className="text-[9px] font-bold text-muted-foreground tracking-widest uppercase mt-0.5 font-mono">
-                  MATZEVET
+                  PIKUD
                 </span>
               </div>
             )}
@@ -506,7 +506,7 @@ export default function MainLayout() {
             >
               <img
                 src="/matzevet_logo.png"
-                alt="לוגו Matzevet"
+                alt="לוגו Pikud"
                 className="w-10 h-10 sm:w-12 sm:h-12 object-contain toren-logo-img"
               />
             </button>

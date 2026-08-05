@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { FilterModal } from "@/components/employees/modals/FilterModal";
 import {
   CalendarDays,
   CalendarRange,
@@ -90,11 +91,17 @@ export default function AttendancePage() {
     }
     return false;
   });
-  const [selectedDeptId, setSelectedDeptId] = useState("all");
-  const [selectedSectionId, setSelectedSectionId] = useState("all");
-  const [selectedTeamId, setSelectedTeamId] = useState("all");
-  const [selectedStatusId, setSelectedStatusId] = useState("all");
-  const [selectedServiceTypeId, setSelectedServiceTypeId] = useState("all");
+  const [selectedDeptIds, setSelectedDeptIds] = useState<string[]>([]);
+  const [selectedSectionIds, setSelectedSectionIds] = useState<string[]>([]);
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
+  const [selectedStatusIds, setSelectedStatusIds] = useState<string[]>([]);
+  const [selectedServiceTypeIds, setSelectedServiceTypeIds] = useState<string[]>([]);
+
+  const selectedDeptId = selectedDeptIds[0] || "all";
+  const selectedSectionId = selectedSectionIds[0] || "all";
+  const selectedTeamId = selectedTeamIds[0] || "all";
+  const selectedStatusId = selectedStatusIds[0] || "all";
+  const selectedServiceTypeId = selectedServiceTypeIds[0] || "all";
 
   const [statusTypes, setStatusTypes] = useState<any[]>([]);
   const [serviceTypes, setServiceTypes] = useState<any[]>([]);
@@ -129,14 +136,11 @@ export default function AttendancePage() {
   // Load filters from localStorage on mount
   const isFilterActive = useMemo(() => {
     if (searchTerm !== "") return true;
-    if (selectedStatusId !== "all") return true;
-    if (selectedServiceTypeId !== "all") return true;
-
-    const isDeptFilterable = !(user && !user.is_admin && user.department_id);
-    if (isDeptFilterable && selectedDeptId !== "all") return true;
-
-    const isSectionFilterable = !(user && !user.is_admin && user.section_id);
-    if (isSectionFilterable && selectedSectionId !== "all") return true;
+    if (selectedStatusIds.length > 0) return true;
+    if (selectedServiceTypeIds.length > 0) return true;
+    if (selectedDeptIds.length > 0) return true;
+    if (selectedSectionIds.length > 0) return true;
+    if (selectedTeamIds.length > 0) return true;
 
     const isTeamFilterable = !(user && !user.is_admin && user.team_id);
     if (isTeamFilterable && selectedTeamId !== "all") return true;
@@ -282,10 +286,10 @@ export default function AttendancePage() {
       const sTypes = await getServiceTypes();
       if (sTypes) setServiceTypes(sTypes);
 
-      const empId = user?.employee_id || user?.id;
+      const empId = user?.employee_id;
       if (empId) {
         const me = await getEmployeeById(empId);
-        setCurrentUserEmp(me);
+        if (me) setCurrentUserEmp(me);
       }
     };
     init();
@@ -399,46 +403,41 @@ export default function AttendancePage() {
       if (!searchMatch) return false;
 
       // Organizational Filters (Selection)
-      if (
-        selectedDeptId !== "all" &&
-        emp.department_id !== parseInt(selectedDeptId)
-      )
+      if (selectedDeptIds.length > 0 && !selectedDeptIds.includes(emp.department_id?.toString() || "")) {
         return false;
-      if (
-        selectedSectionId !== "all" &&
-        emp.section_id !== parseInt(selectedSectionId)
-      )
+      }
+      if (selectedSectionIds.length > 0 && !selectedSectionIds.includes(emp.section_id?.toString() || "")) {
         return false;
-      if (selectedTeamId !== "all" && emp.team_id !== parseInt(selectedTeamId))
+      }
+      if (selectedTeamIds.length > 0 && !selectedTeamIds.includes(emp.team_id?.toString() || "")) {
         return false;
+      }
 
       // Status Filter
-      if (selectedStatusId !== "all") {
-        if (selectedStatusId === "GROUP_VACATION") {
-          if (!emp.status_name?.includes("חופשה")) return false;
-        } else if (selectedStatusId === "GROUP_OFFICE") {
-          if (!emp.status_name?.includes("משרד")) return false;
-        } else if (emp.status_id?.toString() !== selectedStatusId) {
-          return false;
-        }
+      if (selectedStatusIds.length > 0 && !selectedStatusIds.includes(emp.status_id?.toString() || "")) {
+        return false;
       }
 
       // Service Type Filter
       if (
-        selectedServiceTypeId !== "all" &&
-        emp.service_type_id?.toString() !== selectedServiceTypeId
-      )
+        selectedServiceTypeIds.length > 0 &&
+        !selectedServiceTypeIds.includes(emp.service_type_id?.toString() || "") &&
+        !selectedServiceTypeIds.includes(emp.service_type || "")
+      ) {
         return false;
+      }
 
       return true;
     });
   }, [
     scopeEmployees,
     searchTerm,
-    selectedDeptId,
-    selectedSectionId,
-    selectedTeamId,
-    selectedStatusId,
+    selectedDeptIds,
+    selectedSectionIds,
+    selectedTeamIds,
+    selectedStatusIds,
+    selectedServiceTypeIds,
+  ]);
     selectedServiceTypeId,
   ]);
 
@@ -929,26 +928,20 @@ export default function AttendancePage() {
                 <div className="relative flex-1">
                   <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
                   <Input
-                    placeholder="חיפוש שם שוטר או מ.א..."
+                    placeholder="."
                     className="h-10 pr-10 bg-background border border-border/40 focus:ring-ring/20 focus:border-ring rounded-xl text-sm font-bold w-full transition-all hover:border-border/80"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
 
-                {/* Advanced Filters Button (Mobile trigger opens Dialog, Desktop toggles collapsible) */}
+                {/* Advanced Filters Button (opens unified FilterModal dialog) */}
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    if (window.innerWidth < 768) {
-                      setFilterOpen(true);
-                    } else {
-                      setDesktopFiltersExpanded((prev) => !prev);
-                    }
-                  }}
+                  onClick={() => setFilterOpen(true)}
                   className={cn(
                     "h-10 rounded-xl px-3.5 sm:px-4 font-bold text-xs sm:text-sm transition-all gap-1.5 sm:gap-2 border-border/60 shrink-0",
-                    desktopFiltersExpanded || isFilterActive
+                    isFilterActive
                       ? "border-primary/30 text-primary bg-primary/5 hover:bg-primary/10"
                       : "text-muted-foreground hover:bg-muted",
                   )}
@@ -971,398 +964,57 @@ export default function AttendancePage() {
                   </Button>
                 )}
               </div>
-
-              {/* Collapsible Area for Advanced Dropdowns (Desktop only) */}
-              <AnimatePresence initial={false}>
-                {desktopFiltersExpanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                    animate={{ height: "auto", opacity: 1, marginTop: 12 }}
-                    exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                    transition={{ duration: 0.25, ease: "easeOut" }}
-                    className="hidden md:block overflow-hidden w-full"
-                  >
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-3 p-4 bg-card/95 border border-primary/20 dark:border-white/15 rounded-2xl shadow-md backdrop-blur-xl">
-                      {/* Department Filter */}
-                      {(user?.is_admin || !user?.department_id) && (
-                        <div className="space-y-1.5 text-right">
-                          <label className="text-[10px] font-black text-slate-400 uppercase mr-1">
-                            מחלקה
-                          </label>
-                          <Select
-                            value={selectedDeptId}
-                            onValueChange={(val) => {
-                              setSelectedDeptId(val);
-                              setSelectedSectionId("all");
-                              setSelectedTeamId("all");
-                            }}
-                            disabled={
-                              !!(user && !user.is_admin && user.department_id)
-                            }
-                          >
-                            <SelectTrigger className="h-9.5 bg-background border border-border/40 hover:border-border/80 focus:ring-ring/20 focus:border-ring rounded-xl font-bold text-right text-xs">
-                              <SelectValue placeholder="כל המחלקות" />
-                            </SelectTrigger>
-                            <SelectContent dir="rtl" className="rounded-xl">
-                              {user?.is_admin && (
-                                <SelectItem
-                                  value="all"
-                                  className="text-xs font-bold"
-                                >
-                                  כל המחלקות
-                                </SelectItem>
-                              )}
-                              {departments.map((d) => (
-                                <SelectItem
-                                  key={d.id}
-                                  value={d.id.toString()}
-                                  className="text-xs font-bold"
-                                >
-                                  {d.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-
-                      {/* Section Filter */}
-                      {(user?.is_admin || !user?.section_id) && (
-                        <div className="space-y-1.5 text-right">
-                          <label className="text-[10px] font-black text-slate-400 uppercase mr-1">
-                            מדור
-                          </label>
-                          <Select
-                            value={selectedSectionId}
-                            onValueChange={(val) => {
-                              setSelectedSectionId(val);
-                              setSelectedTeamId("all");
-                            }}
-                            disabled={
-                              !selectedDeptId ||
-                              selectedDeptId === "all" ||
-                              !!(user && !user.is_admin && user.section_id)
-                            }
-                          >
-                            <SelectTrigger className="h-9.5 bg-background border border-border/40 hover:border-border/80 focus:ring-ring/20 focus:border-ring rounded-xl font-bold text-right text-xs">
-                              <SelectValue placeholder="כל המדורים" />
-                            </SelectTrigger>
-                            <SelectContent dir="rtl" className="rounded-xl">
-                              {(user?.is_admin ||
-                                user?.commands_department_id) && (
-                                <SelectItem
-                                  value="all"
-                                  className="text-xs font-bold"
-                                >
-                                  כל המדורים
-                                </SelectItem>
-                              )}
-                              {sections.map((s: any) => (
-                                <SelectItem
-                                  key={s.id}
-                                  value={s.id.toString()}
-                                  className="text-xs font-bold"
-                                >
-                                  {s.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-
-                      {/* Team Filter */}
-                      {(user?.is_admin || !user?.team_id) && (
-                        <div className="space-y-1.5 text-right">
-                          <label className="text-[10px] font-black text-slate-400 uppercase mr-1">
-                            חוליה
-                          </label>
-                          <Select
-                            value={selectedTeamId}
-                            onValueChange={(val) => setSelectedTeamId(val)}
-                            disabled={
-                              !selectedSectionId ||
-                              selectedSectionId === "all" ||
-                              !!(user && !user.is_admin && user.team_id)
-                            }
-                          >
-                            <SelectTrigger className="h-9.5 bg-background border border-border/40 hover:border-border/80 focus:ring-ring/20 focus:border-ring rounded-xl font-bold text-right text-xs">
-                              <SelectValue placeholder="כל החוליות" />
-                            </SelectTrigger>
-                            <SelectContent dir="rtl" className="rounded-xl">
-                              {(user?.is_admin ||
-                                user?.commands_department_id ||
-                                user?.commands_section_id) && (
-                                <SelectItem
-                                  value="all"
-                                  className="text-xs font-bold"
-                                >
-                                  כל החוליות
-                                </SelectItem>
-                              )}
-                              {teams.map((t: any) => (
-                                <SelectItem
-                                  key={t.id}
-                                  value={t.id.toString()}
-                                  className="text-xs font-bold"
-                                >
-                                  {t.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-
-                      {/* Status Filter */}
-                      <div className="space-y-1.5 text-right">
-                        <label className="text-[10px] font-black text-slate-400 uppercase mr-1">
-                          סטטוס
-                        </label>
-                        <Select
-                          value={selectedStatusId}
-                          onValueChange={(val) => setSelectedStatusId(val)}
-                        >
-                          <SelectTrigger className="h-9.5 bg-background border border-border/40 hover:border-border/80 focus:ring-ring/20 focus:border-ring rounded-xl font-bold text-right text-xs">
-                            <SelectValue placeholder="הכל" />
-                          </SelectTrigger>
-                          <SelectContent dir="rtl" className="rounded-xl">
-                            <SelectItem
-                              value="all"
-                              className="text-xs font-bold"
-                            >
-                              הכל
-                            </SelectItem>
-                            {statusTypes.map((s: any) => (
-                              <SelectItem
-                                key={s.id}
-                                value={s.id.toString()}
-                                className="text-xs font-bold"
-                              >
-                                {s.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Service Type Filter */}
-                      <div className="space-y-1.5 text-right">
-                        <label className="text-[10px] font-black text-slate-400 uppercase mr-1">
-                          מעמד
-                        </label>
-                        <Select
-                          value={selectedServiceTypeId}
-                          onValueChange={(val) => setSelectedServiceTypeId(val)}
-                        >
-                          <SelectTrigger className="h-9.5 bg-background border border-border/40 hover:border-border/80 focus:ring-ring/20 focus:border-ring rounded-xl font-bold text-right text-xs">
-                            <SelectValue placeholder="הכל" />
-                          </SelectTrigger>
-                          <SelectContent dir="rtl" className="rounded-xl">
-                            <SelectItem
-                              value="all"
-                              className="text-xs font-bold"
-                            >
-                              הכל
-                            </SelectItem>
-                            {serviceTypes.map((s: any) => (
-                              <SelectItem
-                                key={s.id}
-                                value={s.id.toString()}
-                                className="text-xs font-bold"
-                              >
-                                {s.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
 
-            {/* Filter Modal for Mobile */}
-            <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
-              <DialogContent className="w-[90vw] max-w-[340px] p-0 border-none bg-transparent">
-                <div className="bg-card border border-border flex flex-col rounded-2xl  overflow-hidden max-h-[85vh]">
-                  <div className="flex items-center justify-between p-4 border-b border-border bg-background/20">
-                    <div className="flex items-center gap-2 font-bold text-sm text-foreground">
-                      <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-                        <Filter className="w-4 h-4" />
-                      </div>
-                      סינון רשימה
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 rounded-full"
-                      onClick={() => setFilterOpen(false)}
-                    >
-                      <X className="w-4 h-4 text-muted-foreground" />
-                    </Button>
-                  </div>
+            {/* Unified Filter Modal */}
+            <FilterModal
+              open={filterOpen}
+              onOpenChange={setFilterOpen}
+              employees={scopeEmployees}
+              onApply={(modalFilters) => {
+                if (modalFilters.departments?.length) {
+                  const matchedDeptIds = departments
+                    .filter((d: any) => modalFilters.departments?.includes(d.name))
+                    .map((d: any) => d.id.toString());
+                  setSelectedDeptIds(matchedDeptIds);
+                } else {
+                  setSelectedDeptIds([]);
+                }
 
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {(user?.is_admin || !user?.department_id) && (
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-muted-foreground">
-                          מחלקה
-                        </label>
-                        <Select
-                          value={selectedDeptId}
-                          onValueChange={(val) => {
-                            setSelectedDeptId(val);
-                            setSelectedSectionId("all");
-                            setSelectedTeamId("all");
-                          }}
-                          disabled={
-                            !!(user && !user.is_admin && user.department_id)
-                          }
-                        >
-                          <SelectTrigger className="w-full text-right">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent dir="rtl">
-                            <SelectItem value="all">כל המחלקות</SelectItem>
-                            {departments.map((d) => (
-                              <SelectItem key={d.id} value={d.id.toString()}>
-                                {d.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
+                if (modalFilters.sections?.length) {
+                  const matchedSecIds = sections
+                    .filter((s: any) => modalFilters.sections?.includes(s.name))
+                    .map((s: any) => s.id.toString());
+                  setSelectedSectionIds(matchedSecIds);
+                } else {
+                  setSelectedSectionIds([]);
+                }
 
-                    {(user?.is_admin || !user?.section_id) && (
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-muted-foreground">
-                          מדור
-                        </label>
-                        <Select
-                          value={selectedSectionId}
-                          onValueChange={(val) => {
-                            setSelectedSectionId(val);
-                            setSelectedTeamId("all");
-                          }}
-                          disabled={
-                            !selectedDeptId ||
-                            selectedDeptId === "all" ||
-                            !!(user && !user.is_admin && user.section_id)
-                          }
-                        >
-                          <SelectTrigger className="w-full text-right">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent dir="rtl">
-                            <SelectItem value="all">כל המדורים</SelectItem>
-                            {sections.map((s: any) => (
-                              <SelectItem key={s.id} value={s.id.toString()}>
-                                {s.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
+                if (modalFilters.teams?.length) {
+                  const matchedTeamIds = teams
+                    .filter((t: any) => modalFilters.teams?.includes(t.name))
+                    .map((t: any) => t.id.toString());
+                  setSelectedTeamIds(matchedTeamIds);
+                } else {
+                  setSelectedTeamIds([]);
+                }
 
-                    {(user?.is_admin || !user?.team_id) && (
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-muted-foreground">
-                          חוליה
-                        </label>
-                        <Select
-                          value={selectedTeamId}
-                          onValueChange={(val) => setSelectedTeamId(val)}
-                          disabled={
-                            !selectedSectionId ||
-                            selectedSectionId === "all" ||
-                            !!(user && !user.is_admin && user.team_id)
-                          }
-                        >
-                          <SelectTrigger className="w-full text-right">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent dir="rtl">
-                            <SelectItem value="all">כל החוליות</SelectItem>
-                            {teams.map((t: any) => (
-                              <SelectItem key={t.id} value={t.id.toString()}>
-                                {t.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
+                if (modalFilters.statuses?.length) {
+                  const matchedStatusIds = statusTypes
+                    .filter((st: any) => modalFilters.statuses?.includes(st.name || st.status_name))
+                    .map((st: any) => (st.status_id ?? st.id).toString());
+                  setSelectedStatusIds(matchedStatusIds);
+                } else {
+                  setSelectedStatusIds([]);
+                }
 
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-muted-foreground">
-                        סטטוס
-                      </label>
-                      <Select
-                        value={selectedStatusId}
-                        onValueChange={setSelectedStatusId}
-                      >
-                        <SelectTrigger className="w-full text-right">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent dir="rtl">
-                          <SelectItem value="all">הכל</SelectItem>
-                          {statusTypes.map((s: any) => (
-                            <SelectItem key={s.id} value={s.id.toString()}>
-                              {s.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-muted-foreground">
-                        מעמד
-                      </label>
-                      <Select
-                        value={selectedServiceTypeId}
-                        onValueChange={setSelectedServiceTypeId}
-                      >
-                        <SelectTrigger className="w-full text-right">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent dir="rtl">
-                          <SelectItem value="all">הכל</SelectItem>
-                          {serviceTypes.map((s: any) => (
-                            <SelectItem key={s.id} value={s.id.toString()}>
-                              {s.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="p-4 border-t border-border bg-background/20 flex gap-3">
-                    <Button
-                      className="flex-1 font-bold rounded-xl"
-                      onClick={() => setFilterOpen(false)}
-                    >
-                      החל סינון
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="font-bold rounded-xl"
-                      onClick={() => {
-                        handleClearFilters();
-                        setFilterOpen(false);
-                      }}
-                    >
-                      נקה
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+                if (modalFilters.serviceTypes?.length) {
+                  setSelectedServiceTypeIds(modalFilters.serviceTypes);
+                } else {
+                  setSelectedServiceTypeIds([]);
+                }
+              }}
+            />
 
             {/* Attendance Table - Desktop Only */}
             <div
