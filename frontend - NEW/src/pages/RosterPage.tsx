@@ -148,6 +148,46 @@ export default function RosterPage() {
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    const savedFilters = localStorage.getItem("roster_filters");
+    if (savedFilters) {
+      try {
+        const filters = JSON.parse(savedFilters);
+        if (filters.selectedDept !== undefined) setSelectedDept(filters.selectedDept);
+        if (filters.selectedSection !== undefined) setSelectedSection(filters.selectedSection);
+        if (filters.selectedTeam !== undefined) setSelectedTeam(filters.selectedTeam);
+        if (filters.statusFilter !== undefined) setStatusFilter(filters.statusFilter);
+        if (filters.searchTerm !== undefined) setSearchTerm(filters.searchTerm);
+      } catch (e) {
+        console.error("Failed to parse saved roster filters", e);
+      }
+    }
+    setIsInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    if (user?.is_impersonated) return;
+
+    const filters = {
+      selectedDept,
+      selectedSection,
+      selectedTeam,
+      statusFilter,
+      searchTerm,
+    };
+    localStorage.setItem("roster_filters", JSON.stringify(filters));
+  }, [
+    isInitialized,
+    selectedDept,
+    selectedSection,
+    selectedTeam,
+    statusFilter,
+    searchTerm,
+    user?.is_impersonated,
+  ]);
 
   // Pending Changes State
   const [pendingUpdates, setPendingUpdates] = useState<any[]>([]);

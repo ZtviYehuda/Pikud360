@@ -73,6 +73,32 @@ export const EmployeeTable = ({
   const [activeFilters, setActiveFilters] = useState<EmployeeFilters>(
     initialFilters || {},
   );
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    const savedFilters = localStorage.getItem("employee_filters");
+    if (savedFilters) {
+      try {
+        const filters = JSON.parse(savedFilters);
+        if (filters.activeFilters) setActiveFilters(filters.activeFilters);
+        if (filters.searchTerm !== undefined) setSearchTerm(filters.searchTerm);
+      } catch (e) {
+        console.error("Failed to parse saved employee filters", e);
+      }
+    }
+    setIsInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    if (user?.is_impersonated) return;
+
+    const filters = {
+      activeFilters,
+      searchTerm,
+    };
+    localStorage.setItem("employee_filters", JSON.stringify(filters));
+  }, [isInitialized, activeFilters, searchTerm, user?.is_impersonated]);
 
   useEffect(() => {
     if (initialFilters) {

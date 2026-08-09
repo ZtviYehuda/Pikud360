@@ -196,16 +196,8 @@ export default function DashboardPage() {
         if (filters.deptId !== undefined) setSelectedDeptId(filters.deptId);
         if (filters.sectionId !== undefined) setSelectedSectionId(filters.sectionId);
         if (filters.teamId !== undefined) setSelectedTeamId(filters.teamId);
-        if (filters.statusData !== undefined) {
-          // Never restore negative dummy status IDs (-1, -2) as API status filters
-          if (filters.statusData && filters.statusData.id > 0) {
-            setSelectedStatusData(filters.statusData);
-            setSelectedStatusId(filters.statusData.id);
-          } else {
-            setSelectedStatusData(null);
-            setSelectedStatusId(null);
-          }
-        }
+        if (filters.statusId !== undefined) setSelectedStatusId(filters.statusId);
+        if (filters.statusData !== undefined) setSelectedStatusData(filters.statusData);
         if (filters.serviceTypes !== undefined) setSelectedServiceTypes(filters.serviceTypes);
         if (filters.ageRange !== undefined) setSelectedAgeRange(filters.ageRange);
       } catch (e) {
@@ -224,6 +216,7 @@ export default function DashboardPage() {
       deptId: selectedDeptId,
       sectionId: selectedSectionId,
       teamId: selectedTeamId,
+      statusId: selectedStatusId,
       statusData: selectedStatusData && selectedStatusData.id > 0 ? selectedStatusData : null,
       serviceTypes: selectedServiceTypes,
       ageRange: selectedAgeRange,
@@ -234,6 +227,7 @@ export default function DashboardPage() {
     selectedDeptId,
     selectedSectionId,
     selectedTeamId,
+    selectedStatusId,
     selectedStatusData,
     selectedServiceTypes,
     selectedAgeRange,

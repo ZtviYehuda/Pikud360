@@ -182,15 +182,22 @@ export default function AttendancePage() {
     if (savedFilters) {
       try {
         const filters = JSON.parse(savedFilters);
+        if (Array.isArray(filters.deptIds)) setSelectedDeptIds(filters.deptIds);
+        else if (filters.deptId && filters.deptId !== "all") setSelectedDeptIds([filters.deptId]);
+
+        if (Array.isArray(filters.sectionIds)) setSelectedSectionIds(filters.sectionIds);
+        else if (filters.sectionId && filters.sectionId !== "all") setSelectedSectionIds([filters.sectionId]);
+
+        if (Array.isArray(filters.teamIds)) setSelectedTeamIds(filters.teamIds);
+        else if (filters.teamId && filters.teamId !== "all") setSelectedTeamIds([filters.teamId]);
+
+        if (Array.isArray(filters.statusIds)) setSelectedStatusIds(filters.statusIds);
+        else if (filters.statusId && filters.statusId !== "all") setSelectedStatusIds([filters.statusId]);
+
+        if (Array.isArray(filters.serviceTypeIds)) setSelectedServiceTypeIds(filters.serviceTypeIds);
+        else if (filters.serviceTypeId && filters.serviceTypeId !== "all") setSelectedServiceTypeIds([filters.serviceTypeId]);
+
         if (filters.searchTerm !== undefined) setSearchTerm(filters.searchTerm);
-        if (filters.deptId !== undefined) setSelectedDeptId(filters.deptId);
-        if (filters.sectionId !== undefined)
-          setSelectedSectionId(filters.sectionId);
-        if (filters.teamId !== undefined) setSelectedTeamId(filters.teamId);
-        if (filters.statusId !== undefined)
-          setSelectedStatusId(filters.statusId);
-        if (filters.serviceTypeId !== undefined)
-          setSelectedServiceTypeId(filters.serviceTypeId);
       } catch (e) {
         console.error("Failed to parse saved attendance filters", e);
       }
@@ -204,22 +211,21 @@ export default function AttendancePage() {
     if (user?.is_impersonated) return; // Don't save filters when impersonating
 
     const filters = {
+      deptIds: selectedDeptIds,
+      sectionIds: selectedSectionIds,
+      teamIds: selectedTeamIds,
+      statusIds: selectedStatusIds,
+      serviceTypeIds: selectedServiceTypeIds,
       searchTerm,
-      deptId: selectedDeptId,
-      sectionId: selectedSectionId,
-      teamId: selectedTeamId,
-      statusId: selectedStatusId,
-      serviceTypeId: selectedServiceTypeId,
     };
     localStorage.setItem("attendance_filters", JSON.stringify(filters));
   }, [
     isInitialized,
     searchTerm,
-    selectedDeptId,
-    selectedSectionId,
-    selectedTeamId,
-    selectedStatusId,
-    selectedServiceTypeId,
+    selectedDeptIds,
+    selectedSectionIds,
+    selectedTeamIds,
+    selectedStatusIds,
     user?.is_impersonated,
   ]);
 
@@ -436,9 +442,6 @@ export default function AttendancePage() {
     selectedSectionIds,
     selectedTeamIds,
     selectedStatusIds,
-    selectedServiceTypeIds,
-  ]);
-    selectedServiceTypeId,
   ]);
 
   const employeesForModal = useMemo(() => {
@@ -928,7 +931,7 @@ export default function AttendancePage() {
                 <div className="relative flex-1">
                   <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
                   <Input
-                    placeholder="."
+                    placeholder="חפש לפי שם..."
                     className="h-10 pr-10 bg-background border border-border/40 focus:ring-ring/20 focus:border-ring rounded-xl text-sm font-bold w-full transition-all hover:border-border/80"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}

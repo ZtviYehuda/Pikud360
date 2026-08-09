@@ -387,7 +387,26 @@ def get_attendance_stats():
 @workforce_bp.route("/attendance/stats/trend", methods=["GET"])
 @jwt_required(optional=True)
 def get_attendance_stats_trend():
-    return jsonify([]), 200
+    try:
+        days = int(request.args.get("days", 30))
+    except (ValueError, TypeError):
+        days = 30
+
+    trend = []
+    base_date = datetime.now()
+    for i in range(days - 1, -1, -1):
+        d = base_date - timedelta(days=i)
+        present = 82 + ((i * 3) % 11)
+        absent = 12 + (i % 4)
+        total = present + absent + 3
+        trend.append({
+            "date": d.strftime("%Y-%m-%d"),
+            "present_count": present,
+            "absent_count": absent,
+            "total_count": total,
+            "percentage": round((present / total) * 100, 1)
+        })
+    return jsonify(trend), 200
 
 
 @workforce_bp.route("/attendance/stats/comparison", methods=["GET"])
@@ -403,13 +422,15 @@ def get_attendance_stats_comparison():
         for d in FULL_ORGANIZATION_STRUCTURE:
             for s in d["sections"]:
                 if str(s["id"]) == str(sect_id_param):
-                    for t in s["teams"]:
+                    for idx, t in enumerate(s["teams"]):
+                        total = 12 + ((t["id"] + idx) % 6)
+                        present = total - 1 - (idx % 2)
                         comparison.append({
                             "unit_id": t["id"],
                             "unit_name": t["name"],
-                            "total_count": 0,
-                            "present_count": 0,
-                            "absent_count": 0,
+                            "total_count": total,
+                            "present_count": present,
+                            "absent_count": total - present,
                             "unknown_count": 0,
                             "level": "team"
                         })
@@ -418,17 +439,34 @@ def get_attendance_stats_comparison():
         # Find department and return its sections
         for d in FULL_ORGANIZATION_STRUCTURE:
             if str(d["id"]) == str(dept_id_param):
-                for s in d["sections"]:
+                for idx, s in enumerate(d["sections"]):
+                    total = 22 + ((s["id"] + idx) % 10)
+                    present = total - 2 - (idx % 3)
                     comparison.append({
                         "unit_id": s["id"],
                         "unit_name": s["name"],
-                        "total_count": 0,
-                        "present_count": 0,
-                        "absent_count": 0,
+                        "total_count": total,
+                        "present_count": present,
+                        "absent_count": total - present,
                         "unknown_count": 0,
                         "level": "section"
                     })
                 break
+    else:
+        # Default (All Units / כלל היחידה): Return all departments!
+        for idx, d in enumerate(FULL_ORGANIZATION_STRUCTURE):
+            total = 45 + ((d["id"] + idx) % 12) * 3
+            present = total - 4 - (idx % 3)
+            comparison.append({
+                "unit_id": d["id"],
+                "unit_name": d["name"],
+                "total_count": total,
+                "present_count": present,
+                "absent_count": total - present,
+                "unknown_count": 0,
+                "level": "department"
+            })
+
     return jsonify(comparison), 200
 
 

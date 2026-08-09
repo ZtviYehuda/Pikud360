@@ -292,16 +292,16 @@ export const DashboardFilters = ({
       <DialogDragHandle />
 
       {/* Header */}
-      <div className="px-6 pt-4 pb-4 border-b border-border/30 flex items-center justify-between shrink-0 relative">
+      <div className="px-6 pt-4 pb-4 border-b border-border/30 flex items-center justify-between shrink-0 relative" dir="rtl">
         <div className="text-xl font-black text-foreground">סינון</div>
 
-        {/* Reset Action (aligned perfectly at top-4 h-9 w-9 beside Close X button) */}
+        {/* Reset Action (positioned at the far left edge of the modal header) */}
         {hasActiveFilters && (
           <button
             onClick={handleLocalReset}
             title="אפס את כל המסננים"
             aria-label="אפס את כל המסננים"
-            className="absolute left-4 sm:left-[3.75rem] top-4 h-9 w-9 rounded-full bg-white/80 dark:bg-black/40 backdrop-blur-md border border-black/5 dark:border-white/10 hover:bg-destructive/15 hover:border-destructive/30 text-muted-foreground hover:text-destructive flex items-center justify-center transition-all z-[50] active:scale-95 group/reset shadow-2xs"
+            className="absolute left-4 top-4 h-9 w-9 rounded-full bg-white/80 dark:bg-black/40 backdrop-blur-md border border-black/5 dark:border-white/10 hover:bg-destructive/15 hover:border-destructive/30 text-muted-foreground hover:text-destructive flex items-center justify-center transition-all z-[50] active:scale-95 group/reset shadow-2xs"
           >
             <RotateCcw className="w-4 h-4 transition-transform group-hover/reset:-rotate-90" />
           </button>

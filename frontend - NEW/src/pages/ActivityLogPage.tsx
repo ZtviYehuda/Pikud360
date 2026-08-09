@@ -224,11 +224,23 @@ export default function ActivityLogPage() {
 
   const hasActiveFilters = selectedUser || selectedAction || dateFrom || dateTo || statusFilter !== "all" || searchTerm || archiveSearch;
 
+  const hasAdminToken = typeof window !== "undefined" && !!localStorage.getItem("admin_token");
+
+  const handleReturnToAdmin = () => {
+    const adminToken = localStorage.getItem("admin_token");
+    if (adminToken) {
+      localStorage.setItem("token", adminToken);
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("dashboard_filters");
+      window.location.href = "/activity-log";
+    }
+  };
+
   const isAccessAllowed = user?.is_admin || user?.is_commander || activeTab === "my";
 
   if (!isAccessAllowed) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="min-h-screen flex items-center justify-center p-6" dir="rtl">
         <Card className="max-w-md w-full p-10 rounded-[2.5rem] border-border/40 text-center space-y-6">
           <div className="w-20 h-20 bg-destructive/10 rounded-3xl flex items-center justify-center text-destructive mx-auto">
             <Shield className="w-10 h-10" />
@@ -236,10 +248,15 @@ export default function ActivityLogPage() {
           <div className="space-y-2">
             <h1 className="text-2xl font-black">אין הרשאת גישה</h1>
             <p className="text-muted-foreground font-medium text-sm">
-              עמוד זה מיועד למנהלי מערכת או מפקדים בלבד.
+              עמוד זה מיועד למנהלי מערכת בלבד.
             </p>
           </div>
-          <Button onClick={() => window.history.back()} className="w-full h-12 rounded-2xl font-black">
+          {hasAdminToken && (
+            <Button onClick={handleReturnToAdmin} className="w-full h-12 rounded-2xl font-black bg-primary text-primary-foreground">
+              חזור לחשבון מנהל המערכת (יציאה מהתחזות)
+            </Button>
+          )}
+          <Button variant="outline" onClick={() => window.history.back()} className="w-full h-12 rounded-2xl font-black">
             <ArrowRight className="w-4 h-4 ml-2" />
             חזרה לדף הקודם
           </Button>
