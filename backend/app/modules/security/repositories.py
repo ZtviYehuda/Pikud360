@@ -143,7 +143,7 @@ class UserRepository(BaseRepository[User, str]):
             return False
 
     def ensure_seed_users(self):
-        """Ensures default accounts exist in PostgreSQL security.users table with valid bcrypt hashes."""
+        """Ensures Administrator account exists in PostgreSQL security.users table and cleans non-admin users."""
         try:
             tenant_id = '00000000-0000-0000-0000-000000000001'
             import bcrypt, uuid
@@ -153,9 +153,6 @@ class UserRepository(BaseRepository[User, str]):
             default_hash = hash_pw('123456')
             seed_accounts = [
                 ('admin', 'admin@matzevet.gov.il'),
-                ('commander', 'commander@matzevet.gov.il'),
-                ('officer', 'officer@matzevet.gov.il'),
-                ('user', 'user@matzevet.gov.il'),
             ]
             with get_db_connection() as conn:
                 with conn.cursor() as cur:
@@ -170,6 +167,9 @@ class UserRepository(BaseRepository[User, str]):
                                 INSERT INTO security.users (id, tenant_id, username, email, password_hash, is_active)
                                 VALUES (%s, %s, %s, %s, %s, TRUE);
                             """, (str(uuid.uuid4()), tenant_id, uname, email, default_hash))
+                    
+                    # Remove non-admin authentication users from security.users
+                    cur.execute("DELETE FROM security.users WHERE username != %s;", ('admin',))
                     conn.commit()
         except Exception as e:
             logger.warning(f"Notice in ensure_seed_users: {e}")

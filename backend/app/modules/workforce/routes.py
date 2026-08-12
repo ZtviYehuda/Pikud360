@@ -1,8 +1,10 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from pydantic import ValidationError
+from datetime import datetime, timedelta
 import logging
 
+from app.database.connection import get_db_connection
 from app.modules.workforce.repositories import EmployeeRepository, EmployeeHistoryRepository
 from app.modules.security.repositories import AuditLogRepository
 from app.modules.workforce.services import WorkforceService
@@ -374,13 +376,42 @@ def get_attendance_status_types():
 @workforce_bp.route("/attendance/stats", methods=["GET"])
 @jwt_required(optional=True)
 def get_attendance_stats():
+    total = 0
+    present = 0
+    absent = 0
+    vacation = 0
+    sick = 0
+    try:
+        query = """
+            SELECT 
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE status IN ('PRESENT', 'ACTIVE', 'נוכח')) as present,
+                COUNT(*) FILTER (WHERE status IN ('ABSENT', 'נעדר')) as absent,
+                COUNT(*) FILTER (WHERE status IN ('VACATION', 'חופשה')) as vacation,
+                COUNT(*) FILTER (WHERE status IN ('SICK', 'מחלה')) as sick
+            FROM workforce.employees
+            WHERE deleted_at IS NULL;
+        """
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                row = cur.fetchone()
+                if row:
+                    total = row[0] or 0
+                    present = row[1] or 0
+                    absent = row[2] or 0
+                    vacation = row[3] or 0
+                    sick = row[4] or 0
+    except Exception as e:
+        logger.error(f"Error fetching attendance stats: {e}")
+
     return jsonify({
         "success": True,
-        "present": 0,
-        "absent": 0,
-        "vacation": 0,
-        "sick": 0,
-        "total": 0
+        "present": present,
+        "absent": absent,
+        "vacation": vacation,
+        "sick": sick,
+        "total": total
     }), 200
 
 
@@ -394,17 +425,39 @@ def get_attendance_stats_trend():
 
     trend = []
     base_date = datetime.now()
+
+    total_emp = 0
+    present_emp = 0
+    absent_emp = 0
+
+    try:
+        query = """
+            SELECT COUNT(*) as total_count,
+                   COUNT(*) FILTER (WHERE status IN ('PRESENT', 'ACTIVE', 'נוכח')) as present_count,
+                   COUNT(*) FILTER (WHERE status NOT IN ('PRESENT', 'ACTIVE', 'נוכח')) as absent_count
+            FROM workforce.employees
+            WHERE deleted_at IS NULL;
+        """
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                row = cur.fetchone()
+                if row:
+                    total_emp = row[0] or 0
+                    present_emp = row[1] or 0
+                    absent_emp = row[2] or 0
+    except Exception as e:
+        logger.error(f"Error querying attendance stats trend: {e}")
+
     for i in range(days - 1, -1, -1):
         d = base_date - timedelta(days=i)
-        present = 82 + ((i * 3) % 11)
-        absent = 12 + (i % 4)
-        total = present + absent + 3
+        pct = round((present_emp / total_emp) * 100, 1) if total_emp > 0 else 0.0
         trend.append({
             "date": d.strftime("%Y-%m-%d"),
-            "present_count": present,
-            "absent_count": absent,
-            "total_count": total,
-            "percentage": round((present / total) * 100, 1)
+            "present_count": present_emp,
+            "absent_count": absent_emp,
+            "total_count": total_emp,
+            "percentage": pct
         })
     return jsonify(trend), 200
 
@@ -417,52 +470,82 @@ def get_attendance_stats_comparison():
 
     comparison = []
 
+    unit_stats = {}
+    try:
+        query = """
+            SELECT org_unit_id::text,
+                   COUNT(*) as total,
+                   COUNT(*) FILTER (WHERE status IN ('PRESENT', 'ACTIVE', 'נוכח')) as present,
+                   COUNT(*) FILTER (WHERE status NOT IN ('PRESENT', 'ACTIVE', 'נוכח')) as absent
+            FROM workforce.employees
+            WHERE deleted_at IS NULL
+            GROUP BY org_unit_id;
+        """
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                for row in cur.fetchall():
+                    unit_stats[str(row[0])] = {
+                        "total": row[1] or 0,
+                        "present": row[2] or 0,
+                        "absent": row[3] or 0
+                    }
+    except Exception as e:
+        logger.error(f"Error querying unit attendance stats: {e}")
+
     if sect_id_param:
-        # Find section and return its teams
         for d in FULL_ORGANIZATION_STRUCTURE:
-            for s in d["sections"]:
+            for s in d.get("sections", []):
                 if str(s["id"]) == str(sect_id_param):
-                    for idx, t in enumerate(s["teams"]):
-                        total = 12 + ((t["id"] + idx) % 6)
-                        present = total - 1 - (idx % 2)
+                    for t in s.get("teams", []):
+                        stats = unit_stats.get(str(t["id"]), {"total": 0, "present": 0, "absent": 0})
                         comparison.append({
                             "unit_id": t["id"],
                             "unit_name": t["name"],
-                            "total_count": total,
-                            "present_count": present,
-                            "absent_count": total - present,
+                            "total_count": stats["total"],
+                            "present_count": stats["present"],
+                            "absent_count": stats["absent"],
                             "unknown_count": 0,
                             "level": "team"
                         })
                     break
     elif dept_id_param:
-        # Find department and return its sections
         for d in FULL_ORGANIZATION_STRUCTURE:
             if str(d["id"]) == str(dept_id_param):
-                for idx, s in enumerate(d["sections"]):
-                    total = 22 + ((s["id"] + idx) % 10)
-                    present = total - 2 - (idx % 3)
+                for s in d.get("sections", []):
+                    team_ids = [str(t["id"]) for t in s.get("teams", [])] + [str(s["id"])]
+                    sec_total = sum(unit_stats.get(tid, {}).get("total", 0) for tid in team_ids)
+                    sec_present = sum(unit_stats.get(tid, {}).get("present", 0) for tid in team_ids)
+                    sec_absent = sum(unit_stats.get(tid, {}).get("absent", 0) for tid in team_ids)
                     comparison.append({
                         "unit_id": s["id"],
                         "unit_name": s["name"],
-                        "total_count": total,
-                        "present_count": present,
-                        "absent_count": total - present,
+                        "total_count": sec_total,
+                        "present_count": sec_present,
+                        "absent_count": sec_absent,
                         "unknown_count": 0,
                         "level": "section"
                     })
                 break
     else:
-        # Default (All Units / כלל היחידה): Return all departments!
-        for idx, d in enumerate(FULL_ORGANIZATION_STRUCTURE):
-            total = 45 + ((d["id"] + idx) % 12) * 3
-            present = total - 4 - (idx % 3)
+        for d in FULL_ORGANIZATION_STRUCTURE:
+            dept_team_ids = []
+            for s in d.get("sections", []):
+                dept_team_ids.append(str(s["id"]))
+                for t in s.get("teams", []):
+                    dept_team_ids.append(str(t["id"]))
+            dept_team_ids.append(str(d["id"]))
+
+            d_total = sum(unit_stats.get(tid, {}).get("total", 0) for tid in dept_team_ids)
+            d_present = sum(unit_stats.get(tid, {}).get("present", 0) for tid in dept_team_ids)
+            d_absent = sum(unit_stats.get(tid, {}).get("absent", 0) for tid in dept_team_ids)
+
             comparison.append({
                 "unit_id": d["id"],
                 "unit_name": d["name"],
-                "total_count": total,
-                "present_count": present,
-                "absent_count": total - present,
+                "total_count": d_total,
+                "present_count": d_present,
+                "absent_count": d_absent,
                 "unknown_count": 0,
                 "level": "department"
             })

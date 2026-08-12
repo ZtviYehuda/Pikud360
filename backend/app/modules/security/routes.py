@@ -178,7 +178,7 @@ def login():
     )
 
     is_admin = (user.username == "admin") or (user.email == "admin@matzevet.gov.il") or ("ADMIN" in user_roles)
-    is_commander = "COMMANDER" in user_roles or True
+    is_commander = ("COMMANDER" in user_roles) or is_admin
 
     user_obj = {
         "id": user.id,
@@ -206,10 +206,12 @@ def login():
         "success": True,
         "access_token": access_token,
         "token": access_token,
+        "refresh_token": refresh_token,
         "user": user_obj,
         "preferences": user_prefs,
         "data": {
             "access_token": access_token,
+            "refresh_token": refresh_token,
             "user": user_obj,
             "preferences": user_prefs
         }
@@ -233,7 +235,7 @@ def me():
 
     user_roles = get_user_roles(user.id)
     is_admin = (user.username == "admin") or (user.email == "admin@matzevet.gov.il") or ("ADMIN" in user_roles)
-    is_commander = True
+    is_commander = ("COMMANDER" in user_roles) or is_admin
 
     user_obj = {
         "id": user.id,

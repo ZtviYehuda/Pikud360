@@ -21,18 +21,26 @@ export const useAuth = () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
+        setUser(null);
         setLoading(false);
         return;
       }
-      const { data } = await apiClient.get<AuthUser>(
+      const { data } = await apiClient.get<any>(
         endpoints.AUTH_ME_ENDPOINT,
       );
-      setUser(data);
-      setError(null);
+      const userObj = data?.user || data?.data || data;
+      if (userObj && (userObj.id || userObj.username)) {
+        setUser(userObj);
+        setError(null);
+      } else {
+        localStorage.removeItem("token");
+        setUser(null);
+      }
     } catch (err: any) {
-      console.error(err);
+      console.error("Auth me check failed:", err);
       setError("Failed to load user");
-      localStorage.removeItem("token"); // Clear bad token
+      localStorage.removeItem("token");
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -51,8 +59,10 @@ export const useAuth = () => {
       );
 
       if (data.success) {
-        localStorage.setItem("token", data.token);
-        setUser(data.user);
+        const authToken = data.token || (data as any).access_token;
+        const userObj = data.user || (data as any).data?.user || (data as any).data;
+        localStorage.setItem("token", authToken);
+        setUser(userObj);
         setError(null);
         return true;
       }

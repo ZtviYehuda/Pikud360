@@ -70,7 +70,7 @@ def resolve_access_scope(user_id: str, tenant_id: str) -> AuthorizationContext:
     units_query = """
         SELECT DISTINCT ouc.descendant_id 
         FROM security.user_organization_access uoa
-        JOIN core.organization_unit_closure ouc ON ouc.ancestor_id = uoa.org_unit_id
+        JOIN core.organization_unit_closure ouc ON ouc.ancestor_id = uoa.organization_unit_id
         WHERE uoa.user_id = %s
         AND (uoa.is_inheritable = TRUE OR ouc.depth = 0);
     """

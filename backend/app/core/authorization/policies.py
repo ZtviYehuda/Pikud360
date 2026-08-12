@@ -56,7 +56,7 @@ def check_authorization(
             SELECT COUNT(*) 
             FROM core.organization_unit_closure
             WHERE ancestor_id IN (
-                SELECT org_unit_id FROM security.user_organization_access WHERE user_id = %s
+                SELECT organization_unit_id FROM security.user_organization_access WHERE user_id = %s
             )
             AND descendant_id = %s AND depth <= 1;
         """
