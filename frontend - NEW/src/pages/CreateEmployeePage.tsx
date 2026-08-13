@@ -21,10 +21,12 @@ import {
   Briefcase,
   FileCheck,
   ArrowLeft,
+  ArrowRight,
   AlertTriangle,
   Copy,
   Check,
   MessageCircle,
+  ShieldCheck,
 } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
@@ -53,7 +55,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { differenceInYears } from "date-fns";
-import { cn, cleanUnitName } from "@/lib/utils";
+import { cn, cleanUnitName, isValidIsraeliPhone } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/PageHeader";
 const InputItem = ({
   label,
@@ -135,42 +137,49 @@ const SwitchItem = ({
   label,
   checked,
   onCheckedChange,
+  onChange,
   icon: Icon,
   description,
-}: any) => (
-  <div
-    className={cn(
-      "flex items-center justify-between p-4 rounded-2xl border border-slate-100 dark:border-slate-900 transition-colors",
-      checked
-        ? "bg-primary/[0.02] border-primary/10"
-        : "bg-white dark:bg-slate-950",
-    )}
-  >
-    <div className="flex items-center gap-4">
-      {Icon && (
-        <Icon
-          className={cn(
-            "w-5.5 h-5.5 shrink-0",
-            checked ? "text-primary" : "text-slate-300",
-          )}
-        />
+}: any) => {
+  const handler = onCheckedChange || onChange;
+  return (
+    <div
+      onClick={() => handler?.(!checked)}
+      className={cn(
+        "flex items-center justify-between p-4 rounded-2xl border cursor-pointer select-none transition-all hover:bg-slate-50 dark:hover:bg-slate-900/60",
+        checked
+          ? "bg-primary/[0.04] border-primary/20 shadow-xs"
+          : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800",
       )}
-      <div>
-        <p className="text-[15px] font-bold text-slate-900 dark:text-white leading-none">
-          {label}
-        </p>
-        <p className="text-[11px] text-slate-400 font-medium mt-1 truncate max-w-[280px]">
-          {description}
-        </p>
+    >
+      <div className="flex items-center gap-3.5">
+        {Icon && (
+          <Icon
+            className={cn(
+              "w-5 h-5 shrink-0 transition-colors",
+              checked ? "text-primary" : "text-slate-400 dark:text-slate-500",
+            )}
+          />
+        )}
+        <div>
+          <p className="text-[14px] font-bold text-slate-900 dark:text-white leading-tight">
+            {label}
+          </p>
+          {description && (
+            <p className="text-[11px] text-slate-400 font-medium mt-1 truncate max-w-[280px]">
+              {description}
+            </p>
+          )}
+        </div>
       </div>
+      <Switch
+        checked={!!checked}
+        onCheckedChange={(val) => handler?.(val)}
+        className="scale-90"
+      />
     </div>
-    <Switch
-      checked={checked}
-      onCheckedChange={onCheckedChange}
-      className="scale-90"
-    />
-  </div>
-);
+  );
+};
 // --- Tab Components ---
 
 const PersonalFormTab = ({
@@ -197,7 +206,7 @@ const PersonalFormTab = ({
               value={formData.first_name || ""}
               onChange={(e) => handleFieldChange("first_name", e.target.value)}
               placeholder="פרטי"
-       className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 rounded-xl font-bold"
+              className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 rounded-xl font-bold"
             />
           </InputItem>
 
@@ -206,7 +215,7 @@ const PersonalFormTab = ({
               value={formData.last_name || ""}
               onChange={(e) => handleFieldChange("last_name", e.target.value)}
               placeholder="משפחה"
-       className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 rounded-xl font-bold"
+              className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 rounded-xl font-bold"
             />
           </InputItem>
 
@@ -231,31 +240,42 @@ const PersonalFormTab = ({
                         <User className="w-5 h-5" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-black">זיהינו שם ארוך מהרגיל</span>
-                        <span className="text-xs font-bold opacity-80 mt-0.5">בחר את השם שיוצג ביומיום או הקלד בעצמך:</span>
+                        <span className="text-sm font-black">
+                          זיהינו שם ארוך מהרגיל
+                        </span>
+                        <span className="text-xs font-bold opacity-80 mt-0.5">
+                          בחר את השם שיוצג ביומיום או הקלד בעצמך:
+                        </span>
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-wrap items-center gap-2 flex-1 w-full sm:w-auto">
                       {words.map((word, idx) => (
                         <button
                           key={idx}
                           type="button"
-                          onClick={() => handleFieldChange("dominant_name", formData.dominant_name === word ? "" : word)}
+                          onClick={() =>
+                            handleFieldChange(
+                              "dominant_name",
+                              formData.dominant_name === word ? "" : word,
+                            )
+                          }
                           className={cn(
                             "px-4 py-2 rounded-xl text-sm font-black transition-all border",
                             formData.dominant_name === word
                               ? "bg-primary text-white border-primary scale-[1.02]"
-                              : "bg-white dark:bg-slate-900/50 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-primary/50 hover:text-primary"
+                              : "bg-white dark:bg-slate-900/50 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-primary/50 hover:text-primary",
                           )}
                         >
                           {word}
                         </button>
                       ))}
-                      
+
                       <Input
                         value={formData.dominant_name || ""}
-                        onChange={(e) => handleFieldChange("dominant_name", e.target.value)}
+                        onChange={(e) =>
+                          handleFieldChange("dominant_name", e.target.value)
+                        }
                         placeholder="הקלד שם אחר..."
                         className="bg-white/50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 w-[140px] rounded-xl font-bold text-sm"
                       />
@@ -271,7 +291,7 @@ const PersonalFormTab = ({
               value={formData.gender || ""}
               onValueChange={(val) => handleFieldChange("gender", val)}
             >
-       <SelectTrigger className="w-full bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 text-right rounded-xl font-bold px-4">
+              <SelectTrigger className="w-full bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 text-right rounded-xl font-bold px-4">
                 <SelectValue placeholder="בחר מין" />
               </SelectTrigger>
               <SelectContent
@@ -295,7 +315,7 @@ const PersonalFormTab = ({
                 formData.birth_date ? formData.birth_date.split("T")[0] : ""
               }
               onChange={(e) => handleFieldChange("birth_date", e.target.value)}
-       className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 w-full rounded-xl font-bold"
+              className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 w-full rounded-xl font-bold"
             />
           </InputItem>
 
@@ -306,7 +326,7 @@ const PersonalFormTab = ({
                 handleFieldChange("service_type_id", parseInt(val))
               }
             >
-       <SelectTrigger className="w-full bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 text-right rounded-xl font-bold px-4">
+              <SelectTrigger className="w-full bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 text-right rounded-xl font-bold px-4">
                 <SelectValue placeholder="בחר מעמד" />
               </SelectTrigger>
               <SelectContent
@@ -331,7 +351,7 @@ const PersonalFormTab = ({
               value={formData.city || ""}
               onChange={(e) => handleFieldChange("city", e.target.value)}
               placeholder="ירושלים, ת''א..."
-       className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 rounded-xl font-bold"
+              className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 rounded-xl font-bold"
             />
           </InputItem>
         </div>
@@ -351,15 +371,28 @@ const PersonalFormTab = ({
               פרטי התקשרות
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-              <InputItem label="טלפון נייד" icon={Phone} className="sm:col-span-2">
+              <InputItem
+                label="טלפון נייד"
+                icon={Phone}
+                className="sm:col-span-2"
+              >
                 <Input
+                  type="tel"
+                  inputMode="tel"
                   value={formData.phone_number || ""}
-                  onChange={(e) => handleFieldChange("phone_number", e.target.value)}
+                  onChange={(e) =>
+                    handleFieldChange("phone_number", e.target.value)
+                  }
                   placeholder="05X-XXXXXXX"
-                  className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 transition-all h-10 rounded-xl font-bold"
+                  className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 transition-all h-10 rounded-xl font-bold text-right placeholder:text-right"
+                  dir="rtl"
                 />
               </InputItem>
-              <InputItem label="דואר אלקטרוני" icon={Mail} className="sm:col-span-2">
+              <InputItem
+                label="דואר אלקטרוני"
+                icon={Mail}
+                className="sm:col-span-2"
+              >
                 <Input
                   value={formData.email || ""}
                   onChange={(e) => handleFieldChange("email", e.target.value)}
@@ -377,10 +410,18 @@ const PersonalFormTab = ({
             </h4>
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-5 gap-3.5 sm:gap-4 w-full">
-                <InputItem label="שם מלא (פרטי ומשפחה)" className="sm:col-span-3">
+                <InputItem
+                  label="שם מלא (פרטי ומשפחה)"
+                  className="sm:col-span-3"
+                >
                   <Input
                     value={emergencyDetails.name}
-                    onChange={(e) => setEmergencyDetails({ ...emergencyDetails, name: e.target.value })}
+                    onChange={(e) =>
+                      setEmergencyDetails({
+                        ...emergencyDetails,
+                        name: e.target.value,
+                      })
+                    }
                     placeholder="שם איש הקשר"
                     className="h-10 bg-background border border-border/40 focus-visible:ring-rose-500/20 font-bold rounded-xl hover:border-border/80 transition-all"
                   />
@@ -388,14 +429,28 @@ const PersonalFormTab = ({
                 <InputItem label="קרבה" className="sm:col-span-2">
                   <Select
                     value={emergencyDetails.relation}
-                    onValueChange={(val) => setEmergencyDetails({ ...emergencyDetails, relation: val })}
+                    onValueChange={(val) =>
+                      setEmergencyDetails({
+                        ...emergencyDetails,
+                        relation: val,
+                      })
+                    }
                   >
                     <SelectTrigger className="w-full h-10 bg-white dark:bg-slate-900/50 border-rose-500/10 text-right font-bold rounded-xl focus:ring-rose-500/20">
                       <SelectValue placeholder="בחר" />
                     </SelectTrigger>
-                    <SelectContent dir="rtl" className="rounded-xl border-rose-500/10">
+                    <SelectContent
+                      dir="rtl"
+                      className="rounded-xl border-rose-500/10"
+                    >
                       {relations.map((r: string) => (
-                        <SelectItem key={r} value={r} className="font-bold py-2.5">{r}</SelectItem>
+                        <SelectItem
+                          key={r}
+                          value={r}
+                          className="font-bold py-2.5"
+                        >
+                          {r}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -403,11 +458,18 @@ const PersonalFormTab = ({
               </div>
               <InputItem label="טלפון חירום" icon={Phone}>
                 <Input
+                  type="tel"
+                  inputMode="tel"
                   value={emergencyDetails.phone}
-                  onChange={(e) => setEmergencyDetails({ ...emergencyDetails, phone: e.target.value })}
+                  onChange={(e) =>
+                    setEmergencyDetails({
+                      ...emergencyDetails,
+                      phone: e.target.value,
+                    })
+                  }
                   placeholder="מספר טלפון לחירום"
-                  className="h-10 bg-white dark:bg-slate-900/50 border-rose-500/10 focus-visible:ring-rose-500/20 font-bold rounded-xl"
-                  dir="ltr"
+                  className="h-10 bg-white dark:bg-slate-900/50 border-rose-500/10 focus-visible:ring-rose-500/20 font-bold rounded-xl text-right placeholder:text-right"
+                  dir="rtl"
                 />
               </InputItem>
             </div>
@@ -449,12 +511,14 @@ const ProfessionalFormTab = ({
   // Team commander → all pre-filled and locked
   const isDeptDisabled =
     !user.is_admin &&
-    !!(user.commands_department_id || user.commands_section_id || user.commands_team_id);
+    !!(
+      user.commands_department_id ||
+      user.commands_section_id ||
+      user.commands_team_id
+    );
   const isSectionDisabled =
-    !user.is_admin &&
-    !!(user.commands_section_id || user.commands_team_id);
-  const isTeamDisabled =
-    !user.is_admin && !!user.commands_team_id;
+    !user.is_admin && !!(user.commands_section_id || user.commands_team_id);
+  const isTeamDisabled = !user.is_admin && !!user.commands_team_id;
 
   const currentCommander = useMemo(() => {
     if (!formData.is_commander) return null;
@@ -500,13 +564,45 @@ const ProfessionalFormTab = ({
       <CompactCard
         title={
           <span className="flex items-center gap-2 text-primary font-black text-lg">
-            <Building2 className="w-5 h-5" /> שיוך יחידתי
+            <Building2 className="w-5 h-5" /> שיוך יחידתי{" "}
+            {!formData.is_division_commander && !formData.is_admin && (
+              <span className="text-red-500 font-bold text-xl leading-none">
+                *
+              </span>
+            )}
           </span>
         }
       >
+        {formData.is_division_commander && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-3">
+            <Shield className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+              משתמש זה מוגדר כ-<strong>ראש החטיבה (מפקד כלל המחלקות)</strong> –
+              אחראי ומפקד על כלל המחלקות והיחידות בארגון. ללא צורך בשיוך ארגוני.
+            </span>
+          </div>
+        )}
+
+        {formData.is_admin && (
+          <div className="mb-6 p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center gap-3">
+            <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
+            <span className="text-xs font-bold text-blue-900 dark:text-blue-200">
+              משתמש זה מוגדר כ-<strong>מנהל מערכת ראשי (Admin)</strong> – בעל
+              הרשאה וגישה גלובלית לכל המערכת. ללא צורך בשיוך ארגוני.
+            </span>
+          </div>
+        )}
+
         <div className="flex flex-col md:flex-row gap-6 lg:gap-8">
           <UnitPicker
-            label="מחלקה"
+            label={
+              <span className="flex items-center gap-1">
+                מחלקה{" "}
+                {!formData.is_division_commander && !formData.is_admin && (
+                  <span className="text-red-500 font-bold">*</span>
+                )}
+              </span>
+            }
             value={selectedDeptId}
             options={structure}
             onChange={(val: any) => {
@@ -519,9 +615,17 @@ const ProfessionalFormTab = ({
               }));
               setSelectedSectionId("");
             }}
-            placeholder="בחר מחלקה"
+            placeholder={
+              formData.is_division_commander || formData.is_admin
+                ? "כלל המחלקות (ללא שיוך)"
+                : "בחר מחלקה"
+            }
             icon={Building2}
-            disabled={isDeptDisabled}
+            disabled={
+              formData.is_division_commander ||
+              formData.is_admin ||
+              isDeptDisabled
+            }
             onClear={() => {
               setSelectedDeptId("");
               setFormData((prev: any) => ({
@@ -535,7 +639,16 @@ const ProfessionalFormTab = ({
           />
 
           <UnitPicker
-            label="מדור"
+            label={
+              <span className="flex items-center gap-1">
+                מדור{" "}
+                {!formData.is_commander &&
+                  !formData.is_division_commander &&
+                  !formData.is_admin && (
+                    <span className="text-red-500 font-bold">*</span>
+                  )}
+              </span>
+            }
             value={selectedSectionId}
             options={sections}
             onChange={(val: any) => {
@@ -546,9 +659,18 @@ const ProfessionalFormTab = ({
                 team_id: undefined,
               }));
             }}
-            placeholder="בחר מדור"
+            placeholder={
+              formData.is_division_commander || formData.is_admin
+                ? "כלל המדורים (ללא שיוך)"
+                : "בחר מדור"
+            }
             icon={Briefcase}
-            disabled={!selectedDeptId || isSectionDisabled}
+            disabled={
+              formData.is_division_commander ||
+              formData.is_admin ||
+              !selectedDeptId ||
+              isSectionDisabled
+            }
             onClear={() => {
               setSelectedSectionId("");
               setFormData((prev: any) => ({
@@ -560,47 +682,216 @@ const ProfessionalFormTab = ({
           />
 
           <UnitPicker
-            label="חוליה"
+            label={
+              <span className="flex items-center gap-1">
+                חוליה{" "}
+                {!formData.is_commander &&
+                  !formData.is_division_commander &&
+                  !formData.is_admin && (
+                    <span className="text-red-500 font-bold">*</span>
+                  )}
+              </span>
+            }
             value={formData.team_id?.toString() || ""}
             options={teams}
             onChange={(val: any) => handleFieldChange("team_id", parseInt(val))}
-            placeholder="בחר חוליה"
+            placeholder={
+              formData.is_division_commander || formData.is_admin
+                ? "כלל החוליות (ללא שיוך)"
+                : "בחר חוליה"
+            }
             icon={User}
-            disabled={!selectedSectionId || isTeamDisabled}
+            disabled={
+              formData.is_division_commander ||
+              formData.is_admin ||
+              !selectedSectionId ||
+              isTeamDisabled
+            }
             onClear={() => handleFieldChange("team_id", undefined)}
           />
         </div>
 
         {(user?.is_admin || user?.is_commander) && (
-          <div className="mt-8 space-y-6 max-w-xl mx-auto border-t pt-6">
-            <SwitchItem
-              label="מינוי מפקד"
-              checked={!!formData.is_commander}
-              onCheckedChange={(c: boolean) =>
-                handleFieldChange("is_commander", c)
-              }
-              icon={Shield}
-              description="הגדר שוטר זה כמפקד היחידה הארגונית שנבחרה"
-            />
-
-            {currentCommander && (
-              <div className="flex items-start gap-4 p-5 rounded-[24px] bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-800/20">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 shrink-0">
-                  <AlertTriangle className="w-5 h-5" />
+          <div className="mt-8 border-t border-border/40 pt-6 space-y-4 w-full">
+            {/* Roles Selection - Visible to Logged-in Admins */}
+            {user?.is_admin ? (
+              <div className="w-full space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-primary" /> תפקיד פיקודי /
+                    הרשאת מנהל
+                  </h4>
+                  <span className="text-[11px] font-bold text-muted-foreground">
+                    ברירת מחדל: שוטר רגיל
+                  </span>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-[13px] font-black text-amber-900 dark:text-amber-200 leading-tight">
-                    שים לב: קיים מפקד פעיל ליחידה זו
-                  </p>
-                  <p className="text-[11px] font-bold text-amber-600/80 leading-tight">
-                    הגדרת שוטר זה כמפקד תבטל את מינויו של{" "}
-                    <span className="text-amber-700 dark:text-amber-300 underline decoration-2 underline-offset-2">
-                      {currentCommander.name}
+
+                {/* 4 Cards Grid - Responsive & Spanning Full Width */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
+                  {/* Card 1: Regular Officer (DEFAULT) */}
+                  <div
+                    onClick={() => {
+                      setFormData((prev: any) => ({
+                        ...prev,
+                        is_commander: false,
+                        is_admin: false,
+                        is_division_commander: false,
+                      }));
+                    }}
+                    className={cn(
+                      "p-3.5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between select-none min-h-[96px]",
+                      !formData.is_commander &&
+                        !formData.is_admin &&
+                        !formData.is_division_commander
+                        ? "border-primary bg-primary/5 dark:bg-primary/10 shadow-sm ring-1 ring-primary/20"
+                        : "border-border/60 hover:border-border hover:bg-accent/40 bg-card",
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-primary shrink-0" />
+                        <span className="text-xs font-black text-foreground">
+                          שוטר רגיל
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full shrink-0">
+                        ברירת מחדל
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-muted-foreground font-bold mt-2 leading-snug">
+                      ללא תפקיד פיקודי או אדמין (חובת שיוך יחידתי מלא *)
                     </span>
-                  </p>
+                  </div>
+
+                  {/* Card 2: Standard Unit Commander */}
+                  <div
+                    onClick={() => {
+                      setFormData((prev: any) => ({
+                        ...prev,
+                        is_commander: true,
+                        is_admin: false,
+                        is_division_commander: false,
+                      }));
+                    }}
+                    className={cn(
+                      "p-3.5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between select-none min-h-[96px]",
+                      !formData.is_division_commander &&
+                        !formData.is_admin &&
+                        !!formData.is_commander
+                        ? "border-primary bg-primary/5 dark:bg-primary/10 shadow-sm ring-1 ring-primary/20"
+                        : "border-border/60 hover:border-border hover:bg-accent/40 bg-card",
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-primary shrink-0" />
+                      <span className="text-xs font-black text-foreground">
+                        מפקד יחידה
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-muted-foreground font-bold mt-2 leading-snug">
+                      מפקד על היחידה שנבחרה בשיוך (חובת שיוך *)
+                    </span>
+                  </div>
+
+                  {/* Card 3: Head of Division / Brigade Commander */}
+                  <div
+                    onClick={() => {
+                      setFormData((prev: any) => ({
+                        ...prev,
+                        is_commander: true,
+                        is_admin: false,
+                        is_division_commander: true,
+                        department_id: undefined,
+                        section_id: undefined,
+                        team_id: undefined,
+                      }));
+                      setSelectedDeptId("");
+                      setSelectedSectionId("");
+                    }}
+                    className={cn(
+                      "p-3.5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between select-none min-h-[96px]",
+                      !!formData.is_division_commander
+                        ? "border-amber-500 bg-amber-500/10 dark:bg-amber-500/20 shadow-sm ring-1 ring-amber-500/30"
+                        : "border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10",
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                      <span className="text-xs font-black text-amber-900 dark:text-amber-200">
+                        ראש החטיבה
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-amber-800/80 dark:text-amber-300 font-bold mt-2 leading-snug">
+                      מפקד כלל המחלקות והיחידות (ללא שיוך מוגבל)
+                    </span>
+                  </div>
+
+                  {/* Card 4: System Admin */}
+                  <div
+                    onClick={() => {
+                      setFormData((prev: any) => ({
+                        ...prev,
+                        is_admin: true,
+                        is_commander: true,
+                        is_division_commander: false,
+                        department_id: undefined,
+                        section_id: undefined,
+                        team_id: undefined,
+                      }));
+                      setSelectedDeptId("");
+                      setSelectedSectionId("");
+                    }}
+                    className={cn(
+                      "p-3.5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between select-none min-h-[96px]",
+                      !!formData.is_admin
+                        ? "border-blue-500 bg-blue-500/10 dark:bg-blue-500/20 shadow-sm ring-1 ring-blue-500/30"
+                        : "border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10",
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                      <span className="text-xs font-black text-blue-900 dark:text-blue-200">
+                        אדמין מערכת
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-blue-800/80 dark:text-blue-300 font-bold mt-2 leading-snug">
+                      הרשאה ניהולית גלובלית לכל המערכת
+                    </span>
+                  </div>
                 </div>
               </div>
+            ) : (
+              <SwitchItem
+                label="מינוי מפקד"
+                checked={!!formData.is_commander}
+                onCheckedChange={(c: boolean) =>
+                  handleFieldChange("is_commander", c)
+                }
+                icon={Shield}
+                description="הגדר שוטר זה כמפקד היחידה הארגונית שנבחרה"
+              />
             )}
+
+            {currentCommander &&
+              !formData.is_division_commander &&
+              !formData.is_admin && (
+                <div className="flex items-start gap-4 p-5 rounded-[24px] bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-800/20 w-full">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 shrink-0">
+                    <AlertTriangle className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[13px] font-black text-amber-900 dark:text-amber-200 leading-tight">
+                      שים לב: קיים מפקד פעיל ליחידה זו
+                    </p>
+                    <p className="text-[11px] font-bold text-amber-600/80 leading-tight">
+                      הגדרת שוטר זה כמפקד תבטל את מינויו של{" "}
+                      <span className="text-amber-700 dark:text-amber-300 underline decoration-2 underline-offset-2">
+                        {currentCommander.name}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              )}
           </div>
         )}
       </CompactCard>
@@ -669,15 +960,21 @@ const ProfessionalFormTab = ({
           <div className="space-y-3">
             <SwitchItem
               label="סיווג ביטחוני"
+              icon={Shield}
               checked={!!formData.security_clearance}
-              onChange={(c: boolean) =>
+              onCheckedChange={(c: boolean) =>
                 handleFieldChange("security_clearance", c)
               }
+              description="אישור סיווג ביטחוני בתוקף"
             />
             <SwitchItem
               label="רישיון נהיגה משטרתי"
+              icon={FileCheck}
               checked={!!formData.police_license}
-              onChange={(c: boolean) => handleFieldChange("police_license", c)}
+              onCheckedChange={(c: boolean) =>
+                handleFieldChange("police_license", c)
+              }
+              description="אישור רישיון נהיגה מבצעי בתוקף"
             />
           </div>
         </CompactCard>
@@ -702,11 +999,23 @@ const ProfessionalFormTab = ({
   );
 };
 
+const DRAFT_KEY = "pikud360_create_employee_draft_v1";
+
+const loadDraftFromStorage = () => {
+  try {
+    const raw =
+      sessionStorage.getItem(DRAFT_KEY) || localStorage.getItem(DRAFT_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.error("Failed to parse form draft:", e);
+  }
+  return null;
+};
+
 export default function CreateEmployeePage() {
   const navigate = useNavigate();
   const { user } = useAuthContext();
   const { createEmployee, getStructure } = useEmployees();
-  // Note: updateEmployee is unused but kept if needed by hook signature, usually not needed for create page
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -714,21 +1023,37 @@ export default function CreateEmployeePage() {
   const [structure, setStructure] = useState<DepartmentNode[]>([]);
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
 
-  const [selectedDeptId, setSelectedDeptId] = useState<string>("");
-  const [selectedSectionId, setSelectedSectionId] = useState<string>("");
+  const initialDraft = useMemo(() => loadDraftFromStorage(), []);
 
-  const [formData, setFormData] = useState<Partial<CreateEmployeePayload>>({
-    is_active: true,
-  });
+  const [selectedDeptId, setSelectedDeptId] = useState<string>(
+    initialDraft?.selectedDeptId || "",
+  );
+  const [selectedSectionId, setSelectedSectionId] = useState<string>(
+    initialDraft?.selectedSectionId || "",
+  );
 
-  const [emergencyDetails, setEmergencyDetails] = useState({
-    name: "",
-    relation: "",
-    phone: "",
-  });
+  const [formData, setFormData] = useState<Partial<CreateEmployeePayload>>(
+    initialDraft?.formData || { is_active: true },
+  );
 
-  const [activeTab, setActiveTab] = useState("personal");
-  const [createdCredentials, setCreatedCredentials] = useState<{name: string, user: string, pass: string} | null>(null);
+  const [emergencyDetails, setEmergencyDetails] = useState(
+    initialDraft?.emergencyDetails || {
+      name: "",
+      relation: "",
+      phone: "",
+    },
+  );
+
+  const [activeTab, setActiveTab] = useState(
+    initialDraft?.activeTab || "personal",
+  );
+  const [hasDraft, setHasDraft] = useState<boolean>(!!initialDraft);
+  const [createdCredentials, setCreatedCredentials] = useState<{
+    name: string;
+    user: string;
+    pass: string;
+    phone?: string;
+  } | null>(null);
   const [copiedField, setCopiedField] = useState("");
 
   const relations = [
@@ -817,6 +1142,51 @@ export default function CreateEmployeePage() {
     }
   }, [emergencyDetails]);
 
+  // Auto-save form draft across refreshes and page navigation
+  useEffect(() => {
+    const isDirty =
+      Object.keys(formData).some((k) => k !== "is_active") ||
+      selectedDeptId !== "" ||
+      selectedSectionId !== "" ||
+      emergencyDetails.name !== "" ||
+      emergencyDetails.phone !== "";
+
+    if (isDirty) {
+      const draftObj = {
+        formData,
+        emergencyDetails,
+        selectedDeptId,
+        selectedSectionId,
+        activeTab,
+      };
+      try {
+        sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draftObj));
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(draftObj));
+        setHasDraft(true);
+      } catch (err) {
+        console.error("Error saving draft:", err);
+      }
+    }
+  }, [
+    formData,
+    emergencyDetails,
+    selectedDeptId,
+    selectedSectionId,
+    activeTab,
+  ]);
+
+  const clearDraft = () => {
+    sessionStorage.removeItem(DRAFT_KEY);
+    localStorage.removeItem(DRAFT_KEY);
+    setFormData({ is_active: true });
+    setEmergencyDetails({ name: "", relation: "", phone: "" });
+    setSelectedDeptId("");
+    setSelectedSectionId("");
+    setActiveTab("personal");
+    setHasDraft(false);
+    toast.success("טיוטת הטופס אופסה");
+  };
+
   const handleSubmit = async () => {
     setSaving(true);
     if (!formData.birth_date) {
@@ -826,17 +1196,21 @@ export default function CreateEmployeePage() {
     }
 
     // Validation for organizational affiliation
-    if (formData.is_commander) {
+    if (formData.is_admin || formData.is_division_commander) {
+      // System Admin or Division Commander -> Global scope (no unit affiliation required)
+    } else if (formData.is_commander) {
       if (!selectedDeptId) {
-        toast.error("יש לבחור לפחות מחלקה עבור מפקד");
+        toast.error(
+          "שיוך ארגוני הינו שדה חובה * - יש לבחור לפחות מחלקה עבור מפקד",
+        );
         setSaving(false);
         return;
       }
     } else {
-      // Not a commander - full affiliation required
+      // Regular user/employee -> Full organizational affiliation required
       if (!selectedDeptId || !selectedSectionId || !formData.team_id) {
         toast.error(
-          "עבור שוטר שאינו מפקד, יש להזין שיוך ארגוני מלא (מחלקה, מדור וחוליה)",
+          "שיוך ארגוני הינו שדה חובה * - יש להזין מחלקה, מדור וחוליה (אלא אם הוגדר ראש חטיבה או אדמין)",
         );
         setSaving(false);
         return;
@@ -855,32 +1229,55 @@ export default function CreateEmployeePage() {
       return;
     }
 
+    if (formData.phone_number && !isValidIsraeliPhone(formData.phone_number)) {
+      toast.error("מספר הטלפון אינו תקין לפי תקן ישראלי (לדוגמה: 0501234567)");
+      setSaving(false);
+      return;
+    }
+
     const payload = { ...formData } as CreateEmployeePayload;
-    
+    if (formData.is_division_commander) {
+      payload.is_commander = true;
+      payload.is_admin = false;
+      payload.department_id = undefined;
+      payload.section_id = undefined;
+      payload.team_id = undefined;
+      (payload as any).commands_department_id = null;
+    }
+
     let generatedCreds = null;
     const isCmd = payload.is_commander || payload.is_admin;
-    
+
     if (isCmd && !payload.username) {
       generatedCreds = {
         user: Math.floor(100000 + Math.random() * 900000).toString(),
-        pass: Math.floor(100000 + Math.random() * 900000).toString()
+        pass: Math.floor(100000 + Math.random() * 900000).toString(),
       };
       payload.username = generatedCreds.user;
       payload.password = generatedCreds.pass;
       (payload as any).must_change_password = true;
     } else if (!payload.username) {
-      payload.username = 'emp_' + Date.now().toString().slice(-6) + Math.floor(100 + Math.random() * 900).toString();
+      payload.username =
+        "emp_" +
+        Date.now().toString().slice(-6) +
+        Math.floor(100 + Math.random() * 900).toString();
     }
 
     const success = await createEmployee(payload);
     setSaving(false);
 
     if (success) {
+      sessionStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(DRAFT_KEY);
+      setHasDraft(false);
       if (generatedCreds) {
         setCreatedCredentials({
-          name: formData.dominant_name || `${formData.first_name || ''} ${formData.last_name || ''}`,
+          name:
+            formData.dominant_name ||
+            `${formData.first_name || ""} ${formData.last_name || ""}`.trim(),
           user: generatedCreds.user,
-          pass: generatedCreds.pass
+          pass: generatedCreds.pass,
+          phone: formData.phone_number || "",
         });
       } else {
         toast.success("השוטר נוצר בהצלחה");
@@ -932,22 +1329,22 @@ export default function CreateEmployeePage() {
               small ? "w-3.5 h-3.5" : "w-4 h-4",
               active
                 ? "text-primary scale-110"
-                : "text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300"
+                : "text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300",
             )}
           />
         )}
-        <span className={cn(
-          "font-black tracking-tight leading-none whitespace-nowrap transition-all",
-          small ? "text-[10px] sm:text-[11px]" : "text-sm",
-          active ? "opacity-100" : "opacity-75 group-hover:opacity-100"
-        )}>
+        <span
+          className={cn(
+            "font-black tracking-tight leading-none whitespace-nowrap transition-all",
+            small ? "text-[10px] sm:text-[11px]" : "text-sm",
+            active ? "opacity-100" : "opacity-75 group-hover:opacity-100",
+          )}
+        >
           {label}
         </span>
       </div>
     </button>
   );
-
-
 
   return (
     <div id="create-page-root" className="flex flex-col pb-10">
@@ -979,6 +1376,23 @@ export default function CreateEmployeePage() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {hasDraft && (
+            <div className="hidden md:flex items-center gap-2">
+              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 px-2.5 py-1 rounded-xl flex items-center gap-1.5 shrink-0">
+                <Save className="w-3 h-3 text-emerald-500 animate-pulse" />
+                טיוטה שמורה
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearDraft}
+                className="h-8.5 text-xs font-bold rounded-xl text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+              >
+                נקה טיוטה
+              </Button>
+            </div>
+          )}
+
           <Button
             variant="ghost"
             onClick={() => navigate("/employees")}
@@ -997,7 +1411,9 @@ export default function CreateEmployeePage() {
             ) : (
               <Save className="w-4 h-4" />
             )}
-            <span className="text-xs sm:text-sm whitespace-nowrap">שמור שוטר</span>
+            <span className="text-xs sm:text-sm whitespace-nowrap">
+              שמור שוטר
+            </span>
           </Button>
         </div>
       </div>
@@ -1022,7 +1438,7 @@ export default function CreateEmployeePage() {
         </div>
       </div>
 
-        <div className="space-y-4">
+      <div className="space-y-4 pb-20">
         <AnimatePresence mode="wait">
           {activeTab === "personal" && (
             <motion.div
@@ -1069,10 +1485,75 @@ export default function CreateEmployeePage() {
             </motion.div>
           )}
         </AnimatePresence>
-        </div>
+      </div>
 
-      <Dialog open={!!createdCredentials} onOpenChange={() => { navigate("/employees"); }}>
-        <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-xl border-border/50 text-right p-0 overflow-hidden" dir="rtl">
+      {/* Sticky Bottom Navigation Bar (Optimized position with left margin to clear AI Support chat) */}
+      <div className="sticky bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md border-t border-border/50 py-3.5 px-4 sm:px-6 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.4)]">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 pl-20 sm:pl-28">
+          {/* Step Indicator */}
+          <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+            <span className="hidden sm:inline">שלב</span>
+            <span className="w-6 h-6 rounded-full bg-primary/10 text-primary font-black flex items-center justify-center text-xs">
+              {activeTab === "personal" ? "1" : "2"}
+            </span>
+            <span>מתוך 2:</span>
+            <span className="font-black text-foreground">
+              {activeTab === "personal" ? "פרטים אישיים" : "מקצועי והרשאות"}
+            </span>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3">
+            {activeTab === "personal" ? (
+              <Button
+                type="button"
+                onClick={() => setActiveTab("professional")}
+                className="h-10 px-5 sm:px-6 rounded-xl font-black bg-primary hover:bg-primary/90 text-primary-foreground transition-all shadow-sm gap-2"
+              >
+                <span>המשך לשלב הבא</span>
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setActiveTab("personal")}
+                  className="h-10 px-4 rounded-xl font-bold border-border/60 hover:bg-muted text-muted-foreground hover:text-foreground gap-2"
+                >
+                  <ArrowRight className="w-4 h-4" />
+                  <span className="hidden sm:inline">חזור לפרטים אישיים</span>
+                  <span className="sm:hidden">חזור</span>
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={saving}
+                  className="h-10 px-5 sm:px-6 rounded-xl font-black bg-primary hover:bg-primary/90 text-primary-foreground transition-all shadow-sm gap-2"
+                >
+                  {saving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  <span>{saving ? "שומר..." : "שמור שוטר"}</span>
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <Dialog
+        open={!!createdCredentials}
+        onOpenChange={() => {
+          navigate("/employees");
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-md bg-card/95 backdrop-blur-xl border-border/50 text-right p-0 overflow-hidden"
+          dir="rtl"
+        >
           <DialogHeader className="p-6 bg-primary/5 pb-4 border-b border-primary/10">
             <div className="w-12 h-10 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto mb-4">
               <Check className="w-6 h-6" />
@@ -1084,66 +1565,134 @@ export default function CreateEmployeePage() {
               פרטי הגישה נוצרו בהצלחה
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="p-6 space-y-6">
             <div className="bg-muted/50 rounded-2xl p-5 border border-border/50 space-y-4">
               <div>
-                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1.5 block">שם משתמש</Label>
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1.5 block">
+                  שם משתמש
+                </Label>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 bg-background border border-border/50 rounded-xl px-4 py-2.5 font-mono text-center font-black text-lg text-foreground tracking-widest select-all">
                     {createdCredentials?.user}
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    title="העתק הודעה מסודרת"
                     className="h-[46px] w-[46px] rounded-xl border-border/50 shrink-0 text-muted-foreground hover:text-primary transition-colors"
                     onClick={() => {
-                      navigator.clipboard.writeText(createdCredentials?.user || "");
+                      const msg = `שלום ${createdCredentials?.name || ""},\nנוצר לך חשבון חדש למערכת כוח האדם.\n\nשם משתמש: ${createdCredentials?.user || ""}\nסיסמה: ${createdCredentials?.pass || ""}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`;
+                      navigator.clipboard.writeText(msg);
                       setCopiedField("user");
+                      toast.success("הודעת פרטי הגישה הועתקה בהצלחה");
                       setTimeout(() => setCopiedField(""), 2000);
                     }}
                   >
-                    {copiedField === "user" ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                    {copiedField === "user" ? (
+                      <Check className="w-4 h-4 text-emerald-500" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
                   </Button>
                 </div>
               </div>
-              
+
               <div>
-                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1.5 block">סיסמה ראשונית</Label>
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1.5 block">
+                  סיסמה ראשונית
+                </Label>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 bg-background border border-border/50 rounded-xl px-4 py-2.5 font-mono text-center font-black text-lg text-foreground tracking-widest select-all">
                     {createdCredentials?.pass}
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    title="העתק הודעה מסודרת"
                     className="h-[46px] w-[46px] rounded-xl border-border/50 shrink-0 text-muted-foreground hover:text-primary transition-colors"
                     onClick={() => {
-                      navigator.clipboard.writeText(createdCredentials?.pass || "");
+                      const msg = `שלום ${createdCredentials?.name || ""},\nנוצר לך חשבון חדש למערכת כוח האדם.\n\nשם משתמש: ${createdCredentials?.user || ""}\nסיסמה: ${createdCredentials?.pass || ""}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`;
+                      navigator.clipboard.writeText(msg);
                       setCopiedField("pass");
+                      toast.success("הודעת פרטי הגישה הועתקה בהצלחה");
                       setTimeout(() => setCopiedField(""), 2000);
                     }}
                   >
-                    {copiedField === "pass" ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                    {copiedField === "pass" ? (
+                      <Check className="w-4 h-4 text-emerald-500" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
                   </Button>
                 </div>
               </div>
+
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const msg = `שלום ${createdCredentials?.name || ""},\nנוצר לך חשבון חדש למערכת כוח האדם.\n\nשם משתמש: ${createdCredentials?.user || ""}\nסיסמה: ${createdCredentials?.pass || ""}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`;
+                  navigator.clipboard.writeText(msg);
+                  setCopiedField("full");
+                  toast.success("הודעת פרטי הגישה הועתקה בהצלחה");
+                  setTimeout(() => setCopiedField(""), 2000);
+                }}
+                className="w-full h-10 rounded-xl border-dashed border-primary/40 hover:border-primary text-primary hover:bg-primary/5 font-bold transition-all gap-2"
+              >
+                {copiedField === "full" ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    <span>ההודעה המלאה הועתקה!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4" />
+                    <span>העתק הודעת גישה מסודרת</span>
+                  </>
+                )}
+              </Button>
             </div>
 
             <div className="flex flex-col gap-3 pt-2">
-              <Button 
+              <Button
                 onClick={() => {
-                  const text = encodeURIComponent(`אהלן ${createdCredentials?.name},\nנוצר לך חשבון חדש למערכת כוח האדם.\n\nשם משתמש: ${createdCredentials?.user}\nסיסמה: ${createdCredentials?.pass}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`);
-                  window.open(`https://wa.me/?text=${text}`, '_blank');
+                  const fullMsg = `שלום ${createdCredentials?.name || ""},\nנוצר לך חשבון חדש למערכת כוח האדם.\n\nשם משתמש: ${createdCredentials?.user || ""}\nסיסמה: ${createdCredentials?.pass || ""}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`;
+                  try {
+                    navigator.clipboard.writeText(fullMsg);
+                  } catch (e) {
+                    console.error("Clipboard copy error:", e);
+                  }
+
+                  let url = "";
+                  const phone = createdCredentials?.phone?.trim();
+                  if (phone) {
+                    let formattedPhone = phone.replace(/\D/g, "");
+                    if (
+                      !formattedPhone.startsWith("972") &&
+                      !formattedPhone.startsWith("1")
+                    ) {
+                      if (formattedPhone.startsWith("0")) {
+                        formattedPhone = "972" + formattedPhone.substring(1);
+                      } else {
+                        formattedPhone = "972" + formattedPhone;
+                      }
+                    }
+                    url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(fullMsg)}`;
+                  } else {
+                    url = `https://wa.me/?text=${encodeURIComponent(fullMsg)}`;
+                  }
+
+                  window.open(url, "_blank");
+                  toast.success("פותח צ'אט בוואטסאפ...");
                   navigate("/employees");
                 }}
-                className="w-full h-10 rounded-xl text-base font-black bg-[#25D366] hover:bg-[#128C7E] text-white  transition-all gap-2"
+                className="w-full h-10 rounded-xl text-base font-black bg-[#25D366] hover:bg-[#128C7E] text-white transition-all gap-2"
               >
                 <MessageCircle className="w-5 h-5" />
                 שתף פרטים בוואטסאפ
               </Button>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => navigate("/employees")}
                 className="w-full h-10 rounded-xl font-bold text-muted-foreground hover:bg-muted"
               >
@@ -1156,4 +1705,3 @@ export default function CreateEmployeePage() {
     </div>
   );
 }
-

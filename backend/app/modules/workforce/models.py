@@ -18,6 +18,8 @@ class Employee:
     commander_id: Optional[str] = None
     phone: Optional[str] = None
     personal_email: Optional[str] = None
+    city: Optional[str] = None
+    emergency_contact: Optional[str] = None
     status: str = "ACTIVE"
     phone_blind_index: Optional[str] = None
     email_blind_index: Optional[str] = None

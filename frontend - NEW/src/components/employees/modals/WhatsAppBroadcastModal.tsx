@@ -1,5 +1,11 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Dialog, DialogContent, DialogDragHandle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDragHandle,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,7 +25,8 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
   onOpenChange,
 }) => {
   const { user } = useAuthContext();
-  const { employees, loading, fetchEmployees } = useEmployees();
+  const { employees: rawEmployees, loading, fetchEmployees } = useEmployees();
+  const employees = useMemo(() => (Array.isArray(rawEmployees) ? rawEmployees : []), [rawEmployees]);
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [message, setMessage] = useState("");
@@ -164,9 +171,12 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
               <MessageSquare className="w-6 h-6" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight truncate">
+              <DialogTitle className="text-xl sm:text-2xl font-black tracking-tight truncate">
                 רשימת תפוצה
-              </h2>
+              </DialogTitle>
+              <DialogDescription className="sr-only">
+                שליחת הודעות תפוצה בוואטסאפ לעובדים
+              </DialogDescription>
               <div className="flex items-center gap-2 mt-1">
                 {/* Step indicators */}
                 <div className="flex items-center gap-1.5">

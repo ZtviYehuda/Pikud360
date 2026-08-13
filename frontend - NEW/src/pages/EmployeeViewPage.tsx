@@ -21,6 +21,14 @@ import {
   Settings,
   Briefcase,
   Star,
+  Trash2,
+  ShieldCheck,
+  UserX,
+  AlertTriangle,
+  CheckCircle2,
+  RotateCcw,
+  Pencil,
+  X as XIcon,
 } from "lucide-react";
 import { useAuthContext } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -34,6 +42,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Copy, Check } from "lucide-react";
 import {
@@ -44,7 +53,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { cn, cleanUnitName } from "@/lib/utils";
+import { cn, cleanUnitName, isValidIsraeliPhone } from "@/lib/utils";
 import * as endpoints from "@/config/employees.endpoints";
 import { format } from "date-fns";
 import { BirthdayGreetingsModal } from "@/components/dashboard/BirthdayGreetingsModal";
@@ -91,7 +100,7 @@ const UnitPicker = ({
   </div>
 );
 
-// ── Shared Component: Field Display ──────────────────────────────────────────
+// ── Shared Component: Field Display (with double-click inline edit) ───────────
 const Field = ({
   label,
   value,
@@ -99,6 +108,8 @@ const Field = ({
   href,
   icon: Icon,
   valueClassName,
+  fieldKey,
+  onSave,
 }: {
   label: string;
   value?: string | null | React.ReactNode;
@@ -106,12 +117,31 @@ const Field = ({
   href?: string;
   icon?: any;
   valueClassName?: string;
+  fieldKey?: string;
+  onSave?: (key: string, value: string) => void;
 }) => {
-  const hasValue = value !== undefined && value !== null && value !== "";
-  if (!hasValue) return null;
+  const hasValue = value !== undefined && value !== null && value !== "" && value !== "-";
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  const handleDoubleClick = () => {
+    if (!fieldKey || !onSave) return;
+    setDraft(typeof value === "string" ? value : "");
+    setEditing(true);
+  };
+
+  const handleSave = () => {
+    if (fieldKey && onSave) onSave(fieldKey, draft);
+    setEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") { e.preventDefault(); handleSave(); }
+    if (e.key === "Escape") setEditing(false);
+  };
 
   const normalizedHref = href?.trim();
-  const safeHref = normalizedHref
+  const safeHref = hasValue && normalizedHref
     ? normalizedHref.startsWith("mailto:")
       ? `mailto:${normalizedHref.slice(7).trim()}`
       : normalizedHref.startsWith("tel:")
@@ -122,32 +152,100 @@ const Field = ({
   const isExternalLink =
     safeHref?.startsWith("mailto:") || safeHref?.startsWith("tel:");
 
+  const isEditable = !!(fieldKey && onSave);
+
+  // ── Inline edit mode ─────────────────────────────────────────────────────
+  if (editing) {
+    return (
+      <div className="flex items-start gap-4 p-4 rounded-2xl border border-primary/30 bg-primary/[0.03] ring-4 ring-primary/10">
+        {Icon && (
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Icon className="w-4 h-4 text-primary" />
+          </div>
+        )}
+        <div className="flex-1 flex flex-col justify-center gap-1">
+          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+            {label}
+          </span>
+          <div className="flex items-center gap-2">
+            <input
+              autoFocus
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={handleKeyDown}
+              dir="auto"
+              className={cn(
+                "flex-1 text-[15px] font-bold bg-transparent border-b border-primary/40 outline-none pb-0.5 text-foreground",
+                mono && "font-mono"
+              )}
+            />
+            <button
+              onClick={handleSave}
+              className="p-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+              title="שמור"
+            >
+              <Save className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setEditing(false)}
+              className="p-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              title="בטל"
+            >
+              <XIcon className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Regular view mode ─────────────────────────────────────────────────────
   const content = (
-    <div className="flex items-start gap-4 p-4 rounded-2xl bg-transparent border border-transparent transition-colors hover:border-primary/10">
+    <div
+      onDoubleClick={handleDoubleClick}
+      className={cn(
+        "flex items-start gap-4 p-4 rounded-2xl border border-transparent transition-all",
+        isEditable
+          ? "hover:border-primary/10 hover:bg-primary/[0.02] cursor-pointer group"
+          : "bg-transparent"
+      )}
+      title={isEditable ? "לחץ פעמיים לעריכה" : undefined}
+    >
       {Icon && (
-        <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center shrink-0">
-          <Icon className="w-4 h-4 text-slate-400 group-hover:text-primary transition-colors" />
+        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", hasValue ? "bg-primary/5" : "bg-slate-100/60 dark:bg-slate-800/40")}>
+          <Icon className={cn("w-4 h-4 transition-colors", hasValue ? "text-slate-400 group-hover:text-primary" : "text-slate-300 dark:text-slate-600")} />
         </div>
       )}
-      <div className="flex flex-col justify-center">
-        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-          {label}
-        </span>
-        <span
-          className={cn(
-            "font-bold text-[15px] mt-0.5",
-            safeHref && "text-primary hover:underline",
-            mono && "font-mono",
-            valueClassName || "text-foreground",
+      <div className="flex-1 flex flex-col justify-center">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+            {label}
+          </span>
+          {isEditable && (
+            <Pencil className="w-3 h-3 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
           )}
-        >
-          {value}
-        </span>
+        </div>
+        {hasValue ? (
+          <span
+            className={cn(
+              "font-bold text-[15px] mt-0.5",
+              safeHref && "text-primary hover:underline",
+              mono && "font-mono",
+              valueClassName || "text-foreground",
+            )}
+          >
+            {value}
+          </span>
+        ) : (
+          <span className="text-[17px] mt-0.5 text-slate-300 dark:text-slate-600 font-light select-none">
+            &mdash;
+          </span>
+        )}
       </div>
     </div>
   );
 
-  if (safeHref)
+  if (safeHref && hasValue)
     return (
       <a
         href={safeHref}
@@ -162,6 +260,7 @@ const Field = ({
 
   return content;
 };
+
 
 // ── Shared Component: Edit Field Wrapper ─────────────────────────────────────
 const EditField = ({
@@ -268,6 +367,112 @@ const ActiveStatusPopover = ({ isActive, onChange, disabled }: any) => {
         </div>
       </PopoverContent>
     </Popover>
+  );
+};
+
+// ── Deactivate Confirmation Modal ──────────────────────────────────────────
+const DeactivateConfirmModal = ({
+  open,
+  onOpenChange,
+  employee,
+  onConfirm,
+  loading,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  employee: Employee | null;
+  onConfirm: () => void;
+  loading: boolean;
+}) => {
+  if (!employee) return null;
+
+  const fullName = `${employee.first_name || ""} ${employee.last_name || ""}`.trim() || "העובד";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md p-6 rounded-3xl border border-rose-200 dark:border-rose-900/50 shadow-2xl bg-white dark:bg-slate-950" dir="rtl">
+        <DialogHeader className="text-right space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/50 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
+              <UserX className="w-6 h-6" />
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-black text-slate-900 dark:text-white">
+                העברת {fullName} למצב לא פעיל
+              </DialogTitle>
+              <DialogDescription className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
+                אישור השהיית שוטר מהמערכת
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          {/* Main Info Box */}
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 space-y-3 text-right">
+            <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400 font-bold text-xs">
+              <AlertTriangle className="w-4 h-4 shrink-0 text-rose-500" />
+              <span>שימו לב: השהיית שוטר אינה מוחקת אותו מהמערכת</span>
+            </div>
+            
+            <div className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300 pt-1">
+              <div className="flex items-start gap-2.5">
+                <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                </div>
+                <span>
+                  <strong className="font-black text-slate-800 dark:text-slate-100">אינו נמחק מהמערכת:</strong> הפרטים האישיים, ההיסטוריה והנתונים יישמרו במאגר באופן מאובטח.
+                </span>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <div className="w-5 h-5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">
+                  <UserX className="w-3.5 h-3.5" />
+                </div>
+                <span>
+                  <strong className="font-black text-slate-800 dark:text-slate-100">הסתרה ממצבת כוח האדם:</strong> השוטר יעבור למצב לא פעיל ולא יוצג עם שאר העובדים הפעילים ברשימות, בסידורי העבודה ובדוחות.
+                </span>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </div>
+                <span>
+                  <strong className="font-black text-slate-800 dark:text-slate-100">אפשרות החזרה בכל עת:</strong> ניתן להחזיר את השוטר למצב פעיל בכל רגע בלחיצה על "החזר לפעיל".
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 mt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+            className="rounded-xl font-bold h-11 border-slate-200 dark:border-slate-800 flex-1"
+          >
+            ביטול
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={onConfirm}
+            disabled={loading}
+            className="rounded-xl font-black h-11 bg-rose-600 hover:bg-rose-700 text-white flex-1 shadow-md shadow-rose-600/20"
+          >
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin ml-2" />
+            ) : (
+              <UserX className="w-4 h-4 ml-2" />
+            )}
+            אישור והעברה ללא פעיל
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -418,6 +623,8 @@ export default function EmployeeViewPage() {
   const [editMode, setEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState("personal"); // personal | pro
   const [showBirthdayModal, setShowBirthdayModal] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [deactivatingLoading, setDeactivatingLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Form State
@@ -430,24 +637,46 @@ export default function EmployeeViewPage() {
   const [copiedField, setCopiedField] = useState("");
 
   const fetchData = async () => {
-    if (!id) return;
+    if (!id || id === "NaN" || id === "undefined" || id === "null") return;
     try {
-      const [{ data: empData }, { data: structData }, { data: serviceData }] =
+      const [{ data: empResponse }, { data: structData }, { data: serviceData }] =
         await Promise.all([
-          apiClient.get<Employee>(
-            endpoints.updateEmployeeEndpoint(parseInt(id)),
+          apiClient.get<any>(
+            endpoints.getEmployeeByIdEndpoint(id as any),
           ),
           apiClient.get("/employees/structure"),
           apiClient.get("/employees/service-types"),
         ]);
+      const empRaw = empResponse?.data || empResponse;
+      const is_active = empRaw?.is_active !== undefined
+        ? Boolean(empRaw.is_active)
+        : empRaw?.status === "ACTIVE";
+
+      const empData = {
+        ...empRaw,
+        phone_number: empRaw?.phone_number || empRaw?.phone || "",
+        phone: empRaw?.phone || empRaw?.phone_number || "",
+        email: empRaw?.email || empRaw?.personal_email || "",
+        personal_email: empRaw?.personal_email || empRaw?.email || "",
+        birth_date: empRaw?.birth_date || empRaw?.birthdate || "",
+        birthdate: empRaw?.birthdate || empRaw?.birth_date || "",
+        city: empRaw?.city || "",
+        emergency_contact: empRaw?.emergency_contact || "",
+        is_active,
+        status: is_active ? "ACTIVE" : "INACTIVE",
+      };
+
+      const realStruct = (structData as any)?.departments || (structData as any)?.data || structData;
+      const realService = (serviceData as any)?.service_types || (serviceData as any)?.data || serviceData;
+
       setEmployee(empData);
-      setStructure(structData);
-      setServiceTypes(serviceData);
+      setStructure(Array.isArray(realStruct) ? realStruct : []);
+      setServiceTypes(Array.isArray(realService) ? realService : []);
 
       // Init form
       setFormData(empData);
-      setSelectedDeptId(empData.department_id?.toString() || "");
-      setSelectedSectionId(empData.section_id?.toString() || "");
+      setSelectedDeptId(empData?.department_id?.toString() || "");
+      setSelectedSectionId(empData?.section_id?.toString() || "");
     } catch {
       toast.error("שגיאה בטעינת הנתונים");
     } finally {
@@ -486,6 +715,33 @@ export default function EmployeeViewPage() {
     setFormData((prev: any) => ({ ...prev, [field]: value }));
   };
 
+  const handleInlineFieldSave = async (field: string, value: string) => {
+    if (!employee || !id) return;
+
+    if (field === "phone_number" || field === "phone") {
+      if (value && !isValidIsraeliPhone(value)) {
+        toast.error("מספר הטלפון אינו תקין לפי תקן ישראלי (לדוגמה: 0501234567)");
+        return;
+      }
+    }
+
+    const loadingToast = toast.loading("שומר...");
+    try {
+      const payload: Record<string, any> = { [field]: value };
+      if (field === "phone_number") payload.phone = value;
+      if (field === "email") payload.personal_email = value;
+      if (field === "birth_date") payload.birthdate = value;
+
+      await apiClient.put(endpoints.updateEmployeeEndpoint(id as any), payload);
+      toast.success("השדה עודכן בהצלחה", { id: loadingToast });
+      await fetchData();
+    } catch {
+      toast.error("שגיאה בעדכון השדה", { id: loadingToast });
+    }
+  };
+
+
+
   const handleSubmit = async () => {
     if (!employee) return;
     setSaving(true);
@@ -510,7 +766,7 @@ export default function EmployeeViewPage() {
 
     try {
       await apiClient.put(
-        endpoints.updateEmployeeEndpoint(parseInt(id!)),
+        endpoints.updateEmployeeEndpoint(id!),
         payload,
       );
       
@@ -533,24 +789,80 @@ export default function EmployeeViewPage() {
     }
   };
 
-  const toggleActiveStatus = async () => {
+  const handleActiveToggleRequest = () => {
     if (!employee) return;
-    const nextActive = !employee.is_active;
+    const currentActive = employee.is_active !== undefined
+      ? Boolean(employee.is_active)
+      : employee.status === "ACTIVE";
+
+    if (currentActive) {
+      setShowDeactivateModal(true);
+    } else {
+      executeToggleActiveStatus(true);
+    }
+  };
+
+  const executeToggleActiveStatus = async (targetNextActive?: boolean) => {
+    const targetId = employee?.id || id;
+    if (!targetId || targetId === "0") return;
+
+    const currentActive = employee?.is_active !== undefined
+      ? Boolean(employee.is_active)
+      : employee?.status === "ACTIVE";
+    const nextActive = targetNextActive !== undefined ? targetNextActive : !currentActive;
+
+    setDeactivatingLoading(true);
     const loadingToast = toast.loading(nextActive ? "מחזיר שוטר למצב פעיל..." : "מעביר שוטר למצב לא פעיל...");
     try {
       await apiClient.put(
-        endpoints.updateEmployeeEndpoint(employee.id),
-        { ...employee, is_active: nextActive }
+        endpoints.updateEmployeeEndpoint(targetId),
+        {
+          ...(employee || {}),
+          is_active: nextActive,
+          status: nextActive ? "ACTIVE" : "INACTIVE",
+        }
       );
       toast.success(nextActive ? "השוטר הוחזר למצב פעיל בהצלחה" : "השוטר הועבר למצב לא פעיל", { id: loadingToast });
+      setShowDeactivateModal(false);
       await fetchData();
-    } catch {
+    } catch (err) {
+      console.error("executeToggleActiveStatus error:", err);
       toast.error("שגיאה בעדכון סטטוס השוטר", { id: loadingToast });
+    } finally {
+      setDeactivatingLoading(false);
     }
   };
 
   if (loading) return <LoadingScreen />;
   if (!employee) return null;
+
+  const isSupportUser =
+    employee.username === "admin" ||
+    employee.personal_email === "admin@matzevet.gov.il" ||
+    employee.employee_number === "ADMIN" ||
+    (employee.first_name === "צוות" && employee.last_name === "תמיכה") ||
+    employee.team_name === "צוות תמיכה";
+
+  const handleDeleteEmployee = async () => {
+    if (!employee) return;
+
+    if (isSupportUser) {
+      toast.error("משתמש 'צוות תמיכה' (אדמין ראשי) הינו משתמש מערכת מוגן ואינו ניתן למחיקה");
+      return;
+    }
+
+    if (!confirm(`האם אתה בטוח שברצונך למחוק את המשתמש ${employee.first_name} ${employee.last_name}?`)) {
+      return;
+    }
+
+    try {
+      await apiClient.delete(endpoints.deleteEmployeeEndpoint(employee.id));
+      toast.success("המשתמש נמחק בהצלחה מהמערכת");
+      navigate("/employees");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "שגיאה במחיקת המשתמש");
+    }
+  };
 
   const displayName = employee.dominant_name
     ? `${employee.dominant_name} ${employee.last_name}`
@@ -848,7 +1160,7 @@ export default function EmployeeViewPage() {
                       </Button>
                       <Button
                         variant="outline"
-                        onClick={toggleActiveStatus}
+                        onClick={handleActiveToggleRequest}
                         className={cn(
                           "w-full h-12 rounded-xl font-black text-sm transition-all border",
                           employee.is_active
@@ -921,14 +1233,8 @@ export default function EmployeeViewPage() {
                               label="שם מלא *"
                               value={`${employee.first_name} ${employee.last_name}`}
                             />
-                            <Field label="עיר מגורים" value={employee.city} />
+                            <Field label="עיר מגורים" value={employee.city} fieldKey="city" onSave={handleInlineFieldSave} />
                           </div>
-                          {employee.dominant_name && (
-                            <Field
-                              label="שם תצוגה"
-                              value={employee.dominant_name}
-                            />
-                          )}
                           <div className="grid grid-cols-2 gap-4">
                             <Field
                               label="מין"
@@ -959,12 +1265,16 @@ export default function EmployeeViewPage() {
                             mono
                             href={`tel:${employee.phone_number}`}
                             icon={Phone}
+                            fieldKey="phone_number"
+                            onSave={handleInlineFieldSave}
                           />
                           <Field
                             label="דואר אלקטרוני"
                             value={employee.email}
                             href={`mailto:${employee.email}`}
                             icon={Mail}
+                            fieldKey="email"
+                            onSave={handleInlineFieldSave}
                           />
                         </div>
                       </Section>
@@ -983,14 +1293,16 @@ export default function EmployeeViewPage() {
                       >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <Field
-                            label="שם וקרבה"
-                            value={
-                              employee.emergency_contact
-                                ?.split("-")?.[0]
-                                ?.trim() || "-"
-                            }
-                            icon={UserIcon}
-                          />
+                             label="שם וקרבה"
+                             value={
+                               employee.emergency_contact
+                                 ?.split("-")?.[0]
+                                 ?.trim() || null
+                             }
+                             icon={UserIcon}
+                             fieldKey="emergency_contact"
+                             onSave={handleInlineFieldSave}
+                           />
                           <Field
                             label="טלפון חירום"
                             value={
@@ -1187,6 +1499,8 @@ export default function EmployeeViewPage() {
                           <div className="grid grid-cols-1 gap-4">
                             <EditField label="טלפון נייד" icon={Phone}>
                               <Input
+                                type="tel"
+                                inputMode="tel"
                                 value={formData.phone_number || ""}
                                 onChange={(e) =>
                                   handleFieldChange(
@@ -1194,8 +1508,8 @@ export default function EmployeeViewPage() {
                                     e.target.value,
                                   )
                                 }
-                                className="h-8 border-0 bg-transparent px-0 focus-visible:ring-0 font-bold text-[15px]"
-                                dir="ltr"
+                                className="h-8 border-0 bg-transparent px-0 focus-visible:ring-0 font-bold text-[15px] text-right"
+                                dir="rtl"
                               />
                             </EditField>
 
@@ -1241,6 +1555,8 @@ export default function EmployeeViewPage() {
                           </EditField>
                           <EditField label="טלפון חירום" icon={Phone}>
                             <Input
+                              type="tel"
+                              inputMode="tel"
                               value={
                                 formData.emergency_contact
                                   ?.split("-")?.[1]
@@ -1257,8 +1573,8 @@ export default function EmployeeViewPage() {
                                   `${name || ""} - ${e.target.value}`,
                                 );
                               }}
-                              className="h-8 border-0 bg-transparent px-0 focus-visible:ring-0 font-bold text-[15px]"
-                              dir="ltr"
+                              className="h-8 border-0 bg-transparent px-0 focus-visible:ring-0 font-bold text-[15px] text-right"
+                              dir="rtl"
                             />
                           </EditField>
                         </div>
@@ -1456,6 +1772,15 @@ export default function EmployeeViewPage() {
         </div>
       </div>
 
+      {/* Deactivate Confirmation Modal */}
+      <DeactivateConfirmModal
+        open={showDeactivateModal}
+        onOpenChange={setShowDeactivateModal}
+        employee={employee}
+        onConfirm={() => executeToggleActiveStatus(false)}
+        loading={deactivatingLoading}
+      />
+
       {/* Sticky Bottom Bar for Mobile Actions */}
       <ActionFooter
         editMode={editMode}
@@ -1464,7 +1789,7 @@ export default function EmployeeViewPage() {
         onCancel={() => navigate(`/employees/${id}`)}
         saving={saving}
         isActive={employee.is_active}
-        onToggleActive={toggleActiveStatus}
+        onToggleActive={handleActiveToggleRequest}
       />
     </div>
   );

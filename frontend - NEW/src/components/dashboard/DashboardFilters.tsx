@@ -244,7 +244,7 @@ export const DashboardFilters = ({
 
   const sections = useMemo(() => {
     if (!stagedFilters.deptIds || stagedFilters.deptIds.length === 0) {
-      return (structure || []).flatMap((d) => d?.sections || []);
+      return [];
     }
     return (structure || [])
       .filter((d) => stagedFilters.deptIds.includes(String(d?.id ?? "")))
@@ -252,12 +252,12 @@ export const DashboardFilters = ({
   }, [stagedFilters.deptIds, structure]);
 
   const teams = useMemo(() => {
-    if (stagedFilters.sectionIds && stagedFilters.sectionIds.length > 0) {
-      return (sections || [])
-        .filter((s) => stagedFilters.sectionIds.includes(String(s?.id ?? "")))
-        .flatMap((s) => s?.teams || []);
+    if (!stagedFilters.sectionIds || stagedFilters.sectionIds.length === 0) {
+      return [];
     }
-    return (sections || []).flatMap((s) => s?.teams || []);
+    return (sections || [])
+      .filter((s) => stagedFilters.sectionIds.includes(String(s?.id ?? "")))
+      .flatMap((s) => s?.teams || []);
   }, [stagedFilters.sectionIds, sections]);
 
   const currentAgeValue = selectedAgeRange?.min
@@ -415,51 +415,67 @@ export const DashboardFilters = ({
                     </Badge>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setStagedFilters((prev) => ({ ...prev, sectionIds: [], teamIds: [] }))}
-                  className={cn(
-                    "text-[11px] font-bold transition-colors",
-                    stagedFilters.sectionIds.length === 0 ? "text-primary font-black" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {stagedFilters.sectionIds.length === 0 ? "✓ כל המדורים" : "אפס מדורים"}
-                </button>
+                {stagedFilters.deptIds.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setStagedFilters((prev) => ({ ...prev, sectionIds: [], teamIds: [] }))}
+                    className={cn(
+                      "text-[11px] font-bold transition-colors",
+                      stagedFilters.sectionIds.length === 0 ? "text-primary font-black" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {stagedFilters.sectionIds.length === 0 ? "✓ כל המדורים במחלקה" : "אפס מדורים"}
+                  </button>
+                )}
               </div>
 
-              <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto custom-scrollbar p-1">
-                {(sections || []).map((sec) => {
-                  const secIdStr = String(sec?.id ?? "");
-                  const isSelected = stagedFilters.sectionIds.includes(secIdStr);
-                  return (
-                    <Button
-                      key={sec?.id}
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const newSecs = isSelected
-                          ? stagedFilters.sectionIds.filter((id) => id !== secIdStr)
-                          : [...stagedFilters.sectionIds, secIdStr];
-                        setStagedFilters((prev) => ({
-                          ...prev,
-                          sectionIds: newSecs,
-                          teamIds: [],
-                        }));
-                      }}
-                      className={cn(
-                        "h-8 px-3 rounded-xl text-xs font-bold transition-all border shadow-2xs flex items-center gap-1.5",
-                        isSelected
-                          ? "bg-primary text-primary-foreground border-primary shadow-sm scale-[1.02]"
-                          : "bg-muted/30 text-foreground/80 border-border/40 hover:bg-muted/70"
-                      )}
-                    >
-                      {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
-                      <span>{sec?.name}</span>
-                    </Button>
-                  );
-                })}
-              </div>
+              {stagedFilters.deptIds.length === 0 ? (
+                <div className="p-3.5 rounded-2xl bg-muted/20 border border-dashed border-border/50 text-center flex flex-col items-center justify-center gap-1 text-muted-foreground">
+                  <span className="text-[12px] font-bold text-muted-foreground/80">
+                    יש לבחור מחלקה תחילה על מנת להציג מדורים
+                  </span>
+                </div>
+              ) : sections.length === 0 ? (
+                <div className="p-3.5 rounded-2xl bg-muted/20 border border-dashed border-border/50 text-center flex flex-col items-center justify-center gap-1 text-muted-foreground">
+                  <span className="text-[12px] font-bold text-muted-foreground/80">
+                    לא נמצאו מדורים במחלקה שנבחרה
+                  </span>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto custom-scrollbar p-1">
+                  {sections.map((sec) => {
+                    const secIdStr = String(sec?.id ?? "");
+                    const isSelected = stagedFilters.sectionIds.includes(secIdStr);
+                    return (
+                      <Button
+                        key={sec?.id}
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const newSecs = isSelected
+                            ? stagedFilters.sectionIds.filter((id) => id !== secIdStr)
+                            : [...stagedFilters.sectionIds, secIdStr];
+                          setStagedFilters((prev) => ({
+                            ...prev,
+                            sectionIds: newSecs,
+                            teamIds: [],
+                          }));
+                        }}
+                        className={cn(
+                          "h-8 px-3 rounded-xl text-xs font-bold transition-all border shadow-2xs flex items-center gap-1.5",
+                          isSelected
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm scale-[1.02]"
+                            : "bg-muted/30 text-foreground/80 border-border/40 hover:bg-muted/70"
+                        )}
+                      >
+                        {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                        <span>{sec?.name}</span>
+                      </Button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Connector line */}
@@ -477,50 +493,66 @@ export const DashboardFilters = ({
                     </Badge>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setStagedFilters((prev) => ({ ...prev, teamIds: [] }))}
-                  className={cn(
-                    "text-[11px] font-bold transition-colors",
-                    stagedFilters.teamIds.length === 0 ? "text-primary font-black" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {stagedFilters.teamIds.length === 0 ? "✓ כל החוליות" : "אפס חוליות"}
-                </button>
+                {stagedFilters.sectionIds.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setStagedFilters((prev) => ({ ...prev, teamIds: [] }))}
+                    className={cn(
+                      "text-[11px] font-bold transition-colors",
+                      stagedFilters.teamIds.length === 0 ? "text-primary font-black" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {stagedFilters.teamIds.length === 0 ? "✓ כל החוליות במדור" : "אפס חוליות"}
+                  </button>
+                )}
               </div>
 
-              <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto custom-scrollbar p-1">
-                {(teams || []).map((team) => {
-                  const teamIdStr = String(team?.id ?? "");
-                  const isSelected = stagedFilters.teamIds.includes(teamIdStr);
-                  return (
-                    <Button
-                      key={team?.id}
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const newTeams = isSelected
-                          ? stagedFilters.teamIds.filter((id) => id !== teamIdStr)
-                          : [...stagedFilters.teamIds, teamIdStr];
-                        setStagedFilters((prev) => ({
-                          ...prev,
-                          teamIds: newTeams,
-                        }));
-                      }}
-                      className={cn(
-                        "h-8 px-3 rounded-xl text-xs font-bold transition-all border shadow-2xs flex items-center gap-1.5",
-                        isSelected
-                          ? "bg-primary text-primary-foreground border-primary shadow-sm scale-[1.02]"
-                          : "bg-muted/30 text-foreground/80 border-border/40 hover:bg-muted/70"
-                      )}
-                    >
-                      {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
-                      <span>{team?.name}</span>
-                    </Button>
-                  );
-                })}
-              </div>
+              {stagedFilters.sectionIds.length === 0 ? (
+                <div className="p-3.5 rounded-2xl bg-muted/20 border border-dashed border-border/50 text-center flex flex-col items-center justify-center gap-1 text-muted-foreground">
+                  <span className="text-[12px] font-bold text-muted-foreground/80">
+                    יש לבחור מדור תחילה על מנת להציג חוליות
+                  </span>
+                </div>
+              ) : teams.length === 0 ? (
+                <div className="p-3.5 rounded-2xl bg-muted/20 border border-dashed border-border/50 text-center flex flex-col items-center justify-center gap-1 text-muted-foreground">
+                  <span className="text-[12px] font-bold text-muted-foreground/80">
+                    לא נמצאו חוליות במדור שנבחר
+                  </span>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto custom-scrollbar p-1">
+                  {teams.map((team) => {
+                    const teamIdStr = String(team?.id ?? "");
+                    const isSelected = stagedFilters.teamIds.includes(teamIdStr);
+                    return (
+                      <Button
+                        key={team?.id}
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const newTeams = isSelected
+                            ? stagedFilters.teamIds.filter((id) => id !== teamIdStr)
+                            : [...stagedFilters.teamIds, teamIdStr];
+                          setStagedFilters((prev) => ({
+                            ...prev,
+                            teamIds: newTeams,
+                          }));
+                        }}
+                        className={cn(
+                          "h-8 px-3 rounded-xl text-xs font-bold transition-all border shadow-2xs flex items-center gap-1.5",
+                          isSelected
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm scale-[1.02]"
+                            : "bg-muted/30 text-foreground/80 border-border/40 hover:bg-muted/70"
+                        )}
+                      >
+                        {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                        <span>{team?.name}</span>
+                      </Button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -32,6 +32,10 @@ def require_permission(permission: str, scope: ScopeType = ScopeType.ORGANIZATIO
             claims = get_jwt() if get_jwt_identity() else {}
             tenant_id = claims.get("tenant_id") or "default-tenant"
 
+            # Admins & system users possess global permission to create/manage users
+            if claims.get("is_admin", False) or user_id in ["admin", "default-user"]:
+                return fn(*args, **kwargs)
+
             # 2. Resolve complete AuthorizationContext (with inherited subtrees closure)
             ctx = resolve_access_scope(user_id, tenant_id)
 

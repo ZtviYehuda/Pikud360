@@ -45,3 +45,38 @@ export function calculateAge(birthDate: string | null): number {
   }
   return age;
 }
+
+export function isValidIsraeliPhone(phone: string | null | undefined): boolean {
+  if (!phone || !phone.trim()) return true;
+  const cleaned = phone.trim().replace(/[^\d+]/g, "");
+  let normalized = cleaned;
+  if (normalized.startsWith("+972")) {
+    normalized = "0" + normalized.slice(4);
+  } else if (normalized.startsWith("972")) {
+    normalized = "0" + normalized.slice(3);
+  }
+  // Mobile: 05X-XXXXXXX (10 digits) | Landline/VoIP: 02/03/04/08/09/07X (9-10 digits)
+  return /^0(5\d{8}|[23489]\d{7}|7[2346789]\d{7})$/.test(normalized);
+}
+
+export function formatIsraeliPhone(phone: string | null | undefined): string {
+  if (!phone) return "";
+  const cleaned = phone.trim().replace(/[^\d+]/g, "");
+  let normalized = cleaned;
+  if (normalized.startsWith("+972")) {
+    normalized = "0" + normalized.slice(4);
+  } else if (normalized.startsWith("972")) {
+    normalized = "0" + normalized.slice(3);
+  }
+  if (/^05\d{8}$/.test(normalized)) {
+    return `${normalized.slice(0, 3)}-${normalized.slice(3)}`;
+  }
+  if (/^0[23489]\d{7}$/.test(normalized)) {
+    return `${normalized.slice(0, 2)}-${normalized.slice(2)}`;
+  }
+  if (/^07[2346789]\d{7}$/.test(normalized)) {
+    return `${normalized.slice(0, 3)}-${normalized.slice(3)}`;
+  }
+  return phone;
+}
+

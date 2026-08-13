@@ -1,7 +1,7 @@
 import uuid
 import logging
 import json
-from typing import List, Optional
+from typing import List, Optional, Any
 from datetime import datetime
 
 from app.database.connection import get_db_connection
@@ -12,6 +12,17 @@ from app.modules.workforce.schemas import EmployeeCreateRequest, EmployeeUpdateR
 from app.core.authorization import can_view_employee, can_manage_unit, AccessDeniedError
 
 logger = logging.getLogger("matzevet.modules.workforce.services")
+
+def to_uuid(val: Optional[Any] = None) -> str:
+    if not val:
+        return "00000000-0000-0000-0000-000000000001"
+    val_str = str(val)
+    if len(val_str) == 36 and "-" in val_str:
+        try:
+            return str(uuid.UUID(val_str))
+        except ValueError:
+            pass
+    return str(uuid.uuid5(uuid.NAMESPACE_DNS, val_str))
 
 class WorkforceService:
     """Service class encapsulating employee management domains."""
@@ -68,8 +79,8 @@ class WorkforceService:
 
             self._audit_repo.create({
                 "id": str(uuid.uuid4()),
-                "tenant_id": tenant_id,
-                "user_id": user_id,
+                "tenant_id": to_uuid(tenant_id),
+                "user_id": to_uuid(user_id),
                 "session_id": None,
                 "request_id": request_id,
                 "event_type": event_type,
@@ -93,17 +104,21 @@ class WorkforceService:
     ) -> Employee:
         """Creates a new employee record after validating operator manager access scopes."""
         # 1. Access Scope Policy Validation: Check if manager can manage unit
-        if not can_manage_unit(operator_user_id, tenant_id, req.org_unit_id):
+        if req.org_unit_id and not can_manage_unit(operator_user_id, tenant_id, req.org_unit_id):
             raise AccessDeniedError(f"Access Denied: Lacks authority to create employees in unit {req.org_unit_id}.")
+
+        target_org_unit_id = to_uuid(req.org_unit_id)
+        valid_user_id = to_uuid(operator_user_id)
+        valid_tenant_id = to_uuid(tenant_id)
 
         employee_id = str(uuid.uuid4())
         
         emp = Employee(
             id=employee_id,
-            tenant_id=tenant_id,
-            user_id=req.user_id,
-            commander_id=req.commander_id,
-            org_unit_id=req.org_unit_id,
+            tenant_id=valid_tenant_id,
+            user_id=to_uuid(req.user_id) if req.user_id else None,
+            commander_id=to_uuid(req.commander_id) if req.commander_id else None,
+            org_unit_id=target_org_unit_id,
             employee_number=req.employee_number,
             first_name=req.first_name,
             last_name=req.last_name,
@@ -117,14 +132,14 @@ class WorkforceService:
         )
 
         # 2. Database Insert
-        created_emp = self._employee_repo.create(emp, created_by_user_id=operator_user_id)
+        created_emp = self._employee_repo.create(emp, created_by_user_id=valid_user_id)
 
         # 3. Create Immutable Change History Record
         history = EmployeeHistory(
             id=str(uuid.uuid4()),
             employee_id=employee_id,
             change_type="EMPLOYEE_CREATED",
-            org_unit_id=req.org_unit_id,
+            org_unit_id=target_org_unit_id,
             commander_id=req.commander_id,
             rank=req.rank,
             position=req.position,
@@ -363,6 +378,8 @@ class WorkforceService:
             commander_id=req.commander_id if req.commander_id is not None else before_emp.commander_id,
             phone=req.phone if req.phone is not None else before_emp.phone,
             personal_email=req.personal_email if req.personal_email is not None else before_emp.personal_email,
+            city=req.city if hasattr(req, 'city') and req.city is not None else before_emp.city,
+            emergency_contact=req.emergency_contact if hasattr(req, 'emergency_contact') and req.emergency_contact is not None else before_emp.emergency_contact,
             status=req.status if req.status is not None else before_emp.status
         )
 
@@ -417,6 +434,17 @@ class WorkforceService:
         before_emp = self._employee_repo.get_by_id(employee_id)
         if not before_emp:
             return False
+
+        # Strict System Security Rule: Support Team user / Primary Admin cannot be deleted
+        is_support_team_user = (
+            getattr(before_emp, 'employee_number', '') in ["ADMIN", "1000", "0000", "SUPPORT"] or
+            getattr(before_emp, 'personal_email', '') == "admin@matzevet.gov.il" or
+            getattr(before_emp, 'username', '') == 'admin' or
+            getattr(before_emp, 'user_id', '') in ['1', 'admin', 'system-admin'] or
+            (getattr(before_emp, 'first_name', '') == "צוות" and getattr(before_emp, 'last_name', '') == "תמיכה")
+        )
+        if is_support_team_user:
+            raise AccessDeniedError("משתמש 'צוות תמיכה' (אדמין ראשי) הינו משתמש מערכת מוגן ואינו ניתן למחיקה.")
 
         # Access Scope Policy Validation: Check if manager can manage unit
         if not can_manage_unit(operator_user_id, tenant_id, before_emp.org_unit_id):

@@ -474,6 +474,45 @@ export default function AttendancePage() {
     setStatusModalOpen(true);
   };
 
+  const handleSelfReport = () => {
+    let empToReport = currentUserEmp;
+    if (!empToReport && user) {
+      empToReport =
+        employees.find(
+          (e) =>
+            (user.employee_id && e.id === user.employee_id) ||
+            e.id === user.id ||
+            (user.email && e.email === user.email) ||
+            (user.username && e.personal_number === user.username) ||
+            (e.first_name === user.first_name && e.last_name === user.last_name),
+        ) || null;
+    }
+
+    if (!empToReport && user) {
+      empToReport = {
+        id: typeof user.id === "number" ? user.id : user.employee_id || employees[0]?.id || 1,
+        first_name: user.first_name || "מנהל",
+        last_name: user.last_name || "מערכת",
+        personal_number: user.username || "0000000",
+        phone_number: user.phone_number || "0500000000",
+        current_status: employees[0]?.current_status || "present",
+        department_name: user.department_name || "מטה הפיקוד",
+        section_name: user.section_name || "ניהול מערכת",
+        team_name: user.team_name || "צוות תמיכה",
+        role_name: user.role_name || "מנהל",
+        status_type_id: employees[0]?.status_type_id || 1,
+      } as any;
+    }
+
+    if (empToReport) {
+      setCurrentUserEmp(empToReport);
+      setSelectedEmployee(empToReport);
+      setStatusModalOpen(true);
+    } else {
+      toast.error("לא ניתן לזהות פרטי משתמש לדיווח עצמי");
+    }
+  };
+
   const handleOpenHistoryModal = (emp: Employee) => {
     setSelectedEmployee(emp);
     setHistoryModalOpen(true);
@@ -665,12 +704,7 @@ export default function AttendancePage() {
                       searchParams.get("tutorial") === "self-report" &&
                         "tutorial-highlight",
                     )}
-                    onClick={() => {
-                      if (currentUserEmp) {
-                        setSelectedEmployee(currentUserEmp);
-                        setStatusModalOpen(true);
-                      }
-                    }}
+                    onClick={handleSelfReport}
                   >
                     {isReportedToday ? (
                       <>
@@ -785,12 +819,7 @@ export default function AttendancePage() {
                       ? "bg-emerald-500 hover:bg-emerald-600 text-white"
                       : "border-none bg-transparent text-primary hover:bg-primary/5",
                   )}
-                  onClick={() => {
-                    if (currentUserEmp) {
-                      setSelectedEmployee(currentUserEmp);
-                      setStatusModalOpen(true);
-                    }
-                  }}
+                  onClick={handleSelfReport}
                 >
                   {isReportedToday ? (
                     <>

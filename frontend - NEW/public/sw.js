@@ -1,4 +1,4 @@
-const CACHE_NAME = 'matzevet-cache-v1';
+const CACHE_NAME = 'matzevet-cache-v2';
 const OFFLINE_URL = '/offline.html';
 
 // Core assets to pre-cache immediately
@@ -47,23 +47,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Do NOT cache API auth, live heartbeat, notifications, or feedback tickets
-  if (
-    url.pathname.includes('/api/auth') || 
-    url.pathname.includes('/api/notification/unread') || 
-    url.pathname.includes('/api/support/tickets') ||
-    url.pathname.includes('/api/employees/heartbeat')
-  ) {
+  // Do NOT cache any API requests
+  if (url.pathname.startsWith('/api/') || url.pathname.includes('/api/')) {
     return;
   }
 
   // HTML Page Navigation: Network-first, fallback to offline.html
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.open(CACHE_NAME).then((cache) => {
-          return cache.match(OFFLINE_URL);
-        });
+      fetch(event.request).catch(async () => {
+        const cache = await caches.open(CACHE_NAME);
+        const offlineMatch = await cache.match(OFFLINE_URL);
+        return offlineMatch || new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
       })
     );
     return;
@@ -73,15 +68,18 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.match(event.request).then((cachedResponse) => {
-        const fetchPromise = fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            cache.put(event.request, networkResponse.clone());
-          }
-          return networkResponse;
-        }).catch((err) => {
-          console.warn('[Service Worker] Fetch failed, serving cache:', err);
-        });
-        
+        const fetchPromise = fetch(event.request)
+          .then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          })
+          .catch((err) => {
+            console.warn('[Service Worker] Fetch failed:', err);
+            return cachedResponse || new Response('Network Error', { status: 503, statusText: 'Service Unavailable' });
+          });
+
         return cachedResponse || fetchPromise;
       });
     })

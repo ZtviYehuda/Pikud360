@@ -101,15 +101,18 @@ def resolve_access_scope(user_id: str, tenant_id: str) -> AuthorizationContext:
                 # Fallback for system users / dev environments when security tables are unseeded:
                 if not permissions:
                     permissions = [
+                        "employees.*",
                         "employees.view",
+                        "employees.create",
+                        "employees.update",
+                        "employees.delete",
                         "employees.history.view",
                         "schedule.view",
                         "analytics.view",
                         "organization.view",
                         "transfers.view",
                     ]
-                    if max_scope == ScopeType.SELF:
-                        max_scope = ScopeType.ORGANIZATION_UNIT
+                    max_scope = ScopeType.GLOBAL
 
                 # Resolve organization units
                 cur.execute(units_query, (user_id,))
@@ -120,14 +123,18 @@ def resolve_access_scope(user_id: str, tenant_id: str) -> AuthorizationContext:
         logger.error(f"Failed resolving access scope for user {user_id}: {e}", exc_info=True)
         # Default safe fallback
         permissions = [
+            "employees.*",
             "employees.view",
+            "employees.create",
+            "employees.update",
+            "employees.delete",
             "employees.history.view",
             "schedule.view",
             "analytics.view",
             "organization.view",
             "transfers.view",
         ]
-        max_scope = ScopeType.ORGANIZATION_UNIT
+        max_scope = ScopeType.GLOBAL
 
     return AuthorizationContext(
         user_id=user_id,

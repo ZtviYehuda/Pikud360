@@ -95,10 +95,13 @@ export const useEmployees = () => {
         if (min_age) params.append("min_age", min_age.toString());
         if (max_age) params.append("max_age", max_age.toString());
 
-        const { data } = await apiClient.get<Employee[]>(
+        const { data } = await apiClient.get<any>(
           `${endpoints.EMPLOYEES_BASE_ENDPOINT}?${params}`,
         );
-        setEmployees(data);
+        const list = Array.isArray(data)
+          ? data
+          : (data?.data || data?.employees || data?.items || []);
+        setEmployees(list);
         setError(null);
       } catch (err: any) {
         setError(err.message || "Failed to fetch employees");
@@ -354,7 +357,18 @@ export const useEmployees = () => {
       }
     }, []),
     getEmployeeById: useCallback(async (id?: number | string) => {
-      if (!id || id === "undefined" || id === "null" || (typeof id === "number" && isNaN(id))) return null;
+      if (
+        id === undefined ||
+        id === null ||
+        id === "" ||
+        id === "undefined" ||
+        id === "null" ||
+        id === "NaN" ||
+        String(id) === "NaN" ||
+        (typeof id === "number" && isNaN(id))
+      ) {
+        return null;
+      }
       try {
         const { data } = await apiClient.get<Employee>(
           endpoints.getEmployeeByIdEndpoint(id as any),

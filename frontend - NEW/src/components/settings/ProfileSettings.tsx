@@ -397,12 +397,15 @@ export function ProfileSettings({
                 <div className="col-span-2 sm:col-span-1">
                   <InputItem label="מספר טלפון">
                     <Input
+                      type="tel"
+                      inputMode="tel"
                       disabled={readOnly}
                       value={formData.phone_number}
                       onChange={(e) =>
                         setFormData({ ...formData, phone_number: e.target.value })
                       }
-                      className="h-11 sm:h-13 bg-background/30 rounded-xl border-border/40 pl-4 font-bold text-sm sm:text-base focus:bg-background/80 transition-all"
+                      className="h-11 sm:h-13 bg-background/30 rounded-xl border-border/40 pl-4 font-bold text-sm sm:text-base focus:bg-background/80 transition-all text-right placeholder:text-right"
+                      dir="rtl"
                       placeholder="050-0000000"
                     />
                   </InputItem>
@@ -548,6 +551,8 @@ export function ProfileSettings({
                   <InputItem label="מספר טלפון לחירום">
                     <div className="relative group">
                       <Input
+                        type="tel"
+                        inputMode="tel"
                         disabled={readOnly}
                         value={emergencyDetails.phone}
                         onChange={(e) =>
@@ -556,7 +561,8 @@ export function ProfileSettings({
                             phone: e.target.value,
                           })
                         }
-                        className="h-11 sm:h-13 bg-background/30 rounded-xl border-border/40 pl-4 pr-10 font-bold text-sm sm:text-base focus:bg-background/80 transition-all"
+                        className="h-11 sm:h-13 bg-background/30 rounded-xl border-border/40 pl-4 pr-10 font-bold text-sm sm:text-base focus:bg-background/80 transition-all text-right placeholder:text-right"
+                        dir="rtl"
                         placeholder="05X-XXXXXXX"
                       />
                       <div className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-red-500/10 text-red-600">

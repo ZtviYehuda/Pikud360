@@ -469,8 +469,8 @@ class AuditLogRepository:
                     conn.commit()
                     return True
         except Exception as e:
-            logger.error(f"Failed to save audit log: {e}", exc_info=True)
-        return False
+            logger.warning(f"Audit log write skipped (e.g. partition missing): {e}")
+            return False
 
 
 class UserPreferenceRepository:

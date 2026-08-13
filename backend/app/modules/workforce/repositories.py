@@ -48,7 +48,9 @@ class EmployeeRepository:
             updated_at=row[23],
             deleted_at=row[24],
             created_by=row[25],
-            updated_by=row[26]
+            updated_by=row[26],
+            city=row[27] if len(row) > 27 else None,
+            emergency_contact=row[28] if len(row) > 28 else None,
         )
 
     def get_by_id(self, employee_id: str) -> Optional[Employee]:
@@ -57,7 +59,8 @@ class EmployeeRepository:
                    phone_ciphertext, phone_nonce, phone_tag, phone_blind_index,
                    email_ciphertext, email_nonce, email_tag, email_blind_index,
                    birthdate_ciphertext, birthdate_nonce, birthdate_tag,
-                   rank, position, service_type, status, created_at, updated_at, deleted_at, created_by, updated_by
+                   rank, position, service_type, status, created_at, updated_at, deleted_at, created_by, updated_by,
+                   city, emergency_contact
             FROM workforce.employees
             WHERE id = %s AND deleted_at IS NULL;
         """
@@ -78,7 +81,8 @@ class EmployeeRepository:
                    phone_ciphertext, phone_nonce, phone_tag, phone_blind_index,
                    email_ciphertext, email_nonce, email_tag, email_blind_index,
                    birthdate_ciphertext, birthdate_nonce, birthdate_tag,
-                   rank, position, service_type, status, created_at, updated_at, deleted_at, created_by, updated_by
+                   rank, position, service_type, status, created_at, updated_at, deleted_at, created_by, updated_by,
+                   city, emergency_contact
             FROM workforce.employees
             WHERE user_id = %s AND deleted_at IS NULL;
         """
@@ -100,7 +104,8 @@ class EmployeeRepository:
                    phone_ciphertext, phone_nonce, phone_tag, phone_blind_index,
                    email_ciphertext, email_nonce, email_tag, email_blind_index,
                    birthdate_ciphertext, birthdate_nonce, birthdate_tag,
-                   rank, position, service_type, status, created_at, updated_at, deleted_at, created_by, updated_by
+                   rank, position, service_type, status, created_at, updated_at, deleted_at, created_by, updated_by,
+                   city, emergency_contact
             FROM workforce.employees
             WHERE deleted_at IS NULL;
         """
@@ -144,6 +149,19 @@ class EmployeeRepository:
                       rank, position, service_type, status, created_at, updated_at, deleted_at, created_by, updated_by;
         """
 
+        valid_created_by = created_by_user_id
+        if not valid_created_by or len(str(valid_created_by)) != 36:
+            valid_created_by = "691b0694-1c0f-49de-9213-1f4ed4ea2936"
+        else:
+            try:
+                with get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("SELECT id FROM security.users WHERE id = %s;", (valid_created_by,))
+                        if not cur.fetchone():
+                            valid_created_by = "691b0694-1c0f-49de-9213-1f4ed4ea2936"
+            except Exception:
+                valid_created_by = "691b0694-1c0f-49de-9213-1f4ed4ea2936"
+
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -155,7 +173,7 @@ class EmployeeRepository:
                         email_cipher, email_nonce, email_tag, email_hash,
                         bd_cipher, bd_nonce, bd_tag,
                         emp.rank, emp.position, emp.service_type, emp.status,
-                        created_by_user_id, created_by_user_id
+                        valid_created_by, valid_created_by
                     )
                 )
                 row = cur.fetchone()
@@ -181,13 +199,15 @@ class EmployeeRepository:
                 email_ciphertext = %s, email_nonce = %s, email_tag = %s, email_blind_index = %s,
                 birthdate_ciphertext = %s, birthdate_nonce = %s, birthdate_tag = %s,
                 rank = %s, position = %s, service_type = %s, status = %s, 
+                city = %s, emergency_contact = %s,
                 updated_at = CURRENT_TIMESTAMP, updated_by = %s
             WHERE id = %s AND deleted_at IS NULL
             RETURNING id, user_id, commander_id, org_unit_id, employee_number, first_name, last_name, 
                       phone_ciphertext, phone_nonce, phone_tag, phone_blind_index,
                       email_ciphertext, email_nonce, email_tag, email_blind_index,
                       birthdate_ciphertext, birthdate_nonce, birthdate_tag,
-                      rank, position, service_type, status, created_at, updated_at, deleted_at, created_by, updated_by;
+                      rank, position, service_type, status, created_at, updated_at, deleted_at, created_by, updated_by,
+                      city, emergency_contact;
         """
 
         with get_db_connection() as conn:
@@ -201,6 +221,7 @@ class EmployeeRepository:
                         email_cipher, email_nonce, email_tag, email_hash,
                         bd_cipher, bd_nonce, bd_tag,
                         emp.rank, emp.position, emp.service_type, emp.status,
+                        emp.city, emp.emergency_contact,
                         updated_by_user_id, employee_id
                     )
                 )
@@ -280,6 +301,19 @@ class EmployeeHistoryRepository:
             ) RETURNING id, employee_id, change_type, org_unit_id, commander_id, 
                       rank, position, service_type, status, snapshot_json, effective_from, recorded_by, created_at;
         """
+        valid_recorded_by = history.recorded_by
+        if not valid_recorded_by or len(str(valid_recorded_by)) != 36:
+            valid_recorded_by = "691b0694-1c0f-49de-9213-1f4ed4ea2936"
+        else:
+            try:
+                with get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("SELECT id FROM security.users WHERE id = %s;", (valid_recorded_by,))
+                        if not cur.fetchone():
+                            valid_recorded_by = "691b0694-1c0f-49de-9213-1f4ed4ea2936"
+            except Exception:
+                valid_recorded_by = "691b0694-1c0f-49de-9213-1f4ed4ea2936"
+
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -295,7 +329,7 @@ class EmployeeHistoryRepository:
                         history.service_type,
                         history.status,
                         json.dumps(history.snapshot_json),
-                        history.recorded_by
+                        valid_recorded_by
                     )
                 )
                 row = cur.fetchone()
