@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
-import { cn } from "@/lib/utils";
+import { cn, getWhatsAppUrl } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface WhatsAppButtonProps extends React.ComponentProps<typeof Button> {
@@ -42,19 +42,7 @@ export const WhatsAppButton: React.FC<WhatsAppButtonProps> = ({
         if (skipDirectLink) return;
 
         try {
-            const encodedMessage = encodeURIComponent(message);
-            let url = "";
-
-            if (phoneNumber && phoneNumber.trim()) {
-                let formattedPhone = phoneNumber.replace(/\D/g, "");
-                if (!formattedPhone.startsWith("972") && !formattedPhone.startsWith("1")) {
-                    if (formattedPhone.startsWith("0")) formattedPhone = "972" + formattedPhone.substring(1);
-                    else formattedPhone = "972" + formattedPhone;
-                }
-                url = `https://wa.me/${formattedPhone}?text=${encodedMessage}`;
-            } else {
-                url = `https://wa.me/?text=${encodedMessage}`;
-            }
+            const url = getWhatsAppUrl(phoneNumber, message);
 
             try {
                 await navigator.clipboard.writeText(message);

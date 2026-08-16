@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Check, Send, Edit2, RotateCcw, Save, PartyPopper } from "lucide-react";
 import { useAuthContext } from "@/context/AuthContext";
 import { useEmployees } from "@/hooks/useEmployees";
-import { cn } from "@/lib/utils";
+import { cn, getWhatsAppUrl } from "@/lib/utils";
 
 interface BirthdayEmployee {
   id: number;
@@ -122,12 +122,7 @@ export const BirthdayGreetingsModal: React.FC<BirthdayGreetingsModalProps> = ({
     let message = template.replace("[שם]", emp.first_name);
     message = message.replace("[שם_המפקד]", commanderName);
 
-    const cleanPhone = emp.phone_number.replace(/\D/g, "");
-    const finalPhone = cleanPhone.startsWith("972")
-      ? cleanPhone
-      : `972${cleanPhone.startsWith("0") ? cleanPhone.substring(1) : cleanPhone}`;
-
-    const whatsappUrl = `https://api.whatsapp.com/send?phone=${finalPhone}&text=${encodeURIComponent(message)}`;
+    const whatsappUrl = getWhatsAppUrl(emp.phone_number, message);
     window.open(whatsappUrl, "_blank");
 
     if (!sentList.includes(emp.id)) {

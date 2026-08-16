@@ -540,17 +540,9 @@ body.tour-active [data-radix-portal] > [class*="bg-black/50"] {
   perspective: 1000px;
 }
 
-/* Seamless, Buttery-Smooth Theme Transitions (No visual flashing or segmented steps) */
-.theme-transition,
-.theme-transition *,
-.theme-transition *::before,
-.theme-transition *::after {
-  transition: background-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
-              border-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
-              color 300ms cubic-bezier(0.4, 0, 0.2, 1),
-              fill 300ms cubic-bezier(0.4, 0, 0.2, 1),
-              stroke 300ms cubic-bezier(0.4, 0, 0.2, 1),
-              box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+/* Instant 0ms Theme Switch - Zero delay and no background thrashing */
+html, body {
+  transition: none !important;
 }
 
 .toren-spin-logo {

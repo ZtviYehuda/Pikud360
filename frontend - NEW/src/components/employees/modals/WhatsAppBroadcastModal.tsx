@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { MessageSquare, Users, Search, Send, Copy } from "lucide-react";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useAuthContext } from "@/context/AuthContext";
-import { cn } from "@/lib/utils";
+import { cn, getWhatsAppUrl } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface WhatsAppBroadcastModalProps {
@@ -121,7 +121,7 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
 
     if (selectedEmployeesList.length === 1) {
       const emp = selectedEmployeesList[0];
-      const waUrl = `https://api.whatsapp.com/send?phone=${emp.phone_number!.replace(/\D/g, "")}&text=${encodeURIComponent(message)}`;
+      const waUrl = getWhatsAppUrl(emp.phone_number, message);
       window.open(waUrl, "_blank");
       toast.success("טוען צ'אט לוואטסאפ...");
       return;
@@ -136,7 +136,7 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
 
     const emp = selectedEmployeesList[currentSendIndex];
     if (emp && emp.phone_number) {
-      const waUrl = `https://api.whatsapp.com/send?phone=${emp.phone_number.replace(/\D/g, "")}&text=${encodeURIComponent(message)}`;
+      const waUrl = getWhatsAppUrl(emp.phone_number, message);
       window.open(waUrl, "_blank");
     }
 

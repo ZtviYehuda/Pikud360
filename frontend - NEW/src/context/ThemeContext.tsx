@@ -81,14 +81,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const root = window.document.documentElement;
 
-    root.classList.add("theme-transition");
     root.classList.remove("light", "dark");
     root.classList.add(theme);
     localStorage.setItem("theme", theme);
-
-    const transitionTimer = setTimeout(() => {
-      root.classList.remove("theme-transition");
-    }, 350);
 
     // Accent Color class or Dynamic Variable
     root.classList.forEach((cls) => {
@@ -141,9 +136,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.style.fontSize = sizeMap[fontSize];
     localStorage.setItem("fontSize", fontSize);
 
-    // 3. Sync with server if user is logged in and we aren't in the middle of a profile load
+    // 3. Sync with server in background without triggering full-app re-fetch
     if (user && !isSyncingRef.current) {
-      // Check if values actually changed from what's in the user object to avoid redundant calls
       const hasChanged =
         theme !== user.theme ||
         accentColor !== user.accent_color ||
@@ -154,17 +148,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           theme,
           accent_color: accentColor,
           font_size: fontSize,
-        }).then(() => {
-          refreshUser();
-        });
+        }).catch(() => {});
       }
     }
-
-    return () => clearTimeout(transitionTimer);
-  }, [theme, accentColor, fontSize, user, updatePreferences, refreshUser]);
+  }, [theme, accentColor, fontSize, user, updatePreferences]);
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+    const nextTheme = theme === "light" ? "dark" : "light";
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+    root.classList.add(nextTheme);
+    localStorage.setItem("theme", nextTheme);
+    setTheme(nextTheme);
   };
 
   return (

@@ -80,3 +80,40 @@ export function formatIsraeliPhone(phone: string | null | undefined): string {
   return phone;
 }
 
+/**
+ * Normalizes phone numbers to International format for WhatsApp API / wa.me links
+ * e.g., "0501234567" -> "972501234567"
+ * e.g., "+972 50-123-4567" -> "972501234567"
+ */
+export function formatWhatsAppPhone(phone: string | null | undefined): string {
+  if (!phone || !phone.trim()) return "";
+  let cleaned = phone.trim().replace(/\D/g, "");
+  if (!cleaned) return "";
+
+  if (cleaned.startsWith("972")) {
+    return cleaned;
+  }
+
+  if (cleaned.startsWith("0")) {
+    return "972" + cleaned.substring(1);
+  }
+
+  if (cleaned.length === 9) {
+    return "972" + cleaned;
+  }
+
+  return cleaned;
+}
+
+/**
+ * Builds direct WhatsApp URL with recipient phone and pre-filled text
+ */
+export function getWhatsAppUrl(phone: string | null | undefined, text: string = ""): string {
+  const formattedPhone = formatWhatsAppPhone(phone);
+  const encodedText = encodeURIComponent(text);
+  if (formattedPhone) {
+    return `https://wa.me/${formattedPhone}?text=${encodedText}`;
+  }
+  return `https://wa.me/?text=${encodedText}`;
+}
+

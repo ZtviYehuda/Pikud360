@@ -27,7 +27,7 @@ import {
   Activity,
   ArrowLeft,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getWhatsAppUrl } from "@/lib/utils";
 import {
   Popover,
   PopoverContent,
@@ -969,19 +969,10 @@ export default function MainLayout() {
                                       onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        const phone = (
-                                          alert as any
-                                        ).data.commander_phone
-                                          .replace(/-/g, "")
-                                          .replace(/^0/, "972");
-                                        const name = (alert as any).data
-                                          .commander_name;
-                                        const count = (alert as any).data
-                                          .missing_count;
+                                        const rawPhone = (alert as any).data?.commander_phone;
+                                        const name = (alert as any).data?.commander_name;
+                                        const count = (alert as any).data?.missing_count;
                                         const text = `שלום ${name}, טרם הושלם דיווח בוקר עבור ${count} שוטרים ביחידתך. נא להשלים את הדיווח בהקדם.`;
-                                        window.open(
-                                          `https://wa.me/${phone}?text=${encodeURIComponent(
-                                            text,
                                           )}`,
                                           "_blank",
                                         );
