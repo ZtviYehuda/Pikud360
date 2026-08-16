@@ -200,7 +200,7 @@ const Field = ({
   }
 
   // ── Regular view mode ─────────────────────────────────────────────────────
-  const content = (
+  return (
     <div
       onDoubleClick={handleDoubleClick}
       className={cn(
@@ -226,16 +226,38 @@ const Field = ({
           )}
         </div>
         {hasValue ? (
-          <span
-            className={cn(
-              "font-bold text-[15px] mt-0.5",
-              safeHref && "text-primary hover:underline",
-              mono && "font-mono",
-              valueClassName || "text-foreground",
-            )}
-          >
-            {value}
-          </span>
+          safeHref ? (
+            <a
+              href={safeHref}
+              onClick={(e) => e.stopPropagation()}
+              onDoubleClick={(e) => {
+                if (isEditable) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDoubleClick();
+                }
+              }}
+              target={isExternalLink ? "_blank" : undefined}
+              rel={isExternalLink ? "noopener noreferrer" : undefined}
+              className={cn(
+                "font-bold text-[15px] mt-0.5 text-primary hover:underline inline-block w-fit",
+                mono && "font-mono",
+                valueClassName
+              )}
+            >
+              {value}
+            </a>
+          ) : (
+            <span
+              className={cn(
+                "font-bold text-[15px] mt-0.5",
+                mono && "font-mono",
+                valueClassName || "text-foreground"
+              )}
+            >
+              {value}
+            </span>
+          )
         ) : (
           <span className="text-[17px] mt-0.5 text-slate-300 dark:text-slate-600 font-light select-none">
             &mdash;
@@ -244,21 +266,6 @@ const Field = ({
       </div>
     </div>
   );
-
-  if (safeHref && hasValue)
-    return (
-      <a
-        href={safeHref}
-        className="block group"
-        onClick={(e) => e.stopPropagation()}
-        target={isExternalLink ? "_blank" : undefined}
-        rel={isExternalLink ? "noopener noreferrer" : undefined}
-      >
-        {content}
-      </a>
-    );
-
-  return content;
 };
 
 
