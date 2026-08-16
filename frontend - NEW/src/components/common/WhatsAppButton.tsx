@@ -51,7 +51,7 @@ export const WhatsAppButton: React.FC<WhatsAppButtonProps> = ({
             }
 
             window.open(url, "_blank");
-            toast.success("Opening WhatsApp...");
+            toast.success("טוען צ'אט לוואטסאפ...", { duration: 1500 });
 
         } catch (error) {
             console.error("WhatsApp Error:", error);

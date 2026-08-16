@@ -123,7 +123,7 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
       const emp = selectedEmployeesList[0];
       const waUrl = getWhatsAppUrl(emp.phone_number, message);
       window.open(waUrl, "_blank");
-      toast.success("טוען צ'אט לוואטסאפ...");
+      toast.success("טוען צ'אט לוואטסאפ...", { duration: 1500 });
       return;
     }
 

@@ -17,7 +17,7 @@ createRoot(document.getElementById("root")!).render(
           <FeedbackProvider>
             <ChatProvider>
               <AppRouter />
-              <Toaster richColors position="top-center" dir="rtl" />
+              <Toaster duration={1800} richColors position="top-center" dir="rtl" />
             </ChatProvider>
           </FeedbackProvider>
         </DateProvider>
