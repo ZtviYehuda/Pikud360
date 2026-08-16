@@ -416,7 +416,11 @@ export const useEmployees = () => {
           const { data } = await apiClient.get(
             `${attEndpoints.ATTENDANCE_STATS_ENDPOINT}/comparison?${params}`,
           );
-          return extractArray(data, "comparison");
+          const compArr = extractArray(data, "comparison");
+          if (data && data.all_levels) {
+            (compArr as any).all_levels = data.all_levels;
+          }
+          return compArr;
         } catch (err: any) {
           console.error("Failed to fetch comparison stats", err);
           return [];

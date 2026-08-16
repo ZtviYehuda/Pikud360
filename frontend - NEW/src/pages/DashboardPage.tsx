@@ -72,6 +72,11 @@ export default function DashboardPage() {
   // Refs for reports
   const snapshotRef = useRef<any>(null);
   const comparisonRef = useRef<any>(null);
+  const comparisonTreeRef = useRef<{
+    departments?: any[];
+    sections?: Record<string, any[]>;
+    teams?: Record<string, any[]>;
+  } | null>(null);
   const {
     getStructure,
     getDashboardStats,
@@ -323,7 +328,9 @@ export default function DashboardPage() {
   // Fetch Comparison Stats without triggering full page layout shifts
   useEffect(() => {
     const fetchComparison = async () => {
-      setComparisonLoading(true);
+      if (!comparisonStats || comparisonStats.length === 0) {
+        setComparisonLoading(true);
+      }
       const formattedDate = format(selectedDate, "yyyy-MM-dd");
       
       const compData = await getComparisonStats(
@@ -339,6 +346,11 @@ export default function DashboardPage() {
           max_age: selectedAgeRange.max,
         },
       );
+
+      if ((compData as any)?.all_levels) {
+        comparisonTreeRef.current = (compData as any).all_levels;
+      }
+
       setComparisonStats(compData);
       setComparisonLoading(false);
     };
@@ -505,12 +517,30 @@ export default function DashboardPage() {
     if (type === "serviceType") {
       setSelectedServiceTypes(value || []);
     } else if (type === "department") {
-      setSelectedDeptId(value || "");
+      const deptId = value || "";
+      setSelectedDeptId(deptId);
       setSelectedSectionId("");
       setSelectedTeamId("");
+
+      if (comparisonTreeRef.current) {
+        if (deptId && comparisonTreeRef.current.sections?.[deptId]) {
+          setComparisonStats(comparisonTreeRef.current.sections[deptId]);
+        } else if (!deptId && comparisonTreeRef.current.departments) {
+          setComparisonStats(comparisonTreeRef.current.departments);
+        }
+      }
     } else if (type === "section") {
-      setSelectedSectionId(value || "");
+      const sectId = value || "";
+      setSelectedSectionId(sectId);
       setSelectedTeamId("");
+
+      if (comparisonTreeRef.current) {
+        if (sectId && comparisonTreeRef.current.teams?.[sectId]) {
+          setComparisonStats(comparisonTreeRef.current.teams[sectId]);
+        } else if (!sectId && selectedDeptId && comparisonTreeRef.current.sections?.[selectedDeptId]) {
+          setComparisonStats(comparisonTreeRef.current.sections[selectedDeptId]);
+        }
+      }
     } else if (type === "team") {
       setSelectedTeamId(value || "");
     } else if (type === "status") {
@@ -585,11 +615,11 @@ export default function DashboardPage() {
 
   const handleGoBack = () => {
     if (selectedTeamId) {
-      setSelectedTeamId("");
+      handleFilterChange("team", "");
     } else if (selectedSectionId) {
-      setSelectedSectionId("");
+      handleFilterChange("section", "");
     } else if (selectedDeptId && isTopLevelCommander) {
-      setSelectedDeptId("");
+      handleFilterChange("department", "");
     }
   };
 

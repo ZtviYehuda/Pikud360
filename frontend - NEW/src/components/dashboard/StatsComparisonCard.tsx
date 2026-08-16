@@ -389,7 +389,7 @@ export const StatsComparisonCard = forwardRef(
             }
 
             return (
-              <div className={cn(compact ? "flex flex-col gap-3 max-w-xl mx-auto w-full py-2" : "space-y-5 sm:space-y-7 py-4", loading && "opacity-60 pointer-events-none transition-opacity duration-200")}>
+              <div className={cn(compact ? "flex flex-col gap-3 max-w-xl mx-auto w-full py-2" : "space-y-5 sm:space-y-7 py-4", loading && safeData.length === 0 && "opacity-60 pointer-events-none transition-opacity duration-200")}>
                 {safeData.map((item: ComparisonStat) => {
                   const availability =
                     item.total_count > 0

@@ -493,64 +493,83 @@ def get_attendance_stats_comparison():
     except Exception as e:
         logger.error(f"Error querying unit attendance stats: {e}")
 
-    if sect_id_param:
-        for d in FULL_ORGANIZATION_STRUCTURE:
-            for s in d.get("sections", []):
-                if str(s["id"]) == str(sect_id_param):
-                    for t in s.get("teams", []):
-                        stats = unit_stats.get(str(t["id"]), {"total": 0, "present": 0, "absent": 0})
-                        comparison.append({
-                            "unit_id": t["id"],
-                            "unit_name": t["name"],
-                            "total_count": stats["total"],
-                            "present_count": stats["present"],
-                            "absent_count": stats["absent"],
-                            "unknown_count": 0,
-                            "level": "team"
-                        })
-                    break
-    elif dept_id_param:
-        for d in FULL_ORGANIZATION_STRUCTURE:
-            if str(d["id"]) == str(dept_id_param):
-                for s in d.get("sections", []):
-                    team_ids = [str(t["id"]) for t in s.get("teams", [])] + [str(s["id"])]
-                    sec_total = sum(unit_stats.get(tid, {}).get("total", 0) for tid in team_ids)
-                    sec_present = sum(unit_stats.get(tid, {}).get("present", 0) for tid in team_ids)
-                    sec_absent = sum(unit_stats.get(tid, {}).get("absent", 0) for tid in team_ids)
-                    comparison.append({
-                        "unit_id": s["id"],
-                        "unit_name": s["name"],
-                        "total_count": sec_total,
-                        "present_count": sec_present,
-                        "absent_count": sec_absent,
-                        "unknown_count": 0,
-                        "level": "section"
-                    })
-                break
-    else:
-        for d in FULL_ORGANIZATION_STRUCTURE:
-            dept_team_ids = []
-            for s in d.get("sections", []):
-                dept_team_ids.append(str(s["id"]))
-                for t in s.get("teams", []):
-                    dept_team_ids.append(str(t["id"]))
-            dept_team_ids.append(str(d["id"]))
+    # Build all levels tree for instant 0ms client-side drilling
+    all_departments = []
+    all_sections = {}
+    all_teams = {}
 
-            d_total = sum(unit_stats.get(tid, {}).get("total", 0) for tid in dept_team_ids)
-            d_present = sum(unit_stats.get(tid, {}).get("present", 0) for tid in dept_team_ids)
-            d_absent = sum(unit_stats.get(tid, {}).get("absent", 0) for tid in dept_team_ids)
+    for d in FULL_ORGANIZATION_STRUCTURE:
+        dept_id_str = str(d["id"])
+        dept_team_ids = []
+        d_sections_list = []
 
-            comparison.append({
-                "unit_id": d["id"],
-                "unit_name": d["name"],
-                "total_count": d_total,
-                "present_count": d_present,
-                "absent_count": d_absent,
+        for s in d.get("sections", []):
+            sect_id_str = str(s["id"])
+            dept_team_ids.append(sect_id_str)
+            s_teams_list = []
+
+            team_ids = [str(t["id"]) for t in s.get("teams", [])] + [sect_id_str]
+            for t in s.get("teams", []):
+                t_id_str = str(t["id"])
+                dept_team_ids.append(t_id_str)
+                t_stats = unit_stats.get(t_id_str, {"total": 0, "present": 0, "absent": 0})
+                s_teams_list.append({
+                    "unit_id": t["id"],
+                    "unit_name": t["name"],
+                    "total_count": t_stats["total"],
+                    "present_count": t_stats["present"],
+                    "absent_count": t_stats["absent"],
+                    "unknown_count": 0,
+                    "level": "team"
+                })
+
+            all_teams[sect_id_str] = s_teams_list
+
+            sec_total = sum(unit_stats.get(tid, {}).get("total", 0) for tid in team_ids)
+            sec_present = sum(unit_stats.get(tid, {}).get("present", 0) for tid in team_ids)
+            sec_absent = sum(unit_stats.get(tid, {}).get("absent", 0) for tid in team_ids)
+            d_sections_list.append({
+                "unit_id": s["id"],
+                "unit_name": s["name"],
+                "total_count": sec_total,
+                "present_count": sec_present,
+                "absent_count": sec_absent,
                 "unknown_count": 0,
-                "level": "department"
+                "level": "section"
             })
 
-    return jsonify(comparison), 200
+        all_sections[dept_id_str] = d_sections_list
+
+        dept_team_ids.append(dept_id_str)
+        d_total = sum(unit_stats.get(tid, {}).get("total", 0) for tid in dept_team_ids)
+        d_present = sum(unit_stats.get(tid, {}).get("present", 0) for tid in dept_team_ids)
+        d_absent = sum(unit_stats.get(tid, {}).get("absent", 0) for tid in dept_team_ids)
+
+        all_departments.append({
+            "unit_id": d["id"],
+            "unit_name": d["name"],
+            "total_count": d_total,
+            "present_count": d_present,
+            "absent_count": d_absent,
+            "unknown_count": 0,
+            "level": "department"
+        })
+
+    if sect_id_param:
+        comparison = all_teams.get(str(sect_id_param), [])
+    elif dept_id_param:
+        comparison = all_sections.get(str(dept_id_param), [])
+    else:
+        comparison = all_departments
+
+    return jsonify({
+        "comparison": comparison,
+        "all_levels": {
+            "departments": all_departments,
+            "sections": all_sections,
+            "teams": all_teams
+        }
+    }), 200
 
 
 @workforce_bp.route("/attendance/log", methods=["POST"])
