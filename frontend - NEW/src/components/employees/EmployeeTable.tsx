@@ -126,6 +126,11 @@ export const EmployeeTable = ({
     // Hide current user
     if (user && emp.id === user.id) return false;
 
+    // Inactive officers are strictly visible only to Admins in the repository
+    if (!user?.is_admin && !emp.is_active) {
+      return false;
+    }
+
     // Search filter
     const fullName = `${emp.first_name} ${emp.last_name}`.toLowerCase();
     const searchMatch = fullName.includes(searchTerm.toLowerCase()) || false;
@@ -589,8 +594,7 @@ export const EmployeeTable = ({
 
                     <TableCell className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
-                        {((user?.is_admin &&
-                          (emp.is_commander || emp.is_admin)) ||
+                        {((user?.is_admin && emp.id !== user.id) ||
                           (user?.is_commander &&
                             !user?.is_admin &&
                             !user?.is_temp_commander &&
@@ -598,7 +602,7 @@ export const EmployeeTable = ({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 px-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg text-[10px]"
+                            className="h-8 px-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg text-[10px] font-bold"
                             onClick={() =>
                               handleImpersonate(
                                 emp.id,
@@ -607,7 +611,7 @@ export const EmployeeTable = ({
                             }
                             title="התחבר כמשתמש זה"
                           >
-                            <LogIn className="w-3.5 h-3.5 ml-1" />
+                            <LogIn className="w-3.5 h-3.5 ml-1 text-primary" />
                             התחבר
                           </Button>
                         )}

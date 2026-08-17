@@ -20,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { cn } from "@/lib/utils";
+import apiClient from "@/config/api.client";
 
 export default function ChangePasswordPage() {
   const [newPassword, setNewPassword] = useState("");
@@ -77,14 +78,30 @@ export default function ChangePasswordPage() {
     setIsLoading(true);
 
     try {
+      // Check password uniqueness across system accounts
+      const checkRes = await apiClient.post("/api/security/check-password-unique", {
+        password: newPassword,
+        user_id: user?.id,
+      });
+
+      if (checkRes.data && !checkRes.data.unique) {
+        setError("סיסמה זו נמצאת כבר בשימוש במערכת. אנא בחר סיסמה ייחודית אחרת.");
+        setIsLoading(false);
+        return;
+      }
+
       const success = await changePassword(newPassword);
       if (success) {
         navigate("/", { replace: true });
       } else {
-        setError("שגיאה בעדכון הסיסמה. נסה שוב מאוחר יותר.");
+        setError(error || "שגיאה בעדכון הסיסמה. נסה שוב מאוחר יותר.");
       }
-    } catch (err) {
-      setError("שגיאה בעדכון הסיסמה. נסה שוב מאוחר יותר.");
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        "שגיאה בעדכון הסיסמה. נסה שוב מאוחר יותר.";
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +134,7 @@ export default function ChangePasswordPage() {
           <ShieldCheck className="w-5 h-5 text-primary" />
         </div>
         <span className="text-lg font-black tracking-tight text-foreground bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
-          Pikud
+          Unit
         </span>
       </div>
 
@@ -140,6 +157,38 @@ export default function ChangePasswordPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-4">
+                {/* New Password */}
+                <div className="space-y-1.5 flex flex-col">
+                  <Label
+                    htmlFor="new_password"
+                    className="text-xs font-bold text-slate-400 pr-1 flex items-center gap-2"
+                  >
+                    <Lock className="w-3.5 h-3.5 opacity-60" />
+                    סיסמה חדשה
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="new_password"
+                      type={showNewPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => {
+                        setNewPassword(e.target.value);
+                        setError("");
+                      }}
+                      className="h-12 border-slate-200 dark:border-slate-800 focus:border-primary focus:ring-1 focus:ring-primary/20 rounded-xl bg-background/50 backdrop-blur-sm font-bold text-sm pl-10 text-right"
+                      placeholder="הזן סיסמה חדשה"
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-foreground transition-colors"
+                    >
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+
                   {newPassword.length > 0 && (
                     <div className="w-full mt-1.5 space-y-1">
                       <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">

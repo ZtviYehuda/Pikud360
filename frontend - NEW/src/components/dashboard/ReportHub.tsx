@@ -24,7 +24,7 @@ import {
 import { FaWhatsapp } from "react-icons/fa";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { ReportToolbar } from "@/components/dashboard/ReportToolbar";
+import { ReportToolbar, ReportDatePicker } from "@/components/dashboard/ReportToolbar";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useAuthContext } from "@/context/AuthContext";
 import { AttendanceTrendCard } from "@/components/dashboard/AttendanceTrendCard";
@@ -327,9 +327,9 @@ export const ReportHub: React.FC<ReportHubProps> = ({
 
           {previewType === null ? (
             <>
-              {/* Menu Header */}
-              <div className="px-5 pt-4 pb-3 sm:px-7 sm:pt-6 sm:pb-4 text-right shrink-0">
-                <DialogHeader className="text-right">
+              {/* Menu Header with Date Picker alongside Close Button */}
+              <div className="px-5 pt-4 pb-3 sm:px-7 sm:pt-6 sm:pb-3 text-right shrink-0 flex items-center justify-between gap-3">
+                <DialogHeader className="text-right flex-1 min-w-0">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-sm">
                       <FileText className="w-5 h-5" />
@@ -340,11 +340,32 @@ export const ReportHub: React.FC<ReportHubProps> = ({
                     </div>
                   </div>
                 </DialogHeader>
+
+                {/* Date Picker Button positioned adjacent to the Close (X) button */}
+                <div className="flex items-center gap-2 pl-11 sm:pl-12 shrink-0">
+                  <ReportDatePicker
+                    viewMode={localViewMode}
+                    date={localDate}
+                    onDateChange={setLocalDate}
+                    dateRange={dateRange}
+                    onDateRangeChange={setDateRange}
+                    maxDate={maxDate}
+                  />
+                </div>
               </div>
 
-              {/* Menu Toolbar */}
+              {/* Menu Toolbar (Clean Segmented Tabs only) */}
               <div className="px-5 sm:px-7 pb-4 shrink-0 border-b border-border/10">
-                <ReportToolbar viewMode={localViewMode} onViewModeChange={setLocalViewMode} date={localDate} onDateChange={setLocalDate} dateRange={dateRange} onDateRangeChange={setDateRange} maxDate={maxDate} />
+                <ReportToolbar
+                  viewMode={localViewMode}
+                  onViewModeChange={setLocalViewMode}
+                  date={localDate}
+                  onDateChange={setLocalDate}
+                  dateRange={dateRange}
+                  onDateRangeChange={setDateRange}
+                  maxDate={maxDate}
+                  hideDatePicker={true}
+                />
               </div>
             </>
           ) : (

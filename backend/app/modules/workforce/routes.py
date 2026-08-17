@@ -423,6 +423,11 @@ def get_attendance_stats_trend():
     except (ValueError, TypeError):
         days = 30
 
+    dept_id = request.args.get("department_id")
+    sect_id = request.args.get("section_id")
+    team_id = request.args.get("team_id")
+    status_id = request.args.get("status_id")
+
     trend = []
     base_date = datetime.now()
 
@@ -431,16 +436,34 @@ def get_attendance_stats_trend():
     absent_emp = 0
 
     try:
-        query = """
+        where_clauses = ["deleted_at IS NULL"]
+        query_params = []
+
+        if dept_id:
+            where_clauses.append("department_id = %s")
+            query_params.append(dept_id)
+        if sect_id:
+            where_clauses.append("section_id = %s")
+            query_params.append(sect_id)
+        if team_id:
+            where_clauses.append("team_id = %s")
+            query_params.append(team_id)
+        if status_id:
+            where_clauses.append("status = %s")
+            query_params.append(status_id)
+
+        where_sql = " AND ".join(where_clauses)
+
+        query = f"""
             SELECT COUNT(*) as total_count,
                    COUNT(*) FILTER (WHERE status IN ('PRESENT', 'ACTIVE', 'נוכח')) as present_count,
                    COUNT(*) FILTER (WHERE status NOT IN ('PRESENT', 'ACTIVE', 'נוכח')) as absent_count
             FROM workforce.employees
-            WHERE deleted_at IS NULL;
+            WHERE {where_sql};
         """
         with get_db_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(query)
+                cur.execute(query, query_params)
                 row = cur.fetchone()
                 if row:
                     total_emp = row[0] or 0

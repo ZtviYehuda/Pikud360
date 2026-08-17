@@ -657,7 +657,7 @@ export default function LoginPage() {
                   ? "bg-gradient-to-r from-sky-200 via-white to-cyan-300 drop-shadow-[0_2px_16px_rgba(56,189,248,0.6)]"
                   : "bg-gradient-to-r from-slate-900 via-blue-950 to-slate-800 drop-shadow-[0_2px_8px_rgba(30,58,138,0.15)]"
               )}>
-                PIKUD
+                UNIT
               </h1>
               <div className={cn(
                 "h-0.5 w-14 bg-gradient-to-r from-transparent mt-1.5 mb-2 rounded-full transition-colors",

@@ -240,7 +240,11 @@ export default function ForgotPasswordPage() {
       );
 
       if (data.success) {
-        toast.success("קוד אימות נשלח לאימייל שלך");
+        if (data.dev_code) {
+          toast.success(`קוד אימות (סביבת פיתוח): ${data.dev_code}`, { duration: 15000 });
+        } else {
+          toast.success("קוד אימות נשלח לאימייל שלך");
+        }
         setStep("verify");
       } else {
         setError(data.error || "אירעה שגיאה בשליחת הקוד");

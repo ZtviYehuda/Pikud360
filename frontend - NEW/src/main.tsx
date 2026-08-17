@@ -8,6 +8,7 @@ import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import { DateProvider } from "./context/DateContext";
 import { FeedbackProvider } from "./context/FeedbackContext";
 import { ChatProvider } from "./context/ChatContext";
+import { Credits } from "./components/common/Credits";
 
 createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>
@@ -17,6 +18,7 @@ createRoot(document.getElementById("root")!).render(
           <FeedbackProvider>
             <ChatProvider>
               <AppRouter />
+              <Credits />
               <Toaster duration={1800} richColors position="top-center" dir="rtl" />
             </ChatProvider>
           </FeedbackProvider>

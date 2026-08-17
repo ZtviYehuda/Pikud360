@@ -28,6 +28,14 @@ class Settings:
     # DB connection pool configurations
     DB_MIN_CONNECTIONS: int = int(os.getenv("DB_MIN_CONNECTIONS", 1))
     DB_MAX_CONNECTIONS: int = int(os.getenv("DB_MAX_CONNECTIONS", 10))
+
+    # SMTP / Email Configuration
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", 587))
+    SMTP_USER: str = os.getenv("SMTP_USER", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    SMTP_FROM_EMAIL: str = os.getenv("SMTP_FROM_EMAIL", os.getenv("SMTP_USER", "no-reply@pikud360.gov.il"))
+    SMTP_USE_TLS: bool = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
     
     @property
     def database_url(self) -> str:

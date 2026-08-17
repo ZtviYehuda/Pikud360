@@ -79,12 +79,12 @@ export default defineConfig(({ mode }) => {
     },
 
     server: {
+      port: 5173,
       https: httpsConfig,
       allowedHosts: true,
       host: "0.0.0.0",
       hmr: {
         overlay: false,
-        protocol: useHttps ? "wss" : "ws",
       },
       proxy: {
         "/api": {

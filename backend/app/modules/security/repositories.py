@@ -68,14 +68,17 @@ class UserRepository(BaseRepository[User, str]):
         query = """
             SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at
             FROM security.users
-            WHERE id = %s AND deleted_at IS NULL;
+            WHERE id::text = %s AND deleted_at IS NULL;
         """
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(query, (entity_id,))
-                row = cur.fetchone()
-                if row:
-                    return self._row_to_entity(row)
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query, (str(entity_id),))
+                    row = cur.fetchone()
+                    if row:
+                        return self._row_to_entity(row)
+        except Exception as e:
+            logger.error(f"Error fetching user by id '{entity_id}': {e}")
         return None
 
     def get_by_username(self, username: str) -> Optional[User]:
@@ -113,15 +116,33 @@ class UserRepository(BaseRepository[User, str]):
         query = """
             SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at
             FROM security.users
-            WHERE email = %s AND tenant_id = %s AND deleted_at IS NULL;
+            WHERE LOWER(email) = LOWER(%s) AND tenant_id = %s AND deleted_at IS NULL;
         """
         with get_db_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(query, (email, tenant_id))
+                cur.execute(query, (email.strip(), tenant_id))
                 row = cur.fetchone()
                 if row:
                     return self._row_to_entity(row)
         return None
+
+    def get_by_email(self, email: str) -> Optional[User]:
+        query = """
+            SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at
+            FROM security.users
+            WHERE LOWER(email) = LOWER(%s) AND deleted_at IS NULL;
+        """
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query, (email.strip(),))
+                    row = cur.fetchone()
+                    if row:
+                        return self._row_to_entity(row)
+        except Exception as e:
+            logger.error(f"Error fetching user by email '{email}': {e}")
+        return None
+
 
     def update_password_hash(self, identifier: str, new_password_hash: str) -> bool:
         """Updates user password hash in security.users by ID or username strictly in PostgreSQL."""
@@ -445,20 +466,36 @@ class AuditLogRepository:
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
         try:
+            import uuid as py_uuid
+            
+            def to_valid_uuid(val):
+                if not val:
+                    return None
+                try:
+                    return str(py_uuid.UUID(str(val)))
+                except (ValueError, TypeError, AttributeError):
+                    return None
+
+            log_id = to_valid_uuid(log.get("id")) or str(py_uuid.uuid4())
+            tenant_id = to_valid_uuid(log.get("tenant_id")) or "00000000-0000-0000-0000-000000000001"
+            user_id = to_valid_uuid(log.get("user_id"))
+            request_id = to_valid_uuid(log.get("request_id")) or str(py_uuid.uuid4())
+            record_id = to_valid_uuid(log.get("record_id")) or user_id or log_id
+
             with get_db_connection() as conn:
                 with conn.cursor() as cur:
                     cur.execute(
                         query,
                         (
-                            log.get("id"),
-                            log.get("tenant_id"),
-                            log.get("user_id"),
+                            log_id,
+                            tenant_id,
+                            user_id,
                             log.get("session_id"),
-                            log.get("request_id"),
+                            request_id,
                             log.get("event_type"),
                             log.get("action"),
                             log.get("table_name"),
-                            log.get("record_id"),
+                            record_id,
                             json.dumps(log.get("old_values")) if log.get("old_values") is not None else None,
                             json.dumps(log.get("new_values")) if log.get("new_values") is not None else None,
                             log.get("ip_address"),
@@ -469,7 +506,7 @@ class AuditLogRepository:
                     conn.commit()
                     return True
         except Exception as e:
-            logger.warning(f"Audit log write skipped (e.g. partition missing): {e}")
+            logger.warning(f"Audit log write error: {e}")
             return False
 
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>אין חיבור לאינטרנט - Matzevet</title>
+  <title>אין חיבור לרשת - Unit</title>
   <!-- Google Fonts: Inter & Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -57,15 +57,10 @@
       --bg-color: #f8fafc;
       --text-primary: #0f172a;
       --text-secondary: #64748b;
-      --primary: #3b82f6; /* Default system blue */
+      --primary: #3b82f6;
       --accent: var(--primary);
       --accent-hover: #2563eb;
       --accent-glow: rgba(59, 130, 246, 0.15);
-      --flash-opacity: 1;
-      --flash-mix: 12%;
-      --beam-bg: var(--primary);
-      --beam-opacity: 0.55;
-      --beam-shadow: drop-shadow(0 0 5px var(--primary));
     }
 
     html.dark {
@@ -73,10 +68,6 @@
       --text-primary: #f8fafc;
       --text-secondary: #94a3b8;
       --accent-glow: rgba(59, 130, 246, 0.35);
-      --flash-mix: 22%;
-      --beam-bg: #ffffff;
-      --beam-opacity: 0.8;
-      --beam-shadow: drop-shadow(0 0 8px rgba(255, 255, 255, 0.45));
     }
 
     * {
@@ -100,18 +91,21 @@
       transition: background-color 0.3s ease;
     }
 
-    /* Full-screen lighthouse sweep flash effect */
-    .toren-lighthouse-flash {
+    /* Ambient glow */
+    .ambient-glow {
       position: absolute;
-      inset: 0;
-      z-index: 2;
-      background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--primary) var(--flash-mix), transparent) 0%, transparent 75%);
-      opacity: 0;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+      filter: blur(40px);
       pointer-events: none;
-      animation: toren-flash-glow 6s ease-in-out infinite;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -60%);
     }
 
-    /* Outer Wrapper - No floating card border, completely clean and transparent */
+    /* Outer Wrapper */
     .content-wrapper {
       position: relative;
       z-index: 10;
@@ -122,105 +116,23 @@
       align-items: center;
     }
 
-    /* Reusable Toren Spinning Lighthouse Light Beam Styles */
-    .toren-spin-container {
+    .emblem-container {
       position: relative;
-      width: 140px;
-      height: 140px;
+      width: 110px;
+      height: 110px;
       display: flex;
       justify-content: center;
       align-items: center;
-      margin-bottom: 2.5rem;
-      perspective: 1000px;
+      margin-bottom: 2rem;
     }
 
-    .toren-spin-logo {
-      width: 100px;
-      height: 100px;
+    .emblem-img {
+      width: 90px;
+      height: 90px;
       object-fit: contain;
+      filter: drop-shadow(0 8px 24px rgba(59, 130, 246, 0.3));
       position: relative;
       z-index: 5;
-    }
-
-    .toren-spin-logo,
-    img[src*="/toren_logo_base.png"],
-    img[src*="/toren_logo.png"] {
-      filter: drop-shadow(0 4px 12px rgba(15, 23, 42, 0.06));
-    }
-    
-    @media (prefers-color-scheme: dark) {
-      .toren-spin-logo,
-      img[src*="/toren_logo_base.png"],
-      img[src*="/toren_logo.png"] {
-        filter: invert(0.86) brightness(1.18) sepia(0.08) saturate(1.4) hue-rotate(192deg) drop-shadow(0 0 10px rgba(59, 130, 246, 0.16));
-      }
-    }
-
-    .toren-spin-beam-original {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 100px;
-      height: 100px;
-      margin-top: -50px;
-      margin-left: -50px;
-      z-index: 4;
-      pointer-events: none;
-      animation: toren-rotate-beam-3d 6s linear infinite;
-      transform-origin: 50% 24%;
-      transform-style: preserve-3d;
-      
-      /* Dynamic Mask Coloring */
-      background-color: var(--beam-bg);
-      -webkit-mask-image: url('/toren_logo_beam.png');
-      mask-image: url('/toren_logo_beam.png');
-      -webkit-mask-size: contain;
-      mask-size: contain;
-      -webkit-mask-repeat: no-repeat;
-      mask-repeat: no-repeat;
-      opacity: var(--beam-opacity);
-      filter: var(--beam-shadow);
-    }
-
-    .toren-lantern-flare {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      margin-top: -66px; /* -26px offset + -40px half-height */
-      margin-left: -40px;
-      width: 80px;
-      height: 80px;
-      background: radial-gradient(circle, #ffffff 0%, color-mix(in srgb, var(--primary) 70%, transparent) 40%, transparent 70%);
-      z-index: 6;
-      pointer-events: none;
-      opacity: 0;
-      transform: scale(0.5);
-      animation: toren-flare-pulse 6s ease-in-out infinite;
-    }
-
-    @keyframes toren-rotate-beam-3d {
-      0% {
-        transform: rotateX(20deg) rotateY(0deg);
-      }
-      100% {
-        transform: rotateX(20deg) rotateY(360deg);
-      }
-    }
-
-    @keyframes toren-flare-pulse {
-      0% { opacity: 0; transform: scale(0.5); }
-      18% { opacity: 0; transform: scale(0.5); }
-      25% { opacity: 1; transform: scale(1.4); } /* Lens flare peak! */
-      31% { opacity: 0; transform: scale(0.5); }
-      100% { opacity: 0; transform: scale(0.5); }
-    }
-
-    @keyframes toren-flash-glow {
-      0% { opacity: 0; }
-      17% { opacity: 0; }
-      25% { opacity: var(--flash-opacity); } /* Flash peak! */
-      33% { opacity: 0; }
-      100% { opacity: 0; }
     }
 
     h1 {
@@ -247,7 +159,7 @@
       background-color: var(--accent);
       color: white;
       border: none;
-      padding: 1rem 2.2rem;
+      padding: 0.9rem 2.2rem;
       font-size: 0.95rem;
       font-weight: 700;
       border-radius: 1.25rem;
@@ -282,14 +194,12 @@
   </style>
 </head>
 <body>
-  <div class="toren-lighthouse-flash"></div>
+  <div class="ambient-glow"></div>
   
   <div class="content-wrapper">
-    <!-- Spinning Toren Lighthouse using original beam with horizontal tilt -->
-    <div class="toren-spin-container">
-      <img src="/toren_logo_base.png" alt="Matzevet" class="toren-spin-logo">
-      <div class="toren-spin-beam-original"></div>
-      <div class="toren-lantern-flare"></div>
+    <!-- Clean Emblem without spinning light artifacts -->
+    <div class="emblem-container">
+      <img src="/matzevet_icon.png" alt="Unit" class="emblem-img">
     </div>
 
     <!-- Title and Description -->

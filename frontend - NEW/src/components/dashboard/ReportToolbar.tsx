@@ -14,27 +14,25 @@ import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 
-interface ReportToolbarProps {
+export interface ReportDatePickerProps {
   viewMode: "daily" | "weekly" | "monthly" | "yearly" | "custom";
-  onViewModeChange: (
-    mode: "daily" | "weekly" | "monthly" | "yearly" | "custom",
-  ) => void;
   date: Date;
   onDateChange: (date: Date) => void;
   dateRange?: DateRange;
   onDateRangeChange?: (range: DateRange | undefined) => void;
   maxDate?: Date;
+  className?: string;
 }
 
-export function ReportToolbar({
+export function ReportDatePicker({
   viewMode,
-  onViewModeChange,
   date,
   onDateChange,
   dateRange,
   onDateRangeChange,
   maxDate,
-}: ReportToolbarProps) {
+  className,
+}: ReportDatePickerProps) {
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 640
   );
@@ -45,9 +43,121 @@ export function ReportToolbar({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  if (viewMode === "yearly") {
+    return (
+      <div
+        className={cn(
+          "flex items-center gap-2 text-xs sm:text-sm font-bold px-3 py-1.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/60 shrink-0 font-mono border-0 text-foreground",
+          className
+        )}
+      >
+        <CalendarIcon className="h-4 w-4 text-primary" />
+        <span>שנת {format(date, "yyyy")}</span>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full flex flex-col items-stretch gap-2.5 sm:gap-3 p-1">
-      {/* Row 1: Clean, uniform segmented control bar (יומי, שבועי, חודשי, טווח) */}
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          className={cn(
+            "h-9 px-3 bg-slate-100/80 dark:bg-slate-800/60 hover:bg-slate-200/70 dark:hover:bg-slate-700/60 rounded-xl transition-all gap-2 text-xs sm:text-sm font-bold shadow-none text-foreground border-0",
+            viewMode === "custom" && "bg-primary/10 text-primary",
+            className
+          )}
+        >
+          <CalendarIcon className="h-4 w-4 text-primary shrink-0" />
+          <span className="font-mono tracking-tight text-xs sm:text-sm">
+            {viewMode === "monthly" ? (
+              format(date, "MM/yy")
+            ) : viewMode === "custom" && dateRange?.from ? (
+              <>
+                {format(dateRange.from, "dd/MM/yy")}
+                {dateRange.to ? ` - ${format(dateRange.to, "dd/MM/yy")}` : ""}
+              </>
+            ) : (
+              format(date, "dd/MM/yy")
+            )}
+          </span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-auto max-w-[94vw] sm:max-w-none p-0 rounded-2xl border-border/60 shadow-2xl overflow-y-auto max-h-[75vh] z-[100]"
+        align={isMobile ? "center" : "start"}
+        side={isMobile ? "top" : "bottom"}
+        sideOffset={8}
+      >
+        {viewMode === "monthly" ? (
+          <MonthPicker current={date} onSelect={onDateChange} />
+        ) : viewMode === "custom" ? (
+          <CalendarComponent
+            mode="range"
+            selected={dateRange}
+            onSelect={onDateRangeChange}
+            locale={he}
+            initialFocus
+            numberOfMonths={isMobile ? 1 : 2}
+            disabled={(d) => (maxDate ? d > maxDate : false)}
+            className="p-2 sm:p-3 bg-background rounded-2xl"
+          />
+        ) : (
+          <CalendarComponent
+            mode="single"
+            selected={date}
+            onSelect={(d) => d && onDateChange(d)}
+            locale={he}
+            initialFocus
+            disabled={(d) => (maxDate ? d > maxDate : false)}
+            className="p-2 sm:p-3 bg-background rounded-2xl"
+          />
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+interface ReportToolbarProps {
+  viewMode: "daily" | "weekly" | "monthly" | "yearly" | "custom";
+  onViewModeChange: (
+    mode: "daily" | "weekly" | "monthly" | "yearly" | "custom",
+  ) => void;
+  date: Date;
+  onDateChange: (date: Date) => void;
+  dateRange?: DateRange;
+  onDateRangeChange?: (range: DateRange | undefined) => void;
+  maxDate?: Date;
+  hideDatePicker?: boolean;
+}
+
+export function ReportToolbar({
+  viewMode,
+  onViewModeChange,
+  date,
+  onDateChange,
+  dateRange,
+  onDateRangeChange,
+  maxDate,
+  hideDatePicker = false,
+}: ReportToolbarProps) {
+  return (
+    <div className="w-full flex flex-col items-stretch gap-2.5">
+      {/* Optional Date Picker row if not placed in header */}
+      {!hideDatePicker && (
+        <div className="w-full flex items-center justify-start">
+          <ReportDatePicker
+            viewMode={viewMode}
+            date={date}
+            onDateChange={onDateChange}
+            dateRange={dateRange}
+            onDateRangeChange={onDateRangeChange}
+            maxDate={maxDate}
+          />
+        </div>
+      )}
+
+      {/* Segmented control bar (יומי, שבועי, חודשי, טווח) */}
       <Tabs
         value={viewMode}
         onValueChange={(val) => onViewModeChange(val as any)}
@@ -55,7 +165,7 @@ export function ReportToolbar({
       >
         <TabsList
           dir="rtl"
-          className="grid grid-cols-4 w-full h-11 p-1 gap-1 bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-700/50 rounded-2xl"
+          className="grid grid-cols-4 w-full h-10 p-1 gap-1 bg-slate-100/80 dark:bg-slate-800/60 rounded-xl border-0 shadow-none"
         >
           {[
             { id: "daily", label: "יומי" },
@@ -66,84 +176,15 @@ export function ReportToolbar({
             <TabsTrigger
               key={tab.id}
               value={tab.id}
-              className="rounded-xl py-1.5 text-xs sm:text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all"
+              className="rounded-lg py-1.5 text-xs sm:text-sm font-bold border-0 shadow-none transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white data-[state=active]:bg-primary data-[state=active]:text-white dark:data-[state=active]:text-white data-[state=active]:shadow-sm"
             >
               {tab.label}
             </TabsTrigger>
           ))}
         </TabsList>
       </Tabs>
-
-      {/* Row 2: Dedicated area for Date Picker display & Calendar Button */}
-      <div className="w-full flex items-center justify-start">
-        {viewMode !== "yearly" && (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                className={cn(
-                  "h-11 px-4 bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-700/50 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 rounded-2xl transition-all gap-2.5 text-xs sm:text-sm font-bold shadow-none text-foreground",
-                  viewMode === "custom" && "bg-primary/10 text-primary border-primary/20"
-                )}
-              >
-                <CalendarIcon className="h-4 w-4 text-primary shrink-0" />
-                <span className="font-mono tracking-tight">
-                  {viewMode === "monthly" ? (
-                    format(date, "MM/yy")
-                  ) : viewMode === "custom" && dateRange?.from ? (
-                    <>
-                      {format(dateRange.from, "dd/MM/yy")}
-                      {dateRange.to
-                        ? ` - ${format(dateRange.to, "dd/MM/yy")}`
-                        : ""}
-                    </>
-                  ) : (
-                    format(date, "dd/MM/yy")
-                  )}
-                </span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-auto max-w-[94vw] sm:max-w-none p-0 rounded-2xl border-border/60 shadow-2xl overflow-y-auto max-h-[75vh] z-[100]"
-              align={isMobile ? "center" : "start"}
-              side={isMobile ? "top" : "bottom"}
-              sideOffset={8}
-            >
-              {viewMode === "monthly" ? (
-                <MonthPicker current={date} onSelect={onDateChange} />
-              ) : viewMode === "custom" ? (
-                <CalendarComponent
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={onDateRangeChange}
-                  locale={he}
-                  initialFocus
-                  numberOfMonths={isMobile ? 1 : 2}
-                  disabled={(d) => (maxDate ? d > maxDate : false)}
-                  className="p-2 sm:p-3 bg-background rounded-2xl"
-                />
-              ) : (
-                <CalendarComponent
-                  mode="single"
-                  selected={date}
-                  onSelect={(d) => d && onDateChange(d)}
-                  locale={he}
-                  initialFocus
-                  disabled={(d) => (maxDate ? d > maxDate : false)}
-                  className="p-2 sm:p-3 bg-background rounded-2xl"
-                />
-              )}
-            </PopoverContent>
-          </Popover>
-        )}
-        {viewMode === "yearly" && (
-          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold border border-slate-200/50 dark:border-slate-700/50 px-4 py-2.5 rounded-2xl bg-slate-100/70 dark:bg-slate-800/40 shrink-0 font-mono">
-            <CalendarIcon className="h-4 w-4 text-primary" />
-            <span>שנת {format(date, "yyyy")}</span>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
+
 

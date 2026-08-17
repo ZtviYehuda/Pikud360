@@ -62,12 +62,12 @@ class EmployeeRepository:
                    rank, position, service_type, status, created_at, updated_at, deleted_at, created_by, updated_by,
                    city, emergency_contact
             FROM workforce.employees
-            WHERE id = %s AND deleted_at IS NULL;
+            WHERE id::text = %s AND deleted_at IS NULL;
         """
         try:
             with get_db_connection() as conn:
                 with conn.cursor() as cur:
-                    cur.execute(query, (employee_id,))
+                    cur.execute(query, (str(employee_id),))
                     row = cur.fetchone()
                     if row:
                         return self._row_to_entity(row)

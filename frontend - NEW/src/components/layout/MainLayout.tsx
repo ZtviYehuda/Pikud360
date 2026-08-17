@@ -303,7 +303,7 @@ export default function MainLayout() {
             <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden relative">
               <img
                 src="/matzevet_icon.png"
-                alt="סמל פיקוד"
+                alt="סמל Unit"
                 className="w-9 h-9 object-contain filter drop-shadow-[0_2px_8px_rgba(56,189,248,0.35)] group-hover:scale-110 transition-transform duration-300"
               />
             </div>
@@ -312,10 +312,10 @@ export default function MainLayout() {
             {isSidebarOpen && (
               <div className="flex flex-col text-right transition-all">
                 <span className="font-black text-lg tracking-tight text-foreground font-sans leading-none">
-                  פיקוד
+                  Unit
                 </span>
                 <span className="text-[9px] font-bold text-muted-foreground tracking-widest uppercase mt-0.5 font-mono">
-                  PIKUD
+                  UNIT
                 </span>
               </div>
             )}
@@ -506,7 +506,7 @@ export default function MainLayout() {
             >
               <img
                 src="/matzevet_logo.png"
-                alt="לוגו Pikud"
+                alt="לוגו Unit"
                 className="w-10 h-10 sm:w-12 sm:h-12 object-contain toren-logo-img"
               />
             </button>
@@ -973,9 +973,7 @@ export default function MainLayout() {
                                         const name = (alert as any).data?.commander_name;
                                         const count = (alert as any).data?.missing_count;
                                         const text = `שלום ${name}, טרם הושלם דיווח בוקר עבור ${count} שוטרים ביחידתך. נא להשלים את הדיווח בהקדם.`;
-                                          )}`,
-                                          "_blank",
-                                        );
+                                        window.open(getWhatsAppUrl(rawPhone, text), "_blank");
                                       }}
                                       className="w-8 h-8 rounded-lg flex items-center justify-center transition-all text-emerald-600 hover:bg-emerald-50 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 shrink-0 mr-1"
                                       title="שלח תזכורת בווטסאפ"

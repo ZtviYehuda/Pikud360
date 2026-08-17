@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useEmployees } from "@/hooks/useEmployees";
+import { generateUniqueUsername } from "@/utils/usernameGenerator";
 import apiClient from "@/config/api.client";
 import * as endpoints from "@/config/employees.endpoints";
 import { Button } from "@/components/ui/button";
@@ -1015,7 +1016,7 @@ const loadDraftFromStorage = () => {
 export default function CreateEmployeePage() {
   const navigate = useNavigate();
   const { user } = useAuthContext();
-  const { createEmployee, getStructure } = useEmployees();
+  const { createEmployee, getStructure, employees } = useEmployees();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1249,18 +1250,35 @@ export default function CreateEmployeePage() {
     const isCmd = payload.is_commander || payload.is_admin;
 
     if (isCmd && !payload.username) {
+      const existingUsernames = (employees || [])
+        .map((e: any) => e.username || e.user_name || "")
+        .filter(Boolean);
+
+      const generatedUsername = generateUniqueUsername(
+        formData.first_name || "",
+        formData.last_name || "",
+        existingUsernames
+      );
+
+      const generatedPassword = Math.floor(100000 + Math.random() * 900000).toString();
+
       generatedCreds = {
-        user: Math.floor(100000 + Math.random() * 900000).toString(),
-        pass: Math.floor(100000 + Math.random() * 900000).toString(),
+        user: generatedUsername,
+        pass: generatedPassword,
       };
       payload.username = generatedCreds.user;
       payload.password = generatedCreds.pass;
       (payload as any).must_change_password = true;
     } else if (!payload.username) {
-      payload.username =
-        "emp_" +
-        Date.now().toString().slice(-6) +
-        Math.floor(100 + Math.random() * 900).toString();
+      const existingUsernames = (employees || [])
+        .map((e: any) => e.username || e.user_name || "")
+        .filter(Boolean);
+
+      payload.username = generateUniqueUsername(
+        formData.first_name || "emp",
+        formData.last_name || "",
+        existingUsernames
+      );
     }
 
     const success = await createEmployee(payload);
@@ -1612,7 +1630,7 @@ export default function CreateEmployeePage() {
                     title="העתק הודעה מסודרת"
                     className="h-[46px] w-[46px] rounded-xl border-border/50 shrink-0 text-muted-foreground hover:text-primary transition-colors"
                     onClick={() => {
-                      const msg = `שלום ${createdCredentials?.name || ""},\nנוצר לך חשבון חדש למערכת כוח האדם.\n\nשם משתמש: ${createdCredentials?.user || ""}\nסיסמה: ${createdCredentials?.pass || ""}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`;
+                      const msg = `שלום ${createdCredentials?.name || ""},\nנוצר לך חשבון חדש למערכת Unit.\n\nשם משתמש: ${createdCredentials?.user || ""}\nסיסמה: ${createdCredentials?.pass || ""}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`;
                       navigator.clipboard.writeText(msg);
                       setCopiedField("pass");
                       toast.success("הודעת פרטי הגישה הועתקה בהצלחה");
@@ -1631,7 +1649,7 @@ export default function CreateEmployeePage() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  const msg = `שלום ${createdCredentials?.name || ""},\nנוצר לך חשבון חדש למערכת כוח האדם.\n\nשם משתמש: ${createdCredentials?.user || ""}\nסיסמה: ${createdCredentials?.pass || ""}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`;
+                  const msg = `שלום ${createdCredentials?.name || ""},\nנוצר לך חשבון חדש למערכת Unit.\n\nשם משתמש: ${createdCredentials?.user || ""}\nסיסמה: ${createdCredentials?.pass || ""}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`;
                   navigator.clipboard.writeText(msg);
                   setCopiedField("full");
                   toast.success("הודעת פרטי הגישה הועתקה בהצלחה");
@@ -1656,7 +1674,7 @@ export default function CreateEmployeePage() {
             <div className="flex flex-col gap-3 pt-2">
               <Button
                 onClick={() => {
-                  const fullMsg = `שלום ${createdCredentials?.name || ""},\nנוצר לך חשבון חדש למערכת כוח האדם.\n\nשם משתמש: ${createdCredentials?.user || ""}\nסיסמה: ${createdCredentials?.pass || ""}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`;
+                  const fullMsg = `שלום ${createdCredentials?.name || ""},\nנוצר לך חשבון חדש למערכת Unit.\n\nשם משתמש: ${createdCredentials?.user || ""}\nסיסמה: ${createdCredentials?.pass || ""}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`;
                   try {
                     navigator.clipboard.writeText(fullMsg);
                   } catch (e) {

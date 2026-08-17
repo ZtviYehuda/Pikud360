@@ -28,36 +28,85 @@ export function getJewishHoliday(date: Date) {
   const events = HebrewCalendar.getHolidaysOnDate(hDate) || [];
 
   const filteredEvents = events.filter((event) => {
-    const name = event.render("he");
+    const rawName = event.render("he");
     
-    // Strip Nikkud and normalize punctuation to ensure match works despite vowels
-    const cleanName = name
+    // Strip Nikkud, normalize hyphens/dashes to spaces, and strip quotes for robust matching
+    const cleanName = rawName
       .replace(/[\u0591-\u05C7]/g, "") // Strip Nikkud
-      .replace(/[׳״`"]/g, "'");       // Normalize Geresh/quotes to standard single quote
-    
-    // Modern minor civic events we want to exclude (all standardized to standard single quote)
+      .replace(/[\u2010\u2013\u2014\u05BE\-]/g, " ") // Normalize hyphens/maqaf to spaces
+      .replace(/[׳״`']/g, "")          // Strip apostrophes/geresh
+      .replace(/\s+/g, " ")            // Normalize whitespace
+      .trim();
+
+    // 1. Explicit Exclusions (minor/civic/liturgical/diaspora/obscure dates)
     const excludedKeywords = [
-      "ז'בוטינסקי",
+      "זבוטינסקי",
       "הרצל",
       "בן גוריון",
-      "בן-גוריון",
+      "גוריון",
       "רבין",
-      "העלייה",
       "העליה",
+      "העלייה",
       "ירושלים",
       "כיפור קטן",
       "כפור קטן",
+      "פורים קטן",
+      "סליחות",
+      "מעשר",
+      "פסח שני",
+      "תענית בכורות",
+      "סיגד",
+      "ניצחון",
+      "נצחון",
+      "חמישה עשר באב",
+      "חמשה עשר באב",
+      "שפה",
+      "עברית",
+      "משפחה",
+      "ילד",
     ];
 
-    const shouldExclude = excludedKeywords.some((keyword) =>
-      cleanName.includes(keyword)
-    );
+    // Exclude all Special Shabbats (e.g. "שבת החודש", "שבת הגדול", "שבת מברכים")
+    if (cleanName.startsWith("שבת ")) return false;
 
-    return !shouldExclude;
+    // Exclude Diaspora 2nd days of Yom Tov (e.g. "שבועות ב", "פסח ב", "סוכות ב")
+    if (/\sב$/.test(cleanName) || cleanName.includes(" ב ")) return false;
+
+    if (excludedKeywords.some((keyword) => cleanName.includes(keyword))) {
+      return false;
+    }
+
+    // 2. Strict Whitelist of Major Official Chagim & Israel National Days
+    const majorHolidays = [
+      "ראש השנה",
+      "צום גדליה",
+      "יום כיפור",
+      "יום הכיפורים",
+      "סוכות",
+      "הושענא רבה",
+      "שמיני עצרת",
+      "שמחת תורה",
+      "חנוכה",
+      "עשרה בטבת",
+      "טו בשבט",
+      "תענית אסתר",
+      "פורים",
+      "שושן פורים",
+      "פסח",
+      "שביעי של פסח",
+      "יום השואה",
+      "יום הזיכרון",
+      "יום העצמאות",
+      "לג בעומר",
+      "שבועות",
+      "שבעה עשר בתמוז",
+      "תשעה באב",
+    ];
+
+    return majorHolidays.some((holiday) => cleanName.includes(holiday));
   });
 
   if (filteredEvents.length > 0) {
-    // Return the first holiday's Hebrew name
     return filteredEvents[0].render("he");
   }
   return null;

@@ -38,7 +38,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <div className="absolute inset-0 rounded-3xl bg-blue-500/10 blur-xl -z-10" />
               <img
                 src="/matzevet_icon.png"
-                alt="סמל פיקוד"
+                alt="סמל Unit"
                 className="w-24 h-24 sm:w-28 sm:h-28 object-contain filter drop-shadow-[0_8px_20px_rgba(59,130,246,0.3)]"
               />
             </div>

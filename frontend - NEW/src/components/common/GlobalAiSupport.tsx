@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import apiClient from "@/config/api.client";
 import {
   X,
   Send,
@@ -737,7 +738,7 @@ export function GlobalAiSupport() {
     id: "welcome",
     isBot: true,
     text: `שלום ${user?.first_name || user?.username || "משתמש"}!
-אני עוזר הניווט והתמיכה של מערכת פיקוד.
+אני עוזר הניווט והתמיכה של מערכת Unit.
 
 **שאלות בזמן אמת על נתוני נוכחות וכוח אדם (בהתאם להרשאות פיקודך):**
 • *"מי לא נמצא היום?"*
@@ -1319,7 +1320,7 @@ export function GlobalAiSupport() {
             }}
             className={cn(
               "global-ai-support-btn fixed left-6 z-[100] flex flex-col items-center gap-2",
-              isSettingsPage ? "bottom-24 sm:bottom-6" : "bottom-6",
+              isSettingsPage ? "bottom-28 sm:bottom-14" : "bottom-14",
               (isMessagesTab ||
                 (isOpen && !isMinimized) ||
                 (currentTourIndex >= 0 &&

@@ -543,3 +543,227 @@ def change_password():
 @jwt_required(optional=True)
 def support_tickets_pending_count():
     return jsonify({"success": True, "pending_count": 0, "count": 0}), 200
+
+
+@security_bp.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    """Validates email existence and issues a verification code."""
+    data = request.get_json() or {}
+    email = (data.get("email") or "").strip()
+    if not email:
+        return jsonify({"success": False, "error": "נא להזין כתובת אימייל"}), 400
+
+    success, msg, code = security_service.request_password_reset(email)
+    if not success:
+        return jsonify({"success": False, "error": msg}), 404
+
+    from app.config import get_settings
+    settings = get_settings()
+    res = {"success": True, "message": msg}
+    if not settings.SMTP_HOST or settings.DEBUG:
+        res["dev_code"] = code
+
+    return jsonify(res), 200
+
+
+@security_bp.route("/verify-code", methods=["POST"])
+def verify_code():
+    """Validates 6-digit verification code for password reset."""
+    data = request.get_json() or {}
+    email = (data.get("email") or "").strip()
+    code = (data.get("code") or "").strip()
+    if not email or not code:
+        return jsonify({"success": False, "error": "נא להזין אימייל וקוד אימות"}), 400
+
+    success, msg = security_service.verify_reset_code(email, code)
+    if not success:
+        return jsonify({"success": False, "error": msg}), 400
+
+    return jsonify({"success": True, "message": msg}), 200
+
+
+@security_bp.route("/reset-password-with-code", methods=["POST"])
+def reset_password_with_code():
+    """Updates user password after code verification."""
+    data = request.get_json() or {}
+    email = (data.get("email") or "").strip()
+    code = (data.get("code") or "").strip()
+    new_password = (data.get("new_password") or data.get("newPassword") or "").strip()
+
+    if not email or not code or not new_password:
+        return jsonify({"success": False, "error": "נא למלא את כל השדות"}), 400
+
+    success, msg = security_service.reset_password_with_code(email, code, new_password)
+    if not success:
+        return jsonify({"success": False, "error": msg}), 400
+
+    return jsonify({"success": True, "message": msg}), 200
+
+
+@security_bp.route("/check-username", methods=["POST"])
+def check_username():
+    """Checks whether a username is already taken."""
+    data = request.get_json() or {}
+    username = (data.get("username") or "").strip()
+    if not username:
+        return jsonify({"success": False, "available": False, "error": "שם משתמש ריק"}), 400
+
+    is_taken = security_service.is_username_taken(username)
+    return jsonify({
+        "success": True,
+        "available": not is_taken,
+        "message": "שם המשתמש תפוס" if is_taken else "שם המשתמש פנוי"
+    }), 200
+
+
+@security_bp.route("/check-password-unique", methods=["POST"])
+def check_password_unique():
+    """Checks whether a proposed password is already used by another account."""
+    data = request.get_json() or {}
+    password = (data.get("password") or "").strip()
+    user_id = data.get("user_id")
+
+    if not password:
+        return jsonify({"success": False, "unique": False, "error": "סיסמה ריקה"}), 400
+
+    in_use = security_service.is_password_in_use_by_others(password, user_id)
+    return jsonify({
+        "success": True,
+        "unique": not in_use,
+        "message": "סיסמה זו נמצאת כבר בשימוש במערכת" if in_use else "סיסמה ייחודית"
+    }), 200
+
+
+@security_bp.route("/impersonate", methods=["POST"])
+@jwt_required()
+def impersonate():
+    """Allows an Administrator to securely log in / impersonate any commander or user.
+    Strictly recorded in system audit logs."""
+    admin_id = get_jwt_identity()
+    claims = get_jwt()
+
+    admin_roles = claims.get("roles", [])
+    admin_user = user_repo.get_by_id(admin_id)
+
+    is_admin = (
+        ("ADMIN" in admin_roles) or
+        (admin_user and (admin_user.username == "admin" or admin_user.email == "admin@matzevet.gov.il"))
+    )
+
+    if not is_admin:
+        return jsonify({
+            "success": False,
+            "error": "פעולה זו מורשית למנהלי מערכת (אדמין) בלבד",
+            "message": "פעולה זו מורשית למנהלי מערכת (אדמין) בלבד"
+        }), 403
+
+    data = request.get_json() or {}
+    target_id = str(data.get("target_id") or data.get("targetId") or data.get("user_id") or data.get("employee_id") or "").strip()
+
+    if not target_id:
+        return jsonify({"success": False, "error": "נא לציין מזהה משתמש או עובד להתחברות"}), 400
+
+    # 1. Look up target in security.users by ID or username
+    target_user = user_repo.get_by_id(target_id) or user_repo.get_by_username(target_id)
+    target_emp = None
+
+    # 2. If not found by user ID directly, check in workforce.employees
+    from app.modules.workforce.repositories import EmployeeRepository
+    emp_repo = EmployeeRepository()
+    if not target_user:
+        target_emp = emp_repo.get_by_id(target_id)
+        if target_emp and target_emp.user_id:
+            target_user = user_repo.get_by_id(str(target_emp.user_id))
+    else:
+        target_emp = emp_repo.get_by_user_id(str(target_user.id))
+
+    if not target_user and not target_emp:
+        return jsonify({"success": False, "error": "משתמש או עובד לא נמצא במערכת"}), 404
+
+    # If employee exists but no user account exists yet, provision user account
+    if not target_user and target_emp:
+        import uuid as py_uuid
+        import bcrypt
+        new_uid = str(py_uuid.uuid4())
+        default_pwd = bcrypt.hashpw(str(py_uuid.uuid4()).encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        target_username = target_emp.employee_number or f"emp_{target_emp.id}"
+        from app.modules.security.models import User
+        target_user = User(
+            id=new_uid,
+            tenant_id=admin_user.tenant_id if admin_user else "00000000-0000-0000-0000-000000000001",
+            username=target_username,
+            email=target_emp.personal_email or f"{target_username}@system.local",
+            password_hash=default_pwd,
+            is_active=True
+        )
+        user_repo.create(target_user)
+        from app.database.connection import get_db_connection
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("UPDATE workforce.employees SET user_id = %s WHERE id = %s;", (new_uid, target_emp.id))
+                conn.commit()
+
+    impersonated_name = f"{target_emp.first_name} {target_emp.last_name}" if target_emp else (target_user.username if target_user else "משתמש")
+
+    # 3. Create Audit Log for System Security Tracking
+    security_service.create_audit_log(
+        tenant_id=admin_user.tenant_id if admin_user else "00000000-0000-0000-0000-000000000001",
+        user_id=admin_user.id if admin_user else admin_id,
+        session_id=None,
+        request_id=str(uuid.uuid4()),
+        event_type="SECURITY_EVENT",
+        action="USER_IMPERSONATION",
+        table_name="security.users",
+        record_id=str(target_user.id),
+        old_values={
+            "admin_user_id": str(admin_id),
+            "admin_username": admin_user.username if admin_user else "admin"
+        },
+        new_values={
+            "impersonated_user_id": str(target_user.id),
+            "impersonated_username": target_user.username,
+            "impersonated_name": impersonated_name
+        },
+        ip_address=request.headers.get("X-Forwarded-For", request.remote_addr) or "127.0.0.1",
+        user_agent=request.user_agent.string if request.user_agent else "",
+        severity="WARNING"
+    )
+
+    # 4. Generate JWT tokens with is_impersonated flag
+    target_roles = get_user_roles(target_user.id)
+    target_permissions = [code for code, scope in get_user_permissions_and_scopes(target_user.id)]
+
+    additional_claims = {
+        "tenant_id": target_user.tenant_id,
+        "roles": target_roles,
+        "permissions": target_permissions,
+        "is_impersonated": True,
+        "impersonated_by": admin_user.username if admin_user else "admin"
+    }
+
+    access_token = create_access_token(
+        identity=str(target_user.id),
+        additional_claims=additional_claims,
+        expires_delta=timedelta(hours=2)
+    )
+
+    return jsonify({
+        "success": True,
+        "token": access_token,
+        "access_token": access_token,
+        "is_impersonated": True,
+        "user": {
+            "id": target_user.id,
+            "username": target_user.username,
+            "first_name": target_emp.first_name if target_emp else target_user.username,
+            "last_name": target_emp.last_name if target_emp else "",
+            "roles": target_roles,
+            "is_commander": target_emp.position != "עובד" if target_emp else False,
+            "is_admin": "ADMIN" in target_roles,
+            "is_impersonated": True
+        },
+        "message": f"התחברת בהצלחה כ-{impersonated_name}"
+    }), 200
+
+
+
