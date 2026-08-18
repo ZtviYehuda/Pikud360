@@ -30,6 +30,12 @@ export const useAuth = () => {
       );
       const userObj = data?.user || data?.data || data;
       if (userObj && (userObj.id || userObj.username)) {
+        if (userObj.is_admin || userObj.username === "admin") {
+          localStorage.removeItem("admin_token");
+          userObj.is_impersonated = false;
+        } else if (localStorage.getItem("admin_token")) {
+          userObj.is_impersonated = true;
+        }
         setUser(userObj);
         setError(null);
       } else {

@@ -1,25 +1,32 @@
 import { useAuthContext } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogOut, GripVertical } from "lucide-react";
+import { ShieldAlert, GripVertical } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export const ImpersonationBanner = () => {
   const { user, logout } = useAuthContext();
 
-  // @ts-ignore - is_impersonated added dynamically
-  if (!user || !user.is_impersonated) return null;
+  // If user is already the admin / system manager, they are not impersonating
+  const isImpersonating = Boolean(
+    user &&
+    !user.is_admin &&
+    user.username !== "admin" &&
+    // @ts-ignore
+    (user.is_impersonated || localStorage.getItem("admin_token"))
+  );
 
-  const handleLogout = () => {
+  if (!isImpersonating || !user) return null;
+
+  const handleReturnToAdmin = () => {
     const adminToken = localStorage.getItem("admin_token");
     if (adminToken) {
       localStorage.setItem("token", adminToken);
       localStorage.removeItem("admin_token");
-      localStorage.removeItem("dashboard_filters"); // Clear filters to reset view for admin
-      window.location.href = "/";
+      localStorage.removeItem("dashboard_filters");
+      window.location.replace("/");
     } else {
       logout();
-      window.location.href = "/login";
     }
   };
 
@@ -27,59 +34,54 @@ export const ImpersonationBanner = () => {
     <motion.div
       drag
       dragMomentum={false}
-      whileDrag={{ scale: 1.05, cursor: "grabbing" }}
-      initial={{ y: -50, opacity: 0, x: "-50%" }}
-      animate={{ y: 24, opacity: 1, x: "-50%" }}
+      whileDrag={{ scale: 1.03, cursor: "grabbing" }}
+      initial={{ y: -60, opacity: 0, x: "-50%" }}
+      animate={{ y: 16, opacity: 1, x: "-50%" }}
       style={{ x: "-50%" }}
-      className="fixed top-0 left-1/2 z-[100] cursor-grab touch-none"
+      className="fixed top-0 left-1/2 z-[200] cursor-grab touch-none select-none max-w-[95vw]"
     >
       <div
         className={cn(
-          "flex items-center gap-1 p-1.5 pl-1 pr-1.5 rounded-full border-2  backdrop-blur-xl select-none transition-all",
-          // Dynamic Theme Colors - Extra Pop
-          "bg-background/80 border-primary/50 text-foreground",
-          " dark:",
-          "hover:border-primary/80 hover:",
-          // Gradient hint for prominence
-          "bg-gradient-to-r from-background via-background to-primary/5",
+          "flex items-center gap-2 p-1.5 pl-2 pr-2.5 rounded-full border-2 shadow-2xl backdrop-blur-2xl transition-all",
+          "bg-amber-500/15 border-amber-500/50 text-foreground dark:bg-amber-950/90 dark:border-amber-500/60",
+          "hover:border-amber-500/80 shadow-amber-500/10"
         )}
         dir="rtl"
       >
         {/* Drag Handle */}
-        <div className="pl-2 pr-2 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-primary transition-colors group">
+        <div className="pl-1 pr-1 cursor-grab active:cursor-grabbing text-amber-600/70 dark:text-amber-400/70 hover:text-amber-600 transition-colors">
           <GripVertical className="w-4 h-4" />
         </div>
 
         {/* Status Indicator */}
-        <div className="flex items-center gap-2.5 px-1">
+        <div className="flex items-center gap-2 px-1">
           <div className="relative flex h-2.5 w-2.5 shrink-0">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary "></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
           </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-xs font-semibold text-muted-foreground/80">
-              מציג כ-
+          <div className="flex items-baseline gap-1.5 text-xs">
+            <span className="font-semibold text-muted-foreground">
+              מחובר כעת בתור:
             </span>
-            <span className="text-sm font-black text-foreground tracking-tight decoration-primary/30 underline decoration-2 underline-offset-4">
+            <span className="font-black text-amber-900 dark:text-amber-200 tracking-tight">
               {user.first_name} {user.last_name}
             </span>
           </div>
         </div>
 
         {/* Divider */}
-        <div className="h-5 w-px bg-border/60 mx-3" />
+        <div className="h-4 w-px bg-amber-500/30 mx-1" />
 
-        {/* Action */}
+        {/* Action Button */}
         <Button
-          onClick={handleLogout}
+          onClick={handleReturnToAdmin}
           size="sm"
-          className="h-8 rounded-full px-4 text-xs font-bold bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/20 hover:border-primary  transition-all"
+          className="h-8 rounded-full px-3.5 text-xs font-black bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-1.5"
         >
-          <LogOut className="w-3.5 h-3.5 ml-2" />
-          חזור לניהול
+          <ShieldAlert className="w-3.5 h-3.5" />
+          <span>חזור לחשבון אדמין</span>
         </Button>
       </div>
     </motion.div>
   );
 };
-

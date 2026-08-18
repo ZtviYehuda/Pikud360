@@ -26,6 +26,7 @@ import {
   CalendarRange,
   Activity,
   ArrowLeft,
+  ShieldAlert,
 } from "lucide-react";
 import { cn, getWhatsAppUrl } from "@/lib/utils";
 import {
@@ -266,6 +267,26 @@ export default function MainLayout() {
         (item.path !== "/" && location.pathname.startsWith(item.path)),
     )?.name ?? "לוח בקרה";
 
+  // Impersonation detection and exit action (Only active when viewing as non-admin user)
+  const isImpersonating = Boolean(
+    user &&
+    !user.is_admin &&
+    user.username !== "admin" &&
+    ((user as any)?.is_impersonated || localStorage.getItem("admin_token"))
+  );
+
+  const handleReturnToAdmin = () => {
+    const adminToken = localStorage.getItem("admin_token");
+    if (adminToken) {
+      localStorage.setItem("token", adminToken);
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("dashboard_filters");
+      window.location.replace("/");
+    } else {
+      logout();
+    }
+  };
+
   return (
     <div
       className="h-dvh bg-background flex font-sans text-foreground overflow-hidden"
@@ -404,6 +425,23 @@ export default function MainLayout() {
               <ThemeToggle variant="minimal" />
             </div>
           )}
+          {/* Impersonation Return Button in Sidebar */}
+          {isImpersonating && (
+            <div className="w-full pb-2">
+              <button
+                onClick={handleReturnToAdmin}
+                className={cn(
+                  "w-full rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-95",
+                  isSidebarOpen ? "h-9 px-3" : "h-10 px-0"
+                )}
+                title="חזור לחשבון מנהל (אדמין)"
+              >
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                {isSidebarOpen && <span>חזור לחשבון אדמין</span>}
+              </button>
+            </div>
+          )}
+
           {/* User Profile Area */}
           {isSidebarOpen ? (
             <div

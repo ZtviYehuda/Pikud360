@@ -19,6 +19,7 @@ from app.modules.security.repositories import (
     AuditLogRepository,
     UserPreferenceRepository
 )
+from app.modules.workforce.repositories import EmployeeRepository
 from app.modules.security.services import SecurityService
 from app.modules.security.permissions import get_user_permissions_and_scopes, get_user_roles
 
@@ -33,6 +34,7 @@ login_history_repo = UserLoginHistoryRepository()
 tenant_repo = TenantRepository()
 audit_repo = AuditLogRepository()
 user_preference_repo = UserPreferenceRepository()
+employee_repo = EmployeeRepository()
 
 security_service = SecurityService(
     user_repo=user_repo,
@@ -251,16 +253,44 @@ def me():
 
     user_prefs = user_preference_repo.get_by_user_id(str(user.id)) or {}
 
+    claims = get_jwt() or {}
+    is_impersonated = bool(claims.get("is_impersonated", False))
+
+    emp = None
+    try:
+        emp = (
+            employee_repo.get_by_user_id(str(user.id))
+            or employee_repo.get_by_id(str(user.id))
+        )
+    except Exception as e:
+        logger.debug(f"Could not load employee for user {user.id}: {e}")
+
+    first_name = (
+        user_prefs.get("first_name")
+        or (emp.first_name if emp else None)
+        or ("מנהל" if is_admin else "מפקד")
+    )
+    last_name = (
+        user_prefs.get("last_name")
+        or (emp.last_name if emp else None)
+        or ("מערכת" if is_admin else "")
+    )
+    phone_number = (
+        user_prefs.get("phone_number")
+        or (emp.phone if emp else None)
+        or "0501234567"
+    )
+
     user_obj = {
         "id": user.id,
-        "first_name": user_prefs.get("first_name") or ("מנהל" if is_admin else "מפקד"),
-        "last_name": user_prefs.get("last_name") or "מערכת",
+        "first_name": first_name,
+        "last_name": last_name,
         "username": user.username,
         "email": user.email,
-        "phone_number": user_prefs.get("phone_number") or "0501234567",
-        "city": user_prefs.get("city") or "",
-        "birth_date": user_prefs.get("birth_date") or "",
-        "emergency_contact": user_prefs.get("emergency_contact") or "",
+        "phone_number": phone_number,
+        "city": user_prefs.get("city") or (emp.city if emp else ""),
+        "birth_date": user_prefs.get("birth_date") or (emp.birthdate if emp else ""),
+        "emergency_contact": user_prefs.get("emergency_contact") or (emp.emergency_contact if emp else ""),
         "enlistment_date": user_prefs.get("enlistment_date") or "",
         "discharge_date": user_prefs.get("discharge_date") or "",
         "assignment_date": user_prefs.get("assignment_date") or "",
@@ -268,13 +298,15 @@ def me():
         "security_clearance": user_prefs.get("security_clearance", False),
         "is_admin": is_admin,
         "is_commander": is_commander,
-        "department_id": 1,
-        "section_id": 11,
-        "team_id": 111,
-        "department_name": "מטה הפיקוד",
-        "section_name": "ניהול מערכת",
-        "team_name": "צוות תמיכה",
-        "role_name": "מנהל מערכת ראשי" if is_admin else "מפקד",
+        "is_impersonated": is_impersonated,
+        "impersonated_by": claims.get("impersonated_by", "admin"),
+        "department_id": getattr(emp, "department_id", 1) if emp else 1,
+        "section_id": getattr(emp, "section_id", 11) if emp else 11,
+        "team_id": getattr(emp, "team_id", 111) if emp else 111,
+        "department_name": getattr(emp, "department_name", "מטה הפיקוד") if emp else "מטה הפיקוד",
+        "section_name": getattr(emp, "section_name", "ניהול מערכת") if emp else "ניהול מערכת",
+        "team_name": getattr(emp, "team_name", "צוות תמיכה") if emp else "צוות תמיכה",
+        "role_name": "מנהל מערכת ראשי" if is_admin else getattr(emp, "rank", "מפקד"),
     }
 
     return jsonify({
