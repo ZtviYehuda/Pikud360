@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ShieldAlert, GripVertical } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import apiClient from "@/config/api.client";
 
 export const ImpersonationBanner = () => {
   const { user, logout } = useAuthContext();
@@ -18,8 +19,13 @@ export const ImpersonationBanner = () => {
 
   if (!isImpersonating || !user) return null;
 
-  const handleReturnToAdmin = () => {
+  const handleReturnToAdmin = async () => {
     const adminToken = localStorage.getItem("admin_token");
+    try {
+      await apiClient.post("/security/exit-impersonation");
+    } catch (e) {
+      // Continue even if logging fails
+    }
     if (adminToken) {
       localStorage.setItem("token", adminToken);
       localStorage.removeItem("admin_token");

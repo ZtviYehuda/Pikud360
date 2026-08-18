@@ -124,8 +124,17 @@ export const EmployeeTable = ({
 
   const safeEmployeesList = Array.isArray(employees) ? employees : [];
   const filteredEmployees = safeEmployeesList.filter((emp) => {
-    // Hide current user
-    if (user && emp.id === user.id) return false;
+    // Hide commander / logged-in user from their own subordinate workforce list (Admin still sees everyone)
+    if (user && !user.is_admin) {
+      if (
+        emp.id === user.id ||
+        (emp as any).user_id === user.id ||
+        (user.username && emp.username && emp.username.toLowerCase() === user.username.toLowerCase()) ||
+        (`${emp.first_name || ""} ${emp.last_name || ""}`.trim().toLowerCase() === `${user.first_name || ""} ${user.last_name || ""}`.trim().toLowerCase())
+      ) {
+        return false;
+      }
+    }
 
     // Inactive officers are strictly visible only to Admins in the repository
     if (!user?.is_admin && !emp.is_active) {

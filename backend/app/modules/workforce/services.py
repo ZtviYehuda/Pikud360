@@ -9,7 +9,7 @@ from app.modules.workforce.models import Employee, EmployeeHistory
 from app.modules.workforce.repositories import EmployeeRepository, EmployeeHistoryRepository
 from app.modules.security.repositories import AuditLogRepository
 from app.modules.workforce.schemas import EmployeeCreateRequest, EmployeeUpdateRequest
-from app.core.authorization import can_view_employee, can_manage_unit, AccessDeniedError
+from app.core.authorization import can_view_employee, can_manage_unit, AccessDeniedError, resolve_access_scope, ScopeType
 
 logger = logging.getLogger("matzevet.modules.workforce.services")
 
@@ -330,13 +330,20 @@ class WorkforceService:
         tenant_id: str,
         operator_user_id: str
     ) -> List[Employee]:
-        """Lists active employees. Automatically scopes entries the user is permitted to view."""
+        """Lists active employees. Automatically scopes entries the user is permitted to view, hiding commander from their own list."""
         all_emps = self._employee_repo.list_all()
         allowed_emps = []
 
+        ctx = resolve_access_scope(operator_user_id, tenant_id)
+        is_admin = (ctx.scope_type == ScopeType.GLOBAL) or (str(operator_user_id) == "admin")
+
         for emp in all_emps:
-            # Check if operator can view this specific employee unit (or if it is their own profile)
-            if emp.user_id == operator_user_id or can_view_employee(operator_user_id, tenant_id, emp.org_unit_id):
+            # If not admin, the commander/user must not see their own record in the workforce management list
+            if not is_admin:
+                if str(emp.user_id) == str(operator_user_id) or str(emp.id) == str(operator_user_id):
+                    continue
+
+            if can_view_employee(operator_user_id, tenant_id, emp.org_unit_id):
                 allowed_emps.append(emp)
 
         return allowed_emps

@@ -235,35 +235,46 @@ def login():
 def me():
     """Returns current authenticated user profile & preferences from PostgreSQL."""
     current_user_id = get_jwt_identity()
+    claims = get_jwt() or {}
+    is_impersonated = bool(claims.get("is_impersonated", False))
+
     user = None
+    emp = None
+
     if current_user_id:
         user = (
             user_repo.get_by_id(str(current_user_id)) 
             or user_repo.get_by_username(str(current_user_id))
         )
-    if not user:
-        user = user_repo.get_by_username("admin")
-    
-    if not user:
-        return jsonify({"success": False, "message": "User not found"}), 404
+        try:
+            emp = (
+                employee_repo.get_by_id(str(current_user_id))
+                or employee_repo.get_by_user_id(str(current_user_id))
+                or (employee_repo.get_by_user_id(str(user.id)) if user else None)
+            )
+        except Exception as e:
+            logger.debug(f"Could not load employee for id {current_user_id}: {e}")
 
-    user_roles = get_user_roles(user.id)
-    is_admin = (user.username == "admin") or (user.email == "admin@matzevet.gov.il") or ("ADMIN" in user_roles)
-    is_commander = ("COMMANDER" in user_roles) or is_admin
+        # If user not in security.users but employee exists, try to get user by emp.user_id
+        if not user and emp and emp.user_id:
+            user = user_repo.get_by_id(str(emp.user_id))
 
-    user_prefs = user_preference_repo.get_by_user_id(str(user.id)) or {}
+    # If no valid token identity at all, only fallback to admin if not impersonated
+    if not user and not emp:
+        if not current_user_id:
+            user = user_repo.get_by_username("admin")
+        else:
+            return jsonify({"success": False, "message": "User not found"}), 404
 
-    claims = get_jwt() or {}
-    is_impersonated = bool(claims.get("is_impersonated", False))
+    user_id = str(user.id) if user else (str(emp.id) if emp else "0")
+    username = user.username if user else (getattr(emp, "employee_number", None) or "commander")
+    email = user.email if user else (getattr(emp, "personal_email", None) or "")
 
-    emp = None
-    try:
-        emp = (
-            employee_repo.get_by_user_id(str(user.id))
-            or employee_repo.get_by_id(str(user.id))
-        )
-    except Exception as e:
-        logger.debug(f"Could not load employee for user {user.id}: {e}")
+    user_roles = get_user_roles(user.id) if user else ["COMMANDER"]
+    is_admin = (not is_impersonated) and ((username == "admin") or (email == "admin@matzevet.gov.il") or ("ADMIN" in user_roles))
+    is_commander = (not is_admin) or ("COMMANDER" in user_roles)
+
+    user_prefs = user_preference_repo.get_by_user_id(user_id) if user_id else {}
 
     first_name = (
         user_prefs.get("first_name")
@@ -282,15 +293,15 @@ def me():
     )
 
     user_obj = {
-        "id": user.id,
+        "id": user_id,
         "first_name": first_name,
         "last_name": last_name,
-        "username": user.username,
-        "email": user.email,
+        "username": username,
+        "email": email,
         "phone_number": phone_number,
-        "city": user_prefs.get("city") or (emp.city if emp else ""),
-        "birth_date": user_prefs.get("birth_date") or (emp.birthdate if emp else ""),
-        "emergency_contact": user_prefs.get("emergency_contact") or (emp.emergency_contact if emp else ""),
+        "city": user_prefs.get("city") or (getattr(emp, "city", "") if emp else ""),
+        "birth_date": user_prefs.get("birth_date") or (getattr(emp, "birthdate", "") if emp else ""),
+        "emergency_contact": user_prefs.get("emergency_contact") or (getattr(emp, "emergency_contact", "") if emp else ""),
         "enlistment_date": user_prefs.get("enlistment_date") or "",
         "discharge_date": user_prefs.get("discharge_date") or "",
         "assignment_date": user_prefs.get("assignment_date") or "",
@@ -795,6 +806,35 @@ def impersonate():
             "is_impersonated": True
         },
         "message": f"התחברת בהצלחה כ-{impersonated_name}"
+    }), 200
+
+
+@security_bp.route("/exit-impersonation", methods=["POST"])
+@jwt_required(optional=True)
+def exit_impersonation():
+    """Logs an audit event when an admin exits impersonation mode and returns to admin account."""
+    current_user_id = get_jwt_identity()
+    claims = get_jwt() or {}
+    admin_username = claims.get("impersonated_by", "admin")
+
+    security_service.create_audit_log(
+        tenant_id=claims.get("tenant_id") or "00000000-0000-0000-0000-000000000001",
+        user_id=str(current_user_id) if current_user_id else None,
+        session_id=None,
+        request_id=str(uuid.uuid4()),
+        event_type="SECURITY_EVENT",
+        action="USER_IMPERSONATION_EXIT",
+        table_name="security.users",
+        record_id=str(current_user_id) if current_user_id else None,
+        old_values={"impersonated_user_id": str(current_user_id)},
+        new_values={"returned_to_admin": admin_username},
+        ip_address=request.headers.get("X-Forwarded-For", request.remote_addr) or "127.0.0.1",
+        user_agent=request.user_agent.string if request.user_agent else "",
+        severity="INFO"
+    )
+    return jsonify({
+        "success": True,
+        "message": "חזרת בהצלחה לחשבון מנהל המערכת"
     }), 200
 
 

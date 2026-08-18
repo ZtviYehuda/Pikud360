@@ -275,8 +275,13 @@ export default function MainLayout() {
     ((user as any)?.is_impersonated || localStorage.getItem("admin_token"))
   );
 
-  const handleReturnToAdmin = () => {
+  const handleReturnToAdmin = async () => {
     const adminToken = localStorage.getItem("admin_token");
+    try {
+      await apiClient.post("/security/exit-impersonation");
+    } catch (e) {
+      // Continue even if logging fails
+    }
     if (adminToken) {
       localStorage.setItem("token", adminToken);
       localStorage.removeItem("admin_token");

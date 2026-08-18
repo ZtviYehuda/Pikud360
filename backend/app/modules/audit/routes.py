@@ -54,21 +54,54 @@ def _fetch_audit_logs(user_id=None, limit=100, action_type=None, suspicious_only
                 cur.execute(query, tuple(params))
                 for row in cur.fetchall():
                     log_id, action, event_type, table_name, record_id, ip, agent, created_at, uname, uid, old_val, new_val, severity = row
+                    
+                    if isinstance(new_val, str):
+                        try:
+                            new_val = json.loads(new_val)
+                        except Exception:
+                            pass
+                    if isinstance(old_val, str):
+                        try:
+                            old_val = json.loads(old_val)
+                        except Exception:
+                            pass
+
+                    target_name = None
+                    if action == "USER_IMPERSONATION":
+                        imp_name = (new_val.get("impersonated_name") if isinstance(new_val, dict) else None) or (new_val.get("impersonated_username") if isinstance(new_val, dict) else "משתמש")
+                        target_name = imp_name
+                        description = f"התחברות אדמין (התחזות) למשתמש/מפקד: {imp_name}"
+                    elif action in ["USER_IMPERSONATION_EXIT", "IMPERSONATION_EXIT"]:
+                        description = "יציאה מהתחזות וחזרה לחשבון מנהל המערכת (אדמין)"
+                    elif event_type == "EMPLOYEE_VIEWED" or action == "READ":
+                        description = "צפייה בפרטי שוטר/משתמש במערכת"
+                    elif action == "EMPLOYEE_UPDATE" or action == "UPDATE":
+                        description = f"עדכון פרטים ברשומת {table_name or 'משתמש'}"
+                    elif action == "EMPLOYEE_CREATE" or action == "CREATE":
+                        description = f"הוספת רשומה חדשה ל-{table_name or 'מערכת'}"
+                    elif action == "EMPLOYEE_DELETE" or action == "DELETE":
+                        description = f"מחיקת רשומה מ-{table_name or 'מערכת'}"
+                    else:
+                        description = f"פעולה {action or event_type or 'מערכת'} על {table_name or 'מערכת'}"
+
                     logs.append({
                         "id": str(log_id),
                         "action_type": action or event_type or "GENERAL_ACTION",
                         "event_type": event_type,
-                        "description": f"פעולה {action or event_type or 'מערכת'} על טבלה {table_name or 'מערכת'}",
+                        "description": description,
                         "table_name": table_name,
                         "record_id": str(record_id) if record_id else None,
                         "ip_address": ip or "127.0.0.1",
                         "user_name": uname or "אדמין צוות תמיכה",
+                        "target_name": target_name,
                         "user_id": str(uid) if uid else None,
                         "created_at": created_at.isoformat() if created_at else datetime.datetime.now().isoformat(),
                         "metadata": {
                             "browser": agent or "Chrome / Windows 11",
                             "real_ip": ip or "127.0.0.1",
-                            "severity": severity or "INFO"
+                            "severity": severity or "INFO",
+                            "old_values": old_val,
+                            "new_values": new_val
                         },
                         "reason": "פעולה חריגה במערכת" if severity in ['WARNING', 'ERROR'] else None
                     })
