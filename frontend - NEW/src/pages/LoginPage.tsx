@@ -1033,13 +1033,8 @@ export default function LoginPage() {
             {/* Form Footer - Removed */}
           </div>
 
-          <div className="mt-4 text-center px-4 flex flex-col items-center gap-2.5">
-            <img 
-              src="/logo_unit.png" 
-              alt="Cyber Unit Logo" 
-              className="w-10 h-10 object-contain opacity-40 hover:opacity-80 transition-opacity duration-300 select-none pointer-events-none"
-            />
-            <p className="text-[10px] text-muted-foreground font-medium font-mono uppercase tracking-[0.2em] leading-relaxed">
+          <div className="mt-2 text-center px-4">
+            <p className="text-[10px] text-muted-foreground/70 font-medium font-mono uppercase tracking-[0.2em] leading-relaxed select-none">
               © 2026 • CYBER UNIT • v1.0.4
             </p>
           </div>

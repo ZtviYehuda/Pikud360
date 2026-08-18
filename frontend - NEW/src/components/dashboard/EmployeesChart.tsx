@@ -405,7 +405,9 @@ const EmployeesChartComponent = (
                 className="overflow-visible"
                 width="100%"
                 height="100%"
+                minWidth={0}
                 minHeight={220}
+                initialDimension={{ width: 320, height: 220 }}
               >
                 {chartType === "pie" ? (
                   <PieChart

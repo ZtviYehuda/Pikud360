@@ -548,6 +548,12 @@ const MobileProfileHeader = ({
   formData,
   editMode,
   handleFieldChange,
+  onSave,
+  onCancel,
+  onEdit,
+  onToggleActive,
+  isActive,
+  userIsAdmin,
 }: any) => (
   <div className="flex flex-col items-center text-center p-6 bg-card/40 backdrop-blur-xl rounded-3xl border border-border/40 mb-6 lg:hidden relative overflow-hidden">
     <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-primary/5 to-transparent -z-10" />
@@ -865,7 +871,7 @@ export default function EmployeeViewPage() {
     if (!employee) return;
     const currentActive = employee.is_active !== undefined
       ? Boolean(employee.is_active)
-      : employee.status === "ACTIVE";
+      : (employee as any).status === "ACTIVE";
 
     if (currentActive) {
       setShowDeactivateModal(true);
@@ -884,7 +890,7 @@ export default function EmployeeViewPage() {
 
     const currentActive = employee?.is_active !== undefined
       ? Boolean(employee.is_active)
-      : employee?.status === "ACTIVE";
+      : (employee as any)?.status === "ACTIVE";
     const nextActive = targetNextActive !== undefined ? targetNextActive : !currentActive;
 
     setDeactivatingLoading(true);
@@ -914,8 +920,8 @@ export default function EmployeeViewPage() {
 
   const isSupportUser =
     employee.username === "admin" ||
-    employee.personal_email === "admin@matzevet.gov.il" ||
-    employee.employee_number === "ADMIN" ||
+    (employee as any).personal_email === "admin@matzevet.gov.il" ||
+    (employee as any).employee_number === "ADMIN" ||
     (employee.first_name === "צוות" && employee.last_name === "תמיכה") ||
     employee.team_name === "צוות תמיכה";
 
@@ -1106,7 +1112,7 @@ export default function EmployeeViewPage() {
           formData={formData}
           editMode={editMode}
           handleFieldChange={handleFieldChange}
-          onSave={handleSave}
+          onSave={handleSubmit}
           onCancel={() => {
             setEditMode(false);
             setFormData(employee);

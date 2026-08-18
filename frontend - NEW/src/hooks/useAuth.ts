@@ -93,8 +93,11 @@ export const useAuth = () => {
     }
 
     localStorage.removeItem("token");
+    localStorage.removeItem("admin_token");
     setUser(null);
-    window.location.href = "/login";
+    if (window.location.pathname !== "/login") {
+      window.location.replace("/login");
+    }
   };
 
   // Change Password Function

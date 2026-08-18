@@ -344,7 +344,7 @@ export const AttendanceTrendCard = forwardRef(
               </div>
             ) : (
               <div className="w-full h-full flex-1" style={{ direction: "ltr", minHeight: compact ? "150px" : "200px" }}>
-                <ResponsiveContainer width="100%" height="100%" minHeight={compact ? 150 : 200}>
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={compact ? 150 : 200} initialDimension={{ width: 320, height: compact ? 150 : 200 }}>
                 <AreaChart
                   data={chartData}
                   margin={{ top: 10, right: isMobile ? 5 : 10, left: -25, bottom: isMobile ? 0 : 5 }}

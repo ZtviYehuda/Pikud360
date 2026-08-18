@@ -23,10 +23,11 @@ import {
   Pencil,
   LogIn,
   Phone,
+  MessageCircle,
   Upload,
 } from "lucide-react";
 import type { Employee } from "@/types/employee.types";
-import { cn, cleanUnitName, calculateAge } from "@/lib/utils";
+import { cn, cleanUnitName, calculateAge, getWhatsAppUrl } from "@/lib/utils";
 import { FilterModal } from "./modals";
 import type { EmployeeFilters } from "./modals/FilterModal";
 import { EmployeeLink } from "@/components/common/EmployeeLink";
@@ -615,16 +616,17 @@ export const EmployeeTable = ({
                             התחבר
                           </Button>
                         )}
-                        {!user?.is_temp_commander && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 px-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg text-[10px]"
-                            onClick={() => handleViewDetails(emp)}
+                        {emp.phone_number && (
+                          <a
+                            href={getWhatsAppUrl(emp.phone_number)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center h-8 px-2 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg text-[10px] font-bold transition-colors"
+                            title="פתח צ'אט ב-WhatsApp"
                           >
-                            <User className="w-3.5 h-3.5 ml-1" />
-                            פרופיל
-                          </Button>
+                            <MessageCircle className="w-3.5 h-3.5 ml-1 text-emerald-600 dark:text-emerald-400" />
+                            וואטסאפ
+                          </a>
                         )}
                         {!user?.is_temp_commander && (
                           <Button
@@ -775,12 +777,17 @@ export const EmployeeTable = ({
                       <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </a>
                   )}
-                  <button
-                    onClick={() => handleViewDetails(emp)}
-                    className="p-1.5 sm:p-2 bg-muted/40 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                  >
-                    <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  </button>
+                  {emp.phone_number && (
+                    <a
+                      href={getWhatsAppUrl(emp.phone_number)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 sm:p-2 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
+                      title="פתח צ'אט ב-WhatsApp"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    </a>
+                  )}
                   <div className="w-px h-4.5 sm:h-5 bg-border/40 mx-0.5 sm:mx-1" />
                   <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground/40" />
                 </div>

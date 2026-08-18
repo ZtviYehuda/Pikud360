@@ -310,12 +310,9 @@ export default function MainLayout() {
 
             {/* System Title (Visible when Sidebar is Open) */}
             {isSidebarOpen && (
-              <div className="flex flex-col text-right transition-all">
-                <span className="font-black text-lg tracking-tight text-foreground font-sans leading-none">
+              <div className="flex items-center text-right transition-all">
+                <span className="font-black text-2xl tracking-tight text-foreground font-sans leading-none">
                   Unit
-                </span>
-                <span className="text-[9px] font-bold text-muted-foreground tracking-widest uppercase mt-0.5 font-mono">
-                  UNIT
                 </span>
               </div>
             )}

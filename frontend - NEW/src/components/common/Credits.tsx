@@ -8,7 +8,7 @@ export const Credits: React.FC = () => {
       dir="rtl"
     >
       <span className="text-sm font-normal text-foreground whitespace-nowrap">
-        פותח ע"י צבי יהודה בטיטו
+        פותח ע"י NZYB
       </span>
     </div>
   );
