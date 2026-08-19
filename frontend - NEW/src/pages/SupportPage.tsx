@@ -79,7 +79,7 @@ export default function SupportPage() {
                 מרכז תמיכה וסיוע
               </h1>
               <p className="text-muted-foreground font-medium max-w-md mx-auto leading-relaxed">
-                אנחנו כאן כדי לעזור לך להפיק את המירב ממערכת Unit. בחר את
+                אנחנו כאן כדי לעזור לך להפיק את המירב ממערכת The Office. בחר את
                 אפיק הסיוע המבוקש.
               </p>
             </header>

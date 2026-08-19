@@ -652,12 +652,12 @@ export default function LoginPage() {
             {/* Large, Bold & Theme-Adaptive System Name Typography */}
             <div className="flex flex-col items-center justify-center">
               <h1 className={cn(
-                "text-3xl md:text-4xl font-black tracking-[0.2em] uppercase bg-clip-text text-transparent font-mono leading-none transition-all duration-300",
+                "text-2xl md:text-3xl font-black tracking-[0.2em] uppercase bg-clip-text text-transparent font-mono leading-none transition-all duration-300",
                 isDark
                   ? "bg-gradient-to-r from-sky-200 via-white to-cyan-300 drop-shadow-[0_2px_16px_rgba(56,189,248,0.6)]"
                   : "bg-gradient-to-r from-slate-900 via-blue-950 to-slate-800 drop-shadow-[0_2px_8px_rgba(30,58,138,0.15)]"
               )}>
-                UNIT
+                THE OFFICE
               </h1>
               <div className={cn(
                 "h-0.5 w-14 bg-gradient-to-r from-transparent mt-1.5 mb-2 rounded-full transition-colors",
@@ -1035,7 +1035,7 @@ export default function LoginPage() {
 
           <div className="mt-2 text-center px-4">
             <p className="text-[10px] text-muted-foreground/70 font-medium font-mono uppercase tracking-[0.2em] leading-relaxed select-none">
-              © 2026 • CYBER UNIT • v1.0.4
+              © 2026 • THE OFFICE • v1.0.4
             </p>
           </div>
         </motion.div>

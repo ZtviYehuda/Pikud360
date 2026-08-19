@@ -134,7 +134,7 @@ export default function ChangePasswordPage() {
           <ShieldCheck className="w-5 h-5 text-primary" />
         </div>
         <span className="text-lg font-black tracking-tight text-foreground bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
-          Unit
+          The Office
         </span>
       </div>
 

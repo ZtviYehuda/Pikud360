@@ -1630,7 +1630,7 @@ export default function CreateEmployeePage() {
                     title="העתק הודעה מסודרת"
                     className="h-[46px] w-[46px] rounded-xl border-border/50 shrink-0 text-muted-foreground hover:text-primary transition-colors"
                     onClick={() => {
-                      const msg = `שלום ${createdCredentials?.name || ""},\nנוצר לך חשבון חדש למערכת Unit.\n\nשם משתמש: ${createdCredentials?.user || ""}\nסיסמה: ${createdCredentials?.pass || ""}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`;
+                      const msg = `שלום ${createdCredentials?.name || ""},\nנוצר לך חשבון חדש למערכת The Office.\n\nשם משתמש: ${createdCredentials?.user || ""}\nסיסמה: ${createdCredentials?.pass || ""}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`;
                       navigator.clipboard.writeText(msg);
                       setCopiedField("pass");
                       toast.success("הודעת פרטי הגישה הועתקה בהצלחה");
@@ -1649,7 +1649,7 @@ export default function CreateEmployeePage() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  const msg = `שלום ${createdCredentials?.name || ""},\nנוצר לך חשבון חדש למערכת Unit.\n\nשם משתמש: ${createdCredentials?.user || ""}\nסיסמה: ${createdCredentials?.pass || ""}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`;
+                  const msg = `שלום ${createdCredentials?.name || ""},\nנוצר לך חשבון חדש למערכת The Office.\n\nשם משתמש: ${createdCredentials?.user || ""}\nסיסמה: ${createdCredentials?.pass || ""}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`;
                   navigator.clipboard.writeText(msg);
                   setCopiedField("full");
                   toast.success("הודעת פרטי הגישה הועתקה בהצלחה");
@@ -1674,7 +1674,7 @@ export default function CreateEmployeePage() {
             <div className="flex flex-col gap-3 pt-2">
               <Button
                 onClick={() => {
-                  const fullMsg = `שלום ${createdCredentials?.name || ""},\nנוצר לך חשבון חדש למערכת Unit.\n\nשם משתמש: ${createdCredentials?.user || ""}\nסיסמה: ${createdCredentials?.pass || ""}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`;
+                  const fullMsg = `שלום ${createdCredentials?.name || ""},\nנוצר לך חשבון חדש למערכת The Office.\n\nשם משתמש: ${createdCredentials?.user || ""}\nסיסמה: ${createdCredentials?.pass || ""}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`;
                   try {
                     navigator.clipboard.writeText(fullMsg);
                   } catch (e) {

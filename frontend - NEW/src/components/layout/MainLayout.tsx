@@ -329,7 +329,7 @@ export default function MainLayout() {
             <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden relative">
               <img
                 src="/matzevet_icon.png"
-                alt="סמל Unit"
+                alt="סמל The Office"
                 className="w-9 h-9 object-contain filter drop-shadow-[0_2px_8px_rgba(56,189,248,0.35)] group-hover:scale-110 transition-transform duration-300"
               />
             </div>
@@ -337,8 +337,8 @@ export default function MainLayout() {
             {/* System Title (Visible when Sidebar is Open) */}
             {isSidebarOpen && (
               <div className="flex items-center text-right transition-all">
-                <span className="font-black text-2xl tracking-tight text-foreground font-sans leading-none">
-                  Unit
+                <span className="font-black text-xl tracking-tight text-foreground font-sans leading-none">
+                  The Office
                 </span>
               </div>
             )}
@@ -546,7 +546,7 @@ export default function MainLayout() {
             >
               <img
                 src="/matzevet_logo.png"
-                alt="לוגו Unit"
+                alt="לוגו The Office"
                 className="w-10 h-10 sm:w-12 sm:h-12 object-contain toren-logo-img"
               />
             </button>
