@@ -136,6 +136,19 @@ export const EmployeeTable = ({
       }
     }
 
+    // Commanders do not see themselves in their own team/subordinate workforce list
+    if (user && !user.is_admin) {
+      const eAny = emp as any;
+      const uAny = user as any;
+      const isSelf =
+        (uAny.id && (String(eAny.id) === String(uAny.id) || String(eAny.user_id) === String(uAny.id))) ||
+        (uAny.employee_id && (String(eAny.id) === String(uAny.employee_id) || String(eAny.user_id) === String(uAny.employee_id))) ||
+        (uAny.username && (eAny.username === uAny.username || eAny.personal_number === uAny.username)) ||
+        (uAny.first_name && uAny.last_name && eAny.first_name?.trim() === uAny.first_name?.trim() && eAny.last_name?.trim() === uAny.last_name?.trim());
+
+      if (isSelf) return false;
+    }
+
     // Inactive officers are strictly visible only to Admins in the repository
     if (!user?.is_admin && !emp.is_active) {
       return false;

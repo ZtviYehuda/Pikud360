@@ -37,17 +37,20 @@ const apiClient = axios.create({
   timeout: 15_000,
 });
 
-// Request interceptor — attach token
+// Request interceptor — attach token and cache control
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
     if (token) config.headers.Authorization = `Bearer ${token}`;
+    // Ensure fresh data on dynamic API calls
+    config.headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+    config.headers["Pragma"] = "no-cache";
     return config;
   },
   (error) => Promise.reject(error),
 );
 
-// Response interceptor — handle 401 and silent refresh via HttpOnly Cookie
+// Response interceptor — auto invalidate in-memory cache on mutations, handle 401 and silent refresh
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value?: unknown) => void;
@@ -74,7 +77,13 @@ const clearAuthState = () => {
 };
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const method = response.config.method?.toLowerCase() || "";
+    if (["post", "put", "patch", "delete"].includes(method)) {
+      invalidateCache();
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 

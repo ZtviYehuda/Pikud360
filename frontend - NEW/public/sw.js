@@ -1,10 +1,10 @@
-const CACHE_NAME = 'matzevet-cache-v2';
+const CACHE_NAME = 'the-office-cache-v3';
 const OFFLINE_URL = '/offline.html';
 
 // Core assets to pre-cache immediately
 const PRECACHE_ASSETS = [
   OFFLINE_URL,
-  '/logo_unit.png',
+  '/matzevet_logo.png',
   '/',
 ];
 

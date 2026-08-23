@@ -1,11 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
-import {
-  useParams,
-  useNavigate,
-  useLocation,
-} from "react-router-dom";
+import { useParams, useNavigate, useLocation, useBlocker } from "react-router-dom";
 import apiClient from "@/config/api.client";
 import type { Employee } from "@/types/employee.types";
+import { generateUniqueUsername } from "@/utils/usernameGenerator";
 import {
   Loader2,
   User as UserIcon,
@@ -121,7 +118,8 @@ const Field = ({
   fieldKey?: string;
   onSave?: (key: string, value: string) => void;
 }) => {
-  const hasValue = value !== undefined && value !== null && value !== "" && value !== "-";
+  const hasValue =
+    value !== undefined && value !== null && value !== "" && value !== "-";
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
 
@@ -137,18 +135,22 @@ const Field = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") { e.preventDefault(); handleSave(); }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSave();
+    }
     if (e.key === "Escape") setEditing(false);
   };
 
   const normalizedHref = href?.trim();
-  const safeHref = hasValue && normalizedHref
-    ? normalizedHref.startsWith("mailto:")
-      ? `mailto:${normalizedHref.slice(7).trim()}`
-      : normalizedHref.startsWith("tel:")
-      ? `tel:${normalizedHref.slice(4).trim().replace(/\s+/g, "")}`
-      : normalizedHref
-    : undefined;
+  const safeHref =
+    hasValue && normalizedHref
+      ? normalizedHref.startsWith("mailto:")
+        ? `mailto:${normalizedHref.slice(7).trim()}`
+        : normalizedHref.startsWith("tel:")
+          ? `tel:${normalizedHref.slice(4).trim().replace(/\s+/g, "")}`
+          : normalizedHref
+      : undefined;
 
   const isExternalLink =
     safeHref?.startsWith("mailto:") || safeHref?.startsWith("tel:");
@@ -177,7 +179,7 @@ const Field = ({
               dir="auto"
               className={cn(
                 "flex-1 text-[15px] font-bold bg-transparent border-b border-primary/40 outline-none pb-0.5 text-foreground",
-                mono && "font-mono"
+                mono && "font-mono",
               )}
             />
             <button
@@ -208,13 +210,25 @@ const Field = ({
         "flex items-start gap-4 p-4 rounded-2xl border border-transparent transition-all",
         isEditable
           ? "hover:border-primary/10 hover:bg-primary/[0.02] cursor-pointer group"
-          : "bg-transparent"
+          : "bg-transparent",
       )}
       title={isEditable ? "לחץ פעמיים לעריכה" : undefined}
     >
       {Icon && (
-        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", hasValue ? "bg-primary/5" : "bg-slate-100/60 dark:bg-slate-800/40")}>
-          <Icon className={cn("w-4 h-4 transition-colors", hasValue ? "text-slate-400 group-hover:text-primary" : "text-slate-300 dark:text-slate-600")} />
+        <div
+          className={cn(
+            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+            hasValue ? "bg-primary/5" : "bg-slate-100/60 dark:bg-slate-800/40",
+          )}
+        >
+          <Icon
+            className={cn(
+              "w-4 h-4 transition-colors",
+              hasValue
+                ? "text-slate-400 group-hover:text-primary"
+                : "text-slate-300 dark:text-slate-600",
+            )}
+          />
         </div>
       )}
       <div className="flex-1 flex flex-col justify-center">
@@ -223,7 +237,10 @@ const Field = ({
             {label}
           </span>
           {isEditable && (
-            <Pencil className="w-3 h-3 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
+            <Pencil
+              className="w-3 h-3 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity"
+              aria-hidden="true"
+            />
           )}
         </div>
         {hasValue ? (
@@ -243,7 +260,7 @@ const Field = ({
               className={cn(
                 "font-bold text-[15px] mt-0.5 text-primary hover:underline inline-block w-fit",
                 mono && "font-mono",
-                valueClassName
+                valueClassName,
               )}
             >
               {value}
@@ -253,7 +270,7 @@ const Field = ({
               className={cn(
                 "font-bold text-[15px] mt-0.5",
                 mono && "font-mono",
-                valueClassName || "text-foreground"
+                valueClassName || "text-foreground",
               )}
             >
               {value}
@@ -268,7 +285,6 @@ const Field = ({
     </div>
   );
 };
-
 
 // ── Shared Component: Edit Field Wrapper ─────────────────────────────────────
 const EditField = ({
@@ -307,20 +323,22 @@ const Section = ({
   title,
   children,
   className,
+  contentClassName,
   action,
 }: {
   title: string;
   children: React.ReactNode;
   className?: string;
+  contentClassName?: string;
   action?: React.ReactNode;
 }) => (
   <div
     className={cn(
-      "bg-card/40 backdrop-blur-xl border border-border/40 rounded-[2rem] overflow-hidden",
+      "bg-card/40 backdrop-blur-xl border border-border/40 rounded-[2rem] overflow-hidden flex flex-col",
       className,
     )}
   >
-    <div className="flex items-center justify-between px-6 py-5 border-b border-border/40">
+    <div className="flex items-center justify-between px-6 py-5 border-b border-border/40 shrink-0">
       <div className="flex items-center gap-3">
         <div className="w-1 h-5 bg-primary rounded-full" />
         <span className="text-base font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">
@@ -329,7 +347,7 @@ const Section = ({
       </div>
       {action}
     </div>
-    <div className="p-6">{children}</div>
+    <div className={cn("p-6 flex-1", contentClassName)}>{children}</div>
   </div>
 );
 
@@ -351,17 +369,25 @@ const ActiveStatusPopover = ({ isActive, onChange, disabled }: any) => {
           )}
           title={isActive ? "שוטר פעיל" : "שוטר לא פעיל"}
         >
-          <div className={cn("w-2.5 h-2.5 rounded-full bg-white", isActive ? "animate-pulse" : "")} />
+          <div
+            className={cn(
+              "w-2.5 h-2.5 rounded-full bg-white",
+              isActive ? "animate-pulse" : "",
+            )}
+          />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-4 rounded-2xl border-border/40" dir="rtl">
+      <PopoverContent
+        className="w-56 p-4 rounded-2xl border-border/40"
+        dir="rtl"
+      >
         <div className="space-y-3">
           <p className="text-[11px] text-muted-foreground font-bold leading-relaxed">
-            {isActive 
-              ? "השוטר מוגדר כפעיל במערכת. ניתן להעביר אותו למצב לא פעיל במידה וסיים את תפקידו או עבר יחידה." 
+            {isActive
+              ? "השוטר מוגדר כפעיל במערכת. ניתן להעביר אותו למצב לא פעיל במידה וסיים את תפקידו או עבר יחידה."
               : "השוטר מוגדר כלא פעיל. הוא לא יופיע בדוחות השוטפים ובמצבת כוח האדם הפעילה."}
           </p>
-          <Button 
+          <Button
             variant={isActive ? "destructive" : "default"}
             size="sm"
             className="w-full h-9 rounded-xl font-black text-xs"
@@ -394,11 +420,16 @@ const DeactivateConfirmModal = ({
 }) => {
   if (!employee) return null;
 
-  const fullName = `${employee.first_name || ""} ${employee.last_name || ""}`.trim() || "העובד";
+  const fullName =
+    `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
+    "העובד";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg p-6 sm:p-7 rounded-[2rem] border border-rose-200/60 dark:border-rose-900/40 shadow-2xl bg-white dark:bg-slate-950" dir="rtl">
+      <DialogContent
+        className="sm:max-w-lg p-6 sm:p-7 rounded-[2rem] border border-rose-200/60 dark:border-rose-900/40 shadow-2xl bg-white dark:bg-slate-950"
+        dir="rtl"
+      >
         <DialogHeader className="text-right space-y-3">
           <div className="flex items-center gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/20 shadow-sm">
@@ -434,7 +465,8 @@ const DeactivateConfirmModal = ({
                   הנתונים נשמרים במאגר מאובטח
                 </h5>
                 <p className="text-[11.5px] font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
-                  הפרטים האישיים, היסטוריית הנוכחות והתיעוד יישמרו במאגר באופן מאובטח.
+                  הפרטים האישיים, היסטוריית הנוכחות והתיעוד יישמרו במאגר באופן
+                  מאובטח.
                 </p>
               </div>
             </div>
@@ -449,7 +481,8 @@ const DeactivateConfirmModal = ({
                   הסתרה מכלל המפקדים והרשימות
                 </h5>
                 <p className="text-[11.5px] font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
-                  השוטר לא יוצג למפקדים השונים, בסידורי העבודה, ברשימות השוטפות ובדוחות הפעילים.
+                  השוטר לא יוצג למפקדים השונים, בסידורי העבודה, ברשימות השוטפות
+                  ובדוחות הפעילים.
                 </p>
               </div>
             </div>
@@ -464,7 +497,8 @@ const DeactivateConfirmModal = ({
                   מאגר ייעודי ושחזור לאדמין בלבד
                 </h5>
                 <p className="text-[11.5px] font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
-                  השוטר יופיע במאגר הלא-פעילים הנגיש למנהלי מערכת בלבד, ורק מנהל מערכת (אדמין) מוסמך לצפות בו ולהחזירו לפעילות מלאה.
+                  השוטר יופיע במאגר הלא-פעילים הנגיש למנהלי מערכת בלבד, ורק מנהל
+                  מערכת (אדמין) מוסמך לצפות בו ולהחזירו לפעילות מלאה.
                 </p>
               </div>
             </div>
@@ -501,7 +535,6 @@ const DeactivateConfirmModal = ({
   );
 };
 
-
 // ── Tab Button (New Premium Design) ──────────────────────────────────────────
 const TabButton = ({ active, onClick, icon: Icon, label }: any) => (
   <button
@@ -529,7 +562,7 @@ const TabButton = ({ active, onClick, icon: Icon, label }: any) => (
             "w-4 h-4 transition-all duration-200",
             active
               ? "text-primary scale-110"
-              : "text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300"
+              : "text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300",
           )}
         />
       )}
@@ -599,19 +632,13 @@ const MobileProfileHeader = ({
         >
           ביטול
         </Button>
-        <Button
-          onClick={onSave}
-          className="flex-1 rounded-xl h-12 font-black"
-        >
+        <Button onClick={onSave} className="flex-1 rounded-xl h-12 font-black">
           <Save className="w-4 h-4 ml-2" /> שמירה
         </Button>
       </div>
     ) : (
       <div className="flex gap-2 w-full mt-6">
-        <Button
-          onClick={onEdit}
-          className="flex-1 rounded-xl h-12 font-black"
-        >
+        <Button onClick={onEdit} className="flex-1 rounded-xl h-12 font-black">
           <Settings className="w-4 h-4 ml-2" /> עריכת פרופיל
         </Button>
         {isActive ? (
@@ -641,7 +668,15 @@ const MobileProfileHeader = ({
 );
 
 // ── Action Footer (Sticky for Mobile) ────────────────────────────────────────
-const ActionFooter = ({ editMode, onEdit, onSave, onCancel, saving, isActive, onToggleActive }: any) => (
+const ActionFooter = ({
+  editMode,
+  onEdit,
+  onSave,
+  onCancel,
+  saving,
+  isActive,
+  onToggleActive,
+}: any) => (
   <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 z-50 flex gap-3">
     {editMode ? (
       <>
@@ -667,10 +702,7 @@ const ActionFooter = ({ editMode, onEdit, onSave, onCancel, saving, isActive, on
       </>
     ) : (
       <div className="flex gap-2 w-full">
-        <Button
-          onClick={onEdit}
-          className="flex-1 rounded-xl h-12 font-black"
-        >
+        <Button onClick={onEdit} className="flex-1 rounded-xl h-12 font-black">
           <Settings className="w-4 h-4 ml-2" /> עריכת פרופיל
         </Button>
         <Button
@@ -680,7 +712,7 @@ const ActionFooter = ({ editMode, onEdit, onSave, onCancel, saving, isActive, on
             "flex-1 rounded-xl h-12 font-black border transition-all active:scale-[0.98]",
             isActive
               ? "bg-rose-50 border-rose-200 text-rose-600 dark:bg-rose-950/20 dark:border-rose-900/50 dark:text-rose-400"
-              : "bg-emerald-50 border-emerald-200 text-emerald-600 dark:bg-emerald-950/20 dark:border-emerald-900/50 dark:text-emerald-400"
+              : "bg-emerald-50 border-emerald-200 text-emerald-600 dark:bg-emerald-950/20 dark:border-emerald-900/50 dark:text-emerald-400",
           )}
         >
           {isActive ? "העבר ללא פעיל" : "החזר לפעיל"}
@@ -705,30 +737,41 @@ export default function EmployeeViewPage() {
   const [deactivatingLoading, setDeactivatingLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Unsaved changes & Draft state
+  const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [pendingNavigationPath, setPendingNavigationPath] = useState<string | null>(null);
+
   // Form State
   const [formData, setFormData] = useState<any>({});
   const [structure, setStructure] = useState<any[]>([]);
   const [serviceTypes, setServiceTypes] = useState<any[]>([]);
   const [selectedDeptId, setSelectedDeptId] = useState<string>("");
   const [selectedSectionId, setSelectedSectionId] = useState<string>("");
-  const [createdCredentials, setCreatedCredentials] = useState<{name: string, user: string, pass: string} | null>(null);
+  const [createdCredentials, setCreatedCredentials] = useState<{
+    name: string;
+    user: string;
+    pass: string;
+  } | null>(null);
   const [copiedField, setCopiedField] = useState("");
 
   const fetchData = async () => {
     if (!id || id === "NaN" || id === "undefined" || id === "null") return;
     try {
-      const [{ data: empResponse }, { data: structData }, { data: serviceData }] =
-        await Promise.all([
-          apiClient.get<any>(
-            endpoints.getEmployeeByIdEndpoint(id as any),
-          ),
-          apiClient.get("/employees/structure"),
-          apiClient.get("/employees/service-types"),
-        ]);
+      const [
+        { data: empResponse },
+        { data: structData },
+        { data: serviceData },
+      ] = await Promise.all([
+        apiClient.get<any>(endpoints.getEmployeeByIdEndpoint(id as any)),
+        apiClient.get("/employees/structure"),
+        apiClient.get("/employees/service-types"),
+      ]);
       const empRaw = empResponse?.data || empResponse;
-      const is_active = empRaw?.is_active !== undefined
-        ? Boolean(empRaw.is_active)
-        : empRaw?.status === "ACTIVE";
+      const is_active =
+        empRaw?.is_active !== undefined
+          ? Boolean(empRaw.is_active)
+          : empRaw?.status === "ACTIVE";
 
       const empData = {
         ...empRaw,
@@ -744,17 +787,39 @@ export default function EmployeeViewPage() {
         status: is_active ? "ACTIVE" : "INACTIVE",
       };
 
-      const realStruct = (structData as any)?.departments || (structData as any)?.data || structData;
-      const realService = (serviceData as any)?.service_types || (serviceData as any)?.data || serviceData;
+      const realStruct =
+        (structData as any)?.departments ||
+        (structData as any)?.data ||
+        structData;
+      const realService =
+        (serviceData as any)?.service_types ||
+        (serviceData as any)?.data ||
+        serviceData;
 
       setEmployee(empData);
       setStructure(Array.isArray(realStruct) ? realStruct : []);
       setServiceTypes(Array.isArray(realService) ? realService : []);
 
+      // Check and restore draft from localStorage if available
+      let initialForm = empData;
+      try {
+        const draftKey = `employee_edit_draft_${id}`;
+        const savedDraftStr = localStorage.getItem(draftKey);
+        if (savedDraftStr) {
+          const parsed = JSON.parse(savedDraftStr);
+          if (parsed && parsed._id === id && parsed.data) {
+            initialForm = { ...empData, ...parsed.data };
+            setHasRestoredDraft(true);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to restore draft:", e);
+      }
+
       // Init form
-      setFormData(empData);
-      setSelectedDeptId(empData?.department_id?.toString() || "");
-      setSelectedSectionId(empData?.section_id?.toString() || "");
+      setFormData(initialForm);
+      setSelectedDeptId(initialForm?.department_id?.toString() || "");
+      setSelectedSectionId(initialForm?.section_id?.toString() || "");
     } catch {
       toast.error("שגיאה בטעינת הנתונים");
     } finally {
@@ -789,8 +854,104 @@ export default function EmployeeViewPage() {
     );
   }, [selectedSectionId, sections]);
 
+  // Check if form has unsaved modifications
+  const isDirty = useMemo(() => {
+    if (!employee || !formData || !editMode) return false;
+    const fields = [
+      "first_name",
+      "last_name",
+      "phone",
+      "phone_number",
+      "email",
+      "personal_email",
+      "city",
+      "birth_date",
+      "birthdate",
+      "gender",
+      "service_type",
+      "service_type_id",
+      "service_type_name",
+      "police_license",
+      "security_clearance",
+      "is_commander",
+      "department_id",
+      "section_id",
+      "team_id",
+      "enlistment_date",
+      "discharge_date",
+      "emergency_contact",
+    ];
+    return fields.some((f) => {
+      const v1 =
+        formData[f] !== undefined && formData[f] !== null
+          ? String(formData[f]).trim()
+          : "";
+      const v2 =
+        employee[f] !== undefined && employee[f] !== null
+          ? String(employee[f]).trim()
+          : "";
+      return v1 !== v2;
+    });
+  }, [formData, employee, editMode]);
+
+  // Auto-save draft to localStorage whenever formData changes while in edit mode
+  useEffect(() => {
+    if (!id || !editMode) return;
+    const draftKey = `employee_edit_draft_${id}`;
+    if (isDirty) {
+      localStorage.setItem(
+        draftKey,
+        JSON.stringify({ _id: id, ts: Date.now(), data: formData }),
+      );
+    }
+  }, [formData, isDirty, editMode, id]);
+
+  // Browser refresh / leave window event handler
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty && editMode) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty, editMode]);
+
+  // Intercept any internal React Router navigation if there are unsaved changes in editMode
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      Boolean(isDirty && editMode && currentLocation.pathname !== nextLocation.pathname)
+  );
+
+  const isBlocked = blocker.state === "blocked";
+  const showUnsavedPrompt = showUnsavedModal || isBlocked;
+
+  const handleSafeNavigation = (targetPath?: string) => {
+    if (isDirty && editMode) {
+      setPendingNavigationPath(targetPath || `/employees/${id}`);
+      setShowUnsavedModal(true);
+    } else {
+      if (targetPath) {
+        navigate(targetPath);
+      } else {
+        setEditMode(false);
+        navigate(`/employees/${id}`);
+      }
+    }
+  };
+
   const handleFieldChange = (field: string, value: any) => {
-    setFormData((prev: any) => ({ ...prev, [field]: value }));
+    setFormData((prev: any) => {
+      const next = { ...prev, [field]: value };
+      if (field === "phone_number") next.phone = value;
+      if (field === "phone") next.phone_number = value;
+      if (field === "email") next.personal_email = value;
+      if (field === "personal_email") next.email = value;
+      if (field === "birth_date") next.birthdate = value;
+      if (field === "birthdate") next.birth_date = value;
+      return next;
+    });
   };
 
   const handleInlineFieldSave = async (field: string, value: string) => {
@@ -798,7 +959,7 @@ export default function EmployeeViewPage() {
 
     if (field === "phone_number" || field === "phone") {
       if (value && !isValidIsraeliPhone(value)) {
-        toast.error("מספר הטלפון אינו תקין לפי תקן ישראלי (לדוגמה: 0501234567)");
+        toast.error("מספר הטלפון אינו תקין (לדוגמה: 0501234567)");
         return;
       }
     }
@@ -806,11 +967,47 @@ export default function EmployeeViewPage() {
     const loadingToast = toast.loading("שומר...");
     try {
       const payload: Record<string, any> = { [field]: value };
-      if (field === "phone_number") payload.phone = value;
-      if (field === "email") payload.personal_email = value;
-      if (field === "birth_date") payload.birthdate = value;
+      if (field === "phone_number" || field === "phone") {
+        payload.phone = value;
+        payload.phone_number = value;
+      }
+      if (field === "email" || field === "personal_email") {
+        payload.personal_email = value;
+        payload.email = value;
+      }
+      if (field === "birth_date" || field === "birthdate") {
+        payload.birthdate = value;
+        payload.birth_date = value;
+      }
 
-      await apiClient.put(endpoints.updateEmployeeEndpoint(id as any), payload);
+      const { data: res } = await apiClient.put(
+        endpoints.updateEmployeeEndpoint(id as any),
+        payload,
+      );
+      const updatedData = res?.data || res;
+      if (updatedData && typeof updatedData === "object") {
+        setEmployee((prev: any) => ({
+          ...prev,
+          ...updatedData,
+          [field]: value,
+          ...(field === "phone_number" || field === "phone" ? { phone: value, phone_number: value } : {}),
+          ...(field === "email" || field === "personal_email" ? { email: value, personal_email: value } : {}),
+          ...(field === "birth_date" || field === "birthdate" ? { birth_date: value, birthdate: value } : {}),
+        }));
+        setFormData((prev: any) => ({
+          ...prev,
+          ...updatedData,
+          [field]: value,
+          ...(field === "phone_number" || field === "phone" ? { phone: value, phone_number: value } : {}),
+          ...(field === "email" || field === "personal_email" ? { email: value, personal_email: value } : {}),
+          ...(field === "birth_date" || field === "birthdate" ? { birth_date: value, birthdate: value } : {}),
+        }));
+      }
+      // If inline saved, clear draft for this field
+      if (id) {
+        localStorage.removeItem(`employee_edit_draft_${id}`);
+        setHasRestoredDraft(false);
+      }
       toast.success("השדה עודכן בהצלחה", { id: loadingToast });
       await fetchData();
     } catch {
@@ -818,24 +1015,45 @@ export default function EmployeeViewPage() {
     }
   };
 
-
-
   const handleSubmit = async () => {
     if (!employee) return;
     setSaving(true);
-    
+
     const isNowCmd = formData.is_commander || formData.is_admin;
     const wasCmd = employee.is_commander || employee.is_admin;
-    const hasDummyUsername = employee.username?.startsWith('emp_');
+    const hasDummyUsername =
+      !employee.username ||
+      employee.username.startsWith("emp_") ||
+      /^\d+$/.test(employee.username);
 
     const needsNewCredentials = isNowCmd && (!wasCmd || hasDummyUsername);
     let generatedCreds = null;
-    let payload = { ...formData };
+    let payload: any = { ...formData };
+    if (formData.phone_number !== undefined) {
+      payload.phone = formData.phone_number;
+      payload.phone_number = formData.phone_number;
+    }
+    if (formData.email !== undefined) {
+      payload.personal_email = formData.email;
+      payload.email = formData.email;
+    }
+    if (formData.birth_date !== undefined) {
+      payload.birthdate = formData.birth_date;
+      payload.birth_date = formData.birth_date;
+    }
 
     if (needsNewCredentials) {
+      const generatedUsername = generateUniqueUsername(
+        formData.first_name || employee.first_name || "",
+        formData.last_name || employee.last_name || "",
+      );
+      const generatedPassword = Math.floor(
+        100000 + Math.random() * 900000,
+      ).toString();
+
       generatedCreds = {
-        user: Math.floor(100000 + Math.random() * 900000).toString(),
-        pass: Math.floor(100000 + Math.random() * 900000).toString()
+        user: generatedUsername,
+        pass: generatedPassword,
       };
       payload.username = generatedCreds.user;
       payload.password = generatedCreds.pass;
@@ -843,16 +1061,30 @@ export default function EmployeeViewPage() {
     }
 
     try {
-      await apiClient.put(
+      const { data: res } = await apiClient.put(
         endpoints.updateEmployeeEndpoint(id!),
         payload,
       );
-      
+
+      const updatedEntity = res?.data || res;
+      if (updatedEntity && typeof updatedEntity === "object") {
+        setEmployee((prev: any) => ({ ...prev, ...updatedEntity }));
+        setFormData((prev: any) => ({ ...prev, ...updatedEntity }));
+      }
+
+      // Successfully saved - remove stored draft
+      if (id) {
+        localStorage.removeItem(`employee_edit_draft_${id}`);
+        setHasRestoredDraft(false);
+      }
+
       if (generatedCreds) {
         setCreatedCredentials({
-          name: employee.dominant_name || `${employee.first_name || ''} ${employee.last_name || ''}`,
+          name:
+            employee.dominant_name ||
+            `${employee.first_name || ""} ${employee.last_name || ""}`,
           user: generatedCreds.user,
-          pass: generatedCreds.pass
+          pass: generatedCreds.pass,
         });
       } else {
         toast.success("כרטיס שוטר עודכן בהצלחה");
@@ -869,9 +1101,10 @@ export default function EmployeeViewPage() {
 
   const handleActiveToggleRequest = () => {
     if (!employee) return;
-    const currentActive = employee.is_active !== undefined
-      ? Boolean(employee.is_active)
-      : (employee as any).status === "ACTIVE";
+    const currentActive =
+      employee.is_active !== undefined
+        ? Boolean(employee.is_active)
+        : (employee as any).status === "ACTIVE";
 
     if (currentActive) {
       setShowDeactivateModal(true);
@@ -888,23 +1121,29 @@ export default function EmployeeViewPage() {
     const targetId = employee?.id || id;
     if (!targetId || targetId === "0") return;
 
-    const currentActive = employee?.is_active !== undefined
-      ? Boolean(employee.is_active)
-      : (employee as any)?.status === "ACTIVE";
-    const nextActive = targetNextActive !== undefined ? targetNextActive : !currentActive;
+    const currentActive =
+      employee?.is_active !== undefined
+        ? Boolean(employee.is_active)
+        : (employee as any)?.status === "ACTIVE";
+    const nextActive =
+      targetNextActive !== undefined ? targetNextActive : !currentActive;
 
     setDeactivatingLoading(true);
-    const loadingToast = toast.loading(nextActive ? "מחזיר שוטר למצב פעיל..." : "מעביר שוטר למצב לא פעיל...");
+    const loadingToast = toast.loading(
+      nextActive ? "מחזיר שוטר למצב פעיל..." : "מעביר שוטר למצב לא פעיל...",
+    );
     try {
-      await apiClient.put(
-        endpoints.updateEmployeeEndpoint(targetId),
-        {
-          ...(employee || {}),
-          is_active: nextActive,
-          status: nextActive ? "ACTIVE" : "INACTIVE",
-        }
+      await apiClient.put(endpoints.updateEmployeeEndpoint(targetId), {
+        ...(employee || {}),
+        is_active: nextActive,
+        status: nextActive ? "ACTIVE" : "INACTIVE",
+      });
+      toast.success(
+        nextActive
+          ? "השוטר הוחזר למצב פעיל בהצלחה"
+          : "השוטר הועבר למצב לא פעיל",
+        { id: loadingToast },
       );
-      toast.success(nextActive ? "השוטר הוחזר למצב פעיל בהצלחה" : "השוטר הועבר למצב לא פעיל", { id: loadingToast });
       setShowDeactivateModal(false);
       await fetchData();
     } catch (err) {
@@ -929,11 +1168,17 @@ export default function EmployeeViewPage() {
     if (!employee) return;
 
     if (isSupportUser) {
-      toast.error("משתמש 'צוות תמיכה' (אדמין ראשי) הינו משתמש מערכת מוגן ואינו ניתן למחיקה");
+      toast.error(
+        "משתמש 'צוות תמיכה' (אדמין ראשי) הינו משתמש מערכת מוגן ואינו ניתן למחיקה",
+      );
       return;
     }
 
-    if (!confirm(`האם אתה בטוח שברצונך למחוק את המשתמש ${employee.first_name} ${employee.last_name}?`)) {
+    if (
+      !confirm(
+        `האם אתה בטוח שברצונך למחוק את המשתמש ${employee.first_name} ${employee.last_name}?`,
+      )
+    ) {
       return;
     }
 
@@ -994,13 +1239,19 @@ export default function EmployeeViewPage() {
         }
       />
 
-      <Dialog open={!!createdCredentials} onOpenChange={async () => {
-        setCreatedCredentials(null);
-        await fetchData();
-        setEditMode(false);
-        navigate(`/employees/${id}`);
-      }}>
-        <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-xl border-border/50 text-right p-0 overflow-hidden" dir="rtl">
+      <Dialog
+        open={!!createdCredentials}
+        onOpenChange={async () => {
+          setCreatedCredentials(null);
+          await fetchData();
+          setEditMode(false);
+          navigate(`/employees/${id}`);
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-md bg-card/95 backdrop-blur-xl border-border/50 text-right p-0 overflow-hidden"
+          dir="rtl"
+        >
           <DialogHeader className="p-6 bg-primary/5 pb-4 border-b border-primary/10">
             <div className="w-12 h-10 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto mb-4">
               <Check className="w-6 h-6" />
@@ -1012,47 +1263,63 @@ export default function EmployeeViewPage() {
               פרטי הגישה החדשים נוצרו בהצלחה
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="p-6 space-y-6">
             <div className="bg-muted/50 rounded-2xl p-5 border border-border/50 space-y-4">
               <div>
-                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1.5 block">שם משתמש</Label>
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1.5 block">
+                  שם משתמש
+                </Label>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 bg-background border border-border/50 rounded-xl px-4 py-2.5 font-mono text-center font-black text-lg text-foreground tracking-widest select-all">
                     {createdCredentials?.user}
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
+                  <Button
+                    variant="outline"
+                    size="icon"
                     className="h-[46px] w-[46px] rounded-xl border-border/50 shrink-0 text-muted-foreground hover:text-primary transition-colors"
                     onClick={() => {
-                      navigator.clipboard.writeText(createdCredentials?.user || "");
+                      navigator.clipboard.writeText(
+                        createdCredentials?.user || "",
+                      );
                       setCopiedField("user");
                       setTimeout(() => setCopiedField(""), 2000);
                     }}
                   >
-                    {copiedField === "user" ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                    {copiedField === "user" ? (
+                      <Check className="w-4 h-4 text-emerald-500" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
                   </Button>
                 </div>
               </div>
-              
+
               <div>
-                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1.5 block">סיסמה זמנית</Label>
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1.5 block">
+                  סיסמה זמנית
+                </Label>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 bg-background border border-border/50 rounded-xl px-4 py-2.5 font-mono text-center font-black text-lg text-foreground tracking-widest select-all">
                     {createdCredentials?.pass}
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
+                  <Button
+                    variant="outline"
+                    size="icon"
                     className="h-[46px] w-[46px] rounded-xl border-border/50 shrink-0 text-muted-foreground hover:text-primary transition-colors"
                     onClick={() => {
-                      navigator.clipboard.writeText(createdCredentials?.pass || "");
+                      navigator.clipboard.writeText(
+                        createdCredentials?.pass || "",
+                      );
                       setCopiedField("pass");
                       setTimeout(() => setCopiedField(""), 2000);
                     }}
                   >
-                    {copiedField === "pass" ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                    {copiedField === "pass" ? (
+                      <Check className="w-4 h-4 text-emerald-500" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
                   </Button>
                 </div>
               </div>
@@ -1063,12 +1330,17 @@ export default function EmployeeViewPage() {
                 <Loader2 className="w-4 h-4 text-amber-600 animate-spin" />
               </div>
               <div>
-                <p className="text-xs font-black text-amber-900 leading-tight">דרישת החלפת סיסמה הופעלה</p>
-                <p className="text-[10px] font-bold text-amber-600/80 mt-0.5 leading-tight">בחיבורו הראשון של המפקד למערכת, הוא יידרש להחליף סיסמה זו לסיסמה אישית משלו.</p>
+                <p className="text-xs font-black text-amber-900 leading-tight">
+                  דרישת החלפת סיסמה הופעלה
+                </p>
+                <p className="text-[10px] font-bold text-amber-600/80 mt-0.5 leading-tight">
+                  בחיבורו הראשון של המפקד למערכת, הוא יידרש להחליף סיסמה זו
+                  לסיסמה אישית משלו.
+                </p>
               </div>
             </div>
 
-            <Button 
+            <Button
               className="w-full h-12 text-sm font-black rounded-xl"
               onClick={async () => {
                 setCreatedCredentials(null);
@@ -1083,11 +1355,93 @@ export default function EmployeeViewPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Unsaved Changes Confirmation Modal */}
+      <Dialog
+        open={showUnsavedPrompt}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowUnsavedModal(false);
+            if (blocker.state === "blocked") {
+              blocker.reset();
+            }
+          }
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-md bg-card/95 backdrop-blur-xl border-border/50 text-right p-0 overflow-hidden"
+          dir="rtl"
+        >
+          <DialogHeader className="p-6 bg-amber-500/5 pb-4 border-b border-amber-500/10">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <DialogTitle className="text-xl font-black text-center text-foreground mb-1">
+              שינויים שלא נשמרו
+            </DialogTitle>
+            <DialogDescription className="text-center font-bold text-muted-foreground text-sm">
+              ביצעת שינויים בכרטיס השוטר שטרם נשמרו. כיצד ברצונך להמשיך?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="p-6 space-y-3">
+            <Button
+              className="w-full h-12 text-sm font-black rounded-xl gap-2 shadow-sm"
+              onClick={async () => {
+                setShowUnsavedModal(false);
+                await handleSubmit();
+                if (blocker.state === "blocked") {
+                  blocker.proceed();
+                } else if (pendingNavigationPath) {
+                  navigate(pendingNavigationPath);
+                }
+              }}
+            >
+              <Save className="w-4 h-4" />
+              שמור שינויים וצא
+            </Button>
+
+            <Button
+              variant="destructive"
+              className="w-full h-12 text-sm font-black rounded-xl gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+              onClick={() => {
+                if (id) localStorage.removeItem(`employee_edit_draft_${id}`);
+                setFormData(employee);
+                setHasRestoredDraft(false);
+                setShowUnsavedModal(false);
+                setEditMode(false);
+                toast.info("השינויים בוטלו");
+                if (blocker.state === "blocked") {
+                  blocker.proceed();
+                } else {
+                  navigate(pendingNavigationPath || `/employees/${id}`);
+                }
+              }}
+            >
+              <Trash2 className="w-4 h-4" />
+              מחק טיוטה וצא ללא שמירה
+            </Button>
+
+            <Button
+              variant="ghost"
+              className="w-full h-11 text-sm font-bold rounded-xl text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setShowUnsavedModal(false);
+                if (blocker.state === "blocked") {
+                  blocker.reset();
+                }
+              }}
+            >
+              המשך עריכה
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="w-full max-w-full mx-auto pt-6 pb-4 px-4 sm:px-6 transition-all pb-32 lg:pb-12">
         {/* Top bar with back button */}
         <div className="flex items-center justify-between mb-6">
           <button
-            onClick={() => navigate('/employees')}
+            onClick={() => handleSafeNavigation("/employees")}
             className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-primary transition-colors bg-white dark:bg-slate-900 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800"
           >
             <ArrowRight className="w-4 h-4" />{" "}
@@ -1113,10 +1467,7 @@ export default function EmployeeViewPage() {
           editMode={editMode}
           handleFieldChange={handleFieldChange}
           onSave={handleSubmit}
-          onCancel={() => {
-            setEditMode(false);
-            setFormData(employee);
-          }}
+          onCancel={() => handleSafeNavigation(`/employees/${id}`)}
           onEdit={() => setEditMode(true)}
           onToggleActive={handleActiveToggleRequest}
           isActive={employee.is_active}
@@ -1143,7 +1494,6 @@ export default function EmployeeViewPage() {
                 >
                   {formData.first_name?.[0]}
                   {formData.last_name?.[0]}
-
                 </div>
               </div>
 
@@ -1232,7 +1582,7 @@ export default function EmployeeViewPage() {
                     <Button
                       variant="outline"
                       size="lg"
-                      onClick={() => navigate(`/employees/${id}`)}
+                      onClick={() => handleSafeNavigation(`/employees/${id}`)}
                       className="w-full rounded-xl font-bold h-12 bg-white dark:bg-slate-950"
                     >
                       ביטול
@@ -1253,23 +1603,43 @@ export default function EmployeeViewPage() {
                         <Button
                           variant="outline"
                           onClick={async () => {
-                            if (!window.confirm(`האם אתה בטוח שברצונך להתחבר בתור ${employee.first_name} ${employee.last_name}?`)) return;
+                            if (
+                              !window.confirm(
+                                `האם אתה בטוח שברצונך להתחבר בתור ${employee.first_name} ${employee.last_name}?`,
+                              )
+                            )
+                              return;
                             try {
-                              const { data } = await apiClient.post("/auth/impersonate", {
-                                target_id: employee.id,
-                              });
+                              const { data } = await apiClient.post(
+                                "/auth/impersonate",
+                                {
+                                  target_id: employee.id,
+                                },
+                              );
                               if (data.success && data.token) {
-                                const currentToken = localStorage.getItem("token");
-                                if (currentToken && !localStorage.getItem("admin_token")) {
-                                  localStorage.setItem("admin_token", currentToken);
+                                const currentToken =
+                                  localStorage.getItem("token");
+                                if (
+                                  currentToken &&
+                                  !localStorage.getItem("admin_token")
+                                ) {
+                                  localStorage.setItem(
+                                    "admin_token",
+                                    currentToken,
+                                  );
                                 }
                                 localStorage.setItem("token", data.token);
                                 localStorage.removeItem("dashboard_filters");
-                                toast.success(`התחברת בהצלחה בתור ${employee.first_name} ${employee.last_name}`);
+                                toast.success(
+                                  `התחברת בהצלחה בתור ${employee.first_name} ${employee.last_name}`,
+                                );
                                 window.location.href = "/";
                               }
                             } catch (e: any) {
-                              toast.error(e.response?.data?.error || "שגיאה בהתחברות כמשתמש");
+                              toast.error(
+                                e.response?.data?.error ||
+                                  "שגיאה בהתחברות כמשתמש",
+                              );
                             }
                           }}
                           className="w-full h-12 rounded-xl font-black text-sm bg-primary/5 text-primary border-primary/20 hover:bg-primary/10 transition-all gap-2"
@@ -1338,6 +1708,42 @@ export default function EmployeeViewPage() {
               />
             </div>
 
+            {/* Restored Draft Banner */}
+            {hasRestoredDraft && editMode && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 mb-6 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
+                    <RotateCcw className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black">
+                      שוחזרה טיוטה של נתונים שלא נשמרו
+                    </p>
+                    <p className="text-xs font-medium text-amber-800/80 dark:text-amber-300/80">
+                      השינויים שביצעת נשמרו וממתינים לאישורך
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (id) localStorage.removeItem(`employee_edit_draft_${id}`);
+                      setFormData(employee);
+                      setHasRestoredDraft(false);
+                      toast.info("הטיוטה נמחקה ושוחזרו הנתונים המקוריים");
+                    }}
+                    className="h-8 text-xs font-bold bg-white/80 dark:bg-slate-900 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10 rounded-xl"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 ml-1.5" />
+                    בטל טיוטה ושחזר מקור
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <AnimatePresence mode="wait">
               {!editMode ? (
                 <motion.div
@@ -1350,187 +1756,208 @@ export default function EmployeeViewPage() {
                   <div className="grid grid-cols-1 gap-6">
                     {/* PERSONAL TAB SECTION (Mobile Tab or Desktop Always) */}
                     {activeTab === "personal" && (
-                    <div
-                      className={cn(
-                        "grid grid-cols-1 md:grid-cols-2 gap-6",
-                      )}
-                    >
-                      <Section title="פרטים אישיים">
-                        <div className="grid grid-cols-1 gap-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <Field
-                              label="שם מלא *"
-                              value={`${employee.first_name} ${employee.last_name}`}
-                            />
-                            <Field label="עיר מגורים" value={employee.city} fieldKey="city" onSave={handleInlineFieldSave} />
+                      <div
+                        className={cn("grid grid-cols-1 md:grid-cols-2 gap-6")}
+                      >
+                        <Section title="פרטים אישיים">
+                          <div className="grid grid-cols-1 gap-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <Field
+                                label="שם מלא *"
+                                value={`${employee.first_name} ${employee.last_name}`}
+                              />
+                              <Field
+                                label="עיר מגורים"
+                                value={employee.city}
+                                fieldKey="city"
+                                onSave={handleInlineFieldSave}
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <Field
+                                label="מין"
+                                value={
+                                  employee.gender === "male" ? "גבר" : "אישה"
+                                }
+                              />
+                              <Field
+                                label="תאריך לידה"
+                                value={
+                                  employee.birth_date
+                                    ? format(
+                                        new Date(employee.birth_date),
+                                        "dd/MM/yyyy",
+                                      )
+                                    : null
+                                }
+                              />
+                            </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <Field
-                              label="מין"
-                              value={
-                                employee.gender === "male" ? "גבר" : "אישה"
-                              }
-                            />
-                            <Field
-                              label="תאריך לידה"
-                              value={
-                                employee.birth_date
-                                  ? format(
-                                      new Date(employee.birth_date),
-                                      "dd/MM/yyyy",
-                                    )
-                                  : null
-                              }
-                            />
-                          </div>
-                        </div>
-                      </Section>
+                        </Section>
 
-                      <Section title="פרטי קשר">
-                        <div className="grid grid-cols-1 gap-4">
-                          <Field
-                            label="טלפון נייד"
-                            value={employee.phone_number}
-                            mono
-                            href={`tel:${employee.phone_number}`}
-                            icon={Phone}
-                            fieldKey="phone_number"
-                            onSave={handleInlineFieldSave}
-                          />
-                          <Field
-                            label="דואר אלקטרוני"
-                            value={employee.email}
-                            href={`mailto:${employee.email}`}
-                            icon={Mail}
-                            fieldKey="email"
-                            onSave={handleInlineFieldSave}
-                          />
-                        </div>
-                      </Section>
-                    </div>
+                        <Section title="פרטי קשר">
+                          <div className="grid grid-cols-1 gap-4">
+                            <Field
+                              label="טלפון נייד"
+                              value={employee.phone_number}
+                              mono
+                              href={`tel:${employee.phone_number}`}
+                              icon={Phone}
+                              fieldKey="phone_number"
+                              onSave={handleInlineFieldSave}
+                            />
+                            <Field
+                              label="דואר אלקטרוני"
+                              value={employee.email}
+                              href={`mailto:${employee.email}`}
+                              icon={Mail}
+                              fieldKey="email"
+                              onSave={handleInlineFieldSave}
+                            />
+                          </div>
+                        </Section>
+                      </div>
                     )}
 
                     {activeTab === "personal" && (
-                    <div
-                      className={cn(
-                        "grid grid-cols-1 gap-6",
-                      )}
-                    >
-                      <Section
-                        title="איש קשר לחירום"
-                        className="border-rose-100 dark:border-rose-900/30"
-                      >
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <Field
-                             label="שם וקרבה"
-                             value={
-                               employee.emergency_contact
-                                 ?.split("-")?.[0]
-                                 ?.trim() || null
-                             }
-                             icon={UserIcon}
-                             fieldKey="emergency_contact"
-                             onSave={handleInlineFieldSave}
-                           />
-                          <Field
-                            label="טלפון חירום"
-                            value={
-                              employee.emergency_contact
-                                ?.split("-")?.[1]
-                                ?.trim() || employee.emergency_contact
-                            }
-                            icon={Phone}
-                            mono
-                            href={`tel:${employee.emergency_contact
-                              ?.split("-")?.[1]
-                              ?.trim() || employee.emergency_contact}`}
-                          />
-                        </div>
-                      </Section>
-                    </div>
+                      <div className={cn("grid grid-cols-1 gap-6")}>
+                        <Section
+                          title="איש קשר לחירום"
+                          className="border-rose-100 dark:border-rose-900/30"
+                        >
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <Field
+                              label="שם וקרבה"
+                              value={
+                                employee.emergency_contact
+                                  ?.split("-")?.[0]
+                                  ?.trim() || null
+                              }
+                              icon={UserIcon}
+                              fieldKey="emergency_contact"
+                              onSave={handleInlineFieldSave}
+                            />
+                            <Field
+                              label="טלפון חירום"
+                              value={
+                                employee.emergency_contact
+                                  ?.split("-")?.[1]
+                                  ?.trim() || employee.emergency_contact
+                              }
+                              icon={Phone}
+                              mono
+                              href={`tel:${
+                                employee.emergency_contact
+                                  ?.split("-")?.[1]
+                                  ?.trim() || employee.emergency_contact
+                              }`}
+                            />
+                          </div>
+                        </Section>
+                      </div>
                     )}
 
                     {/* PRO TAB SECTION */}
                     {activeTab === "pro" && (
-                    <div
-                      className={cn(
-                        "grid grid-cols-1 md:grid-cols-2 gap-6",
-                      )}
-                    >
-                      <Section title="הגדרות תפקיד">
-                        <div className="grid grid-cols-1 gap-6">
+                      <div
+                        className={cn("grid grid-cols-1 md:grid-cols-2 gap-6")}
+                      >
+                        <Section title="הגדרות תפקיד">
+                          <div className="grid grid-cols-1 gap-6">
+                            <div className="grid grid-cols-1 gap-4">
+                              <Field
+                                label="רישיון משטרתי"
+                                value={
+                                  employee.police_license
+                                    ? "✓ אישור"
+                                    : "✗ לא אושר"
+                                }
+                                icon={BadgeCheck}
+                                valueClassName={
+                                  employee.police_license
+                                    ? "text-emerald-600"
+                                    : "text-slate-500"
+                                }
+                              />
+                              <Field
+                                label="סיווג ביטחוני"
+                                value={
+                                  employee.security_clearance
+                                    ? "✓ אישור"
+                                    : "✗ לא אושר"
+                                }
+                                icon={Shield}
+                                valueClassName={
+                                  employee.security_clearance
+                                    ? "text-emerald-600"
+                                    : "text-slate-500"
+                                }
+                              />
+                              <Field
+                                label="דרגת פיקוד"
+                                value={
+                                  employee.is_commander ? "✓ מפקד" : "שוטר"
+                                }
+                                icon={Shield}
+                                valueClassName={
+                                  employee.is_commander
+                                    ? "text-emerald-600"
+                                    : "text-slate-500"
+                                }
+                              />
+                            </div>
+                          </div>
+                        </Section>
+
+                        <Section title="שיבוץ וסטטוס">
                           <div className="grid grid-cols-1 gap-4">
                             <Field
-                              label="רישיון משטרתי"
-                              value={employee.police_license ? "✓ אישור" : "✗ לא אושר"}
-                              icon={BadgeCheck}
-                              valueClassName={employee.police_license ? "text-emerald-600" : "text-slate-500"}
+                              label="מחלקה"
+                              value={cleanUnitName(employee.department_name)}
+                              icon={MapPin}
                             />
                             <Field
-                              label="סיווג ביטחוני"
-                              value={employee.security_clearance ? "✓ אישור" : "✗ לא אושר"}
-                              icon={Shield}
-                              valueClassName={employee.security_clearance ? "text-emerald-600" : "text-slate-500"}
+                              label="מדור"
+                              value={cleanUnitName(employee.section_name)}
+                              icon={MapPin}
                             />
                             <Field
-                              label="דרגת פיקוד"
-                              value={employee.is_commander ? "✓ מפקד" : "שוטר"}
-                              icon={Shield}
-                              valueClassName={employee.is_commander ? "text-emerald-600" : "text-slate-500"}
+                              label="חוליה"
+                              value={cleanUnitName(employee.team_name)}
+                              icon={MapPin}
+                            />
+                            <Field
+                              label="מעמד ארגוני"
+                              value={employee.service_type || employee.service_type_name || "לא הוגדר"}
+                              icon={Briefcase}
+                            />
+                            <Field
+                              label="תאריך גיוס"
+                              value={
+                                employee.enlistment_date
+                                  ? format(
+                                      new Date(employee.enlistment_date),
+                                      "dd/MM/yyyy",
+                                    )
+                                  : null
+                              }
+                              icon={Calendar}
+                            />
+                            <Field
+                              label="תאריך שחרור"
+                              value={
+                                employee.discharge_date
+                                  ? format(
+                                      new Date(employee.discharge_date),
+                                      "dd/MM/yyyy",
+                                    )
+                                  : null
+                              }
+                              icon={Calendar}
                             />
                           </div>
-                        </div>
-                      </Section>
-
-                      <Section title="שיבוץ וסטטוס">
-                        <div className="grid grid-cols-1 gap-4">
-                          <Field
-                            label="מחלקה"
-                            value={cleanUnitName(employee.department_name)}
-                            icon={MapPin}
-                          />
-                          <Field
-                            label="מדור"
-                            value={cleanUnitName(employee.section_name)}
-                            icon={MapPin}
-                          />
-                          <Field
-                            label="חוליה"
-                            value={cleanUnitName(employee.team_name)}
-                            icon={MapPin}
-                          />
-                          <Field
-                            label="מעמד אירגוני"
-                            value={employee.service_type_name}
-                            icon={Briefcase}
-                          />
-                          <Field
-                            label="תאריך גיוס"
-                            value={
-                              employee.enlistment_date
-                                ? format(
-                                    new Date(employee.enlistment_date),
-                                    "dd/MM/yyyy",
-                                  )
-                                : null
-                            }
-                            icon={Calendar}
-                          />
-                          <Field
-                            label="שחרור צפוי"
-                            value={
-                              employee.discharge_date
-                                ? format(
-                                    new Date(employee.discharge_date),
-                                    "dd/MM/yyyy",
-                                  )
-                                : null
-                            }
-                            icon={Calendar}
-                          />
-                        </div>
-                      </Section>
-                    </div>
+                        </Section>
+                      </div>
                     )}
                   </div>
                 </motion.div>
@@ -1712,86 +2139,112 @@ export default function EmployeeViewPage() {
                   )}
 
                   {activeTab === "pro" && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <Section title="הגדרות תפקיד">
-                        <div className="grid grid-cols-1 gap-8">
-                          <div className="grid grid-cols-1 gap-4">
-                            <div className="space-y-1.5">
-                              <Label className="text-sm font-black text-slate-700 dark:text-slate-300 pr-1">
-                                מעמד אירגוני
-                              </Label>
-                              <Select
-                                value={formData.service_type_id?.toString()}
-                                onValueChange={(val) =>
-                                  handleFieldChange(
-                                    "service_type_id",
-                                    parseInt(val),
-                                  )
-                                }
-                              >
-                                <SelectTrigger className="w-full h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent dir="rtl">
-                                  {serviceTypes.map((st) => (
-                                    <SelectItem
-                                      key={st.id}
-                                      value={st.id.toString()}
-                                    >
-                                      {st.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                      <Section
+                        title="הגדרות תפקיד"
+                        className="h-full"
+                        contentClassName="flex flex-col justify-between h-full"
+                      >
+                        <div className="flex flex-col justify-between h-full min-h-[390px] gap-6">
+                          <div className="space-y-2">
+                            <Label className="text-sm font-black text-slate-700 dark:text-slate-300 pr-1">
+                              מעמד ארגוני
+                            </Label>
+                            <Select
+                              value={
+                                formData.service_type ||
+                                formData.service_type_name ||
+                                formData.service_type_id?.toString() ||
+                                ""
+                              }
+                              onValueChange={(val) => {
+                                const matched = (serviceTypes || []).find(
+                                  (st: any) =>
+                                    st.id?.toString() === val ||
+                                    st.name === val ||
+                                    st.code === val
+                                );
+                                const nameVal = matched?.name || val;
+                                handleFieldChange("service_type", nameVal);
+                                handleFieldChange("service_type_name", nameVal);
+                                handleFieldChange("service_type_id", matched?.id || val);
+                              }}
+                            >
+                              <SelectTrigger className="w-full h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-right px-4 shadow-sm hover:border-primary/50 transition-all flex items-center justify-between">
+                                <SelectValue placeholder="בחר מעמד ארגוני..." />
+                              </SelectTrigger>
+                              <SelectContent dir="rtl">
+                                {(serviceTypes && serviceTypes.length > 0
+                                  ? serviceTypes
+                                  : [
+                                      { id: "קבע", name: "קבע" },
+                                      { id: "קבע - קצין", name: "קבע - קצין" },
+                                      { id: "קבע - נגד", name: "קבע - נגד" },
+                                      { id: "חובה", name: "חובה" },
+                                      { id: "שח\"מ", name: "שח\"מ" },
+                                      { id: "שמ\"ז", name: "שמ\"ז" },
+                                      { id: "מילואים", name: "מילואים" },
+                                      { id: "אזרח עובד משטרה (אע\"מ)", name: "אזרח עובד משטרה (אע\"מ)" },
+                                      { id: "שירות לאומי", name: "שירות לאומי" },
+                                      { id: "מתנדב", name: "מתנדב" },
+                                      { id: "מנהל מערכת", name: "מנהל מערכת" },
+                                    ]
+                                ).map((st: any) => (
+                                  <SelectItem
+                                    key={st.id || st.name}
+                                    value={st.name || st.id?.toString()}
+                                    className="font-bold py-2.5 cursor-pointer text-right"
+                                  >
+                                    <span>{st.name}</span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
 
-                            <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
-                              <div className="flex flex-col">
-                                <span className="text-base font-black text-slate-900 dark:text-slate-100">
-                                  רישיון משטרתי
-                                </span>
-                              </div>
-                              <Switch
-                                checked={formData.police_license}
-                                onCheckedChange={(val) =>
-                                  handleFieldChange("police_license", val)
-                                }
-                              />
+                          <div className="flex items-center justify-between p-4.5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 transition-all hover:border-primary/20">
+                            <div className="flex flex-col">
+                              <span className="text-base font-black text-slate-900 dark:text-slate-100">
+                                רישיון משטרתי
+                              </span>
                             </div>
+                            <Switch
+                              checked={formData.police_license}
+                              onCheckedChange={(val) =>
+                                handleFieldChange("police_license", val)
+                              }
+                            />
+                          </div>
 
-                            <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
-                              <div className="flex flex-col">
-                                <span className="text-base font-black text-slate-900 dark:text-slate-100">
-                                  סיווג ביטחוני
-                                </span>
-                                <span className="text-[10px] text-muted-foreground font-bold">
-                                  אישור גישה למידע מוגן
-                                </span>
-                              </div>
-                              <Switch
-                                checked={formData.security_clearance}
-                                onCheckedChange={(val) =>
-                                  handleFieldChange("security_clearance", val)
-                                }
-                              />
+                          <div className="flex items-center justify-between p-4.5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 transition-all hover:border-primary/20">
+                            <div className="flex flex-col">
+                              <span className="text-base font-black text-slate-900 dark:text-slate-100">
+                                סיווג ביטחוני
+                              </span>
                             </div>
+                            <Switch
+                              checked={formData.security_clearance}
+                              onCheckedChange={(val) =>
+                                handleFieldChange("security_clearance", val)
+                              }
+                            />
+                          </div>
 
-                            <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
-                              <div className="flex flex-col">
-                                <span className="text-base font-black text-slate-900 dark:text-slate-100">
-                                  דרגת פיקוד
-                                </span>
-                                <span className="text-[10px] text-muted-foreground font-bold">
-                                  סמכות צפייה וניהול שוטרים
-                                </span>
-                              </div>
-                              <Switch
-                                checked={formData.is_commander}
-                                onCheckedChange={(val) =>
-                                  handleFieldChange("is_commander", val)
-                                }
-                              />
+                          <div className="flex items-center justify-between p-4.5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 transition-all hover:border-primary/20">
+                            <div className="flex flex-col">
+                              <span className="text-base font-black text-slate-900 dark:text-slate-100">
+                                דרגת פיקוד
+                              </span>
+                              <span className="text-[10px] text-muted-foreground font-bold">
+                                סמכות צפייה וניהול שוטרים
+                              </span>
                             </div>
+                            <Switch
+                              checked={formData.is_commander}
+                              onCheckedChange={(val) =>
+                                handleFieldChange("is_commander", val)
+                              }
+                            />
                           </div>
                         </div>
                       </Section>
@@ -1847,7 +2300,7 @@ export default function EmployeeViewPage() {
                               />
                             </>
                           )}
-                          
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                             <div className="space-y-1.5">
                               <Label className="text-sm font-black text-slate-700 dark:text-slate-300 pr-1">
@@ -1871,7 +2324,7 @@ export default function EmployeeViewPage() {
                             </div>
                             <div className="space-y-1.5">
                               <Label className="text-sm font-black text-slate-700 dark:text-slate-300 pr-1">
-                                שחרור צפוי
+                                תאריך שחרור
                               </Label>
                               <Input
                                 type="date"

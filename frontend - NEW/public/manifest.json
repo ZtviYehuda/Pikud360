@@ -3,18 +3,20 @@
   "name": "The Office - מערכת ניהול ושליטה",
   "icons": [
     {
-      "src": "/toren_logo.png",
+      "src": "/logo_unit.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
-      "src": "/toren_logo.png",
+      "src": "/logo_unit.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": "/",
-  "background_color": "#0f172a",
+  "background_color": "#020617",
   "theme_color": "#2563eb",
   "display": "standalone",
   "orientation": "portrait"

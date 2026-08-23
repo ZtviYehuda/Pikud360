@@ -3,71 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>אין חיבור לרשת - Unit</title>
-  <!-- Google Fonts: Inter & Outfit -->
+  <title>אין חיבור לרשת — The Office</title>
+  <link rel="icon" type="image/png" href="/matzevet_logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  
   <script>
     (function() {
       try {
-        // Theme synchronization
         const theme = localStorage.getItem('theme');
-        if (theme === 'dark') {
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
           document.documentElement.classList.add('dark');
-        } else if (theme === 'light') {
-          document.documentElement.classList.remove('dark');
         } else {
-          // Fallback to system OS preferences
-          if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.documentElement.classList.add('dark');
-          }
+          document.documentElement.classList.remove('dark');
         }
-
-        // Accent color synchronization
-        const accent = localStorage.getItem('accentColor');
-        if (accent) {
-          const root = document.documentElement;
-          if (accent.startsWith('#')) {
-            root.style.setProperty('--primary', accent);
-            
-            // Hex to RGB for glow effect
-            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(accent);
-            if (result) {
-              const rgb = `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`;
-              root.style.setProperty('--accent-glow', `rgba(${rgb}, 0.15)`);
-            }
-          } else if (accent === 'emerald') {
-            root.style.setProperty('--primary', '#10b981');
-            root.style.setProperty('--accent-glow', 'rgba(16, 185, 129, 0.15)');
-          } else if (accent === 'blue') {
-            root.style.setProperty('--primary', '#3b82f6');
-            root.style.setProperty('--accent-glow', 'rgba(59, 130, 246, 0.15)');
-          }
-        }
-      } catch (e) {
-        console.error(e);
-      }
+      } catch (e) {}
     })();
   </script>
 
   <style>
     :root {
-      /* Default: Light Mode */
-      --bg-color: #f8fafc;
-      --text-primary: #0f172a;
-      --text-secondary: #64748b;
-      --primary: #3b82f6;
-      --accent: var(--primary);
-      --accent-hover: #2563eb;
-      --accent-glow: rgba(59, 130, 246, 0.15);
+      --bg: #f8fafc;
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --card-border: rgba(226, 232, 240, 0.9);
+      --card-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(226, 232, 240, 0.6);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.1);
+      --glow: rgba(37, 99, 235, 0.12);
+      --radar-line: rgba(37, 99, 235, 0.15);
+      --font-mono: 'JetBrains Mono', monospace;
     }
 
     html.dark {
-      --bg-color: #090d16;
-      --text-primary: #f8fafc;
-      --text-secondary: #94a3b8;
-      --accent-glow: rgba(59, 130, 246, 0.35);
+      --bg: #020617;
+      --card-bg: rgba(15, 23, 42, 0.75);
+      --card-border: rgba(30, 41, 59, 0.8);
+      --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(51, 65, 85, 0.4);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #60a5fa;
+      --danger: #f87171;
+      --danger-bg: rgba(239, 68, 68, 0.15);
+      --glow: rgba(59, 130, 246, 0.2);
+      --radar-line: rgba(56, 189, 248, 0.18);
     }
 
     * {
@@ -77,142 +61,351 @@
     }
 
     body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
       min-height: 100vh;
-      background-color: var(--bg-color);
-      color: var(--text-primary);
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      text-align: center;
-      overflow: hidden;
-      padding: 1.5rem;
-      position: relative;
-      transition: background-color 0.3s ease;
-    }
-
-    /* Ambient glow */
-    .ambient-glow {
-      position: absolute;
-      width: 320px;
-      height: 320px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
-      filter: blur(40px);
-      pointer-events: none;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -60%);
-    }
-
-    /* Outer Wrapper */
-    .content-wrapper {
-      position: relative;
-      z-index: 10;
-      max-width: 440px;
-      width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: 'Assistant', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
-    .emblem-container {
+    /* Ambient Background Gradients */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        radial-gradient(circle at 50% 20%, var(--glow) 0%, transparent 60%),
+        linear-gradient(to right, var(--radar-line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--radar-line) 1px, transparent 1px);
+      background-size: 100% 100%, 48px 48px, 48px 48px;
+      opacity: 0.65;
+      pointer-events: none;
+    }
+
+    .main-card {
       position: relative;
-      width: 110px;
-      height: 110px;
+      z-index: 10;
+      width: 100%;
+      max-width: 480px;
+      background: var(--card-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--card-border);
+      border-radius: 2.25rem;
+      padding: 3rem 2.25rem 2.5rem;
+      box-shadow: var(--card-shadow);
+      text-align: center;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
+      animation: cardAppear 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes cardAppear {
+      from {
+        opacity: 0;
+        transform: scale(0.96) translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    /* Tactical Radar / Signal Icon */
+    .signal-icon-wrapper {
+      position: relative;
+      width: 108px;
+      height: 108px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       margin-bottom: 2rem;
     }
 
-    .emblem-img {
-      width: 90px;
-      height: 90px;
-      object-fit: contain;
-      filter: drop-shadow(0 8px 24px rgba(59, 130, 246, 0.3));
+    .radar-pulse-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px dashed var(--danger);
+      opacity: 0.35;
+      animation: pulseRadar 3s linear infinite;
+    }
+
+    .radar-pulse-ring:nth-child(2) {
+      inset: -14px;
+      border: 1px solid var(--danger);
+      opacity: 0.2;
+      animation: pulseRadar 3s linear infinite 1.5s;
+    }
+
+    @keyframes pulseRadar {
+      0% {
+        transform: scale(0.85);
+        opacity: 0.6;
+      }
+      50% {
+        transform: scale(1.1);
+        opacity: 0.2;
+      }
+      100% {
+        transform: scale(0.85);
+        opacity: 0.6;
+      }
+    }
+
+    .icon-core {
+      width: 80px;
+      height: 80px;
+      border-radius: 1.75rem;
+      background: var(--danger-bg);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       position: relative;
-      z-index: 5;
+      z-index: 2;
+      box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.25);
+    }
+
+    .icon-core svg {
+      width: 40px;
+      height: 40px;
+      color: var(--danger);
+      stroke-width: 2.2;
+    }
+
+    /* System Brand Badge */
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.9rem;
+      background: rgba(37, 99, 235, 0.08);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      color: var(--primary);
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      font-family: var(--font-mono);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
     }
 
     h1 {
-      font-family: 'Outfit', sans-serif;
-      font-size: 2rem;
+      font-size: 1.85rem;
       font-weight: 900;
+      line-height: 1.2;
       margin-bottom: 0.75rem;
       letter-spacing: -0.02em;
-      background: linear-gradient(135deg, var(--text-primary) 60%, var(--text-secondary) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: var(--text-main);
     }
 
     p {
-      color: var(--text-secondary);
-      font-size: 0.95rem;
+      color: var(--text-muted);
+      font-size: 1rem;
       line-height: 1.6;
-      margin-bottom: 2.5rem;
-      max-width: 340px;
+      margin-bottom: 2rem;
+      font-weight: 500;
+      max-width: 360px;
     }
 
-    .btn-reconnect {
-      position: relative;
-      background-color: var(--accent);
-      color: white;
+    /* Action Buttons */
+    .actions-group {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .btn-primary {
+      width: 100%;
+      height: 52px;
+      background: var(--primary);
+      color: #ffffff;
       border: none;
-      padding: 0.9rem 2.2rem;
-      font-size: 0.95rem;
-      font-weight: 700;
       border-radius: 1.25rem;
+      font-size: 1rem;
+      font-weight: 800;
+      font-family: inherit;
       cursor: pointer;
-      overflow: hidden;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 4px 20px var(--accent-glow);
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: center;
+      gap: 0.6rem;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 10px 24px -6px var(--glow);
     }
 
-    .btn-reconnect:hover {
-      background-color: var(--accent-hover);
-      box-shadow: 0 8px 30px rgba(37, 99, 235, 0.5);
+    .btn-primary:hover {
+      background: var(--primary-hover);
       transform: translateY(-2px);
+      box-shadow: 0 16px 32px -8px var(--glow);
     }
 
-    .btn-reconnect:active {
+    .btn-primary:active {
       transform: translateY(1px);
     }
 
-    .btn-reconnect svg {
-      width: 18px;
-      height: 18px;
-      transition: transform 0.6s ease;
+    .btn-primary svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 2.5;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .btn-reconnect:hover svg {
-      transform: rotate(360deg);
+    .btn-primary:hover svg {
+      transform: rotate(180deg);
+    }
+
+    /* Auto-Check Live Indicator */
+    .live-status {
+      margin-top: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--text-muted);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .footer-brand {
+      margin-top: 2rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      opacity: 0.6;
+      letter-spacing: 0.15em;
     }
   </style>
 </head>
 <body>
-  <div class="ambient-glow"></div>
-  
-  <div class="content-wrapper">
-    <!-- Clean Emblem without spinning light artifacts -->
-    <div class="emblem-container">
-      <img src="/matzevet_icon.png" alt="Unit" class="emblem-img">
+  <div class="bg-grid"></div>
+
+  <div class="main-card">
+    <!-- Brand Badge -->
+    <div class="brand-badge">
+      <span class="status-dot"></span>
+      THE OFFICE · מערכת מנותקת
     </div>
 
-    <!-- Title and Description -->
-    <h1>חיבור הרשת אבד</h1>
-    <p>המערכת לא הצליחה להתחבר לשרת. אנא ודא שאתה מחובר לרשת אלחוטית או סלולרית תקינה ונסה שוב.</p>
+    <!-- Signal Disconnected Radar Icon -->
+    <div class="signal-icon-wrapper">
+      <div class="radar-pulse-ring"></div>
+      <div class="radar-pulse-ring"></div>
+      <div class="icon-core">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+          <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+          <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+          <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+          <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+          <line x1="12" y1="20" x2="12.01" y2="20"></line>
+        </svg>
+      </div>
+    </div>
 
-    <!-- Reconnect Button -->
-    <button class="btn-reconnect" onclick="window.location.reload()">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-      </svg>
-      נסה להתחבר מחדש
-    </button>
+    <!-- Headline & Instructions -->
+    <h1>אין חיבור לרשת</h1>
+    <p>
+      לא ניתן ליצור קשר עם שרתי המערכת. אנא ודא שהאינטרנט פעיל (Wi-Fi / סלולר) או המתן לחזרת החיבור.
+    </p>
+
+    <!-- Action Group -->
+    <div class="actions-group">
+      <button class="btn-primary" id="retry-btn" onclick="handleRetry()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+        </svg>
+        נסה להתחבר מחדש
+      </button>
+    </div>
+
+    <!-- Live Auto Reconnect Indicator -->
+    <div class="live-status" id="live-indicator">
+      <div class="spinner"></div>
+      <span id="status-text">ממתין לחיבור רשת... בדיקה אוטומטית פעילה</span>
+    </div>
+
+    <!-- Footer Copyright -->
+    <div class="footer-brand">
+      © 2026 • THE OFFICE • v1.0.4
+    </div>
   </div>
+
+  <script>
+    function handleRetry() {
+      const btn = document.getElementById('retry-btn');
+      const text = document.getElementById('status-text');
+      if (btn) btn.style.opacity = '0.7';
+      if (text) text.innerText = 'בודק חיבור לשרת...';
+      
+      fetch('/api/security/health', { method: 'GET', cache: 'no-cache' })
+        .then(() => {
+          window.location.reload();
+        })
+        .catch(() => {
+          setTimeout(() => {
+            window.location.reload();
+          }, 400);
+        });
+    }
+
+    // Auto reconnect as soon as network returns online
+    window.addEventListener('online', function() {
+      const text = document.getElementById('status-text');
+      if (text) text.innerText = 'החיבור חזר! מרענן דף...';
+      setTimeout(function() {
+        window.location.reload();
+      }, 500);
+    });
+
+    // Periodic heartbeat check
+    setInterval(function() {
+      if (navigator.onLine) {
+        fetch('/', { method: 'HEAD', cache: 'no-cache' })
+          .then(function() {
+            window.location.reload();
+          })
+          .catch(function() {});
+      }
+    }, 4000);
+  </script>
 </body>
 </html>

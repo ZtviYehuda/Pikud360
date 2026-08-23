@@ -390,7 +390,10 @@ def get_attendance_stats():
                 COUNT(*) FILTER (WHERE status IN ('VACATION', 'חופשה')) as vacation,
                 COUNT(*) FILTER (WHERE status IN ('SICK', 'מחלה')) as sick
             FROM workforce.employees
-            WHERE deleted_at IS NULL;
+            WHERE deleted_at IS NULL
+              AND (position NOT IN ('מנהל מערכת', 'מנהלת מערכת', 'ADMIN') OR position IS NULL)
+              AND (rank NOT IN ('מנהל מערכת', 'מנהלת מערכת') OR rank IS NULL)
+              AND (service_type NOT IN ('מנהל מערכת', 'מנהלת מערכת') OR service_type IS NULL);
         """
         with get_db_connection() as conn:
             with conn.cursor() as cur:
@@ -436,7 +439,12 @@ def get_attendance_stats_trend():
     absent_emp = 0
 
     try:
-        where_clauses = ["deleted_at IS NULL"]
+        where_clauses = [
+            "deleted_at IS NULL",
+            "(position NOT IN ('מנהל מערכת', 'מנהלת מערכת', 'ADMIN') OR position IS NULL)",
+            "(rank NOT IN ('מנהל מערכת', 'מנהלת מערכת') OR rank IS NULL)",
+            "(service_type NOT IN ('מנהל מערכת', 'מנהלת מערכת') OR service_type IS NULL)"
+        ]
         query_params = []
 
         if dept_id:
@@ -502,6 +510,9 @@ def get_attendance_stats_comparison():
                    COUNT(*) FILTER (WHERE status NOT IN ('PRESENT', 'ACTIVE', 'נוכח')) as absent
             FROM workforce.employees
             WHERE deleted_at IS NULL
+              AND (position NOT IN ('מנהל מערכת', 'מנהלת מערכת', 'ADMIN') OR position IS NULL)
+              AND (rank NOT IN ('מנהל מערכת', 'מנהלת מערכת') OR rank IS NULL)
+              AND (service_type NOT IN ('מנהל מערכת', 'מנהלת מערכת') OR service_type IS NULL)
             GROUP BY org_unit_id;
         """
         with get_db_connection() as conn:

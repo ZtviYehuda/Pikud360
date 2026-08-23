@@ -22,6 +22,7 @@ from app.modules.security.repositories import (
 from app.modules.workforce.repositories import EmployeeRepository
 from app.modules.security.services import SecurityService
 from app.modules.security.permissions import get_user_permissions_and_scopes, get_user_roles
+from app.database.connection import get_db_connection
 
 logger = logging.getLogger("matzevet.security.routes")
 
@@ -179,18 +180,43 @@ def login():
         is_successful=True
     )
 
-    is_admin = (user.username == "admin") or (user.email == "admin@matzevet.gov.il") or ("ADMIN" in user_roles)
-    is_commander = ("COMMANDER" in user_roles) or is_admin
+    emp_record = None
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute('''
+                    SELECT e.first_name, e.last_name, e.org_unit_id,
+                           ou.name as unit_name
+                    FROM workforce.employees e
+                    LEFT JOIN core.organization_units ou ON ou.id = e.org_unit_id
+                    WHERE e.user_id = %s OR e.employee_number = %s;
+                ''', (user.id, user.username))
+                emp_record = cur.fetchone()
+    except Exception as e:
+        logger.warning(f'Notice in employee query: {e}')
+
+    is_admin = (user.username == 'admin') or (user.email == 'admin@matzevet.gov.il') or ('ADMIN' in user_roles)
+    is_commander = ('COMMANDER' in user_roles) or is_admin
 
     # Fetch user preferences from PostgreSQL DB
     user_prefs = user_preference_repo.get_by_user_id(str(user.id)) or {}
 
+    first_name = (emp_record[0] if emp_record and emp_record[0] else None) or user_prefs.get('first_name') or ('מנהל' if is_admin else 'רוית')
+    last_name = (emp_record[1] if emp_record and emp_record[1] else None) or user_prefs.get('last_name') or 'מערכת'
+    dept_id = 1
+    sect_id = 11
+    team_id = 111
+    dept_name = (emp_record[3] if emp_record and emp_record[3] else None) or 'מטה הפיקוד'
+    sect_name = 'ניהול מערכת'
+    team_name = 'צוות תמיכה'
+    phone_number = user_prefs.get('phone_number') or '0501234567'
+
     user_obj = {
         "id": user.id,
-        "first_name": user_prefs.get("first_name") or ("מנהל" if is_admin else "מפקד"),
-        "last_name": user_prefs.get("last_name") or "מערכת",
+        "first_name": first_name,
+        "last_name": last_name,
         "username": user.username,
-        "phone_number": user_prefs.get("phone_number") or "0501234567",
+        "phone_number": phone_number,
         "email": user.email,
         "city": user_prefs.get("city") or "",
         "birth_date": user_prefs.get("birth_date") or "",
@@ -203,13 +229,13 @@ def login():
         "must_change_password": False,
         "is_admin": is_admin,
         "is_commander": is_commander,
-        "department_id": 1,
-        "section_id": 11,
-        "team_id": 111,
-        "department_name": "מטה הפיקוד",
-        "section_name": "ניהול מערכת",
-        "team_name": "צוות תמיכה",
-        "role_name": "מנהל מערכת ראשי" if is_admin else "מפקד",
+        "department_id": dept_id,
+        "section_id": sect_id,
+        "team_id": team_id,
+        "department_name": dept_name,
+        "section_name": sect_name,
+        "team_name": team_name,
+        "role_name": "מנהל מערכת ראשי" if is_admin else ("מפקד" if is_commander else "שוטר"),
     }
 
     response = jsonify({
@@ -354,8 +380,52 @@ def update_profile():
         except Exception as e:
             logger.warning(f"Failed updating user email: {e}")
 
+    if user and req_data.get("username"):
+        new_username = str(req_data.get("username")).strip().lower()
+        if new_username and new_username != user.username:
+            existing_user = user_repo.get_by_username(new_username)
+            if existing_user and str(existing_user.id) != str(user.id):
+                return jsonify({"success": False, "error": "שם המשתמש כבר תפוס במערכת"}), 400
+            user.username = new_username
+            try:
+                user_repo.update(user.id, user)
+                with get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            "UPDATE workforce.employees SET employee_number = %s WHERE user_id = %s",
+                            (new_username, user.id)
+                        )
+                        conn.commit()
+            except Exception as e:
+                logger.warning(f"Failed updating username: {e}")
+
     # Upsert to PostgreSQL user preferences
     updated_prefs = user_preference_repo.upsert(target_id, req_data) or {}
+
+    # Synchronize with workforce.employees table
+    if user:
+        try:
+            from app.modules.workforce.repositories import EmployeeRepository
+            emp_repo = EmployeeRepository()
+            linked_emps = [e for e in emp_repo.list_all() if str(e.user_id) == str(user.id) or e.employee_number == user.username]
+            for emp in linked_emps:
+                if req_data.get("first_name"):
+                    emp.first_name = req_data.get("first_name")
+                if req_data.get("last_name"):
+                    emp.last_name = req_data.get("last_name")
+                if req_data.get("phone_number"):
+                    emp.phone = req_data.get("phone_number")
+                if req_data.get("email"):
+                    emp.personal_email = req_data.get("email")
+                if req_data.get("city"):
+                    emp.city = req_data.get("city")
+                if req_data.get("emergency_contact"):
+                    emp.emergency_contact = req_data.get("emergency_contact")
+                if req_data.get("birth_date"):
+                    emp.birthdate = req_data.get("birth_date")
+                emp_repo.update(emp.id, emp, updated_by_user_id=str(user.id))
+        except Exception as e:
+            logger.warning(f"Could not update linked workforce employee from update_profile: {e}")
 
     user_roles = get_user_roles(user.id) if user else []
     is_admin = (user and ((user.username == "admin") or (user.email == "admin@matzevet.gov.il") or ("ADMIN" in user_roles)))

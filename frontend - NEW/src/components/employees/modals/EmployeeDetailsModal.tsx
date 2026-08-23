@@ -50,7 +50,7 @@ const InfoRow = ({
   if (!value || value === "---") return null;
   const cleanValue = typeof value === "string" ? value.trim() : value;
 
-  const inner = (
+  return (
     <div className="flex items-center justify-between gap-3 py-3 group">
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <div className="w-8 h-8 rounded-xl bg-muted/60 flex items-center justify-center shrink-0">
@@ -60,39 +60,36 @@ const InfoRow = ({
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">
             {label}
           </p>
-          <p
-            className={cn(
-              "text-sm font-black leading-snug truncate",
-              type ? "text-primary" : "text-foreground"
-            )}
-          >
-            {cleanValue}
-          </p>
+          {type === "phone" && typeof cleanValue === "string" ? (
+            <a
+              href={`tel:${cleanValue.replace(/\s/g, "")}`}
+              className="text-sm font-black leading-snug truncate text-primary hover:underline block"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {cleanValue}
+            </a>
+          ) : type === "email" && typeof cleanValue === "string" ? (
+            <a
+              href={`mailto:${cleanValue}`}
+              className="text-sm font-black leading-snug truncate text-primary hover:underline block"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {cleanValue}
+            </a>
+          ) : (
+            <p className="text-sm font-black leading-snug truncate text-foreground">
+              {cleanValue}
+            </p>
+          )}
         </div>
       </div>
-      {action && <div className="shrink-0">{action}</div>}
+      {action && (
+        <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+          {action}
+        </div>
+      )}
     </div>
   );
-
-  if (type === "phone" && typeof cleanValue === "string") {
-    return <a href={`tel:${cleanValue.replace(/\s/g, "")}`}>{inner}</a>;
-  }
-  if (type === "email" && typeof cleanValue === "string") {
-    return (
-      <button
-        type="button"
-        className="w-full text-right"
-        onClick={(e) => {
-          e.stopPropagation();
-          window.location.href = `mailto:${cleanValue}`;
-        }}
-      >
-        {inner}
-      </button>
-    );
-  }
-
-  return inner;
 };
 
 export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({

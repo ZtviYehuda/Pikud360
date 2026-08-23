@@ -371,6 +371,18 @@ export default function AttendancePage() {
     const safeEmpList = Array.isArray(employees) ? employees : [];
     return safeEmpList.filter((emp) => {
       if (!user) return true;
+
+      // The commander / logged-in user must NEVER appear as a subordinate employee in team/attendance lists
+      const eAny = emp as any;
+      const uAny = user as any;
+      const isSelf =
+        (uAny.id && (String(eAny.id) === String(uAny.id) || String(eAny.user_id) === String(uAny.id))) ||
+        (uAny.employee_id && (String(eAny.id) === String(uAny.employee_id) || String(eAny.user_id) === String(uAny.employee_id))) ||
+        (uAny.username && (eAny.username === uAny.username || eAny.personal_number === uAny.username)) ||
+        (uAny.first_name && uAny.last_name && eAny.first_name?.trim() === uAny.first_name?.trim() && eAny.last_name?.trim() === uAny.last_name?.trim());
+
+      if (isSelf) return false;
+
       if (user.is_admin) return true;
 
       if (user.is_commander) {

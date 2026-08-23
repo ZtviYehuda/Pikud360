@@ -429,6 +429,29 @@ class WorkforceService:
             old_values=self._serialize_employee(before_emp)
         )
 
+        # Synchronize linked security user profile & preferences
+        if after_emp.user_id:
+            try:
+                from app.modules.security.repositories import UserRepository, UserPreferenceRepository
+                user_repo = UserRepository()
+                pref_repo = UserPreferenceRepository()
+                u = user_repo.get_by_id(str(after_emp.user_id))
+                if u:
+                    if after_emp.personal_email:
+                        u.email = after_emp.personal_email
+                    user_repo.update(u.id, u)
+                
+                pref_repo.upsert(str(after_emp.user_id), {
+                    "first_name": after_emp.first_name,
+                    "last_name": after_emp.last_name,
+                    "phone_number": after_emp.phone,
+                    "city": getattr(after_emp, "city", ""),
+                    "emergency_contact": getattr(after_emp, "emergency_contact", ""),
+                    "birth_date": getattr(after_emp, "birthdate", "")
+                })
+            except Exception as e:
+                logger.warning(f"Notice: Failed to sync linked user profile: {e}")
+
         return after_emp
 
     def delete_employee(

@@ -164,9 +164,9 @@ class SecurityService:
         is_successful: bool,
         failure_reason: Optional[str] = None,
         login_method: str = "PASSWORD"
-    ) -> UserLoginHistory:
+    ) -> Optional[UserLoginHistory]:
         """Records sign-in audits in core logs."""
-        target_user = user_id or "00000000-0000-0000-0000-000000000000"
+        target_user = user_id if (user_id and str(user_id) != "00000000-0000-0000-0000-000000000000") else None
         
         history = UserLoginHistory(
             id=str(uuid.uuid4()),
@@ -180,7 +180,11 @@ class SecurityService:
             is_successful=is_successful,
             failure_reason=failure_reason
         )
-        return self._login_history_repo.create(history)
+        try:
+            return self._login_history_repo.create(history)
+        except Exception as e:
+            logger.warning(f"Could not write login attempt history: {e}")
+            return None
 
     def create_audit_log(
         self,

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useSearchParams, useNavigate, useBlocker } from "react-router-dom";
 import { useAuthContext } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import apiClient from "@/config/api.client";
@@ -11,9 +11,20 @@ import {
   ShieldCheck,
   Bell,
   Database,
+  AlertTriangle,
+  Save,
+  Trash2,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 // Import Settings Components
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
@@ -271,6 +282,7 @@ export default function SettingsPage() {
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
+    username: "",
     phone_number: "",
     email: "",
     city: "",
@@ -318,36 +330,62 @@ export default function SettingsPage() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [pendingNavigationPath, setPendingNavigationPath] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+
+  const draftKey = `profile_settings_draft_${user?.id || user?.username || "me"}`;
+
+  // Initial user sync on load
   useEffect(() => {
     if (user) {
-      setFormData({
-        first_name: user.first_name || "",
-        last_name: user.last_name || "",
-        phone_number: user.phone_number || "",
-        email: user.email || "",
-        city: user.city || "",
-        birth_date: user.birth_date || "",
-        emergency_contact: user.emergency_contact || "",
-        notif_sick_leave: user.notif_sick_leave !== false,
-        notif_transfers: user.notif_transfers !== false,
-        notif_morning_report: user.notif_morning_report !== false,
-        enlistment_date: user.enlistment_date || "",
-        discharge_date: user.discharge_date || "",
-        assignment_date: user.assignment_date || "",
-        police_license: !!user.police_license,
-        security_clearance: !!user.security_clearance,
-        // Commander fields for UI display
-        commands_department_id: user.commands_department_id ?? null,
-        department_name: user.department_name ?? "",
-        commands_section_id: user.commands_section_id ?? null,
-        section_name: user.section_name ?? "",
-        commands_team_id: user.commands_team_id ?? null,
-        team_name: user.team_name ?? "",
-      });
+      // Check if user has an ongoing unsaved draft
+      const savedDraft = localStorage.getItem(draftKey);
+      let initialData: any = null;
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft);
+          if (parsed?.data && Object.keys(parsed.data).length > 0) {
+            initialData = parsed.data;
+            setIsDirty(true);
+          }
+        } catch {}
+      }
+
+      if (!initialData) {
+        initialData = {
+          first_name: user.first_name || "",
+          last_name: user.last_name || "",
+          phone_number: user.phone_number || "",
+          email: user.email || "",
+          city: user.city || "",
+          username: user.username || "",
+          birth_date: user.birth_date || "",
+          emergency_contact: user.emergency_contact || "",
+          notif_sick_leave: user.notif_sick_leave !== false,
+          notif_transfers: user.notif_transfers !== false,
+          notif_morning_report: user.notif_morning_report !== false,
+          enlistment_date: user.enlistment_date || "",
+          discharge_date: user.discharge_date || "",
+          assignment_date: user.assignment_date || "",
+          police_license: !!user.police_license,
+          security_clearance: !!user.security_clearance,
+          commands_department_id: user.commands_department_id ?? null,
+          department_name: user.department_name ?? "",
+          commands_section_id: user.commands_section_id ?? null,
+          section_name: user.section_name ?? "",
+          commands_team_id: user.commands_team_id ?? null,
+          team_name: user.team_name ?? "",
+        };
+        setIsDirty(false);
+      }
+
+      setFormData(initialData);
 
       // Parse Emergency Contact
-      if (user.emergency_contact) {
-        const match = user.emergency_contact.match(/^(.*) \((.*)\) - (.*)$/);
+      const eContact = initialData.emergency_contact || user.emergency_contact || "";
+      if (eContact) {
+        const match = eContact.match(/^(.*) \((.*)\) - (.*)$/);
         if (match) {
           setEmergencyDetails({
             name: match[1],
@@ -356,20 +394,62 @@ export default function SettingsPage() {
           });
         } else {
           setEmergencyDetails({
-            name: user.emergency_contact,
+            name: eContact,
             relation: "",
             phone: "",
           });
         }
-      } else {
-        setEmergencyDetails({
-          name: "",
-          relation: "",
-          phone: "",
-        });
       }
     }
-  }, [user]);
+  }, [user, draftKey]);
+
+  // Wrapped updater to mark form as dirty when user edits
+  const handleFormDataChange = (updater: any) => {
+    setIsDirty(true);
+    setFormData(updater);
+  };
+
+  const handleEmergencyDetailsChange = (updater: any) => {
+    setIsDirty(true);
+    setEmergencyDetails(updater);
+  };
+
+  // Save draft on change
+  useEffect(() => {
+    if (isDirty) {
+      localStorage.setItem(
+        draftKey,
+        JSON.stringify({ ts: Date.now(), data: formData })
+      );
+    } else {
+      localStorage.removeItem(draftKey);
+    }
+  }, [formData, isDirty, draftKey]);
+
+  // Window beforeunload
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty]);
+
+  // Navigation Blocker
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      Boolean(isDirty && currentLocation.pathname !== nextLocation.pathname)
+  );
+
+  const isBlocked = blocker.state === "blocked";
+  const showUnsavedPrompt = Boolean(isDirty && (showUnsavedModal || isBlocked));
+
+  useEffect(() => {
+    refreshUser();
+  }, []);
 
   // Update formData when emergencyDetails changes
   useEffect(() => {
@@ -379,8 +459,6 @@ export default function SettingsPage() {
         ...prev,
         emergency_contact: `${name} (${relation}) - ${phone}`,
       }));
-    } else {
-      setFormData((prev) => ({ ...prev, emergency_contact: "" }));
     }
   }, [emergencyDetails]);
 
@@ -397,10 +475,17 @@ export default function SettingsPage() {
       };
       const { data } = await apiClient.put("/auth/update-profile", payload);
       if (data.success) {
+        setIsDirty(false);
+        localStorage.removeItem(draftKey);
         await refreshUser();
         toast.success("ההגדרות עודכנו בהצלחה", {
           description: "השינויים נשמרו במערכת",
         });
+        if (blocker.state === "blocked") {
+          blocker.proceed();
+        } else if (pendingNavigationPath) {
+          navigate(pendingNavigationPath);
+        }
       } else {
         toast.error("שגיאה בעדכון ההגדרות", {
           description: data.error,
@@ -549,9 +634,9 @@ export default function SettingsPage() {
             <ProfileSettings
               user={user}
               formData={formData}
-              setFormData={setFormData}
+              setFormData={handleFormDataChange}
               emergencyDetails={emergencyDetails}
-              setEmergencyDetails={setEmergencyDetails}
+              setEmergencyDetails={handleEmergencyDetailsChange}
               relations={relations}
               isSaving={isSaving}
               handleSaveProfile={handleSaveProfile}
@@ -683,6 +768,106 @@ export default function SettingsPage() {
             />
           )}
         </div>
+        {/* Unsaved Changes Confirmation Modal */}
+        <Dialog
+          open={showUnsavedPrompt}
+          onOpenChange={(open) => {
+            if (!open) {
+              setShowUnsavedModal(false);
+              if (blocker.state === "blocked") {
+                blocker.reset();
+              }
+            }
+          }}
+        >
+          <DialogContent
+            className="sm:max-w-md bg-card/95 backdrop-blur-xl border-border/50 text-right p-0 overflow-hidden"
+            dir="rtl"
+          >
+            <DialogHeader className="p-6 bg-amber-500/5 pb-4 border-b border-amber-500/10">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-3">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <DialogTitle className="text-xl font-black text-center text-foreground mb-1">
+                שינויים שלא נשמרו
+              </DialogTitle>
+              <DialogDescription className="text-center font-bold text-muted-foreground text-sm">
+                ביצעת שינויים בהגדרות הפרופיל שטרם נשמרו. כיצד ברצונך להמשיך?
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="p-6 space-y-3">
+              <Button
+                className="w-full h-12 text-sm font-black rounded-xl gap-2 shadow-sm"
+                onClick={async () => {
+                  setShowUnsavedModal(false);
+                  await handleSaveProfile();
+                }}
+              >
+                <Save className="w-4 h-4" />
+                שמור שינויים וצא
+              </Button>
+
+              <Button
+                variant="destructive"
+                className="w-full h-12 text-sm font-black rounded-xl gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                onClick={() => {
+                  setIsDirty(false);
+                  localStorage.removeItem(draftKey);
+                  if (user) {
+                    setFormData({
+                      first_name: user.first_name || "",
+                      last_name: user.last_name || "",
+                      phone_number: user.phone_number || "",
+                      email: user.email || "",
+                      city: user.city || "",
+                      username: user.username || "",
+                      birth_date: user.birth_date || "",
+                      emergency_contact: user.emergency_contact || "",
+                      notif_sick_leave: user.notif_sick_leave !== false,
+                      notif_transfers: user.notif_transfers !== false,
+                      notif_morning_report: user.notif_morning_report !== false,
+                      enlistment_date: user.enlistment_date || "",
+                      discharge_date: user.discharge_date || "",
+                      assignment_date: user.assignment_date || "",
+                      police_license: !!user.police_license,
+                      security_clearance: !!user.security_clearance,
+                      commands_department_id: user.commands_department_id ?? null,
+                      department_name: user.department_name ?? "",
+                      commands_section_id: user.commands_section_id ?? null,
+                      section_name: user.section_name ?? "",
+                      commands_team_id: user.commands_team_id ?? null,
+                      team_name: user.team_name ?? "",
+                    });
+                  }
+                  setShowUnsavedModal(false);
+                  toast.info("השינויים בוטלו");
+                  if (blocker.state === "blocked") {
+                    blocker.proceed();
+                  } else if (pendingNavigationPath) {
+                    navigate(pendingNavigationPath);
+                  }
+                }}
+              >
+                <Trash2 className="w-4 h-4" />
+                מחק טיוטה וצא ללא שמירה
+              </Button>
+
+              <Button
+                variant="ghost"
+                className="w-full h-11 text-sm font-bold rounded-xl text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  setShowUnsavedModal(false);
+                  if (blocker.state === "blocked") {
+                    blocker.reset();
+                  }
+                }}
+              >
+                המשך עריכה
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

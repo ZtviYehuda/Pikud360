@@ -599,6 +599,18 @@ export default function RosterPage() {
 
   const filteredEmployees = useMemo(() => {
     return employees.filter((emp) => {
+      if (user) {
+        const eAny = emp as any;
+        const uAny = user as any;
+        const isSelf =
+          (uAny.id && (String(eAny.id) === String(uAny.id) || String(eAny.user_id) === String(uAny.id))) ||
+          (uAny.employee_id && (String(eAny.id) === String(uAny.employee_id) || String(eAny.user_id) === String(uAny.employee_id))) ||
+          (uAny.username && (eAny.username === uAny.username || eAny.personal_number === uAny.username)) ||
+          (uAny.first_name && uAny.last_name && eAny.first_name?.trim() === uAny.first_name?.trim() && eAny.last_name?.trim() === uAny.last_name?.trim());
+
+        if (isSelf) return false;
+      }
+
       const fullName = `${emp.first_name} ${emp.last_name}`.toLowerCase();
       const matchesSearch =
         fullName.includes(searchTerm.toLowerCase()) || false;
@@ -620,7 +632,7 @@ export default function RosterPage() {
 
       return log?.status_type_id.toString() === statusFilter;
     });
-  }, [employees, searchTerm, statusFilter, logs, statusTypes, today]);
+  }, [employees, user, searchTerm, statusFilter, logs, statusTypes, today]);
 
   const dailyTotals = useMemo(() => {
     const totals: Record<

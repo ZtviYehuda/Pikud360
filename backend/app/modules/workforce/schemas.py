@@ -106,11 +106,19 @@ class EmployeeUpdateRequest(BaseModel):
             if "is_active" in data and not data.get("status"):
                 data["status"] = "ACTIVE" if data["is_active"] else "INACTIVE"
             # Alias frontend view field names → backend column names
-            if not data.get("phone") and data.get("phone_number"):
+            if "phone_number" in data and data.get("phone_number") is not None:
                 data["phone"] = data["phone_number"]
-            if not data.get("personal_email") and data.get("email"):
+            elif not data.get("phone") and data.get("phone_number"):
+                data["phone"] = data["phone_number"]
+            
+            if "email" in data and data.get("email") is not None:
                 data["personal_email"] = data["email"]
-            if not data.get("birthdate") and data.get("birth_date"):
+            elif not data.get("personal_email") and data.get("email"):
+                data["personal_email"] = data["email"]
+            
+            if "birth_date" in data and data.get("birth_date") is not None:
+                data["birthdate"] = str(data["birth_date"]).split("T")[0]
+            elif not data.get("birthdate") and data.get("birth_date"):
                 data["birthdate"] = str(data["birth_date"]).split("T")[0]
         return data
 

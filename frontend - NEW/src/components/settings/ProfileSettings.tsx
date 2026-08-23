@@ -16,12 +16,14 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  Wand2,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cleanUnitName, cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { generateUniqueUsername } from "@/utils/usernameGenerator";
 
 interface ProfileSettingsProps {
   user: any;
@@ -356,7 +358,7 @@ export function ProfileSettings({
                   <InputItem label="שם פרטי" required>
                     <Input
                       disabled={readOnly}
-                      value={formData.first_name}
+                      value={formData.first_name || user?.first_name || ""}
                       onChange={(e) =>
                         setFormData({ ...formData, first_name: e.target.value })
                       }
@@ -370,7 +372,7 @@ export function ProfileSettings({
                   <InputItem label="שם משפחה" required>
                     <Input
                       disabled={readOnly}
-                      value={formData.last_name}
+                      value={formData.last_name || user?.last_name || ""}
                       onChange={(e) =>
                         setFormData({ ...formData, last_name: e.target.value })
                       }
@@ -384,7 +386,7 @@ export function ProfileSettings({
                   <InputItem label="עיר מגורים">
                     <Input
                       disabled={readOnly}
-                      value={formData.city}
+                      value={formData.city || user?.city || ""}
                       onChange={(e) =>
                         setFormData({ ...formData, city: e.target.value })
                       }
@@ -400,7 +402,7 @@ export function ProfileSettings({
                       type="tel"
                       inputMode="tel"
                       disabled={readOnly}
-                      value={formData.phone_number}
+                      value={formData.phone_number || user?.phone_number || ""}
                       onChange={(e) =>
                         setFormData({ ...formData, phone_number: e.target.value })
                       }
@@ -415,7 +417,7 @@ export function ProfileSettings({
                   <InputItem label="כתובת אימייל">
                     <Input
                       disabled={readOnly}
-                      value={formData.email}
+                      value={formData.email || user?.email || ""}
                       onChange={(e) =>
                         setFormData({ ...formData, email: e.target.value })
                       }
@@ -430,7 +432,7 @@ export function ProfileSettings({
                     <Input
                       disabled={readOnly}
                       type="date"
-                      value={formData.birth_date}
+                      value={formData.birth_date || user?.birth_date || ""}
                       onChange={(e) =>
                         setFormData({ ...formData, birth_date: e.target.value })
                       }
@@ -450,12 +452,19 @@ export function ProfileSettings({
                   <InputItem label="שם משתמש" required>
                     <div className="relative group">
                       <Input
-                        disabled={true}
-                        value={formData.username || user?.username || ""}
-                        className="h-11 sm:h-13 bg-background/30 rounded-xl border-border/40 pl-4 pr-10 font-bold text-sm sm:text-base opacity-70"
-                        placeholder="username"
+                        disabled={readOnly}
+                        value={formData.username ?? user?.username ?? ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            username: e.target.value.toLowerCase().trim(),
+                          })
+                        }
+                        className="h-11 sm:h-13 bg-background/30 rounded-xl border-border/40 pl-11 pr-10 font-bold text-sm sm:text-base text-left focus:bg-background/80 transition-all"
+                        placeholder="שם משתמש באנגלית"
+                        dir="ltr"
                       />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-primary/10 text-primary">
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-primary/10 text-primary pointer-events-none">
                         <ShieldCheck className="w-3.5 h-3.5" />
                       </div>
                     </div>
@@ -467,7 +476,7 @@ export function ProfileSettings({
                     <Input
                       disabled={readOnly}
                       type="date"
-                      value={formData.enlistment_date}
+                      value={formData.enlistment_date || user?.enlistment_date || ""}
                       onChange={(e) =>
                         setFormData({
                           ...formData,

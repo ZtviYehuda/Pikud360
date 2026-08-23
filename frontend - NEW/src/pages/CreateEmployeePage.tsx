@@ -934,7 +934,7 @@ const ProfessionalFormTab = ({
                 }
               />
             </InputItem>
-            <InputItem label="שחרור צפוי (תש''ש)" icon={Calendar}>
+            <InputItem label="תאריך שחרור (תש''ש)" icon={Calendar}>
               <Input
                 type="date"
                 value={
@@ -1257,10 +1257,12 @@ export default function CreateEmployeePage() {
       const generatedUsername = generateUniqueUsername(
         formData.first_name || "",
         formData.last_name || "",
-        existingUsernames
+        existingUsernames,
       );
 
-      const generatedPassword = Math.floor(100000 + Math.random() * 900000).toString();
+      const generatedPassword = Math.floor(
+        100000 + Math.random() * 900000,
+      ).toString();
 
       generatedCreds = {
         user: generatedUsername,
@@ -1277,7 +1279,7 @@ export default function CreateEmployeePage() {
       payload.username = generateUniqueUsername(
         formData.first_name || "emp",
         formData.last_name || "",
-        existingUsernames
+        existingUsernames,
       );
     }
 

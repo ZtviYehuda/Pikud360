@@ -30,7 +30,9 @@ export const WhatsAppButton: React.FC<WhatsAppButtonProps> = ({
 }) => {
 
     const handleSend = async (e: React.MouseEvent<HTMLButtonElement>) => {
-        // ... (unchanged)
+        e.preventDefault();
+        e.stopPropagation();
+
         if (onClick) {
             onClick(e);
         }
@@ -44,18 +46,20 @@ export const WhatsAppButton: React.FC<WhatsAppButtonProps> = ({
         try {
             const url = getWhatsAppUrl(phoneNumber, message);
 
-            try {
-                await navigator.clipboard.writeText(message);
-            } catch (err) {
-                console.error("Clipboard copy failed", err);
+            if (message) {
+                try {
+                    await navigator.clipboard.writeText(message);
+                } catch (err) {
+                    console.error("Clipboard copy failed", err);
+                }
             }
 
-            window.open(url, "_blank");
+            window.open(url, "_blank", "noopener,noreferrer");
             toast.success("טוען צ'אט לוואטסאפ...", { duration: 1500 });
 
         } catch (error) {
             console.error("WhatsApp Error:", error);
-            toast.error("Error opening WhatsApp");
+            toast.error("שגיאה בפתיחת וואטסאפ");
         }
     };
 

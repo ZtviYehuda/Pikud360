@@ -85,12 +85,12 @@ class UserRepository(BaseRepository[User, str]):
         query = """
             SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at
             FROM security.users
-            WHERE username = %s AND deleted_at IS NULL;
+            WHERE LOWER(username) = LOWER(%s) AND deleted_at IS NULL;
         """
         try:
             with get_db_connection() as conn:
                 with conn.cursor() as cur:
-                    cur.execute(query, (username,))
+                    cur.execute(query, (username.strip(),))
                     row = cur.fetchone()
                     if row:
                         return self._row_to_entity(row)
@@ -102,11 +102,11 @@ class UserRepository(BaseRepository[User, str]):
         query = """
             SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at
             FROM security.users
-            WHERE username = %s AND tenant_id = %s AND deleted_at IS NULL;
+            WHERE LOWER(username) = LOWER(%s) AND tenant_id = %s AND deleted_at IS NULL;
         """
         with get_db_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(query, (username, tenant_id))
+                cur.execute(query, (username.strip(), tenant_id))
                 row = cur.fetchone()
                 if row:
                     return self._row_to_entity(row)
@@ -182,15 +182,13 @@ class UserRepository(BaseRepository[User, str]):
                         cur.execute("INSERT INTO core.tenants (id, name, code, is_active) VALUES (%s, %s, %s, TRUE);", (tenant_id, "Default Tenant", "DEFAULT"))
                     
                     for uname, email in seed_accounts:
-                        cur.execute("SELECT id FROM security.users WHERE username = %s;", (uname,))
+                        cur.execute("SELECT id FROM security.users WHERE LOWER(username) = LOWER(%s);", (uname,))
                         if not cur.fetchone():
                             cur.execute("""
                                 INSERT INTO security.users (id, tenant_id, username, email, password_hash, is_active)
                                 VALUES (%s, %s, %s, %s, %s, TRUE);
                             """, (str(uuid.uuid4()), tenant_id, uname, email, default_hash))
                     
-                    # Remove non-admin authentication users from security.users
-                    cur.execute("DELETE FROM security.users WHERE username != %s;", ('admin',))
                     conn.commit()
         except Exception as e:
             logger.warning(f"Notice in ensure_seed_users: {e}")
