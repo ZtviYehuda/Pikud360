@@ -296,11 +296,11 @@ def me():
     username = user.username if user else (getattr(emp, "employee_number", None) or "commander")
     email = user.email if user else (getattr(emp, "personal_email", None) or "")
 
-    user_roles = get_user_roles(user.id) if user else ["COMMANDER"]
+    user_roles = get_user_roles(user.id) if user else []
     is_admin = (not is_impersonated) and ((username == "admin") or (email == "admin@matzevet.gov.il") or ("ADMIN" in user_roles))
-    is_commander = (not is_admin) or ("COMMANDER" in user_roles)
-
+    
     user_prefs = user_preference_repo.get_by_user_id(user_id) if user_id else {}
+    is_commander = bool(is_admin or ("COMMANDER" in user_roles) or user_prefs.get("is_commander", False) or (getattr(emp, "position", "") in ["מפקד", "קצין"]))
 
     first_name = (
         user_prefs.get("first_name")
@@ -402,28 +402,38 @@ def update_profile():
     # Upsert to PostgreSQL user preferences
     updated_prefs = user_preference_repo.upsert(target_id, req_data) or {}
 
-    # Synchronize with workforce.employees table
+    # Synchronize with workforce.employees table & chat_messages
     if user:
         try:
-            from app.modules.workforce.repositories import EmployeeRepository
-            emp_repo = EmployeeRepository()
-            linked_emps = [e for e in emp_repo.list_all() if str(e.user_id) == str(user.id) or e.employee_number == user.username]
-            for emp in linked_emps:
-                if req_data.get("first_name"):
-                    emp.first_name = req_data.get("first_name")
-                if req_data.get("last_name"):
-                    emp.last_name = req_data.get("last_name")
-                if req_data.get("phone_number"):
-                    emp.phone = req_data.get("phone_number")
-                if req_data.get("email"):
-                    emp.personal_email = req_data.get("email")
-                if req_data.get("city"):
-                    emp.city = req_data.get("city")
-                if req_data.get("emergency_contact"):
-                    emp.emergency_contact = req_data.get("emergency_contact")
-                if req_data.get("birth_date"):
-                    emp.birthdate = req_data.get("birth_date")
-                emp_repo.update(emp.id, emp, updated_by_user_id=str(user.id))
+            fn = req_data.get("first_name")
+            ln = req_data.get("last_name")
+            phone = req_data.get("phone_number")
+            city = req_data.get("city")
+            emergency = req_data.get("emergency_contact")
+            birthdate = req_data.get("birth_date")
+
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        UPDATE workforce.employees
+                        SET first_name = COALESCE(%s, first_name),
+                            last_name = COALESCE(%s, last_name),
+                            city = COALESCE(%s, city),
+                            emergency_contact = COALESCE(%s, emergency_contact),
+                            updated_at = NOW(),
+                            updated_by = %s
+                        WHERE user_id::text = %s OR employee_number::text = %s;
+                    """, (fn, ln, city, emergency, str(user.id), str(user.id), str(user.username)))
+
+                    if fn or ln:
+                        cur.execute("""
+                            UPDATE core.chat_messages
+                            SET sender_first = COALESCE(%s, sender_first),
+                                sender_last = COALESCE(%s, sender_last)
+                            WHERE sender_id::text = %s OR sender_id::text = %s;
+                        """, (fn, ln, str(user.id), str(user.username)))
+
+                    conn.commit()
         except Exception as e:
             logger.warning(f"Could not update linked workforce employee from update_profile: {e}")
 

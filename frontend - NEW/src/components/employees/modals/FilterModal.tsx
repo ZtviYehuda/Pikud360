@@ -38,7 +38,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-[560px] md:max-w-[620px] max-h-[92vh] sm:max-h-[85vh] p-0 border border-border/80 dark:border-white/15 bg-card/98 backdrop-blur-2xl flex flex-col overflow-hidden !gap-0 pointer-events-auto rounded-t-[2.5rem] sm:rounded-3xl shadow-xl ring-1 ring-black/5 dark:ring-white/10"
+        className="sm:max-w-[560px] md:max-w-[620px] max-h-[92svh] sm:max-h-[85vh] p-0 border border-border/80 dark:border-white/15 bg-card flex flex-col overflow-hidden !gap-0 pointer-events-auto rounded-t-2xl sm:rounded-2xl shadow-xl"
         dir="rtl"
       >
         <DialogTitle className="sr-only">סינון</DialogTitle>

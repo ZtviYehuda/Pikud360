@@ -48,6 +48,8 @@ const ChangePasswordPage = lazyWithRetry(() => import("@/pages/ChangePasswordPag
 const ActivityLogPage    = lazyWithRetry(() => import("@/pages/ActivityLogPage"));
 const FeedbackPage       = lazyWithRetry(() => import("@/pages/FeedbackPage"));
 
+const MessagingPage       = lazyWithRetry(() => import("@/features/messaging/MessagingPage"));
+
 // ── Page-level suspense wrapper ───────────────────────────────────────────────
 // Keeps UX smooth: shows LoadingScreen while the chunk downloads
 function PageSuspense({ children }: { children: React.ReactNode }) {
@@ -164,6 +166,7 @@ const router = createBrowserRouter([
           { path: "/roster",              element: <RosterPage /> },
           { path: "/settings",            element: <SettingsPage /> },
           { path: "/feedback",            element: <PageSuspense><FeedbackPage /></PageSuspense> },
+          { path: "/messaging",           element: <PageSuspense><FeedbackPage /></PageSuspense> },
           { path: "/activity-log",        element: <PageSuspense><ActivityLogPage /></PageSuspense> },
           { path: "/manage",              element: <Navigate to="/employees" replace /> },
           { path: "*",                    element: <Navigate to="/" replace /> },

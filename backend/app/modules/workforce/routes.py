@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from pydantic import ValidationError
 from datetime import datetime, timedelta
 import logging
+import json
 
 from app.database.connection import get_db_connection
 from app.modules.workforce.repositories import EmployeeRepository, EmployeeHistoryRepository
@@ -27,6 +28,48 @@ workforce_service = WorkforceService(
     audit_repo=audit_repo
 )
 
+def _enrich_employee_serialized(serialized: dict) -> dict:
+    if not isinstance(serialized, dict):
+        return serialized
+    uid = serialized.get("user_id")
+    emp_num = serialized.get("employee_number")
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                # Resolve target user_id
+                target_uid = str(uid) if uid else None
+                if not target_uid and emp_num:
+                    cur.execute("SELECT id FROM security.users WHERE username = %s OR id::text = %s;", (str(emp_num), str(emp_num)))
+                    r = cur.fetchone()
+                    if r:
+                        target_uid = str(r[0])
+
+                prefs = {}
+                has_cmd_role = False
+                if target_uid:
+                    from app.modules.security.repositories import UserPreferenceRepository
+                    pref_repo = UserPreferenceRepository()
+                    prefs = pref_repo.get_by_user_id(target_uid) or {}
+
+                    cur.execute("""
+                        SELECT 1 FROM security.user_roles ur
+                        JOIN security.roles r ON r.id = ur.role_id
+                        WHERE ur.user_id::text = %s AND r.name = 'COMMANDER';
+                    """, (target_uid,))
+                    has_cmd_role = bool(cur.fetchone())
+
+                is_cmd = bool(has_cmd_role or prefs.get("is_commander", False))
+                serialized["is_commander"] = is_cmd
+                serialized["security_clearance"] = bool(prefs.get("security_clearance", False))
+                serialized["police_license"] = bool(prefs.get("police_license", False))
+                if prefs.get("emergency_contact") and not serialized.get("emergency_contact"):
+                    serialized["emergency_contact"] = prefs.get("emergency_contact")
+                if prefs.get("city") and not serialized.get("city"):
+                    serialized["city"] = prefs.get("city")
+    except Exception as e:
+        logger.warning(f"Error enriching employee {serialized.get('id')}: {e}")
+    return serialized
+
 @workforce_bp.route("/employees", methods=["GET"])
 @require_permission("employees.view", ScopeType.ORGANIZATION_UNIT)
 def list_employees():
@@ -36,7 +79,7 @@ def list_employees():
     tenant_id = claims.get("tenant_id")
     
     employees = workforce_service.list_employees(tenant_id, user_id)
-    serialized = [EmployeeResponse.model_validate(emp).model_dump() for emp in employees]
+    serialized = [_enrich_employee_serialized(EmployeeResponse.model_validate(emp).model_dump()) for emp in employees]
     
     return ApiResponse.success(data=serialized)
 
@@ -53,7 +96,7 @@ def get_employee(employee_id):
     if not emp:
         return ApiResponse.error(message="Employee not found", error_code="NOT_FOUND", status_code=404)
         
-    serialized = EmployeeResponse.model_validate(emp).model_dump()
+    serialized = _enrich_employee_serialized(EmployeeResponse.model_validate(emp).model_dump())
     return ApiResponse.success(data=serialized)
 
 
@@ -77,7 +120,7 @@ def create_employee():
         )
         
     created_emp = workforce_service.create_employee(req, tenant_id, user_id)
-    serialized = EmployeeResponse.model_validate(created_emp).model_dump()
+    serialized = _enrich_employee_serialized(EmployeeResponse.model_validate(created_emp).model_dump())
     
     return ApiResponse.success(data=serialized, status_code=201)
 
@@ -105,7 +148,7 @@ def update_employee(employee_id):
     if not updated_emp:
         return ApiResponse.error(message="Employee not found", error_code="NOT_FOUND", status_code=404)
         
-    serialized = EmployeeResponse.model_validate(updated_emp).model_dump()
+    serialized = _enrich_employee_serialized(EmployeeResponse.model_validate(updated_emp).model_dump())
     return ApiResponse.success(data=serialized)
 
 
@@ -146,7 +189,29 @@ def get_employee_history(employee_id):
 @workforce_bp.route("/employees/chat/heartbeat", methods=["POST"])
 @jwt_required(optional=True)
 def chat_heartbeat():
-    return jsonify({"success": True, "status": "online"}), 200
+    return jsonify({
+        "success": True,
+        "status": "online",
+        "recipient": {
+            "is_online": True,
+            "chat_status": "online",
+            "chat_status_custom": None,
+            "is_typing": False
+        }
+    }), 200
+
+
+@workforce_bp.route("/employees/chat/status", methods=["PUT"])
+@jwt_required(optional=True)
+def update_chat_status():
+    try:
+        user_id = get_jwt_identity() or "default-user"
+        data = request.get_json() or {}
+        chat_status = data.get("chat_status", "online")
+        chat_status_custom = data.get("chat_status_custom")
+        return jsonify({"success": True, "chat_status": chat_status, "chat_status_custom": chat_status_custom}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 FULL_ORGANIZATION_STRUCTURE = [
@@ -315,23 +380,247 @@ SYSTEM_ATTENDANCE_STATUS_TYPES = [
 ]
 
 
+def get_configured_service_types():
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT value FROM core.system_settings WHERE key = 'custom_service_types';")
+                row = cur.fetchone()
+                if row and row[0]:
+                    val = json.loads(row[0]) if isinstance(row[0], str) else row[0]
+                    if isinstance(val, list) and len(val) > 0:
+                        return val
+    except Exception as e:
+        logger.warning(f"Failed to fetch custom_service_types: {e}")
+    return SYSTEM_SERVICE_TYPES
+
+
+def get_configured_attendance_status_types():
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT value FROM core.system_settings WHERE key = 'custom_attendance_statuses';")
+                row = cur.fetchone()
+                if row and row[0]:
+                    val = json.loads(row[0]) if isinstance(row[0], str) else row[0]
+                    if isinstance(val, list) and len(val) > 0:
+                        return val
+    except Exception as e:
+        logger.warning(f"Failed to fetch custom_attendance_statuses: {e}")
+    return SYSTEM_ATTENDANCE_STATUS_TYPES
+
+
 @workforce_bp.route("/employees/service-types", methods=["GET"])
 @jwt_required(optional=True)
 def get_employees_service_types():
-    return jsonify(SYSTEM_SERVICE_TYPES), 200
+    return jsonify(get_configured_service_types()), 200
+
+
+@workforce_bp.route("/settings/statuses-and-service-types", methods=["GET"])
+@jwt_required(optional=True)
+def get_statuses_and_service_types_settings():
+    return jsonify({
+        "success": True,
+        "service_types": get_configured_service_types(),
+        "attendance_statuses": get_configured_attendance_status_types(),
+        "default_service_types": SYSTEM_SERVICE_TYPES,
+        "default_attendance_statuses": SYSTEM_ATTENDANCE_STATUS_TYPES,
+    }), 200
+
+
+@workforce_bp.route("/settings/statuses-and-service-types", methods=["POST"])
+@jwt_required(optional=True)
+def save_statuses_and_service_types_settings():
+    try:
+        data = request.get_json() or {}
+        service_types = data.get("service_types")
+        attendance_statuses = data.get("attendance_statuses")
+
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                if service_types is not None:
+                    cur.execute("""
+                        INSERT INTO core.system_settings (key, value, updated_at)
+                        VALUES ('custom_service_types', %s, CURRENT_TIMESTAMP)
+                        ON CONFLICT (key) DO UPDATE
+                            SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP;
+                    """, (json.dumps(service_types, ensure_ascii=False),))
+
+                if attendance_statuses is not None:
+                    cur.execute("""
+                        INSERT INTO core.system_settings (key, value, updated_at)
+                        VALUES ('custom_attendance_statuses', %s, CURRENT_TIMESTAMP)
+                        ON CONFLICT (key) DO UPDATE
+                            SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP;
+                    """, (json.dumps(attendance_statuses, ensure_ascii=False),))
+                conn.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "הגדרות סטטוסים ומעמד ארגוני נשמרו בהצלחה",
+            "service_types": get_configured_service_types(),
+            "attendance_statuses": get_configured_attendance_status_types(),
+        }), 200
+    except Exception as e:
+        logger.error(f"Error saving statuses and service types: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@workforce_bp.route("/settings/reset-defaults", methods=["POST"])
+@jwt_required(optional=True)
+def reset_statuses_and_service_types_defaults():
+    try:
+        data = request.get_json() or {}
+        target = data.get("target", "all")  # 'all', 'service_types', 'attendance_statuses'
+
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                if target in ("all", "service_types"):
+                    cur.execute("DELETE FROM core.system_settings WHERE key = 'custom_service_types';")
+                if target in ("all", "attendance_statuses"):
+                    cur.execute("DELETE FROM core.system_settings WHERE key = 'custom_attendance_statuses';")
+                conn.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "ההגדרות אופסו לברירת המחדל של המערכת בהצלחה",
+            "service_types": get_configured_service_types(),
+            "attendance_statuses": get_configured_attendance_status_types(),
+        }), 200
+    except Exception as e:
+        logger.error(f"Error resetting statuses and service types: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @workforce_bp.route("/employees/chat-contacts", methods=["GET"])
 @jwt_required(optional=True)
 def get_employees_chat_contacts():
-    """Returns active employee contacts for messaging/chat."""
+    """Returns active employee and user contacts for messaging/chat, strictly excluding current user and self aliases."""
     try:
         user_id = get_jwt_identity() or "default-user"
         claims = get_jwt() if get_jwt_identity() else {}
         tenant_id = claims.get("tenant_id") or "default-tenant"
+        
+        user_aliases = {str(user_id).lower()}
+        is_admin = bool(claims.get("is_admin", False))
+        
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT u.id, u.username, e.id, e.employee_number
+                    FROM security.users u
+                    LEFT JOIN workforce.employees e ON e.user_id = u.id OR e.employee_number::text = u.username
+                    WHERE u.id::text = %s OR u.username = %s;
+                """, (str(user_id), str(user_id)))
+                for r in cur.fetchall():
+                    for item in r:
+                        if item:
+                            user_aliases.add(str(item).lower())
+                            if str(item).lower() in ["admin", "691b0694-1c0f-49de-9213-1f4ed4ea2936"]:
+                                is_admin = True
+
+        if str(user_id).lower() in ["admin", "691b0694-1c0f-49de-9213-1f4ed4ea2936"]:
+            is_admin = True
+            user_aliases.update(["admin", "admin-support", "691b0694-1c0f-49de-9213-1f4ed4ea2936"])
+
         employees = workforce_service.list_employees(tenant_id, user_id)
-        serialized = [EmployeeResponse.model_validate(emp).model_dump() for emp in employees]
-        return jsonify(serialized), 200
+        
+        contacts = []
+        for emp in employees:
+            emp_id_str = str(emp.id).lower() if emp.id else ""
+            emp_user_id_str = str(emp.user_id).lower() if emp.user_id else ""
+            emp_num_str = str(emp.employee_number).lower() if emp.employee_number else ""
+            
+            # Skip if this employee represents the current logged-in user
+            if (emp_id_str in user_aliases or 
+                emp_user_id_str in user_aliases or 
+                emp_num_str in user_aliases):
+                continue
+            
+            contacts.append(EmployeeResponse.model_validate(emp).model_dump())
+
+        # Also query registered users from security.users
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT u.id, u.username, u.email, p.display_preferences, r.name as role_name
+                    FROM security.users u
+                    LEFT JOIN security.user_preferences p ON p.user_id = u.id::text
+                    LEFT JOIN security.user_roles ur ON ur.user_id = u.id
+                    LEFT JOIN security.roles r ON r.id = ur.role_id
+                    WHERE u.deleted_at IS NULL;
+                """)
+                for row in cur.fetchall():
+                    u_id, u_uname, u_email, u_prefs, u_role = row
+                    u_id_str = str(u_id).lower()
+                    u_uname_str = str(u_uname).lower()
+                    
+                    if u_id_str in user_aliases or u_uname_str in user_aliases:
+                        continue
+                        
+                    already_in_contacts = any(
+                        str(c.get("user_id", "")).lower() == u_id_str or 
+                        str(c.get("employee_number", "")).lower() == u_uname_str or
+                        str(c.get("id", "")).lower() == u_id_str
+                        for c in contacts
+                    )
+                    if already_in_contacts:
+                        continue
+                        
+                    prefs = u_prefs or {}
+                    raw_first = prefs.get("first_name")
+                    raw_last = prefs.get("last_name")
+                    
+                    if "ravit" in u_uname_str:
+                        first_name = "רווית"
+                        last_name = "שחריאן"
+                    elif raw_first:
+                        first_name = raw_first
+                        last_name = raw_last or ("(אדמין)" if u_role == "ADMIN" else "")
+                    else:
+                        first_name = u_uname
+                        last_name = "(אדמין)" if u_role == "ADMIN" else ""
+                    
+                    user_contact = {
+                        "id": str(u_id),
+                        "user_id": str(u_id),
+                        "employee_number": u_uname,
+                        "first_name": first_name,
+                        "last_name": last_name,
+                        "is_admin": u_role == "ADMIN" or "admin" in u_uname_str,
+                        "is_commander": bool(prefs.get("is_commander", True)),
+                        "rank": "מנהלת מערכת" if "ravit" in u_uname_str else ("מנהל מערכת" if u_role == "ADMIN" else "מפקד"),
+                        "department_name": "מטה הפיקוד" if u_role == "ADMIN" else "פיקוד",
+                        "section_name": "ניהול מערכת" if u_role == "ADMIN" else "",
+                        "team_name": "אדמין" if u_role == "ADMIN" else "",
+                        "phone_number": prefs.get("phone_number", ""),
+                        "is_active": True,
+                        "is_online": True,
+                        "chat_status": "online"
+                    }
+                    contacts.append(user_contact)
+        
+        # Include Support Team Admin contact for non-admin users if admin isn't already present
+        if not is_admin:
+            has_admin = any(c.get("is_admin") for c in contacts)
+            if not has_admin:
+                support_contact = {
+                    "id": 1,
+                    "employee_number": "admin",
+                    "first_name": "צוות",
+                    "last_name": "תמיכה",
+                    "is_admin": True,
+                    "rank": "מנהל מערכת ראשי",
+                    "department_name": "מטה הפיקוד",
+                    "section_name": "ניהול מערכת",
+                    "team_name": "צוות תמיכה",
+                    "is_active": True,
+                    "is_online": True,
+                    "chat_status": "online"
+                }
+                contacts.insert(0, support_contact)
+            
+        return jsonify(contacts), 200
     except Exception as e:
         logger.error(f"Error fetching chat contacts: {e}")
         return jsonify([]), 200
@@ -370,7 +659,7 @@ def mark_notification_alert_read(alert_id):
 @workforce_bp.route("/attendance/status-types", methods=["GET"])
 @jwt_required(optional=True)
 def get_attendance_status_types():
-    return jsonify(SYSTEM_ATTENDANCE_STATUS_TYPES), 200
+    return jsonify(get_configured_attendance_status_types()), 200
 
 
 @workforce_bp.route("/attendance/stats", methods=["GET"])

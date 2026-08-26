@@ -83,6 +83,9 @@ def create_app() -> Flask:
     from app.modules.notifications.routes import notifications_bp
     app.register_blueprint(notifications_bp, url_prefix="/api")
 
+    from app.modules.messaging.routes import messaging_bp
+    app.register_blueprint(messaging_bp, url_prefix="/api/messaging")
+
     from app.modules.admin.routes import admin_bp
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
 

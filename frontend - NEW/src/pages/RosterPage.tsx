@@ -148,6 +148,7 @@ export default function RosterPage() {
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
@@ -754,138 +755,69 @@ export default function RosterPage() {
                     />
                   </div>
 
-                  <Popover>
-                    <div className="relative group">
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "h-10 w-10 p-0 rounded-xl border-border/40 hover:bg-muted/30 shrink-0 shadow-sm transition-all bg-background",
-                            hasActiveFilters
-                              ? "text-primary border-primary/30 bg-primary/5"
-                              : "",
-                          )}
-                        >
-                          <Filter className="w-4 h-4" />
-                          {hasActiveFilters && (
-                            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary shadow-sm border border-background" />
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      {hasActiveFilters && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleResetFilters();
-                          }}
-                          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center border-2 border-background transition-all hover:scale-110 active:scale-90 z-20 shadow-sm"
-                          title="נקה הכל"
-                        >
-                          <RotateCcw className="w-2.5 h-2.5" />
-                        </button>
+                  <div className="relative group">
+                    <Button
+                      variant="outline"
+                      onClick={() => setFilterModalOpen(true)}
+                      className={cn(
+                        "h-10 w-10 p-0 rounded-xl border-border/40 hover:bg-muted/30 shrink-0 shadow-sm transition-all bg-background",
+                        hasActiveFilters
+                          ? "text-primary border-primary/30 bg-primary/5"
+                          : "",
                       )}
-                    </div>
-                    <PopoverContent
-                      align="end"
-                      sideOffset={12}
-                      className="w-[95vw] sm:w-[560px] md:w-[620px] max-h-[92vh] sm:max-h-[85vh] p-0 rounded-[2.5rem] sm:rounded-3xl border border-border/80 dark:border-white/15 bg-card/98 backdrop-blur-2xl shadow-xl ring-1 ring-black/5 dark:ring-white/10 z-50 flex flex-col overflow-hidden"
                     >
-                      <DashboardFilters
-                        isDialogContent={true}
-                        selectedDeptId={selectedDept}
-                        selectedSectionId={selectedSection}
-                        selectedTeamId={selectedTeam}
-                        selectedStatusId={statusFilter}
-                        onFilterChange={(type, val) => {
-                          if (type === "department") {
-                            setSelectedDept(val || "all");
-                            setSelectedSection("all");
-                            setSelectedTeam("all");
-                          } else if (type === "section") {
-                            setSelectedSection(val || "all");
-                            setSelectedTeam("all");
-                          } else if (type === "team") {
-                            setSelectedTeam(val || "all");
-                          } else if (type === "status") {
-                            setStatusFilter(val || "all");
-                          } else if (type === "reset") {
-                            handleResetFilters();
-                          }
+                      <Filter className="w-4 h-4" />
+                      {hasActiveFilters && (
+                        <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary shadow-sm border border-background" />
+                      )}
+                    </Button>
+                    {hasActiveFilters && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleResetFilters();
                         }}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                        className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center border-2 border-background transition-all hover:scale-110 active:scale-90 z-20 shadow-sm"
+                        title="נקה הכל"
+                      >
+                        <RotateCcw className="w-2.5 h-2.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Desktop Only Filter/Search */}
                 <div className="hidden lg:flex items-center gap-2">
-                  <Popover>
-                    <div className="relative group">
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "h-9 rounded-full px-4 border-border/40 hover:bg-muted/30 font-bold text-xs gap-2 shrink-0 shadow-sm transition-all bg-background",
-                            hasActiveFilters
-                              ? "text-primary border-primary/30 bg-primary/5"
-                              : "",
-                          )}
-                        >
-                          <Filter className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">
-                            {filterButtonLabel || "סינון"}
-                          </span>
-                          <span className="sm:hidden">
-                            {filterButtonLabel || "סינון"}
-                          </span>
-                          {hasActiveFilters && (
-                            <span className="w-2 h-2 rounded-full bg-primary relative -right-1 shadow-sm" />
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      {hasActiveFilters && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleResetFilters();
-                          }}
-                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center border-2 border-background transition-all hover:scale-110 active:scale-90 z-20 shadow-sm"
-                          title="נקה הכל"
-                        >
-                          <RotateCcw className="w-2.5 h-2.5" />
-                        </button>
+                  <div className="relative group">
+                    <Button
+                      variant="outline"
+                      onClick={() => setFilterModalOpen(true)}
+                      className={cn(
+                        "h-9 rounded-full px-4 border-border/40 hover:bg-muted/30 font-bold text-xs gap-2 shrink-0 shadow-sm transition-all bg-background",
+                        hasActiveFilters
+                          ? "text-primary border-primary/30 bg-primary/5"
+                          : "",
                       )}
-                    </div>
-                    <PopoverContent
-                      align="start"
-                      sideOffset={12}
-                      className="w-[95vw] sm:w-[560px] md:w-[620px] max-h-[92vh] sm:max-h-[85vh] p-0 rounded-[2.5rem] sm:rounded-3xl border border-border/80 dark:border-white/15 bg-card/98 backdrop-blur-2xl shadow-xl ring-1 ring-black/5 dark:ring-white/10 z-50 flex flex-col overflow-hidden"
                     >
-                      <DashboardFilters
-                        isDialogContent={true}
-                        selectedDeptId={selectedDept}
-                        selectedSectionId={selectedSection}
-                        selectedTeamId={selectedTeam}
-                        selectedStatusId={statusFilter}
-                        onFilterChange={(type, val) => {
-                          if (type === "department") {
-                            setSelectedDept(val || "all");
-                            setSelectedSection("all");
-                            setSelectedTeam("all");
-                          } else if (type === "section") {
-                            setSelectedSection(val || "all");
-                            setSelectedTeam("all");
-                          } else if (type === "team") {
-                            setSelectedTeam(val || "all");
-                          } else if (type === "status") {
-                            setStatusFilter(val || "all");
-                          } else if (type === "reset") {
-                            handleResetFilters();
-                          }
+                      <Filter className="w-3.5 h-3.5" />
+                      <span>{filterButtonLabel || "סינון"}</span>
+                      {hasActiveFilters && (
+                        <span className="w-2 h-2 rounded-full bg-primary relative -right-1 shadow-sm" />
+                      )}
+                    </Button>
+                    {hasActiveFilters && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleResetFilters();
                         }}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center border-2 border-background transition-all hover:scale-110 active:scale-90 z-20 shadow-sm"
+                        title="נקה הכל"
+                      >
+                        <RotateCcw className="w-2.5 h-2.5" />
+                      </button>
+                    )}
+                  </div>
 
                   <div className="relative group/search">
                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50 group-focus-within/search:text-primary transition-colors z-10" />
@@ -901,6 +833,64 @@ export default function RosterPage() {
             }
           />
         </div>
+
+        {/* Unified Filter Dialog (Native Bottom Sheet on mobile, Centered Modal on desktop) */}
+        <Dialog open={filterModalOpen} onOpenChange={setFilterModalOpen}>
+          <DialogContent
+            className="sm:max-w-[560px] md:max-w-[620px] max-h-[92svh] sm:max-h-[85vh] p-0 border border-border/80 dark:border-white/15 bg-card flex flex-col overflow-hidden !gap-0 pointer-events-auto rounded-t-2xl sm:rounded-2xl shadow-xl"
+            dir="rtl"
+          >
+            <DialogTitle className="sr-only">סינון סידור עבודה</DialogTitle>
+            {filterModalOpen && (
+              <DashboardFilters
+                isDialogContent={true}
+                selectedDeptId={selectedDept}
+                selectedSectionId={selectedSection}
+                selectedTeamId={selectedTeam}
+                selectedStatusId={statusFilter}
+                onApplyModal={(filters) => {
+                  if (filters.deptIds?.length) {
+                    setSelectedDept(filters.deptIds[0]);
+                  } else {
+                    setSelectedDept("all");
+                  }
+                  if (filters.sectionIds?.length) {
+                    setSelectedSection(filters.sectionIds[0]);
+                  } else {
+                    setSelectedSection("all");
+                  }
+                  if (filters.teamIds?.length) {
+                    setSelectedTeam(filters.teamIds[0]);
+                  } else {
+                    setSelectedTeam("all");
+                  }
+                  if (filters.statusIds?.length) {
+                    setStatusFilter(filters.statusIds[0]);
+                  } else {
+                    setStatusFilter("all");
+                  }
+                  setFilterModalOpen(false);
+                }}
+                onFilterChange={(type, val) => {
+                  if (type === "department") {
+                    setSelectedDept(val || "all");
+                    setSelectedSection("all");
+                    setSelectedTeam("all");
+                  } else if (type === "section") {
+                    setSelectedSection(val || "all");
+                    setSelectedTeam("all");
+                  } else if (type === "team") {
+                    setSelectedTeam(val || "all");
+                  } else if (type === "status") {
+                    setStatusFilter(val || "all");
+                  } else if (type === "reset") {
+                    handleResetFilters();
+                  }
+                }}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
 
         <div className="flex-1 overflow-auto py-3 sm:py-4 md:py-6 custom-scrollbar relative">
           {/* Mobile Calendar & Stats - Refactored */}

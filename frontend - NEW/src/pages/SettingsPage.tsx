@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Save,
   Trash2,
+  Briefcase,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,7 @@ import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { BackupSettings } from "@/components/settings/BackupSettings";
+import { StatusAndServiceSettings } from "@/components/settings/StatusAndServiceSettings";
 
 export default function SettingsPage() {
   const { user, refreshUser } = useAuthContext();
@@ -69,8 +71,10 @@ export default function SettingsPage() {
   useEffect(() => {
     if (urlTab) {
       setActiveTab(urlTab);
+    } else {
+      setActiveTab(user?.is_temp_commander ? "appearance" : "profile");
     }
-  }, [urlTab]);
+  }, [urlTab, user?.is_temp_commander]);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -78,7 +82,22 @@ export default function SettingsPage() {
     newParams.set("tab", tab);
     setSearchParams(newParams, { replace: true });
   };
-  // const [mobileNavOpen, setMobileNavOpen] = useState(true);
+
+  const canManageStatuses = useMemo(() => {
+    if (!user) return false;
+    return (
+      user.is_admin ||
+      user.is_commander ||
+      user.is_department_commander ||
+      user.is_section_commander ||
+      user.is_team_commander ||
+      !!user.commands_department_id ||
+      !!user.commands_section_id ||
+      !!user.commands_team_id ||
+      user.is_temp_commander
+    );
+  }, [user]);
+
   const [isSaving, setIsSaving] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isServerBackingUp, setIsServerBackingUp] = useState(false);
@@ -578,7 +597,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex-1 min-h-0 flex flex-col">
-        {/* Desktop Horizontal Navigation (Replaces Sidebar) */}
+        {/* Desktop Horizontal Navigation (Replaces Sidebar on Desktop) */}
         <div className="hidden lg:flex items-center gap-1 border-b border-border sticky top-[-35px] bg-background/95 backdrop-blur z-50 pb-0 overflow-x-auto no-scrollbar pt-2 px-4">
           {!user?.is_temp_commander && (
             <TabItem
@@ -590,6 +609,14 @@ export default function SettingsPage() {
                 searchParams.get("tutorial") === "profile" &&
                   "tutorial-highlight",
               )}
+            />
+          )}
+          {canManageStatuses && (
+            <TabItem
+              id="statuses-tab"
+              label="סטטוסים ומעמד"
+              active={activeTab === "statuses"}
+              onClick={() => handleTabChange("statuses")}
             />
           )}
           <TabItem
@@ -715,6 +742,10 @@ export default function SettingsPage() {
             />
           )}
 
+          {activeTab === "statuses" && canManageStatuses && (
+            <StatusAndServiceSettings />
+          )}
+
           {activeTab === "backup" && user?.is_admin && (
             <BackupSettings
               backupConfig={backupConfig}
@@ -735,7 +766,25 @@ export default function SettingsPage() {
         </div>
 
         {/* Mobile Bottom Navigation Bar - Standard Fixed */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-t border-border flex justify-around items-center h-16 px-2 safe-area-bottom">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border flex justify-around items-center h-16 px-1 safe-area-bottom overflow-x-auto no-scrollbar">
+          {!user?.is_temp_commander && (
+            <MobileBottomNavLink
+              id="mobile-profile-tab"
+              label="פרופיל"
+              icon={User}
+              active={activeTab === "profile"}
+              onClick={() => handleTabChange("profile")}
+            />
+          )}
+          {canManageStatuses && (
+            <MobileBottomNavLink
+              id="mobile-statuses-tab"
+              label="סטטוסים"
+              icon={Briefcase}
+              active={activeTab === "statuses"}
+              onClick={() => handleTabChange("statuses")}
+            />
+          )}
           <MobileBottomNavLink
             label="תצוגה"
             icon={Palette}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, 
@@ -62,7 +62,6 @@ export const ChatSidebar: React.FC = () => {
 
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      // Don't close if clicking inside the sidebar, or on chat trigger buttons
       const isTriggerClick = target.closest("#chat-button") || target.closest("#mobile-broadcast-button") || target.closest("#broadcast-button");
       
       if (
@@ -137,7 +136,7 @@ export const ChatSidebar: React.FC = () => {
   useEffect(() => {
     if (isChatOpen && selectedRecipient && alerts.length > 0) {
       alerts.forEach(alert => {
-        if (alert.id.startsWith("msg-") && Number(alert.data?.sender_id) === Number(selectedRecipient.id)) {
+        if (alert.id?.startsWith("msg-") && Number(alert.data?.sender_id) === Number(selectedRecipient.id)) {
           markAsRead(alert.id);
         }
       });
@@ -147,9 +146,8 @@ export const ChatSidebar: React.FC = () => {
   // Auto-open conversation if there is an unread message from a contact and we just opened the chat
   useEffect(() => {
     if (isChatOpen && !selectedRecipient && !autoOpenAttemptedRef.current && alerts.length > 0 && chatContacts.length > 0) {
-      const msgAlerts = alerts.filter(a => a.id.startsWith("msg-"));
+      const msgAlerts = alerts.filter(a => a.id?.startsWith("msg-"));
       if (msgAlerts.length > 0) {
-        // Find the sender_id of the most recent message alert
         const firstAlert = msgAlerts[0];
         const senderId = Number(firstAlert.data?.sender_id);
         if (senderId) {
@@ -172,7 +170,7 @@ export const ChatSidebar: React.FC = () => {
   useEffect(() => {
     if (isChatOpen && selectedRecipient) {
       fetchConversation();
-      const interval = setInterval(fetchConversation, 5000); // Polling for new messages
+      const interval = setInterval(fetchConversation, 1500);
       return () => clearInterval(interval);
     }
   }, [isChatOpen, selectedRecipient]);
@@ -195,7 +193,7 @@ export const ChatSidebar: React.FC = () => {
       };
 
       sendChatHeartbeat();
-      const heartbeatInterval = setInterval(sendChatHeartbeat, 3000); // Heartbeat every 3s
+      const heartbeatInterval = setInterval(sendChatHeartbeat, 3000);
       return () => clearInterval(heartbeatInterval);
     }
   }, [isChatOpen, selectedRecipient, isMeTyping, newMessage]);
@@ -295,6 +293,60 @@ export const ChatSidebar: React.FC = () => {
     }
   };
 
+  const contactsToDisplay = useMemo(() => {
+    let list = Array.isArray(chatContacts) ? [...chatContacts] : [];
+    
+    // Always include Support Team Admin if not present and current user is not admin
+    const hasAdmin = list.some((c: any) => c.is_admin);
+    if (!hasAdmin && !user?.is_admin) {
+      list.unshift({
+        id: 1,
+        employee_number: "admin",
+        first_name: "צוות",
+        last_name: "תמיכה",
+        is_admin: true,
+        rank: "מנהל מערכת ראשי",
+        department_name: "מטה הפיקוד",
+        section_name: "ניהול מערכת",
+        team_name: "צוות תמיכה",
+        is_active: true,
+        is_online: true,
+        chat_status: "online"
+      } as any);
+    }
+
+    return list
+      .filter((emp: any) => {
+        // Never show the logged-in user themselves
+        const isSelf = 
+          (user?.id && (String(emp.id) === String(user.id) || String(emp.user_id) === String(user.id))) ||
+          (user?.username && (emp.username === user.username || emp.employee_number === user.username)) ||
+          (user?.first_name && user?.last_name && emp.first_name?.trim() === user.first_name?.trim() && emp.last_name?.trim() === user.last_name?.trim());
+        if (isSelf) return false;
+
+        const isGenericSupport = emp.is_admin && (!emp.first_name || emp.first_name === "צוות");
+        const displayName = isGenericSupport
+          ? "צוות תמיכה"
+          : `${emp.first_name || ""} ${emp.last_name || ""}`.trim() || emp.employee_number;
+        return !contactSearch || displayName.toLowerCase().includes(contactSearch.toLowerCase());
+      })
+      .sort((a: any, b: any) => {
+        const aAlerts = alerts.filter(al => al.id?.startsWith("msg-") && Number(al.data?.sender_id) === Number(a.id));
+        const bAlerts = alerts.filter(al => al.id?.startsWith("msg-") && Number(al.data?.sender_id) === Number(b.id));
+        if (aAlerts.length > 0 && bAlerts.length === 0) return -1;
+        if (aAlerts.length === 0 && bAlerts.length > 0) return 1;
+
+        if (a.is_admin && !b.is_admin) return -1;
+        if (!a.is_admin && b.is_admin) return 1;
+
+        const isGenericSupportA = a.is_admin && (!a.first_name || a.first_name === "צוות");
+        const isGenericSupportB = b.is_admin && (!b.first_name || b.first_name === "צוות");
+        const displayNameA = isGenericSupportA ? "צוות תמיכה" : `${a.first_name || ""} ${a.last_name || ""}`.trim();
+        const displayNameB = isGenericSupportB ? "צוות תמיכה" : `${b.first_name || ""} ${b.last_name || ""}`.trim();
+        return displayNameA.localeCompare(displayNameB, 'he');
+      });
+  }, [chatContacts, user, contactSearch, alerts]);
+
   return (
     <AnimatePresence>
       {isChatOpen && (
@@ -370,9 +422,11 @@ export const ChatSidebar: React.FC = () => {
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="h-9 w-9 rounded-xl text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
-                                onClick={() => window.location.href = `tel:${emp.phone_number}`}
-                                title={`חיוג ל-${emp.phone_number}`}
+                                className="h-8 w-8 rounded-xl text-muted-foreground hover:bg-emerald-500/10 hover:text-emerald-600 transition-colors"
+                                title={`חייג למספר ${emp.phone_number}`}
+                                onClick={() => {
+                                  window.open(`tel:${emp.phone_number}`);
+                                }}
                               >
                                 <Phone className="w-4 h-4" />
                               </Button>
@@ -380,73 +434,78 @@ export const ChatSidebar: React.FC = () => {
                           }
                           return null;
                         })()}
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl text-muted-foreground hover:bg-muted/50 hover:text-foreground">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-48 p-2 rounded-2xl shadow-xl border-border/40 backdrop-blur-xl bg-card/95 z-[300]" align="end">
+                            <div className="flex flex-col gap-1 text-right" dir="rtl">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="w-full justify-start text-xs font-bold gap-2 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 rounded-xl"
+                                onClick={handleClearHistory}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                מחק היסטוריית שיחה
+                              </Button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
                       </>
                     )}
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-white/80 hover:bg-white/20 hover:text-white transition-colors">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-48 p-1 rounded-2xl shadow-2xl border-border/40 backdrop-blur-xl bg-card/95 z-[300]" align="start">
-                        <div className="flex flex-col gap-1">
-                          <button
-                            onClick={() => {
-                              if (selectedRecipient) {
-                                openProfile(selectedRecipient.id);
-                              }
-                            }}
-                            className="flex items-center gap-2 px-3 py-2.5 text-xs font-bold hover:bg-muted rounded-xl transition-colors text-right w-full"
-                          >
-                            <UserCircle className="w-4 h-4 text-primary" />
-                            <span>צפה בפרופיל מלא</span>
-                          </button>
-                          
-                          <div className="h-px bg-border/40 my-1" />
-                          
-                          <button
-                            onClick={handleClearHistory}
-                            className="flex items-center gap-2 px-3 py-2.5 text-xs font-bold hover:bg-destructive/10 text-destructive rounded-xl transition-colors text-right w-full"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            <span>מחק היסטוריית צ'אט</span>
-                          </button>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                    <Button variant="ghost" size="icon" onClick={closeChat} className="h-9 w-9 rounded-xl text-white/80 hover:bg-white/20 hover:text-white">
+                    <Button variant="ghost" size="icon" onClick={closeChat} className="h-8 w-8 rounded-xl text-muted-foreground hover:bg-muted/50 hover:text-foreground">
                       <X className="w-5 h-5" />
                     </Button>
                   </div>
                 </div>
 
-                {/* Chat Messages */}
-                <div 
-                  ref={scrollRef}
-                  className="flex-grow overflow-y-auto p-4 sm:p-6 space-y-6 bg-slate-50/30 dark:bg-slate-900/10 custom-scrollbar"
-                >
+                {/* Conversation Message Feed */}
+                <div ref={scrollRef} className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-3 custom-scrollbar bg-slate-50/50 dark:bg-slate-900/50">
                   {loading ? (
-                    <div className="h-full flex items-center justify-center opacity-30">
-                      <Loader2 className="w-8 h-8 animate-spin" />
+                    <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      <span className="text-xs font-bold">טוען הודעות...</span>
                     </div>
                   ) : messages.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-40">
-                      <div className="w-16 h-16 rounded-3xl bg-muted flex items-center justify-center mb-4">
-                        <MessageSquare className="w-8 h-8" />
+                    <div className="flex flex-col items-center justify-center h-full text-center p-6 gap-3 text-muted-foreground">
+                      <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center text-foreground">
+                        <MessageSquare className="w-6 h-6" />
                       </div>
-                      <h4 className="font-black text-sm mb-1">אין היסטוריית התכתבות</h4>
-                      <p className="text-xs font-bold leading-relaxed">שלח הודעה ראשונה כדי להתחיל את השיחה.</p>
+                      <div>
+                        <p className="font-bold text-xs">אין היסטוריית הודעות עם איש קשר זה</p>
+                        <p className="text-[10px] text-muted-foreground/70 mt-0.5">שלח הודעה כדי להתחיל שיחה חדשה</p>
+                      </div>
                     </div>
                   ) : (
-                    <div className="flex flex-col space-y-4">
-                       <div className="flex justify-center my-4">
-                         <span className="text-[10px] font-black text-muted-foreground/60 uppercase bg-muted/30 px-3 py-1 rounded-full border border-border/40">היום</span>
-                       </div>
-                       {messages.map((msg, idx) => {
-                          const isMe = Number(msg.sender_id) === Number(user?.id);
-                          const nextIsMe = Number(messages[idx+1]?.sender_id) === Number(msg.sender_id);
-                          return (
-                            <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} key={msg.id} className={cn("flex flex-col max-w-[85%] sm:max-w-[75%]", isMe ? "self-start items-end" : "self-end items-start")}>
+                    <div className="space-y-3">
+                      {messages.map((msg, index) => {
+                         const isMe = Boolean(
+                           user &&
+                           (
+                             String(msg.sender_id).toLowerCase() === String(user.id).toLowerCase() ||
+                             String(msg.sender_id).toLowerCase() === String(user.username).toLowerCase() ||
+                             ((user as any)?.employee_id && String(msg.sender_id).toLowerCase() === String((user as any).employee_id).toLowerCase()) ||
+                             (user.is_admin && ["1", "admin", "admin-support", "691b0694-1c0f-49de-9213-1f4ed4ea2936"].includes(String(msg.sender_id).toLowerCase()))
+                           )
+                         );
+                         const nextMsg = messages[index + 1];
+                         const nextIsMe = nextMsg ? (
+                           String(nextMsg.sender_id).toLowerCase() === String(user?.id).toLowerCase() ||
+                           String(nextMsg.sender_id).toLowerCase() === String(user?.username).toLowerCase()
+                         ) : false;
+                         return (
+                            <motion.div 
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              key={msg.id || index} 
+                              className={cn(
+                                "flex flex-col max-w-[80%]",
+                                isMe ? "mr-auto items-end" : "ml-auto items-start"
+                              )}
+                            >
                               {!nextIsMe && <span className="text-[9px] font-bold text-muted-foreground mb-1 mx-1">{format(new Date(msg.created_at), "HH:mm", { locale: he })}</span>}
                               <div className={cn("p-3 sm:p-4 rounded-3xl text-sm font-bold leading-relaxed shadow-sm", isMe ? "bg-primary/10 text-primary border border-primary/20 rounded-tl-lg" : "bg-card border border-border/40 text-foreground rounded-tr-lg")}>
                                 {msg.description}
@@ -471,7 +530,6 @@ export const ChatSidebar: React.FC = () => {
               </>
             ) : (
               <>
-
                 {/* Header for Contacts List */}
                 <div className="p-6 bg-card border-b border-border/40 shadow-sm shrink-0 rounded-t-[2.5rem]">
                   <div className="flex items-center justify-between mb-4">
@@ -539,7 +597,7 @@ export const ChatSidebar: React.FC = () => {
                               <div className="grid grid-cols-2 gap-1.5 mt-1">
                                 <Button 
                                   variant={myStatus === "online" ? "default" : "outline"} 
-                                  size="sm"
+                                  size="sm" 
                                   onClick={() => handleUpdateStatus("online")}
                                   className="h-8 text-[11px] font-black rounded-xl"
                                 >
@@ -547,7 +605,7 @@ export const ChatSidebar: React.FC = () => {
                                 </Button>
                                 <Button 
                                   variant={myStatus === "busy" ? "default" : "outline"} 
-                                  size="sm"
+                                  size="sm" 
                                   onClick={() => handleUpdateStatus("busy")}
                                   className="h-8 text-[11px] font-black rounded-xl"
                                 >
@@ -555,7 +613,7 @@ export const ChatSidebar: React.FC = () => {
                                 </Button>
                                 <Button 
                                   variant={myStatus === "away" ? "default" : "outline"} 
-                                  size="sm"
+                                  size="sm" 
                                   onClick={() => handleUpdateStatus("away")}
                                   className="h-8 text-[11px] font-black rounded-xl"
                                 >
@@ -563,7 +621,7 @@ export const ChatSidebar: React.FC = () => {
                                 </Button>
                                 <Button 
                                   variant={myStatus === "custom" ? "default" : "outline"} 
-                                  size="sm"
+                                  size="sm" 
                                   onClick={() => setIsEditingCustomStatus(true)}
                                   className="h-8 text-[11px] font-black rounded-xl"
                                 >
@@ -630,98 +688,78 @@ export const ChatSidebar: React.FC = () => {
 
                 {/* Contacts List */}
                 <div className="flex-grow overflow-y-auto p-3 space-y-1 custom-scrollbar">
-                    {chatContacts
-                     .filter((emp: any) => {
-                       const displayName = emp.is_admin ? "צוות תמיכה" : `${emp.first_name} ${emp.last_name}`;
-                       return Number(emp.id) !== Number(user?.id) && 
-                         (!contactSearch || displayName.toLowerCase().includes(contactSearch.toLowerCase()));
-                     })
-                     .sort((a: any, b: any) => {
-                       // 1. Contacts with unread messages first
-                       const aAlerts = alerts.filter(al => al.id.startsWith("msg-") && Number(al.data?.sender_id) === Number(a.id));
-                       const bAlerts = alerts.filter(al => al.id.startsWith("msg-") && Number(al.data?.sender_id) === Number(b.id));
-                       if (aAlerts.length > 0 && bAlerts.length === 0) return -1;
-                       if (aAlerts.length === 0 && bAlerts.length > 0) return 1;
+                  {contactsToDisplay.map((emp: any) => {
+                    const contactAlerts = alerts.filter(a => a.id?.startsWith("msg-") && Number(a.data?.sender_id) === Number(emp.id));
+                    const unreadCount = contactAlerts.length;
+                    const hasUnread = unreadCount > 0;
 
-                       if (a.is_admin && !b.is_admin) return -1;
-                       if (!a.is_admin && b.is_admin) return 1;
-                       // Keep alphabetical order for others
-                       const displayNameA = a.is_admin ? "צוות תמיכה" : `${a.first_name} ${a.last_name}`;
-                       const displayNameB = b.is_admin ? "צוות תמיכה" : `${b.first_name} ${b.last_name}`;
-                       return displayNameA.localeCompare(displayNameB, 'he');
-                     })
-                     .map((emp: any) => {
-                      const contactAlerts = alerts.filter(a => a.id.startsWith("msg-") && Number(a.data?.sender_id) === Number(emp.id));
-                      const unreadCount = contactAlerts.length;
-                      const hasUnread = unreadCount > 0;
-
-                      return (
-                       <button
-                         key={emp.id}
-                         onClick={() => openChat({ id: emp.id, name: emp.is_admin ? "צוות תמיכה" : `${emp.first_name} ${emp.last_name}` })}
-                         className={cn(
-                           "w-full flex items-center gap-4 p-3 rounded-2xl transition-all text-right group border border-transparent",
-                           hasUnread 
-                             ? "bg-primary/5 dark:bg-primary/10 border-primary/15 hover:bg-primary/10 shadow-sm" 
-                             : "hover:bg-muted/50"
-                         )}
-                       >
-                         {/* Avatar with Status Dot */}
-                         <div className="relative shrink-0">
-                           <div className={cn(
-                             "w-12 h-12 rounded-2xl flex items-center justify-center font-black transition-all",
-                             hasUnread 
-                               ? "bg-primary text-primary-foreground" 
-                               : "bg-primary/5 text-primary border border-primary/10 group-hover:bg-primary group-hover:text-white"
-                           )}>
-                             {emp.is_admin ? "💬" : `${emp.first_name?.[0] ?? ""}${emp.last_name?.[0] ?? ""}`}
-                           </div>
-                           {/* Real-time Status Dot Badge */}
-                           <div className={cn("absolute -bottom-1 -left-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 shadow-sm", getStatusDotColor(emp))} />
-                         </div>
-                         
-                         <div className="flex-grow min-w-0">
-                           <div className="flex items-center justify-between mb-0.5">
-                             <h4 className={cn(
-                               "font-bold text-sm text-foreground transition-colors",
-                               hasUnread ? "text-primary font-black" : "group-hover:text-primary"
-                             )}>
-                               {emp.is_admin ? "צוות תמיכה" : `${emp.first_name} ${emp.last_name}`}
-                             </h4>
-                             <div className="flex items-center gap-1.5">
-                               {unreadCount > 0 && (
-                                 <span className="bg-primary text-primary-foreground text-[10px] font-black h-5 w-5 rounded-full flex items-center justify-center animate-pulse shadow-sm">
-                                   {unreadCount}
-                                 </span>
-                               )}
-                               {emp.is_online && (
-                                 <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                                     פעיל/ה
-                                 </span>
-                               )}
-                             </div>
-                           </div>
-                           {hasUnread ? (
-                             <p className="text-xs text-primary font-semibold truncate max-w-[200px] leading-relaxed mt-0.5">
-                               {contactAlerts[contactAlerts.length - 1].description}
-                             </p>
-                           ) : emp.chat_status_custom ? (
-                             <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-lg truncate max-w-[185px] inline-block mt-0.5">
-                               💬 {emp.chat_status_custom}
-                             </p>
-                           ) : (
-                             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest truncate">{emp.is_admin ? "ניהול מערכת" : (emp.section_name || emp.department_name || "מפקד")}</p>
-                           )}
-                         </div>
-                         <ChevronLeft className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary transition-all shrink-0" />
-                       </button>
-                      );
-                    })}
-                     {chatContacts.filter((emp: any) => Number(emp.id) !== Number(user?.id)).length === 0 && (
-                      <div className="p-8 text-center opacity-40">
-                        <p className="text-xs font-bold">לא נמצאו אנשי קשר זמינים.</p>
-                      </div>
-                    )}
+                    return (
+                      <button
+                        key={emp.id}
+                        onClick={() => openChat({ id: emp.id, name: emp.is_admin ? "צוות תמיכה" : `${emp.first_name} ${emp.last_name}` })}
+                        className={cn(
+                          "w-full flex items-center gap-4 p-3 rounded-2xl transition-all text-right group border border-transparent",
+                          hasUnread 
+                            ? "bg-primary/5 dark:bg-primary/10 border-primary/15 hover:bg-primary/10 shadow-sm" 
+                            : "hover:bg-muted/50"
+                        )}
+                      >
+                        {/* Avatar with Status Dot */}
+                        <div className="relative shrink-0">
+                          <div className={cn(
+                            "w-12 h-12 rounded-2xl flex items-center justify-center font-black transition-all",
+                            hasUnread 
+                              ? "bg-primary text-primary-foreground" 
+                              : "bg-primary/5 text-primary border border-primary/10 group-hover:bg-primary group-hover:text-white"
+                          )}>
+                            {emp.is_admin ? "💬" : `${emp.first_name?.[0] ?? ""}${emp.last_name?.[0] ?? ""}`}
+                          </div>
+                          {/* Real-time Status Dot Badge */}
+                          <div className={cn("absolute -bottom-1 -left-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 shadow-sm", getStatusDotColor(emp))} />
+                        </div>
+                        
+                        <div className="flex-grow min-w-0">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <h4 className={cn(
+                              "font-bold text-sm text-foreground transition-colors",
+                              hasUnread ? "text-primary font-black" : "group-hover:text-primary"
+                            )}>
+                              {emp.is_admin ? "צוות תמיכה" : `${emp.first_name} ${emp.last_name}`}
+                            </h4>
+                            <div className="flex items-center gap-1.5">
+                              {unreadCount > 0 && (
+                                <span className="bg-primary text-primary-foreground text-[10px] font-black h-5 w-5 rounded-full flex items-center justify-center animate-pulse shadow-sm">
+                                  {unreadCount}
+                                </span>
+                              )}
+                              {emp.is_online && (
+                                <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                                    פעיל/ה
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {hasUnread ? (
+                            <p className="text-xs text-primary font-semibold truncate max-w-[200px] leading-relaxed mt-0.5">
+                              {contactAlerts[contactAlerts.length - 1].description}
+                            </p>
+                          ) : emp.chat_status_custom ? (
+                            <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-lg truncate max-w-[185px] inline-block mt-0.5">
+                              💬 {emp.chat_status_custom}
+                            </p>
+                          ) : (
+                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest truncate">{emp.is_admin ? "ניהול מערכת" : (emp.section_name || emp.department_name || "מפקד")}</p>
+                          )}
+                        </div>
+                        <ChevronLeft className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary transition-all shrink-0" />
+                      </button>
+                    );
+                  })}
+                  {contactsToDisplay.length === 0 && (
+                    <div className="p-8 text-center opacity-40">
+                      <p className="text-xs font-bold">לא נמצאו אנשי קשר זמינים.</p>
+                    </div>
+                  )}
                 </div>
               </>
             )}

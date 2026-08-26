@@ -254,7 +254,7 @@ const EmployeesChartComponent = (
       ref={cardRef}
       id="attendance-snapshot-card"
       className={cn(
-        "bg-card/60 dark:bg-slate-900/60 backdrop-blur-2xl text-card-foreground rounded-[1.5rem] border-0 shadow-sm flex flex-col overflow-visible h-full relative transition-all",
+        "bg-card text-card-foreground rounded-2xl border border-border/40 flex flex-col overflow-visible h-full relative transition-all shadow-none",
         compact && "bg-transparent border-0 shadow-none",
       )}
     >

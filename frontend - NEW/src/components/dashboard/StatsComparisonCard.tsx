@@ -245,7 +245,7 @@ export const StatsComparisonCard = forwardRef(
         className={cn(
           compact
             ? "bg-transparent border-0 shadow-none p-0 flex flex-col h-auto w-full relative"
-            : "bg-card/60 dark:bg-slate-900/60 backdrop-blur-2xl text-card-foreground gap-2 rounded-[1.5rem] border border-border/40 shadow-sm py-3 flex flex-col overflow-hidden h-full relative transition-all",
+            : "bg-card text-card-foreground gap-2 rounded-2xl border border-border/40 py-3 flex flex-col overflow-hidden h-full relative transition-all shadow-none",
           className
         )}
       >

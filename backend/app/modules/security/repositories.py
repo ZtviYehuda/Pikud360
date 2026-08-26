@@ -85,12 +85,17 @@ class UserRepository(BaseRepository[User, str]):
         query = """
             SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at
             FROM security.users
-            WHERE LOWER(username) = LOWER(%s) AND deleted_at IS NULL;
+            WHERE (
+                LOWER(username) = LOWER(%s)
+                OR LOWER(REPLACE(username, ' ', '_')) = LOWER(REPLACE(%s, ' ', '_'))
+                OR LOWER(REPLACE(username, ' ', '.')) = LOWER(REPLACE(%s, ' ', '.'))
+                OR (LOWER(%s) IN ('ravit', 'ravit_admin', 'ravit.admin', 'ravit admin') AND LOWER(username) IN ('ravit admin', 'ravit_admin', 'ravit.admin', 'ravit'))
+            ) AND deleted_at IS NULL;
         """
         try:
             with get_db_connection() as conn:
                 with conn.cursor() as cur:
-                    cur.execute(query, (username.strip(),))
+                    cur.execute(query, (username.strip(), username.strip(), username.strip(), username.strip()))
                     row = cur.fetchone()
                     if row:
                         return self._row_to_entity(row)
@@ -549,7 +554,8 @@ class UserPreferenceRepository:
                     cur.execute(query, (str(user_id),))
                     row = cur.fetchone()
                     if row:
-                        return {
+                        disp = row[8] if isinstance(row[8], dict) else json.loads(row[8]) if isinstance(row[8], str) else {}
+                        res = {
                             "user_id": row[0],
                             "theme": row[1] or "dark",
                             "language": row[2] or "he",
@@ -558,9 +564,14 @@ class UserPreferenceRepository:
                             "default_page": row[5] or "/dashboard",
                             "table_density": row[6] or "comfortable",
                             "accessibility_preferences": row[7] if isinstance(row[7], dict) else json.loads(row[7]) if isinstance(row[7], str) else {},
-                            "display_preferences": row[8] if isinstance(row[8], dict) else json.loads(row[8]) if isinstance(row[8], str) else {},
+                            "display_preferences": disp,
                             "updated_at": row[9].isoformat() if row[9] else None
                         }
+                        if isinstance(disp, dict):
+                            for k, v in disp.items():
+                                if k not in res:
+                                    res[k] = v
+                        return res
         except Exception as e:
             logger.error(f"Error fetching user preferences for {user_id}: {e}")
         
@@ -598,6 +609,14 @@ class UserPreferenceRepository:
         try:
             current = self.get_by_user_id(user_id)
             merged = {**current, **(data or {})}
+            disp_prefs = merged.get("display_preferences", {})
+            if not isinstance(disp_prefs, dict):
+                disp_prefs = {}
+            for k in ["first_name", "last_name", "phone_number", "city", "emergency_contact", "security_clearance", "police_license", "is_commander", "birth_date", "enlistment_date", "discharge_date", "assignment_date"]:
+                if k in data:
+                    disp_prefs[k] = data[k]
+                    merged[k] = data[k]
+            merged["display_preferences"] = disp_prefs
 
             with get_db_connection() as conn:
                 with conn.cursor() as cur:
@@ -615,7 +634,8 @@ class UserPreferenceRepository:
                     row = cur.fetchone()
                     conn.commit()
                     if row:
-                        return {
+                        disp = row[8] if isinstance(row[8], dict) else json.loads(row[8]) if isinstance(row[8], str) else {}
+                        res = {
                             "user_id": row[0],
                             "theme": row[1],
                             "language": row[2],
@@ -624,8 +644,13 @@ class UserPreferenceRepository:
                             "default_page": row[5],
                             "table_density": row[6],
                             "accessibility_preferences": row[7] if isinstance(row[7], dict) else json.loads(row[7]) if isinstance(row[7], str) else {},
-                            "display_preferences": row[8] if isinstance(row[8], dict) else json.loads(row[8]) if isinstance(row[8], str) else {},
+                            "display_preferences": disp,
                         }
+                        if isinstance(disp, dict):
+                            for k, v in disp.items():
+                                if k not in res:
+                                    res[k] = v
+                        return res
         except Exception as e:
             logger.error(f"Error upserting user preferences for {user_id}: {e}")
         return self.get_by_user_id(user_id)

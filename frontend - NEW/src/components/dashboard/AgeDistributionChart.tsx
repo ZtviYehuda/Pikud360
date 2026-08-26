@@ -140,6 +140,10 @@ export const AgeDistributionChart = ({
     };
   }, [selectedRange, isMobile]);
 
+  const hasData = useMemo(() => {
+    return chartData.some((d) => d.count > 0);
+  }, [chartData]);
+
   const maxCount = useMemo(() => {
     const counts = chartData.map((d) => d.count);
     const maxVal = Math.max(...counts, 0);
@@ -147,7 +151,7 @@ export const AgeDistributionChart = ({
   }, [chartData]);
 
   return (
-    <Card id="age-distribution-card" className="bg-card/60 dark:bg-slate-900/60 backdrop-blur-2xl text-card-foreground rounded-[1.8rem] border border-border/30 shadow-sm flex flex-col overflow-hidden h-full relative transition-all">
+    <Card id="age-distribution-card" className="bg-card text-card-foreground rounded-2xl border border-border/40 flex flex-col overflow-hidden h-full relative transition-all shadow-none">
       <div className="pt-4 pb-3 px-0 flex-1 flex flex-col relative overflow-visible">
       
       {/* Header */}
@@ -175,8 +179,8 @@ export const AgeDistributionChart = ({
         
         {/* Average Age Badge */}
         <div className="relative shrink-0">
-          <div className="relative bg-card/75 dark:bg-slate-950/75 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-border/40 flex flex-col items-end min-w-[70px] sm:min-w-[80px]">
-            <span className="text-[7px] sm:text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">
+          <div className="relative bg-muted/40 px-3 py-1.5 rounded-xl border border-border/40 flex flex-col items-end min-w-[70px] sm:min-w-[80px]">
+            <span className="text-[7px] sm:text-[9px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">
               גיל ממוצע
             </span>
             <div className="flex items-center gap-1.5">
@@ -189,23 +193,17 @@ export const AgeDistributionChart = ({
       </div>
 
       {/* Chart Container */}
-      <div className="flex flex-col flex-1 w-full min-h-[220px] sm:min-h-[240px] md:min-h-[300px] relative mt-0 overflow-visible select-none px-2">
-        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200} initialDimension={{ width: 300, height: 220 }}>
+      <div className="flex flex-col flex-1 w-full min-h-[170px] sm:min-h-[220px] md:min-h-[280px] relative mt-0 overflow-visible select-none px-2">
+        {!hasData ? (
+          <div className="flex-1 flex items-center justify-center py-12 text-center text-muted-foreground font-bold tracking-tight text-xs sm:text-sm">
+            אין נתונים להצגה
+          </div>
+        ) : (
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={170} initialDimension={{ width: 300, height: 220 }}>
           <BarChart
             data={chartData}
             margin={{ top: 25, right: 10, left: 10, bottom: 5 }}
           >
-            <defs>
-              <linearGradient id="ageBarGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgb(148, 163, 184)" stopOpacity={0.6} />
-                <stop offset="100%" stopColor="rgb(148, 163, 184)" stopOpacity={0.2} />
-              </linearGradient>
-              <linearGradient id="activeAgeBarGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.9} />
-                <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.4} />
-              </linearGradient>
-            </defs>
-
             <CartesianGrid 
               strokeDasharray="4 4" 
               vertical={false} 
@@ -225,14 +223,14 @@ export const AgeDistributionChart = ({
             <YAxis hide domain={[0, maxCount + 1]} />
             
             <Tooltip
-              cursor={{ fill: "rgba(59, 130, 246, 0.04)", radius: 8 }}
+              cursor={{ fill: "transparent" }}
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   const displayRange = payload[0].payload.range === "36-99" ? "36+" : payload[0].payload.range;
                   const count = payload[0].value;
                   return (
-                    <div className="bg-card/95 dark:bg-slate-950/95 backdrop-blur-xl border border-primary/20 rounded-2xl p-3 shadow-2xl text-right min-w-[120px] space-y-1">
-                      <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">
+                    <div className="bg-card border border-border rounded-xl p-3 shadow-md text-right min-w-[120px] space-y-1">
+                      <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest leading-none">
                         טווח גילאים
                       </p>
                       <h4 className="text-xs sm:text-sm font-black text-foreground leading-none">
@@ -259,9 +257,7 @@ export const AgeDistributionChart = ({
               dataKey="count"
               radius={[6, 6, 0, 0]}
               barSize={isMobile ? 18 : 26}
-              isAnimationActive={true}
-              animationDuration={800}
-              animationEasing="ease-out"
+              isAnimationActive={false}
             >
                {chartData.map((entry, index) => {
                 const isSelected = isSelectedRange(entry.range);
@@ -324,6 +320,7 @@ export const AgeDistributionChart = ({
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        )}
       </div>
       </div>
     </Card>

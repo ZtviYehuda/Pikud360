@@ -27,6 +27,7 @@ import {
   Pencil,
   LogIn,
   X as XIcon,
+  MessageCircle,
 } from "lucide-react";
 import { useAuthContext } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -677,7 +678,7 @@ const ActionFooter = ({
   isActive,
   onToggleActive,
 }: any) => (
-  <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 z-50 flex gap-3">
+  <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border z-50 flex gap-3">
     {editMode ? (
       <>
         <Button
@@ -752,6 +753,7 @@ export default function EmployeeViewPage() {
     name: string;
     user: string;
     pass: string;
+    phone?: string;
   } | null>(null);
   const [copiedField, setCopiedField] = useState("");
 
@@ -927,6 +929,24 @@ export default function EmployeeViewPage() {
   const isBlocked = blocker.state === "blocked";
   const showUnsavedPrompt = showUnsavedModal || isBlocked;
 
+  const handleCancelEdit = () => {
+    if (id) {
+      localStorage.removeItem(`employee_edit_draft_${id}`);
+    }
+    setHasRestoredDraft(false);
+    if (employee) {
+      setFormData({ ...employee });
+      setSelectedDeptId(employee?.department_id?.toString() || "");
+      setSelectedSectionId(employee?.section_id?.toString() || "");
+    }
+    setEditMode(false);
+    setShowUnsavedModal(false);
+    if (blocker.state === "blocked") {
+      blocker.reset();
+    }
+    navigate(`/employees/${id}`);
+  };
+
   const handleSafeNavigation = (targetPath?: string) => {
     if (isDirty && editMode) {
       setPendingNavigationPath(targetPath || `/employees/${id}`);
@@ -1019,14 +1039,11 @@ export default function EmployeeViewPage() {
     if (!employee) return;
     setSaving(true);
 
-    const isNowCmd = formData.is_commander || formData.is_admin;
-    const wasCmd = employee.is_commander || employee.is_admin;
-    const hasDummyUsername =
-      !employee.username ||
-      employee.username.startsWith("emp_") ||
-      /^\d+$/.test(employee.username);
+    const isNowCmd = Boolean(formData.is_commander);
+    const wasCmd = Boolean(employee.is_commander);
+    const isNewlyPromotedCommander = isNowCmd && !wasCmd;
 
-    const needsNewCredentials = isNowCmd && (!wasCmd || hasDummyUsername);
+    const needsNewCredentials = isNewlyPromotedCommander;
     let generatedCreds = null;
     let payload: any = { ...formData };
     if (formData.phone_number !== undefined) {
@@ -1081,10 +1098,13 @@ export default function EmployeeViewPage() {
       if (generatedCreds) {
         setCreatedCredentials({
           name:
-            employee.dominant_name ||
-            `${employee.first_name || ""} ${employee.last_name || ""}`,
+            formData.first_name && formData.last_name
+              ? `${formData.first_name} ${formData.last_name}`
+              : employee.dominant_name ||
+                `${employee.first_name || ""} ${employee.last_name || ""}`,
           user: generatedCreds.user,
           pass: generatedCreds.pass,
+          phone: formData.phone || formData.phone_number || employee.phone || employee.phone_number || "",
         });
       } else {
         toast.success("כרטיס שוטר עודכן בהצלחה");
@@ -1340,17 +1360,60 @@ export default function EmployeeViewPage() {
               </div>
             </div>
 
-            <Button
-              className="w-full h-12 text-sm font-black rounded-xl"
-              onClick={async () => {
-                setCreatedCredentials(null);
-                await fetchData();
-                setEditMode(false);
-                navigate(`/employees/${id}`);
-              }}
-            >
-              המשך
-            </Button>
+            <div className="flex flex-col gap-3 pt-2">
+              <Button
+                onClick={async () => {
+                  const fullMsg = `שלום ${createdCredentials?.name || ""},\nהוגדרת כמפקד במערכת.\n\nפרטי ההתחברות שלך:\nשם משתמש: ${createdCredentials?.user || ""}\nסיסמה זמנית: ${createdCredentials?.pass || ""}\n\n* בחיבור הראשון המערכת תדרוש ממך להחליף סיסמה.`;
+                  try {
+                    navigator.clipboard.writeText(fullMsg);
+                  } catch (e) {
+                    console.error("Clipboard copy error:", e);
+                  }
+
+                  let url = "";
+                  const phone = createdCredentials?.phone?.trim();
+                  if (phone) {
+                    let formattedPhone = phone.replace(/\D/g, "");
+                    if (
+                      !formattedPhone.startsWith("972") &&
+                      !formattedPhone.startsWith("1")
+                    ) {
+                      if (formattedPhone.startsWith("0")) {
+                        formattedPhone = "972" + formattedPhone.substring(1);
+                      } else {
+                        formattedPhone = "972" + formattedPhone;
+                      }
+                    }
+                    url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(fullMsg)}`;
+                  } else {
+                    url = `https://wa.me/?text=${encodeURIComponent(fullMsg)}`;
+                  }
+
+                  window.open(url, "_blank");
+                  toast.success("פותח צ'אט בוואטסאפ...");
+                  setCreatedCredentials(null);
+                  await fetchData();
+                  setEditMode(false);
+                  navigate(`/employees/${id}`);
+                }}
+                className="w-full h-12 rounded-xl text-base font-black bg-[#25D366] hover:bg-[#128C7E] text-white shadow-md transition-all gap-2"
+              >
+                <MessageCircle className="w-5 h-5 ml-1" />
+                שליחת פרטי כניסה בוואטסאפ
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full h-10 text-xs font-bold text-muted-foreground hover:text-foreground"
+                onClick={async () => {
+                  setCreatedCredentials(null);
+                  await fetchData();
+                  setEditMode(false);
+                  navigate(`/employees/${id}`);
+                }}
+              >
+                סגירה
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -1441,11 +1504,13 @@ export default function EmployeeViewPage() {
         {/* Top bar with back button */}
         <div className="flex items-center justify-between mb-6">
           <button
-            onClick={() => handleSafeNavigation("/employees")}
+            onClick={() => (editMode ? handleCancelEdit() : handleSafeNavigation("/employees"))}
             className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-primary transition-colors bg-white dark:bg-slate-900 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800"
           >
             <ArrowRight className="w-4 h-4" />{" "}
-            <span className="hidden sm:inline">חזרה לרשימה</span>
+            <span className="hidden sm:inline">
+              {editMode ? "ביטול וחזרה לכרטיס" : "חזרה לרשימה"}
+            </span>
           </button>
 
           {!editMode && isBirthdayToday && (
@@ -1467,7 +1532,7 @@ export default function EmployeeViewPage() {
           editMode={editMode}
           handleFieldChange={handleFieldChange}
           onSave={handleSubmit}
-          onCancel={() => handleSafeNavigation(`/employees/${id}`)}
+          onCancel={handleCancelEdit}
           onEdit={() => setEditMode(true)}
           onToggleActive={handleActiveToggleRequest}
           isActive={employee.is_active}
@@ -1582,7 +1647,7 @@ export default function EmployeeViewPage() {
                     <Button
                       variant="outline"
                       size="lg"
-                      onClick={() => handleSafeNavigation(`/employees/${id}`)}
+                      onClick={handleCancelEdit}
                       className="w-full rounded-xl font-bold h-12 bg-white dark:bg-slate-950"
                     >
                       ביטול
@@ -2187,9 +2252,11 @@ export default function EmployeeViewPage() {
                                       { id: "אזרח עובד משטרה (אע\"מ)", name: "אזרח עובד משטרה (אע\"מ)" },
                                       { id: "שירות לאומי", name: "שירות לאומי" },
                                       { id: "מתנדב", name: "מתנדב" },
-                                      { id: "מנהל מערכת", name: "מנהל מערכת" },
+                                      ...(user?.is_admin ? [{ id: "מנהל מערכת", name: "מנהל מערכת" }] : []),
                                     ]
-                                ).map((st: any) => (
+                                )
+                                .filter((st: any) => user?.is_admin || (st.name !== "מנהל מערכת" && st.name !== "אדמין"))
+                                .map((st: any) => (
                                   <SelectItem
                                     key={st.id || st.name}
                                     value={st.name || st.id?.toString()}
@@ -2368,7 +2435,7 @@ export default function EmployeeViewPage() {
         editMode={editMode}
         onEdit={() => navigate(`/employees/edit/${id}`)}
         onSave={handleSubmit}
-        onCancel={() => navigate(`/employees/${id}`)}
+        onCancel={handleCancelEdit}
         saving={saving}
         isActive={employee.is_active}
         onToggleActive={handleActiveToggleRequest}

@@ -1202,8 +1202,9 @@ export function GlobalAiSupport() {
 
   const isSettingsPage = location.pathname === "/settings";
   const isMessagesTab =
-    location.pathname === "/feedback" &&
-    new URLSearchParams(location.search).get("tab") === "messages";
+    (location.pathname === "/messaging" || location.pathname === "/feedback") &&
+    (new URLSearchParams(location.search).get("tab") === "messages" ||
+      !new URLSearchParams(location.search).get("tab"));
 
   return (
     <>
@@ -1233,32 +1234,7 @@ export function GlobalAiSupport() {
 
       {showAiSupport && (
         <>
-          {/* Drag-off hint overlay - only shown while dragging */}
-          {isDragging && (
-            <div className="fixed inset-0 z-[99] pointer-events-none">
-              {/* Edge "trash" zone indicators */}
-              <div
-                className={cn(
-                  "absolute top-0 left-0 right-0 h-16 flex items-center justify-center text-xs font-bold tracking-widest transition-all duration-200",
-                  isNearDrop
-                    ? "bg-red-500/20 text-red-500"
-                    : "bg-muted/10 text-muted-foreground/40",
-                )}
-              >
-                {isNearDrop ? "🗑️ שחרר כדי להסתיר" : "גרור לקצה המסך להסתרה"}
-              </div>
-              <div
-                className={cn(
-                  "absolute bottom-0 left-0 right-0 h-16 flex items-center justify-center text-xs font-bold tracking-widest transition-all duration-200",
-                  isNearDrop
-                    ? "bg-red-500/20 text-red-500"
-                    : "bg-muted/10 text-muted-foreground/40",
-                )}
-              >
-                {isNearDrop ? "🗑️ שחרר כדי להסתיר" : "גרור לקצה המסך להסתרה"}
-              </div>
-            </div>
-          )}
+          {/* Floating AI Button */}
 
           <motion.div
             key={`fab-container-${isOpen}-${isMinimized}-${resetKey}`}
@@ -1364,7 +1340,7 @@ export function GlobalAiSupport() {
                     transition={{ delay: 0 }}
                     onClick={() => {
                       setShowQuickMenu(false);
-                      navigate("/feedback?tab=send");
+                      navigate("/messaging?tab=send");
                     }}
                     className="flex items-center gap-3 w-full px-3.5 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-750 shadow-2xl hover:bg-slate-900 dark:hover:bg-slate-800 hover:border-red-500/60 transition-all group text-right active:scale-[0.98]"
                   >

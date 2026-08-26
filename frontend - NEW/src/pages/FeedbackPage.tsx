@@ -13,6 +13,7 @@ import {
   Archive,
   RefreshCw,
   ChevronLeft,
+  ChevronDown,
   ShieldCheck,
   Download,
   Eye,
@@ -21,7 +22,7 @@ import {
   Trash2,
   Plus,
   Users,
-  GitPullRequest
+  GitPullRequest,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
@@ -43,6 +44,7 @@ import {
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import type { SupportTicket, Ticket } from "@/types/feedback.types";
+import { WhatsAppBroadcastTab } from "@/components/messaging/WhatsAppBroadcastTab";
 
 const parseDateSafe = (dateStr: any) => {
   if (!dateStr) return new Date(0);
@@ -85,15 +87,15 @@ const FeedbackPage = () => {
   const isAdmin = currentUser?.is_admin;
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab =
-    (searchParams.get("tab") as any) || (isAdmin ? "admin-view" : "send");
+  const initialTab = (searchParams.get("tab") as any) || "messages";
   const [activeTab, setActiveTab] = useState<
+    | "messages"
+    | "whatsapp-broadcast"
+    | "admin-view"
     | "send"
     | "my-tickets"
-    | "admin-view"
-    | "whats-new"
-    | "messages"
     | "chat-admin"
+    | "whats-new"
   >(initialTab);
   const [myTickets, setMyTickets] = useState<Ticket[]>([]);
   const [allTickets, setAllTickets] = useState<Ticket[]>([]);
@@ -154,7 +156,9 @@ const FeedbackPage = () => {
   const [ticketDescription, setTicketDescription] = useState("");
   const [isSendingTicket, setIsSendingTicket] = useState(false);
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
-  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(
+    null,
+  );
 
   const handleSubmitTicket = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,11 +172,15 @@ const FeedbackPage = () => {
       if (screenshotFile) {
         const formData = new FormData();
         formData.append("screenshot", screenshotFile);
-        const uploadRes = await apiClient.post("/feedback/upload-screenshot", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data"
-          }
-        });
+        const uploadRes = await apiClient.post(
+          "/feedback/upload-screenshot",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          },
+        );
         if (uploadRes.data && uploadRes.data.screenshot_url) {
           uploadedUrl = uploadRes.data.screenshot_url;
         }
@@ -255,7 +263,11 @@ const FeedbackPage = () => {
   const markContactAsRead = (contactId: number, timestamp?: string) => {
     // Clear global alerts for this contact
     alerts
-      .filter((a) => a.id.startsWith("msg-") && Number(a.data?.sender_id) === Number(contactId))
+      .filter(
+        (a) =>
+          a.id.startsWith("msg-") &&
+          Number(a.data?.sender_id) === Number(contactId),
+      )
       .forEach((a) => markAsRead(a.id));
 
     const timeToSave = timestamp || new Date().toISOString();
@@ -268,7 +280,9 @@ const FeedbackPage = () => {
 
   const getUnreadCount = (contactId: number) => {
     return alerts.filter(
-      (a) => a.id.startsWith("msg-") && Number(a.data?.sender_id) === Number(contactId)
+      (a) =>
+        a.id.startsWith("msg-") &&
+        Number(a.data?.sender_id) === Number(contactId),
     ).length;
   };
 
@@ -280,6 +294,15 @@ const FeedbackPage = () => {
   const [adminCategoryFilter, setAdminCategoryFilter] = useState<
     "all" | "bug" | "improvement" | "feature" | "support"
   >("all");
+  const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
+
+  const categoryOptions = [
+    { value: "all" as const, label: "כל הסוגים" },
+    { value: "bug" as const, label: "באגים (Bugs)" },
+    { value: "improvement" as const, label: "הצעות לשיפור" },
+    { value: "feature" as const, label: "פיצ'רים חדשים" },
+    { value: "support" as const, label: "קריאות תמיכה" },
+  ];
 
   const [selectedItem, setSelectedItem] = useState<{
     data: any;
@@ -694,6 +717,7 @@ const FeedbackPage = () => {
         if (adminFilter === "done" && item.status !== "done") return false;
         if (
           adminFilter === "dismissed" &&
+          item.status !== "done" &&
           item.status !== "dismissed" &&
           item.status !== "irrelevant"
         )
@@ -702,17 +726,21 @@ const FeedbackPage = () => {
           return false;
         if (
           adminCategoryFilter === "bug" &&
-          (item.type !== "feedback" || (item.category !== "bug" && item.category !== "באג"))
+          (item.type !== "feedback" ||
+            (item.category !== "bug" && item.category !== "באג"))
         )
           return false;
         if (
           adminCategoryFilter === "improvement" &&
-          (item.type !== "feedback" || (item.category !== "improvement" && item.category !== "הצעה לשיפור"))
+          (item.type !== "feedback" ||
+            (item.category !== "improvement" &&
+              item.category !== "הצעה לשיפור"))
         )
           return false;
         if (
           adminCategoryFilter === "feature" &&
-          (item.type !== "feedback" || (item.category !== "feature" && item.category !== "פיצ'ר חדש"))
+          (item.type !== "feedback" ||
+            (item.category !== "feature" && item.category !== "פיצ'ר חדש"))
         )
           return false;
         return true;
@@ -789,81 +817,128 @@ const FeedbackPage = () => {
         )}
         dir="rtl"
       >
-        {/* Page Header */}
-        <div className="pt-6 pb-4 px-4 sm:px-6 shrink-0">
+        {/* Page Header with Integrated Desktop Segmented Tabs */}
+        <div className="pt-5 pb-3 px-4 sm:px-6 shrink-0 border-b border-border/40 bg-background/95 backdrop-blur">
           <PageHeader
             icon={MessageSquare}
-            title="הודעות וניהול פניות"
-            subtitle="ניהול התכתבויות פנימיות ופניות למערכת"
+            title="מרכז הודעות ותקשורת"
+            subtitle="הודעות מפקדים, תפוצה בוואטסאפ ופניות לצוות התמיכה"
             className="mb-0"
             hideMobile={true}
+            badge={
+              <div className="hidden md:flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border/50">
+                <TabItem
+                  icon={MessageSquare}
+                  label="הודעות וצ'אט"
+                  active={activeTab === "messages"}
+                  onClick={() => {
+                    setActiveTab("messages");
+                    setSearchParams({ tab: "messages" });
+                  }}
+                  badge={totalUnreadCount}
+                />
+                <TabItem
+                  icon={Send}
+                  label="תפוצה בוואטסאפ"
+                  active={activeTab === "whatsapp-broadcast"}
+                  onClick={() => {
+                    setActiveTab("whatsapp-broadcast");
+                    setSearchParams({ tab: "whatsapp-broadcast" });
+                  }}
+                />
+                {isAdmin ? (
+                  <TabItem
+                    icon={Filter}
+                    label="ניהול פניות"
+                    active={activeTab === "admin-view"}
+                    onClick={() => {
+                      setActiveTab("admin-view");
+                      setSearchParams({ tab: "admin-view" });
+                    }}
+                  />
+                ) : (
+                  <>
+                    <TabItem
+                      icon={Plus}
+                      label="פנייה חדשה"
+                      active={activeTab === "send"}
+                      onClick={() => {
+                        setActiveTab("send");
+                        setSearchParams({ tab: "send" });
+                      }}
+                    />
+                    <TabItem
+                      icon={Archive}
+                      label="הפניות שלי"
+                      active={activeTab === "my-tickets"}
+                      onClick={() => {
+                        setActiveTab("my-tickets");
+                        setSearchParams({ tab: "my-tickets" });
+                        fetchMyTickets();
+                      }}
+                    />
+                  </>
+                )}
+                {isAdmin && (
+                  <TabItem
+                    icon={History}
+                    label="גיבוי צ'אטים"
+                    active={activeTab === "chat-admin"}
+                    onClick={() => {
+                      setActiveTab("chat-admin");
+                      setSearchParams({ tab: "chat-admin" });
+                    }}
+                  />
+                )}
+                {!isAdmin && (
+                  <TabItem
+                    icon={Activity}
+                    label="מה חדש?"
+                    active={activeTab === "whats-new"}
+                    onClick={() => {
+                      setActiveTab("whats-new");
+                      setSearchParams({ tab: "whats-new" });
+                    }}
+                  />
+                )}
+              </div>
+            }
           />
         </div>
         <div className="flex-1 min-h-0 flex flex-col">
-          {/* Desktop Horizontal Navigation (Replaces Sidebar) */}
-          <div className="hidden lg:flex items-center gap-1 sticky top-[-35px] bg-background/95 backdrop-blur z-50 pb-0 overflow-x-auto no-scrollbar pt-2 px-6">
-            {isAdmin && (
-              <TabItem
-                label="ניהול משימות"
-                active={activeTab === "admin-view"}
-                onClick={() => {
-                  setActiveTab("admin-view");
-                  setSearchParams({ tab: "admin-view" });
-                }}
-              />
-            )}
-            {isAdmin && (
-              <TabItem
-                label="גיבוי צ'אטים"
-                active={activeTab === "chat-admin"}
-                onClick={() => {
-                  setActiveTab("chat-admin");
-                  setSearchParams({ tab: "chat-admin" });
-                }}
-              />
-            )}
-            <TabItem
-              label="הודעות מפקדים"
-              active={activeTab === "messages"}
-              onClick={() => {
-                setActiveTab("messages");
-                setSearchParams({ tab: "messages" });
-              }}
-              badge={totalUnreadCount}
-            />
-            {!isAdmin && (
-              <TabItem
-                label="פנייה חדשה"
-                active={activeTab === "send"}
-                onClick={() => {
-                  setActiveTab("send");
-                  setSearchParams({ tab: "send" });
-                }}
-              />
-            )}
-            <TabItem
-              label={isAdmin ? "ארכיון שלי" : "הפניות שלי"}
-              active={activeTab === "my-tickets"}
-              onClick={() => {
-                setActiveTab("my-tickets");
-                setSearchParams({ tab: "my-tickets" });
-                fetchMyTickets();
-              }}
-            />
-            <TabItem
-              label="מה חדש?"
-              active={activeTab === "whats-new"}
-              onClick={() => {
-                setActiveTab("whats-new");
-                setSearchParams({ tab: "whats-new" });
-              }}
-            />
-          </div>
+          {/* Mobile Messaging Sub-Tabs (Visible ONLY on Messaging pages on mobile) */}
+          {(activeTab === "messages" || activeTab === "whatsapp-broadcast") && (
+            <div className="sticky top-0 bg-background/95 backdrop-blur z-30 py-2 px-3 border-b border-border/40 md:hidden">
+              <div className="grid grid-cols-2 items-center gap-1.5 bg-muted/40 p-1 rounded-2xl border border-border/50 w-full">
+                <TabItem
+                  icon={MessageSquare}
+                  label="צ'אט מפקדים"
+                  active={activeTab === "messages"}
+                  onClick={() => {
+                    setActiveTab("messages");
+                    setSearchParams({ tab: "messages" });
+                  }}
+                  badge={totalUnreadCount}
+                  className="flex-1 justify-center py-2"
+                />
+                <TabItem
+                  icon={Send}
+                  label="וואטסאפ"
+                  active={activeTab === "whatsapp-broadcast"}
+                  onClick={() => {
+                    setActiveTab("whatsapp-broadcast");
+                    setSearchParams({ tab: "whatsapp-broadcast" });
+                  }}
+                  className="flex-1 justify-center py-2"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Main Card */}
           <main
             className={cn(
-              "flex-1 px-4 sm:px-6 pb-8 mt-2",
+              "flex-1 px-3.5 sm:px-6 pb-6 mt-1",
               activeTab === "messages"
                 ? "overflow-hidden flex flex-col min-h-0"
                 : "overflow-y-auto",
@@ -872,16 +947,16 @@ const FeedbackPage = () => {
             <div
               className={cn(
                 "overflow-hidden flex flex-col flex-grow",
-                activeTab === "messages" ? "flex-1 min-h-0" : "min-h-[600px]",
+                activeTab === "messages" ? "flex-1 min-h-0" : "min-h-0",
               )}
             >
               {/* Tab Content */}
               <div
                 className={cn(
                   "flex-1",
-                  activeTab === "messages"
+                  activeTab === "messages" || activeTab === "whatsapp-broadcast"
                     ? "overflow-hidden flex flex-col min-h-0 p-0"
-                    : "overflow-y-auto space-y-6 custom-scrollbar p-4 sm:p-6",
+                    : "overflow-y-auto space-y-6 custom-scrollbar p-2 sm:p-6",
                 )}
               >
                 <AnimatePresence mode="wait">
@@ -890,118 +965,231 @@ const FeedbackPage = () => {
                       key="admin-tab"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="space-y-6"
+                      className="space-y-4"
                     >
-                      {/* ── Toolbar ── */}
-                      <div className="flex flex-col gap-4 bg-background/20 rounded-2xl border border-border/30 p-4">
-                        {/* Row 1: Search + Action Buttons */}
-                        <div className="flex items-center gap-3">
-                          {/* Search */}
-                          <div className="relative flex-1">
-                            <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-                            <input
-                              type="text"
-                              placeholder="חיפוש לפי שם, תיאור..."
-                              value={searchQuery}
-                              onChange={(e) => setSearchQuery(e.target.value)}
-                              className="w-full h-11 pr-11 pl-4 bg-background border border-border/40 rounded-2xl text-sm font-bold text-foreground placeholder:text-muted-foreground/50 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                            />
+                      {/* ── Section 1: System Versions & Releases Management Card ── */}
+                      <Card className="p-4 sm:p-5 rounded-2xl bg-card/60 border border-border/40 shadow-sm space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
+                              <GitPullRequest className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-sm font-bold text-foreground">
+                                  ניהול ושחרור גרסאות מערכת
+                                </h3>
+                                {systemUpdates.length > 0 && (
+                                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                                    גרסה פעילה: {systemUpdates[0].version}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {systemUpdates.length > 0
+                                  ? `פורסמה בתאריך: ${new Date(systemUpdates[0].release_date).toLocaleDateString("he-IL")}`
+                                  : "פרסום גרסאות וחידושים המוצגים למשתמשים"}
+                              </p>
+                            </div>
                           </div>
 
-                          {/* Refresh */}
+                          <Button
+                            onClick={() => setAddUpdateOpen(true)}
+                            size="sm"
+                            className="h-10 px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-sm w-full sm:w-auto"
+                          >
+                            <Plus className="w-4 h-4" />
+                            פרסם עדכון גרסה חדש
+                          </Button>
+                        </div>
+
+                        {/* Recent Releases List */}
+                        {systemUpdates.length > 0 && (
+                          <div className="pt-3 border-t border-border/40 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-semibold text-muted-foreground">
+                                גרסאות שפורסמו במערכת ({systemUpdates.length}):
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                              {systemUpdates
+                                .slice(0, 4)
+                                .map((upd: any, idx: number) => {
+                                  let featuresCount = 0;
+                                  try {
+                                    const parsed =
+                                      typeof upd.features === "string"
+                                        ? JSON.parse(upd.features)
+                                        : upd.features;
+                                    featuresCount = Array.isArray(parsed)
+                                      ? parsed.length
+                                      : 0;
+                                  } catch {}
+
+                                  return (
+                                    <div
+                                      key={upd.id}
+                                      className="flex items-center justify-between p-2.5 rounded-xl border bg-background/50 text-xs"
+                                    >
+                                      <div className="min-w-0 flex-1 pl-2">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="font-bold text-foreground">
+                                            {upd.version}
+                                          </span>
+                                          {idx === 0 ? (
+                                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 font-semibold">
+                                              פעילה
+                                            </span>
+                                          ) : null}
+                                          {featuresCount > 0 && (
+                                            <span className="text-[10px] text-muted-foreground">
+                                              ({featuresCount} שינויים)
+                                            </span>
+                                          )}
+                                        </div>
+                                        <span className="text-[10px] text-muted-foreground block truncate">
+                                          {new Date(
+                                            upd.release_date,
+                                          ).toLocaleDateString("he-IL")}
+                                        </span>
+                                      </div>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                          handleDeleteSystemUpdate(upd.id)
+                                        }
+                                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg shrink-0"
+                                        title="מחק גרסה"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </Button>
+                                    </div>
+                                  );
+                                })}
+                            </div>
+                          </div>
+                        )}
+                      </Card>
+
+                      {/* ── Section 2: Tickets & User Inquiries Management ── */}
+                      <Card className="p-4 sm:p-5 rounded-2xl bg-card/60 border border-border/40 shadow-sm space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="text-sm font-bold text-foreground">
+                              פניות משתמשים ומשימות
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                              מעקב, טיפול וארכוב פניות משוב ותמיכה
+                            </p>
+                          </div>
                           <Button
                             variant="outline"
-                            size="icon"
-                            onClick={
-                              isAdmin ? fetchAdminTickets : fetchMyTickets
-                            }
+                            size="sm"
+                            onClick={fetchAdminTickets}
                             disabled={isLoadingTickets}
-                            className="h-11 w-11 rounded-2xl border-border/40 bg-background text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all shrink-0"
+                            className="h-8 text-xs px-2.5 rounded-xl border-border/50 gap-1.5 bg-background shadow-none"
                           >
                             <RefreshCw
                               className={cn(
-                                "w-4 h-4",
+                                "w-3.5 h-3.5",
                                 isLoadingTickets && "animate-spin",
                               )}
                             />
+                            רענן
                           </Button>
-
-                          {/* Add Update (Admin only) */}
-                          {isAdmin && (
-                            <Button
-                              onClick={() => setAddUpdateOpen(true)}
-                              className="h-11 px-5 rounded-2xl bg-gradient-to-l from-violet-600 to-primary text-white font-black text-xs shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all flex items-center gap-2 shrink-0"
-                            >
-                              <GitPullRequest className="w-3.5 h-3.5" />
-                              עדכון גרסה
-                            </Button>
-                          )}
                         </div>
 
-                        {/* Row 2: Filter Pills */}
-                        <div className="flex flex-wrap items-center gap-2">
-                          {/* Status Filters */}
-                          <div className="flex items-center bg-background border border-border/40 rounded-2xl p-1 gap-0.5">
-                            {(
-                              [
-                                {
-                                  value: "pending",
-                                  label: "ממתין",
-                                  color: "text-amber-600",
-                                },
-                                {
-                                  value: "done",
-                                  label: "טופל",
-                                  color: "text-emerald-600",
-                                },
-                                {
-                                  value: "dismissed",
-                                  label: "ארכיון",
-                                  color: "text-muted-foreground",
-                                },
-                                {
-                                  value: "all",
-                                  label: "הכל",
-                                  color: "text-primary",
-                                },
-                              ] as const
-                            ).map(({ value, label, color }) => (
-                              <button
-                                key={value}
-                                onClick={() => setAdminFilter(value)}
-                                className={cn(
-                                  "px-3 py-1.5 rounded-xl text-[11px] font-black transition-all whitespace-nowrap",
-                                  adminFilter === value
-                                    ? "bg-primary text-white shadow-sm"
-                                    : `${color} hover:bg-muted`,
-                                )}
+                        {/* Search & Category Filter */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            {/* Search Bar */}
+                            <div className="relative flex-1">
+                              <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+                              <input
+                                type="text"
+                                placeholder="חיפוש פנייה לפי שם שוטר, נושא או תיאור..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full h-10 pr-10 pl-4 bg-background border border-border/40 rounded-xl text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground/50 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                              />
+                            </div>
+
+                            {/* Category Filter Popover Menu (shadcn) */}
+                            <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "h-10 px-3 justify-between text-xs font-semibold rounded-xl border shrink-0 bg-background min-w-[125px] sm:min-w-[145px]",
+                                    adminCategoryFilter !== "all"
+                                      ? "border-primary text-primary bg-primary/5"
+                                      : "border-border/40 text-foreground",
+                                  )}
+                                >
+                                  <div className="flex items-center gap-1.5 truncate">
+                                    <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                    <span className="truncate">
+                                      {categoryOptions.find((c) => c.value === adminCategoryFilter)?.label || "כל הסוגים"}
+                                    </span>
+                                  </div>
+                                  <ChevronDown className="w-3 h-3 text-muted-foreground mr-1 opacity-60 shrink-0" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                align="end"
+                                className="w-48 p-1.5 rounded-2xl shadow-xl border bg-popover text-right z-50"
+                                dir="rtl"
                               >
-                                {label}
-                              </button>
-                            ))}
+                                <div className="space-y-1">
+                                  {categoryOptions.map((opt) => {
+                                    const isSelected = adminCategoryFilter === opt.value;
+                                    return (
+                                      <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => {
+                                          setAdminCategoryFilter(opt.value);
+                                          setCategoryPopoverOpen(false);
+                                        }}
+                                        className={cn(
+                                          "w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors text-right select-none",
+                                          isSelected
+                                            ? "bg-primary/10 text-primary font-bold"
+                                            : "hover:bg-muted text-foreground",
+                                        )}
+                                      >
+                                        <span>{opt.label}</span>
+                                        {isSelected && (
+                                          <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                                        )}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
                           </div>
 
-                          <div className="w-px h-5 bg-border/40" />
-
-                          {/* Category Filters */}
-                          <div className="flex items-center flex-wrap gap-1">
+                          {/* Status Tabs: 3 Equal Width Columns (ממתין לטיפול | ארכיון | הכל) */}
+                          <div className="grid grid-cols-3 bg-muted/60 p-1 rounded-xl border border-border/40 gap-1 text-center w-full">
                             {(
                               [
-                                { value: "all", label: "כל הסוגים" },
-                                { value: "bug", label: "באג" },
-                                { value: "improvement", label: "שיפור" },
-                                { value: "feature", label: "פיצ'ר" },
-                                { value: "support", label: "תמיכה" },
+                                { value: "pending", label: "ממתין לטיפול" },
+                                { value: "dismissed", label: "ארכיון" },
+                                { value: "all", label: "הכל" },
                               ] as const
                             ).map(({ value, label }) => (
                               <button
                                 key={value}
-                                onClick={() => setAdminCategoryFilter(value)}
+                                type="button"
+                                onClick={() => setAdminFilter(value)}
                                 className={cn(
-                                  "px-3 py-1.5 rounded-xl text-[11px] font-black transition-all whitespace-nowrap border",
-                                  adminCategoryFilter === value
-                                    ? "bg-primary text-white border-primary shadow-sm"
-                                    : "text-muted-foreground border-border/30 hover:border-primary/20 hover:text-foreground hover:bg-muted/40",
+                                  "py-2 px-1 rounded-lg text-xs font-semibold transition-all text-center truncate select-none",
+                                  adminFilter === value
+                                    ? "bg-background text-foreground shadow-sm font-bold border border-border/50"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-background/40",
                                 )}
                               >
                                 {label}
@@ -1009,29 +1197,26 @@ const FeedbackPage = () => {
                             ))}
                           </div>
 
-                          {/* Results count */}
-                          {(adminFilter !== "all" ||
-                            adminCategoryFilter !== "all" ||
-                            searchQuery) && (
-                            <div className="mr-auto flex items-center gap-2">
-                              <span className="text-[11px] font-bold text-muted-foreground">
-                                {filteredItems.length} תוצאות
+                          {/* Results count & Clear button - ONLY shown when search query or non-default category is active */}
+                          {(adminCategoryFilter !== "all" || searchQuery.trim() !== "") && (
+                            <div className="flex items-center justify-between text-xs pt-1 border-t border-border/20 px-0.5">
+                              <span className="font-medium text-muted-foreground">
+                                נמצאו {filteredItems.length} פניות תואמות
                               </span>
                               <button
                                 onClick={() => {
-                                  setAdminFilter("all");
                                   setAdminCategoryFilter("all");
                                   setSearchQuery("");
                                 }}
-                                className="text-[11px] font-black text-destructive hover:underline flex items-center gap-1"
+                                className="text-xs font-semibold text-destructive hover:underline flex items-center gap-1"
                               >
                                 <X className="w-3 h-3" />
-                                נקה
+                                איפוס סינון
                               </button>
                             </div>
                           )}
                         </div>
-                      </div>
+                      </Card>
                       {/* Stylized Cards List */}
                       <div className="space-y-3">
                         {filteredItems.length === 0 ? (
@@ -1156,9 +1341,12 @@ const FeedbackPage = () => {
                           <div className="flex-1 overflow-y-auto divide-y divide-border/5 p-2 space-y-1 custom-scrollbar">
                             {availableCommanders
                               .filter((contact: any) => {
-                                const name = contact.is_admin
-                                  ? "צוות תמיכה"
-                                  : `${contact.first_name} ${contact.last_name}`;
+                                const name =
+                                  contact.first_name && contact.first_name !== "צוות"
+                                    ? `${contact.first_name} ${contact.last_name || ""}`.trim()
+                                    : contact.is_admin
+                                      ? "צוות תמיכה"
+                                      : `${contact.first_name || ""} ${contact.last_name || ""}`.trim() || contact.employee_number;
                                 return (
                                   !contactSearch ||
                                   name
@@ -1169,12 +1357,14 @@ const FeedbackPage = () => {
                               .map((contact: any) => {
                                 const isSelected =
                                   selectedChatContact?.id === contact.id;
-                                const displayName = contact.is_admin
+                                const isGenericSupport =
+                                  contact.is_admin && (!contact.first_name || contact.first_name === "צוות");
+                                const displayName = isGenericSupport
                                   ? "צוות תמיכה"
-                                  : `${contact.first_name} ${contact.last_name}`;
+                                  : `${contact.first_name || ""} ${contact.last_name || ""}`.trim() || contact.employee_number;
                                 const lastMsg = internalMessages.find(
                                   (m: any) =>
-                                    Number(m.other_id) === Number(contact.id),
+                                    String(m.other_id) === String(contact.id),
                                 );
                                 const unreadCount = getUnreadCount(contact.id);
 
@@ -1199,12 +1389,14 @@ const FeedbackPage = () => {
                                           "w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs transition-all",
                                           isSelected
                                             ? "bg-primary text-primary-foreground"
-                                            : contact.is_admin
+                                            : isGenericSupport
                                               ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
-                                              : "bg-muted text-muted-foreground",
+                                              : contact.is_admin
+                                                ? "bg-primary/10 text-primary border border-primary/20"
+                                                : "bg-muted text-muted-foreground",
                                         )}
                                       >
-                                        {contact.is_admin
+                                        {isGenericSupport
                                           ? "💬"
                                           : `${contact.first_name?.[0] ?? ""}${contact.last_name?.[0] ?? ""}`}
                                       </div>
@@ -1315,15 +1507,14 @@ const FeedbackPage = () => {
                                   {/* Name & Subtitle */}
                                   <div className="min-w-0 text-right">
                                     <h4 className="font-black text-sm text-foreground truncate">
-                                      {selectedChatContact.is_admin
+                                      {selectedChatContact.is_admin && (!selectedChatContact.first_name || selectedChatContact.first_name === "צוות")
                                         ? "צוות תמיכה"
-                                        : `${selectedChatContact.first_name} ${selectedChatContact.last_name}`}
+                                        : `${selectedChatContact.first_name || ""} ${selectedChatContact.last_name || ""}`.trim() || selectedChatContact.employee_number}
                                     </h4>
                                     <p className="text-[10px] text-muted-foreground truncate font-semibold">
-                                      {selectedChatContact.is_admin
+                                      {selectedChatContact.is_admin && (!selectedChatContact.first_name || selectedChatContact.first_name === "צוות")
                                         ? "צוות תמיכה וניהול פניות"
-                                        : selectedChatContact.department_name ||
-                                          "מפקד"}
+                                        : selectedChatContact.rank || selectedChatContact.department_name || "מנהל מערכת"}
                                     </p>
                                   </div>
                                 </div>
@@ -1471,6 +1662,17 @@ const FeedbackPage = () => {
                     </motion.div>
                   )}
 
+                  {activeTab === "whatsapp-broadcast" && (
+                    <motion.div
+                      key="broadcast-tab"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-6"
+                    >
+                      <WhatsAppBroadcastTab />
+                    </motion.div>
+                  )}
+
                   {activeTab === "my-tickets" && (
                     <motion.div
                       key="history-tab"
@@ -1508,15 +1710,22 @@ const FeedbackPage = () => {
                                 </p>
                                 {ticket.screenshot_url && (
                                   <div className="mt-3 flex items-center gap-3">
-                                    <div 
+                                    <div
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        window.open(getScreenshotUrl(ticket.screenshot_url), "_blank");
+                                        window.open(
+                                          getScreenshotUrl(
+                                            ticket.screenshot_url,
+                                          ),
+                                          "_blank",
+                                        );
                                       }}
                                       className="relative w-16 h-12 rounded-xl overflow-hidden border border-border/40 bg-black/5 cursor-pointer hover:border-primary/40 transition-all group shrink-0"
                                     >
                                       <img
-                                        src={getScreenshotUrl(ticket.screenshot_url)}
+                                        src={getScreenshotUrl(
+                                          ticket.screenshot_url,
+                                        )}
                                         alt="צילום מסך פנייה"
                                         className="w-full h-full object-cover"
                                       />
@@ -1966,34 +2175,42 @@ const FeedbackPage = () => {
                         {/* Right Column: The Form Card (lg:col-span-8) */}
                         <Card className="lg:col-span-8 bg-card/50 border border-border/30 backdrop-blur-xl rounded-2xl p-4 sm:p-6 space-y-4 text-right">
                           <div className="space-y-0.5 pb-1 border-b border-border/20">
-                            <h3 className="text-sm font-black text-foreground">שליחת פנייה לצוות</h3>
+                            <h3 className="text-sm font-black text-foreground">
+                              שליחת פנייה לצוות
+                            </h3>
                             <p className="text-[11px] text-muted-foreground">
-                              אנחנו כאן כדי לשמוע אותך. הפידבק שלך בונה את המערכת.
+                              אנחנו כאן כדי לשמוע אותך. הפידבק שלך בונה את
+                              המערכת.
                             </p>
                           </div>
 
-                          <form onSubmit={handleSubmitTicket} className="space-y-4">
+                          <form
+                            onSubmit={handleSubmitTicket}
+                            className="space-y-4"
+                          >
                             {/* Category */}
                             <div className="space-y-2">
                               <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block">
                                 סוג הפנייה
                               </label>
                               <div className="flex gap-2">
-                                {["באג", "הצעה לשיפור", "פיצ'ר חדש"].map((cat) => (
-                                  <button
-                                    type="button"
-                                    key={cat}
-                                    onClick={() => setTicketCategory(cat)}
-                                    className={cn(
-                                      "flex-1 py-2 px-2 rounded-xl text-[11px] font-black transition-all duration-200 border",
-                                      ticketCategory === cat
-                                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                                        : "bg-card/40 border-border/20 text-muted-foreground hover:bg-muted/50",
-                                    )}
-                                  >
-                                    {cat}
-                                  </button>
-                                ))}
+                                {["באג", "הצעה לשיפור", "פיצ'ר חדש"].map(
+                                  (cat) => (
+                                    <button
+                                      type="button"
+                                      key={cat}
+                                      onClick={() => setTicketCategory(cat)}
+                                      className={cn(
+                                        "flex-1 py-2 px-2 rounded-xl text-[11px] font-black transition-all duration-200 border",
+                                        ticketCategory === cat
+                                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                          : "bg-card/40 border-border/20 text-muted-foreground hover:bg-muted/50",
+                                      )}
+                                    >
+                                      {cat}
+                                    </button>
+                                  ),
+                                )}
                               </div>
                             </div>
 
@@ -2005,7 +2222,9 @@ const FeedbackPage = () => {
                               <textarea
                                 placeholder="ספרו לנו מה אפשר לשפר..."
                                 value={ticketDescription}
-                                onChange={(e) => setTicketDescription(e.target.value)}
+                                onChange={(e) =>
+                                  setTicketDescription(e.target.value)
+                                }
                                 className="w-full min-h-[110px] resize-none rounded-xl border border-border/30 bg-background/40 text-sm text-right p-3 leading-relaxed focus:bg-background focus:border-primary/30 transition-all font-medium placeholder:text-muted-foreground/40 outline-none focus:ring-1 focus:ring-primary/10"
                                 required
                               />
@@ -2023,7 +2242,9 @@ const FeedbackPage = () => {
                                   const file = e.target.files?.[0];
                                   if (file) {
                                     setScreenshotFile(file);
-                                    setScreenshotPreview(URL.createObjectURL(file));
+                                    setScreenshotPreview(
+                                      URL.createObjectURL(file),
+                                    );
                                   }
                                 }}
                                 className="hidden"
@@ -2045,7 +2266,10 @@ const FeedbackPage = () => {
                                   />
                                   <button
                                     type="button"
-                                    onClick={() => { setScreenshotFile(null); setScreenshotPreview(null); }}
+                                    onClick={() => {
+                                      setScreenshotFile(null);
+                                      setScreenshotPreview(null);
+                                    }}
                                     className="absolute top-1.5 right-1.5 w-6 h-6 bg-destructive text-destructive-foreground rounded-lg flex items-center justify-center transition-all active:scale-90 shadow"
                                   >
                                     <X className="w-3 h-3" />
@@ -2056,7 +2280,9 @@ const FeedbackPage = () => {
 
                             <Button
                               type="submit"
-                              disabled={isSendingTicket || !ticketDescription.trim()}
+                              disabled={
+                                isSendingTicket || !ticketDescription.trim()
+                              }
                               className="w-full h-10 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-black text-sm shadow-md shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2"
                             >
                               {isSendingTicket ? (
@@ -2074,7 +2300,9 @@ const FeedbackPage = () => {
                         {/* Left Column: Guidelines Card (lg:col-span-4) */}
                         <Card className="lg:col-span-4 bg-card/50 border border-border/30 backdrop-blur-xl rounded-2xl p-4 sm:p-5 space-y-4 text-right">
                           <div className="space-y-0.5 pb-1 border-b border-border/20">
-                            <h3 className="text-sm font-black text-primary">מדריך לפנייה יעילה</h3>
+                            <h3 className="text-sm font-black text-primary">
+                              מדריך לפנייה יעילה
+                            </h3>
                             <p className="text-[11px] text-muted-foreground">
                               עקבו אחר הדגשים לטיפול מהיר יותר.
                             </p>
@@ -2100,13 +2328,20 @@ const FeedbackPage = () => {
                             ].map((item, idx) => {
                               const IconComp = item.icon;
                               return (
-                                <div key={idx} className="flex gap-3 items-start">
+                                <div
+                                  key={idx}
+                                  className="flex gap-3 items-start"
+                                >
                                   <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
                                     <IconComp className="w-3.5 h-3.5" />
                                   </div>
                                   <div className="space-y-0.5">
-                                    <h4 className="text-[11px] font-black text-foreground">{item.title}</h4>
-                                    <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">{item.desc}</p>
+                                    <h4 className="text-[11px] font-black text-foreground">
+                                      {item.title}
+                                    </h4>
+                                    <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">
+                                      {item.desc}
+                                    </p>
                                   </div>
                                 </div>
                               );
@@ -2184,25 +2419,37 @@ const FeedbackPage = () => {
                       {selectedItem.data.description}
                     </div>
                   </div>
-                  {selectedItem.type === "feedback" && selectedItem.data.screenshot_url && (
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
-                        צילום מסך מצורף
-                      </label>
-                      <div className="relative rounded-2xl overflow-hidden border border-border/50 max-h-[300px] flex items-center justify-center bg-black/5 hover:bg-black/10 transition-all cursor-pointer group">
-                        <img
-                          src={getScreenshotUrl(selectedItem.data.screenshot_url)}
-                          alt="צילום מסך פנייה"
-                          className="max-w-full max-h-[300px] object-contain"
-                          onClick={() => window.open(getScreenshotUrl(selectedItem.data.screenshot_url), "_blank")}
-                        />
-                        <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                          <Eye className="w-5 h-5 text-white" />
-                          <span className="text-xs font-black text-white">לחץ להגדלה</span>
+                  {selectedItem.type === "feedback" &&
+                    selectedItem.data.screenshot_url && (
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+                          צילום מסך מצורף
+                        </label>
+                        <div className="relative rounded-2xl overflow-hidden border border-border/50 max-h-[300px] flex items-center justify-center bg-black/5 hover:bg-black/10 transition-all cursor-pointer group">
+                          <img
+                            src={getScreenshotUrl(
+                              selectedItem.data.screenshot_url,
+                            )}
+                            alt="צילום מסך פנייה"
+                            className="max-w-full max-h-[300px] object-contain"
+                            onClick={() =>
+                              window.open(
+                                getScreenshotUrl(
+                                  selectedItem.data.screenshot_url,
+                                ),
+                                "_blank",
+                              )
+                            }
+                          />
+                          <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <Eye className="w-5 h-5 text-white" />
+                            <span className="text-xs font-black text-white">
+                              לחץ להגדלה
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                   <div className="space-y-4">
                     <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
                       מענה רשמי
@@ -2283,7 +2530,9 @@ const FeedbackPage = () => {
                               type="text"
                               placeholder="חיפוש לפי שם..."
                               value={recipientSearch}
-                              onChange={(e) => setRecipientSearch(e.target.value)}
+                              onChange={(e) =>
+                                setRecipientSearch(e.target.value)
+                              }
                               className="w-full h-10 pr-9 pl-4 bg-background border border-border/50 rounded-xl text-xs font-bold focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                             />
                           </div>
@@ -2542,7 +2791,7 @@ const FeedbackPage = () => {
           )}
         </AnimatePresence>
         {/* Mobile Bottom Navigation Bar - Standard Fixed */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-t border-border flex justify-around items-center h-16 px-2 safe-area-bottom">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border flex justify-around items-center h-16 px-2 safe-area-bottom">
           {isAdmin && (
             <MobileBottomNavLink
               label="ניהול"
@@ -2575,16 +2824,18 @@ const FeedbackPage = () => {
             }}
             badge={totalUnreadCount}
           />
-          <MobileBottomNavLink
-            label={isAdmin ? "ארכיון" : "הפניות שלי"}
-            icon={History}
-            active={activeTab === "my-tickets"}
-            onClick={() => {
-              setActiveTab("my-tickets");
-              setSearchParams({ tab: "my-tickets" });
-              fetchMyTickets();
-            }}
-          />
+          {!isAdmin && (
+            <MobileBottomNavLink
+              label="הפניות שלי"
+              icon={History}
+              active={activeTab === "my-tickets"}
+              onClick={() => {
+                setActiveTab("my-tickets");
+                setSearchParams({ tab: "my-tickets" });
+                fetchMyTickets();
+              }}
+            />
+          )}
           {!isAdmin && (
             <MobileBottomNavLink
               label="פנייה"
@@ -2596,15 +2847,17 @@ const FeedbackPage = () => {
               }}
             />
           )}
-          <MobileBottomNavLink
-            label="מה חדש?"
-            icon={Activity}
-            active={activeTab === "whats-new"}
-            onClick={() => {
-              setActiveTab("whats-new");
-              setSearchParams({ tab: "whats-new" });
-            }}
-          />
+          {!isAdmin && (
+            <MobileBottomNavLink
+              label="מה חדש?"
+              icon={Activity}
+              active={activeTab === "whats-new"}
+              onClick={() => {
+                setActiveTab("whats-new");
+                setSearchParams({ tab: "whats-new" });
+              }}
+            />
+          )}
         </div>
       </div>
     </>
@@ -2618,6 +2871,7 @@ function TabItem({
   onClick,
   className,
   badge,
+  icon: Icon,
 }: {
   id?: string;
   label: string;
@@ -2625,29 +2879,33 @@ function TabItem({
   onClick: () => void;
   className?: string;
   badge?: number;
+  icon?: any;
 }) {
   return (
     <button
       id={id}
       onClick={onClick}
       className={cn(
-        "relative px-4 py-2.5 rounded-lg transition-all font-bold text-sm whitespace-nowrap",
+        "relative flex items-center gap-1.5 h-8 px-3 rounded-lg transition-all font-semibold text-xs whitespace-nowrap shrink-0 select-none",
         active
-          ? "text-primary bg-primary/10"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+          ? "bg-background text-foreground shadow-xs font-bold border border-border/60"
+          : "text-muted-foreground hover:text-foreground hover:bg-background/50",
         className,
       )}
     >
-      <div className="flex items-center gap-2">
-        {label}
-        {badge !== undefined && badge > 0 && (
-          <span className="bg-destructive text-destructive-foreground text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm animate-pulse">
-            {badge}
-          </span>
-        )}
-      </div>
-      {active && (
-        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full mx-2" />
+      {Icon && <Icon className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />}
+      <span>{label}</span>
+      {badge !== undefined && badge > 0 && (
+        <span
+          className={cn(
+            "text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-full flex items-center justify-center leading-none",
+            active
+              ? "bg-primary text-primary-foreground"
+              : "bg-destructive text-destructive-foreground",
+          )}
+        >
+          {badge}
+        </span>
       )}
     </button>
   );

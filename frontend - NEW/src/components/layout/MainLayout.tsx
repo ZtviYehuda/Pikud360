@@ -217,7 +217,7 @@ export default function MainLayout() {
             label: "פתח צ'אט",
             onClick: () => {
               markAsRead(alert.id);
-              navigate("/feedback?tab=messages");
+              navigate("/messaging?tab=messages");
               openChat({
                 id: alert.data?.sender_id || 0,
                 name:
@@ -252,7 +252,7 @@ export default function MainLayout() {
           { name: "בקשות העברה", path: "/transfers", icon: ArrowLeftRight },
         ]
       : []),
-    { name: "מרכז משוב", path: "/feedback", icon: MessageSquare },
+    { name: "מרכז הודעות ותקשורת", path: "/messaging", icon: MessageSquare },
     ...(user?.is_admin
       ? [{ name: "יומן פעילות", path: "/activity-log", icon: Activity }]
       : []),
@@ -454,7 +454,7 @@ export default function MainLayout() {
               className="flex items-center justify-between gap-3 p-2 bg-muted/40 dark:bg-muted/20 border border-border/40 hover:border-border/80 rounded-xl transition-all duration-200 select-none group w-full"
             >
               <Link
-                to="/settings"
+                to="/settings?tab=profile"
                 onClick={() => {
                   if (window.innerWidth < 1024) setIsSidebarOpen(false);
                 }}
@@ -496,7 +496,7 @@ export default function MainLayout() {
             /* Collapsed Profile Link */
             <Link
               id="sidebar-profile-link-collapsed"
-              to="/settings"
+              to="/settings?tab=profile"
               title="הגדרות פרופיל"
               onClick={() => {
                 if (window.innerWidth < 1024) setIsSidebarOpen(false);
@@ -520,6 +520,13 @@ export default function MainLayout() {
               >
                 <LogOut className="w-4 h-4" />
               </button>
+            </div>
+          )}
+
+          {/* Watermark in Sidebar */}
+          {isSidebarOpen && (
+            <div className="w-full text-center pt-2 pb-1 text-[11px] font-normal text-muted-foreground/60 select-none border-t border-border/30 mt-1">
+              פותח ע"י צבי בטיטו
             </div>
           )}
         </div>
@@ -1171,8 +1178,9 @@ export default function MainLayout() {
         <main
           className={cn(
             "flex-grow bg-background custom-scrollbar px-2 lg:px-6",
-            location.pathname === "/feedback" &&
-              new URLSearchParams(location.search).get("tab") === "messages"
+            (location.pathname === "/messaging" || location.pathname === "/feedback") &&
+              (new URLSearchParams(location.search).get("tab") === "messages" ||
+               !new URLSearchParams(location.search).get("tab"))
               ? "overflow-hidden flex flex-col"
               : "overflow-y-auto",
           )}
@@ -1180,9 +1188,9 @@ export default function MainLayout() {
           <div
             className={cn(
               "w-full max-w-full mx-auto",
-              location.pathname === "/feedback" &&
-                new URLSearchParams(location.search).get("tab") ===
-                  "messages" &&
+              (location.pathname === "/messaging" || location.pathname === "/feedback") &&
+                (new URLSearchParams(location.search).get("tab") === "messages" ||
+                 !new URLSearchParams(location.search).get("tab")) &&
                 "h-full flex flex-col",
             )}
           >

@@ -288,12 +288,12 @@ export const DashboardFilters = ({
         !!selectedAgeRange?.max;
 
   const FilterContent = (
-    <div className="flex flex-col h-full bg-card/98 backdrop-blur-2xl border border-border/80 dark:border-white/15 overflow-hidden rounded-t-[2.5rem] sm:rounded-3xl shadow-xl ring-1 ring-black/5 dark:ring-white/10">
+    <div className="flex flex-col h-full bg-card overflow-hidden">
       <DialogDragHandle />
 
       {/* Header */}
-      <div className="px-6 pt-4 pb-4 border-b border-border/30 flex items-center justify-between shrink-0 relative" dir="rtl">
-        <div className="text-xl font-black text-foreground">סינון</div>
+      <div className="px-6 pt-4 pb-3 border-b border-border/40 flex items-center justify-between shrink-0 relative" dir="rtl">
+        <div className="text-lg font-bold text-foreground">סינון</div>
 
         {/* Reset Action (positioned at the far left edge of the modal header) */}
         {hasActiveFilters && (
@@ -722,11 +722,11 @@ export const DashboardFilters = ({
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-4 border-t border-border/30 shrink-0">
+      <div className="px-6 py-4 pb-6 sm:pb-4 border-t border-border/40 shrink-0 bg-card">
         <Button
           id="apply-filters-btn"
           onClick={handleApply}
-          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-xl h-14 transition-all active:scale-[0.98] text-base"
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl h-12 transition-all active:scale-[0.98] text-sm shadow-sm"
         >
           החל סינון
         </Button>

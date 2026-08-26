@@ -126,7 +126,7 @@ def resolve_access_scope(user_id: str, tenant_id: str) -> AuthorizationContext:
                     max_scope = ScopeType.GLOBAL
 
                 # Resolve organization units
-                cur.execute(units_query, (user_id,))
+                cur.execute(units_query, (str(user_id), str(user_id)))
                 unit_rows = cur.fetchall()
                 organization_units = [row[0] for row in unit_rows]
 

@@ -271,80 +271,114 @@ export default function ActivityLogPage() {
 
   return (
     <div className="flex flex-col h-full bg-background/50 overflow-hidden" dir="rtl">
-      <div className="pt-5 pb-3 px-4 sm:px-6 shrink-0 transition-all">
-        <PageHeader 
-          id="activity-log-header"
-          title="מרכז ניטור וביקורת"
-          icon={History}
-          className={cn(
-            "mb-0",
-            searchParams.get("tutorial") === "activity-log" && "tutorial-highlight"
-          )}
-          hideMobile={true}
-          badge={
-            <div className="flex items-center gap-3">
-              <Button 
-                variant="outline" 
-                className="rounded-xl h-10 border-border/40 bg-card hover:bg-muted/50 font-bold text-xs"
-                onClick={fetchData}
-                disabled={isLoading}
-              >
-                <RefreshCw className={cn("w-3.5 h-3.5 ml-2", isLoading && "animate-spin")} />
-                רענן
-              </Button>
-              {user?.is_admin && (
-                <Button 
-                  onClick={handleExport}
-                  disabled={isExporting}
-                  className="rounded-xl h-10 font-black text-xs"
-                >
-                  {isExporting ? (
-                    <Loader2 className="w-3.5 h-3.5 ml-2 animate-spin" />
-                  ) : (
-                    <Download className="w-3.5 h-3.5 ml-2" />
-                  )}
-                  ייצוא דוח ביקורת מלא
-                </Button>
-              )}
+      {/* Header Bar */}
+      <div className="pt-3 sm:pt-5 pb-2 sm:pb-3 px-3 sm:px-6 shrink-0 transition-all">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shrink-0">
+              <History className="w-5 h-5" />
             </div>
-          }
-        />
+            <div>
+              <h1 className="text-base sm:text-lg font-bold text-foreground">מרכז ניטור וביקורת</h1>
+              <p className="text-xs text-muted-foreground hidden sm:block">מעקב ובקרה אחר פעולות, אבטחה וכניסות למערכת</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-auto w-full sm:w-auto justify-between sm:justify-end">
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="rounded-xl h-9 border-border/40 bg-card hover:bg-muted/50 font-semibold text-xs gap-1.5 flex-1 sm:flex-initial"
+              onClick={fetchData}
+              disabled={isLoading}
+            >
+              <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
+              <span>רענן</span>
+            </Button>
+            {user?.is_admin && (
+              <Button 
+                size="sm"
+                onClick={handleExport}
+                disabled={isExporting}
+                className="rounded-xl h-9 font-semibold text-xs gap-1.5 flex-1 sm:flex-initial"
+              >
+                {isExporting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
+                <span>ייצוא דוח ביקורת</span>
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
 
-      <main className="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-6 space-y-6">
-
+      <main className="flex-1 overflow-y-auto custom-scrollbar px-2.5 sm:px-6 pb-6 space-y-4">
         {/* Main Content Card */}
-        <Card className="rounded-2xl border-border/40 overflow-hidden flex flex-col min-h-[600px] bg-card/60 backdrop-blur-xl">
-          {/* Custom Tabs */}
-          <div className="flex bg-background/20 px-4 pt-4 border-b border-border/40 gap-1.5 overflow-x-auto no-scrollbar">
-             <button onClick={() => setActiveTab("my")} className={cn("px-4 py-2.5 text-xs font-black rounded-t-xl transition-all border-t border-x", activeTab === "my" ? "bg-card text-primary border-border/40" : "text-muted-foreground hover:bg-card/50 border-transparent")}>
-               <div className="flex items-center gap-1.5">
-                 <UserCheck className="w-3.5 h-3.5" />
-                 הפעילות שלי
+        <Card className="rounded-2xl border-border/40 overflow-hidden flex flex-col min-h-[500px] bg-card/60 backdrop-blur-xl shadow-sm">
+          {/* Custom Tabs Bar - 2x2 grid on mobile, inline on desktop */}
+          <div className="grid grid-cols-2 sm:flex sm:flex-row bg-muted/40 p-2 sm:p-1.5 border-b border-border/40 gap-1.5 sm:gap-1">
+             <button
+               onClick={() => setActiveTab("my")}
+               className={cn(
+                 "py-2.5 sm:py-2 px-3 text-xs font-semibold rounded-xl transition-all select-none text-center sm:flex-1",
+                 activeTab === "my"
+                   ? "bg-background text-foreground shadow-sm font-bold border border-border/50"
+                   : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+               )}
+             >
+               <div className="flex items-center justify-center gap-1.5">
+                 <UserCheck className="w-3.5 h-3.5 shrink-0" />
+                 <span>הפעילות שלי</span>
                </div>
              </button>
 
              {(user?.is_admin || user?.is_commander) && (
-               <button onClick={() => setActiveTab("all")} className={cn("px-4 py-2.5 text-xs font-black rounded-t-xl transition-all border-t border-x", activeTab === "all" ? "bg-card text-primary border-border/40" : "text-muted-foreground hover:bg-card/50 border-transparent")}>
-                 <div className="flex items-center gap-1.5">
-                   <FileText className="w-3.5 h-3.5" />
-                   כל פעילות המערכת
+               <button
+                 onClick={() => setActiveTab("all")}
+                 className={cn(
+                   "py-2.5 sm:py-2 px-3 text-xs font-semibold rounded-xl transition-all select-none text-center sm:flex-1",
+                   activeTab === "all"
+                     ? "bg-background text-foreground shadow-sm font-bold border border-border/50"
+                     : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+                 )}
+               >
+                 <div className="flex items-center justify-center gap-1.5">
+                   <FileText className="w-3.5 h-3.5 shrink-0" />
+                   <span>כל פעילות המערכת</span>
                  </div>
                </button>
              )}
 
              {user?.is_admin && (
                <>
-                 <button onClick={() => setActiveTab("suspicious")} className={cn("px-4 py-2.5 text-xs font-black rounded-t-xl transition-all border-t border-x", activeTab === "suspicious" ? "bg-card text-red-600 border-border/40" : "text-muted-foreground hover:bg-card/50 border-transparent")}>
-                   <div className="flex items-center gap-1.5">
-                     <AlertTriangle className="w-3.5 h-3.5" />
-                     התראות ואנומליות
+                 <button
+                   onClick={() => setActiveTab("suspicious")}
+                   className={cn(
+                     "py-2.5 sm:py-2 px-3 text-xs font-semibold rounded-xl transition-all select-none text-center sm:flex-1",
+                     activeTab === "suspicious"
+                       ? "bg-background text-destructive shadow-sm font-bold border border-border/50"
+                       : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+                   )}
+                 >
+                   <div className="flex items-center justify-center gap-1.5">
+                     <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                     <span>התראות ואנומליות</span>
                    </div>
                  </button>
-                 <button onClick={() => setActiveTab("archives")} className={cn("px-4 py-2.5 text-xs font-black rounded-t-xl transition-all border-t border-x", activeTab === "archives" ? "bg-card text-purple-600 border-border/40" : "text-muted-foreground hover:bg-card/50 border-transparent")}>
-                   <div className="flex items-center gap-1.5">
-                     <Archive className="w-3.5 h-3.5" />
-                     ארכיון קבצים
+                 <button
+                   onClick={() => setActiveTab("archives")}
+                   className={cn(
+                     "py-2.5 sm:py-2 px-3 text-xs font-semibold rounded-xl transition-all select-none text-center sm:flex-1",
+                     activeTab === "archives"
+                       ? "bg-background text-purple-600 shadow-sm font-bold border border-border/50"
+                       : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+                   )}
+                 >
+                   <div className="flex items-center justify-center gap-1.5">
+                     <Archive className="w-3.5 h-3.5 shrink-0" />
+                     <span>ארכיון קבצים</span>
                    </div>
                  </button>
                </>
@@ -688,78 +722,74 @@ function ActivityEntry({ log, index, isSuspicious }: { log: any, index: number, 
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.02, 0.4) }}
+      transition={{ delay: Math.min(index * 0.02, 0.3) }}
       className={cn(
-        "group flex flex-col border-b border-border/20 transition-all cursor-pointer overflow-hidden",
+        "group flex flex-col border-b border-border/20 transition-all cursor-pointer overflow-hidden select-none",
         isError 
-          ? "bg-red-500/[0.01] hover:bg-red-500/[0.03]" 
-          : "bg-card hover:bg-muted/10",
-        expanded && "bg-muted/20 border-primary/20"
+          ? "bg-red-500/[0.02] hover:bg-red-500/[0.05]" 
+          : "bg-card hover:bg-muted/20",
+        expanded && "bg-muted/30 border-primary/20"
       )}
       onClick={() => setExpanded(!expanded)}
     >
-      <div className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-6">
-        <div className="flex items-center gap-4 min-w-0 flex-1">
-          {/* Icon (small and sleek) */}
-          <div className={cn(
-            "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border transition-transform group-hover:scale-105",
-            isError ? "bg-red-500/10 text-red-500 border-red-500/20" : cn("bg-background border-border/30", config.color)
-          )}>
-            <Icon className="w-5 h-5" />
+      <div className="p-3.5 sm:p-4 flex flex-col gap-2.5">
+        {/* Row 1: Action Tag, Date & Chevron */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={cn(
+              "w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 border",
+              isError ? "bg-red-500/10 text-red-500 border-red-500/20" : cn("bg-background border-border/30", config.color)
+            )}>
+              <Icon className="w-4 h-4" />
+            </div>
+            <span className={cn(
+              "text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-md border shrink-0",
+              isError ? "bg-red-500/15 border-red-500/30 text-red-600 dark:text-red-400" : "bg-primary/10 border-primary/20 text-primary"
+            )}>
+              {config.label}
+            </span>
           </div>
 
-          <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 items-center">
-            {/* Col 1: Action Tag & Time */}
-            <div className="md:col-span-4 flex items-center gap-2.5">
-              <span className={cn(
-                "text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg border shrink-0",
-                isError ? "bg-red-500/15 border-red-500/30 text-red-500" : "bg-primary/10 border-primary/20 text-primary"
-              )}>
-                {config.label}
-              </span>
-              <span className="text-[11px] font-bold text-muted-foreground/80 shrink-0 flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-muted-foreground/45" />
-                {log.created_at ? format(new Date(log.created_at), "HH:mm, dd/MM/yyyy", { locale: he }) : "זמן לא ידוע"}
-              </span>
-            </div>
-
-            {/* Col 2: Log Description */}
-            <div className="md:col-span-5 min-w-0">
-              <p className="text-xs sm:text-sm font-black text-foreground/80 truncate leading-relaxed">
-                {log.description}
-              </p>
-            </div>
-
-            {/* Col 3: Actors (User / Target) */}
-            <div className="md:col-span-3 min-w-0 flex flex-wrap items-center gap-1.5">
-              {log.user_name && (
-                <span className="text-[10px] font-bold text-muted-foreground/80 flex items-center gap-1 bg-background/50 border border-border/20 px-2 py-0.5 rounded-lg">
-                  <User className="w-3 h-3 text-muted-foreground/55" />
-                  <span>בוצע ע״י: <span className="font-black text-foreground/75">{log.user_name}</span></span>
-                </span>
-              )}
-              {log.target_name && (
-                <span className="text-[10px] font-bold text-muted-foreground/80 flex items-center gap-1 bg-background/50 border border-border/20 px-2 py-0.5 rounded-lg">
-                  <ArrowLeftRight className="w-3 h-3 text-muted-foreground/55" />
-                  <span>עבור: <span className="font-black text-foreground/75">{log.target_name}</span></span>
-                </span>
-              )}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
+              <Clock className="w-3 h-3 text-muted-foreground/60" />
+              {log.created_at ? format(new Date(log.created_at), "dd/MM/yy, HH:mm", { locale: he }) : "—"}
+            </span>
+            <div className="p-1 rounded-md bg-muted/40 text-muted-foreground">
+              <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", expanded && "rotate-180")} />
             </div>
           </div>
         </div>
 
-        {/* Left-end row metadata */}
-        <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-border/10">
-          <div className="flex items-center gap-3">
-            <span className="text-[11px] font-mono font-bold text-muted-foreground/70">{ip}</span>
-            <span className="text-[10px] font-black text-muted-foreground/50 hidden md:inline">
-              {isWindows ? "מחשב" : isMobile ? "נייד" : "שרת"}
-            </span>
+        {/* Row 2: Description */}
+        <p className="text-xs sm:text-sm font-semibold text-foreground leading-snug break-words">
+          {log.description}
+        </p>
+
+        {/* Row 3: Metadata Badges (Actors & IP) */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-border/10 text-xs">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {log.user_name && (
+              <span className="text-[10px] text-muted-foreground bg-muted/40 border border-border/20 px-2 py-0.5 rounded-md flex items-center gap-1">
+                <User className="w-3 h-3 text-muted-foreground/60" />
+                <span>מבצע: <strong className="font-semibold text-foreground">{log.user_name}</strong></span>
+              </span>
+            )}
+            {log.target_name && (
+              <span className="text-[10px] text-muted-foreground bg-muted/40 border border-border/20 px-2 py-0.5 rounded-md flex items-center gap-1">
+                <ArrowLeftRight className="w-3 h-3 text-muted-foreground/60" />
+                <span>עבור: <strong className="font-semibold text-foreground">{log.target_name}</strong></span>
+              </span>
+            )}
           </div>
-          <div className="p-1.5 rounded-lg bg-background/50 border border-border/20 group-hover:bg-primary/10 transition-colors">
-            <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-300", expanded && "rotate-180")} />
+
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-medium mr-auto sm:mr-0">
+            <span className="hidden sm:inline">{isWindows ? "מחשב" : isMobile ? "נייד" : "שרת"} •</span>
+            <span className="font-mono text-muted-foreground/80 font-bold" dir="ltr">
+              {ip}
+            </span>
           </div>
         </div>
       </div>
@@ -770,9 +800,9 @@ function ActivityEntry({ log, index, isSuspicious }: { log: any, index: number, 
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="border-t border-border/20 bg-muted/5"
+            className="border-t border-border/20 bg-muted/10"
           >
-            <div className="px-4 py-3 flex flex-wrap items-center gap-2.5">
+            <div className="p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
               <DetailPill icon={Wifi} label="כתובת IP" value={ip} />
               <DetailPill icon={Clock} label="שעה מדויקת" value={log.created_at ? format(new Date(log.created_at), "HH:mm:ss") : "N/A"} />
               <DetailPill icon={Fingerprint} label="מזהה פעולה" value={`#${log.id}`} />

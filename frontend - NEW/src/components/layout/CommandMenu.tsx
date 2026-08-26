@@ -61,9 +61,9 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
         category: "דפים",
       },
       {
-        name: "מרכז משוב",
-        description: "שליחת פידבק, הצעות לשיפור ופניות תמיכה",
-        path: "/feedback",
+        name: "מרכז הודעות ותקשורת",
+        description: "הודעות מפקדים, תפוצה בוואטסאפ ופניות תמיכה",
+        path: "/messaging",
         icon: MessageSquarePlus,
         category: "דפים",
       },

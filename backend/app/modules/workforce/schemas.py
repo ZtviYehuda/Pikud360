@@ -97,6 +97,9 @@ class EmployeeUpdateRequest(BaseModel):
     emergency_contact: Optional[str] = None
     status: Optional[str] = None
     is_active: Optional[bool] = None
+    is_commander: Optional[bool] = None
+    security_clearance: Optional[bool] = None
+    police_license: Optional[bool] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -196,6 +199,9 @@ class EmployeeResponse(BaseModel):
     emergency_contact: Optional[str] = None
     status: str
     is_active: bool = True
+    is_commander: bool = False
+    security_clearance: bool = False
+    police_license: bool = False
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     organization_info: Optional[EmployeeOrganizationInfo] = None

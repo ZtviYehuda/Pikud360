@@ -370,6 +370,13 @@ class WorkforceService:
                 raise AccessDeniedError(f"Access Denied: Lacks authority to transfer employee to unit {req.org_unit_id}.")
 
         # Update properties dynamically
+        new_position = req.position if req.position is not None else before_emp.position
+        if req.is_commander is not None:
+            if req.is_commander and (not new_position or new_position in ["שוטר", "עובד"]):
+                new_position = "מפקד"
+            elif not req.is_commander and (new_position in ["מפקד", "קצין"]):
+                new_position = "שוטר"
+
         updated_data = Employee(
             id=before_emp.id,
             tenant_id=before_emp.tenant_id,
@@ -379,7 +386,7 @@ class WorkforceService:
             last_name=req.last_name if req.last_name is not None else before_emp.last_name,
             birthdate=req.birthdate if req.birthdate is not None else before_emp.birthdate,
             rank=req.rank if req.rank is not None else before_emp.rank,
-            position=req.position if req.position is not None else before_emp.position,
+            position=new_position,
             service_type=req.service_type if req.service_type is not None else before_emp.service_type,
             user_id=req.user_id if req.user_id is not None else before_emp.user_id,
             commander_id=req.commander_id if req.commander_id is not None else before_emp.commander_id,
@@ -418,6 +425,20 @@ class WorkforceService:
         )
         self._history_repo.create(history)
 
+        # Synchronize linked chat_messages sender names
+        if after_emp.user_id or after_emp.id:
+            try:
+                with get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("""
+                            UPDATE core.chat_messages
+                            SET sender_first = %s, sender_last = %s
+                            WHERE sender_id = %s OR sender_id = %s OR sender_id = %s;
+                        """, (after_emp.first_name, after_emp.last_name, str(after_emp.user_id), str(after_emp.id), str(after_emp.employee_number)))
+                        conn.commit()
+            except Exception as e:
+                logger.warning(f"Failed to sync chat_messages names on employee update: {e}")
+
         # Write Audit Log
         self._write_audit_log(
             tenant_id=tenant_id,
@@ -429,28 +450,65 @@ class WorkforceService:
             old_values=self._serialize_employee(before_emp)
         )
 
-        # Synchronize linked security user profile & preferences
-        if after_emp.user_id:
+        # Synchronize linked security user profile & preferences & roles
+        if after_emp.user_id or after_emp.employee_number:
             try:
+                target_uid = str(after_emp.user_id) if after_emp.user_id else None
                 from app.modules.security.repositories import UserRepository, UserPreferenceRepository
                 user_repo = UserRepository()
                 pref_repo = UserPreferenceRepository()
-                u = user_repo.get_by_id(str(after_emp.user_id))
-                if u:
-                    if after_emp.personal_email:
-                        u.email = after_emp.personal_email
-                    user_repo.update(u.id, u)
                 
-                pref_repo.upsert(str(after_emp.user_id), {
-                    "first_name": after_emp.first_name,
-                    "last_name": after_emp.last_name,
-                    "phone_number": after_emp.phone,
-                    "city": getattr(after_emp, "city", ""),
-                    "emergency_contact": getattr(after_emp, "emergency_contact", ""),
-                    "birth_date": getattr(after_emp, "birthdate", "")
-                })
+                if not target_uid and after_emp.employee_number:
+                    u = user_repo.get_by_username(after_emp.employee_number)
+                    if u:
+                        target_uid = str(u.id)
+
+                if target_uid:
+                    u = user_repo.get_by_id(target_uid)
+                    if u:
+                        if after_emp.personal_email:
+                            u.email = after_emp.personal_email
+                        user_repo.update(u.id, u)
+                    
+                    pref_updates = {
+                        "first_name": after_emp.first_name,
+                        "last_name": after_emp.last_name,
+                        "phone_number": after_emp.phone,
+                        "city": getattr(after_emp, "city", ""),
+                        "emergency_contact": getattr(after_emp, "emergency_contact", ""),
+                        "birth_date": getattr(after_emp, "birthdate", "")
+                    }
+                    if req.is_commander is not None:
+                        pref_updates["is_commander"] = req.is_commander
+                    if req.security_clearance is not None:
+                        pref_updates["security_clearance"] = req.security_clearance
+                    if req.police_license is not None:
+                        pref_updates["police_license"] = req.police_license
+
+                    pref_repo.upsert(target_uid, pref_updates)
+
+                    # Update security.user_roles for COMMANDER
+                    if req.is_commander is not None:
+                        with get_db_connection() as conn:
+                            with conn.cursor() as cur:
+                                cur.execute("SELECT id FROM security.roles WHERE name = 'COMMANDER';")
+                                cmd_row = cur.fetchone()
+                                if cmd_row:
+                                    cmd_role_id = cmd_row[0]
+                                    if req.is_commander:
+                                        cur.execute("""
+                                            INSERT INTO security.user_roles (user_id, role_id)
+                                            VALUES (%s, %s)
+                                            ON CONFLICT DO NOTHING;
+                                        """, (target_uid, cmd_role_id))
+                                    else:
+                                        cur.execute("""
+                                            DELETE FROM security.user_roles
+                                            WHERE user_id = %s AND role_id = %s;
+                                        """, (target_uid, cmd_role_id))
+                                conn.commit()
             except Exception as e:
-                logger.warning(f"Notice: Failed to sync linked user profile: {e}")
+                logger.warning(f"Notice: Failed to sync linked user profile/roles: {e}")
 
         return after_emp
 

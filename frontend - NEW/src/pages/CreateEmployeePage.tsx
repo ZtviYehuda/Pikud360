@@ -1507,8 +1507,8 @@ export default function CreateEmployeePage() {
         </AnimatePresence>
       </div>
 
-      {/* Sticky Bottom Navigation Bar (Optimized position with left margin to clear AI Support chat) */}
-      <div className="sticky bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md border-t border-border/50 py-3.5 px-4 sm:px-6 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.4)]">
+      {/* Sticky Bottom Navigation Bar (Hidden on mobile where inline step buttons are used) */}
+      <div className="hidden md:block sticky bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md border-t border-border/50 py-3.5 px-4 sm:px-6 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.4)]">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 pl-20 sm:pl-28">
           {/* Step Indicator */}
           <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">

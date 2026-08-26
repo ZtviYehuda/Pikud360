@@ -500,13 +500,6 @@ export const EmployeeTable = ({
                               לא פעיל
                             </Badge>
                           )}
-                          {emp.is_active && (emp.is_commander || emp.is_admin) && (
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] font-black text-muted-foreground/50 tracking-[0.1em]">
-                                #{emp.username}
-                              </span>
-                            </div>
-                          )}
                         </div>
                       </div>
                     </TableCell>

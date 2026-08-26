@@ -272,10 +272,10 @@ export const AttendanceTrendCard = forwardRef(
         id="attendance-chart"
         ref={cardRef}
         className={cn(
-          "bg-card/60 dark:bg-slate-900/60 backdrop-blur-2xl text-card-foreground rounded-[1.5rem] border-0 shadow-sm flex flex-col overflow-hidden h-full relative transition-all",
+          "bg-card text-card-foreground rounded-2xl border border-border/40 flex flex-col overflow-hidden h-full relative transition-all shadow-none",
           className,
-          hideHeader && "border-none bg-transparent backdrop-blur-none py-0",
-          compact && "bg-transparent backdrop-blur-none border-0 shadow-none"
+          hideHeader && "border-none bg-transparent py-0",
+          compact && "bg-transparent border-0 shadow-none"
         )}
       >
         <div className={cn(
@@ -362,16 +362,15 @@ export const AttendanceTrendCard = forwardRef(
                 >
                   <defs>
                     <linearGradient id="colorPresent" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.35} />
-                      <stop offset="60%" stopColor="var(--primary)" stopOpacity={0.08} />
-                      <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
+                      <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.22} />
+                      <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid
                     strokeDasharray="3 3"
                     vertical={false}
                     stroke="var(--border)"
-                    strokeOpacity={0.4}
+                    strokeOpacity={0.3}
                   />
                   <XAxis
                     dataKey="date"
@@ -417,8 +416,8 @@ export const AttendanceTrendCard = forwardRef(
                     contentStyle={{
                       borderRadius: "12px",
                       border: "1px solid var(--border)",
-                      backgroundColor: "rgba(255, 255, 255, 0.95)",
-                      boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+                      backgroundColor: "rgba(255, 255, 255, 0.98)",
+                      boxShadow: "none",
                       fontSize: "12px",
                       fontWeight: "bold",
                     }}
@@ -434,10 +433,10 @@ export const AttendanceTrendCard = forwardRef(
                     type="monotone"
                     dataKey="present_count"
                     stroke="var(--primary)"
-                    strokeWidth={3}
+                    strokeWidth={2.5}
                     fillOpacity={1}
                     fill="url(#colorPresent)"
-                    animationDuration={1500}
+                    isAnimationActive={false}
                     dot={(props: any) => {
                       const { cx, cy, payload } = props;
                       if (!payload || !payload.date) return null as any;

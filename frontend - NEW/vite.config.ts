@@ -80,7 +80,7 @@ export default defineConfig(({ mode }) => {
 
     server: {
       port: 5173,
-      strictPort: true,
+      strictPort: false,
       https: httpsConfig,
       allowedHosts: true,
       host: "0.0.0.0",
