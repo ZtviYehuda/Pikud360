@@ -261,12 +261,28 @@ export default function MainLayout() {
   ];
 
   // Derive the current page title for the mobile header
-  const currentPageName =
-    navItems.find(
-      (item) =>
-        item.path === location.pathname ||
-        (item.path !== "/" && location.pathname.startsWith(item.path)),
-    )?.name ?? "לוח בקרה";
+  const getPageTitle = () => {
+    const path = location.pathname;
+    if (path === "/employees/new") return "הוספת שוטר";
+    if (path.startsWith("/employees/edit/")) return "עריכת שוטר";
+    if (path.startsWith("/employees/") && path !== "/employees") return "כרטיס שוטר";
+    if (path === "/employees") return "ניהול שוטרים";
+    if (path === "/feedback") return "משוב ורעיונות";
+    if (path === "/privacy") return "מדיניות פרטיות";
+    if (path === "/terms") return "תנאי שימוש";
+    if (path === "/support") return "מרכז תמיכה";
+    if (path === "/change-password") return "שינוי סיסמה";
+
+    return (
+      navItems.find(
+        (item) =>
+          item.path === path ||
+          (item.path !== "/" && path.startsWith(item.path)),
+      )?.name ?? "לוח בקרה"
+    );
+  };
+
+  const currentPageName = getPageTitle();
 
   // Impersonation detection and exit action (Only active when viewing as non-admin user)
   const isImpersonating = Boolean(
@@ -298,47 +314,46 @@ export default function MainLayout() {
       className="h-dvh bg-background flex font-sans text-foreground overflow-hidden"
       dir="rtl"
     >
-      {/* Sidebar - Official White Style */}
+      {/* Sidebar - Modern Sleek Enterprise Style */}
       <aside
         onDoubleClick={() => setIsSidebarOpen((prev) => !prev)}
         className={cn(
           // Base: fixed to RIGHT edge (RTL), full height
-          "bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-2xl border-l border-border shadow-[4px_0_24px_-12px_rgba(0,0,0,0.15)] flex flex-col z-[100] fixed right-0 lg:sticky lg:right-auto top-0 h-[100dvh] overflow-hidden flex-shrink-0",
-          // Mobile: keep w-72 always, only slide translateX (RIGHT = off-screen in RTL)
-          // Desktop: width animates between w-24 ↔ w-72
-          "w-72 transition-transform lg:transition-all ease-out",
+          "bg-card/95 backdrop-blur-xl border-l border-border/60 shadow-xs flex flex-col z-[100] fixed right-0 lg:sticky lg:right-auto top-0 h-[100dvh] overflow-hidden flex-shrink-0 select-none",
+          // Mobile: w-72 slide translateX (RIGHT = off-screen in RTL)
+          // Desktop: width animates between w-20 ↔ w-68
+          "w-72 transition-all duration-200 ease-out",
           isSidebarOpen
-            ? "translate-x-0 lg:w-72"
-            : "translate-x-full lg:translate-x-0 lg:w-24",
+            ? "translate-x-0 lg:w-68"
+            : "translate-x-full lg:translate-x-0 lg:w-20",
         )}
       >
-        {/* Sidebar Header */}
+        {/* Sidebar Header - Exactly h-16 to align seamlessly with top header border */}
         <div
           className={cn(
-            "h-16 flex-none flex items-center border-b border-border/40 transition-all duration-300",
+            "h-16 flex-none flex items-center border-b border-border/40 transition-all duration-200",
             isSidebarOpen ? "px-4 justify-between" : "px-0 justify-center"
           )}
         >
           {/* Brand Logo & Title Group */}
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="flex items-center gap-2.5 shrink-0 transition-all active:scale-95 group focus:outline-none"
+            className="flex items-center gap-3 shrink-0 transition-all active:scale-95 group focus:outline-none cursor-pointer"
             aria-label="תפריט ניווט"
             title={isSidebarOpen ? "כווץ תפריט" : "הרחב תפריט"}
           >
-            {/* Pure Shield Emblem Icon - Aspect Square (Never Squished) */}
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden relative">
+            <div className="w-9 h-9 rounded-xl bg-primary/5 flex items-center justify-center shrink-0 border border-border/50">
               <img
                 src="/matzevet_icon.png"
                 alt="סמל The Office"
-                className="w-9 h-9 object-contain filter drop-shadow-[0_2px_8px_rgba(56,189,248,0.35)] group-hover:scale-110 transition-transform duration-300"
+                className="w-7 h-7 object-contain filter drop-shadow-xs group-hover:scale-105 transition-transform duration-200"
               />
             </div>
 
-            {/* System Title (Visible when Sidebar is Open) */}
+            {/* System Title */}
             {isSidebarOpen && (
               <div className="flex items-center text-right transition-all">
-                <span className="font-black text-xl tracking-tight text-foreground font-sans leading-none">
+                <span className="font-black text-lg tracking-tight text-foreground font-sans">
                   The Office
                 </span>
               </div>
@@ -347,7 +362,7 @@ export default function MainLayout() {
 
           {/* Left Side Actions (Desktop Theme Toggle & Mobile Close Button) */}
           {isSidebarOpen && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <ThemeToggle variant="minimal" className="hidden lg:flex" />
               <button
                 className="lg:hidden p-1 text-muted-foreground hover:text-foreground rounded-lg"
@@ -360,7 +375,7 @@ export default function MainLayout() {
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex-grow p-2.5 space-y-1 overflow-y-auto no-scrollbar custom-scrollbar">
+        <nav className="flex-grow p-2.5 space-y-1.5 overflow-y-auto no-scrollbar custom-scrollbar">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
@@ -378,40 +393,32 @@ export default function MainLayout() {
                   if (window.innerWidth < 1024) setIsSidebarOpen(false);
                 }}
                 className={cn(
-                  "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all group relative overflow-hidden select-none",
+                  "flex items-center rounded-2xl transition-all duration-150 group relative select-none",
+                  isSidebarOpen
+                    ? "h-11 px-3.5 gap-3.5"
+                    : "h-11 w-11 mx-auto justify-center",
                   isActive
-                    ? "bg-primary/10 text-primary font-black  "
-                    : "text-muted-foreground hover:bg-muted/50 hover:text-primary",
+                    ? "bg-primary/10 text-primary font-black shadow-2xs"
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground font-bold",
                 )}
                 title={!isSidebarOpen ? item.name : undefined}
               >
                 <Icon
                   className={cn(
-                    "w-6 h-6 shrink-0 transition-transform group-hover:scale-110",
+                    "w-5 h-5 shrink-0 transition-transform duration-150 group-hover:scale-105",
                     isActive
                       ? "text-primary"
-                      : "text-muted-foreground group-hover:text-primary",
-                    !isSidebarOpen && "mx-auto",
+                      : "text-muted-foreground group-hover:text-foreground",
                   )}
                 />
-                <span
-                  className={cn(
-                    "text-sm font-black tracking-tight truncate flex-1 text-right transition-all",
-                    isSidebarOpen
-                      ? "opacity-100 translate-x-0"
-                      : "opacity-0 translate-x-10 absolute right-12 w-0",
-                  )}
-                >
-                  {item.name}
-                </span>
-                <div
-                  className={cn(
-                    "absolute left-1 w-1 bg-primary rounded-full transition-all duration-300 ease-out origin-center",
-                    isActive
-                      ? "h-5 opacity-100 scale-100"
-                      : "h-0 opacity-0 scale-50",
-                  )}
-                />
+                {isSidebarOpen && (
+                  <span className="text-[13.5px] tracking-tight truncate flex-1 text-right">
+                    {item.name}
+                  </span>
+                )}
+                {isSidebarOpen && isActive && (
+                  <div className="absolute left-1.5 w-1 h-5 bg-primary rounded-full shrink-0" />
+                )}
               </Link>
             );
           })}
@@ -426,19 +433,20 @@ export default function MainLayout() {
         >
           {/* Mobile Only: Theme Toggle at bottom of sidebar */}
           {isSidebarOpen && (
-            <div className="lg:hidden w-full flex items-center justify-between px-3 py-2 rounded-xl bg-muted/40 border border-border/40 select-none mb-0.5">
+            <div className="lg:hidden w-full flex items-center justify-between px-3 py-2 rounded-xl bg-muted/40 border border-border/40 select-none">
               <span className="text-xs font-bold text-foreground">מצב תצוגה</span>
               <ThemeToggle variant="minimal" />
             </div>
           )}
+
           {/* Impersonation Return Button in Sidebar */}
           {isImpersonating && (
-            <div className="w-full pb-2">
+            <div className="w-full pb-1">
               <button
                 onClick={handleReturnToAdmin}
                 className={cn(
-                  "w-full rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-95",
-                  isSidebarOpen ? "h-9 px-3" : "h-10 px-0"
+                  "w-full rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95",
+                  isSidebarOpen ? "h-9 px-3" : "h-9 px-0"
                 )}
                 title="חזור לחשבון מנהל (אדמין)"
               >
@@ -452,7 +460,7 @@ export default function MainLayout() {
           {isSidebarOpen ? (
             <div
               id="sidebar-profile-container"
-              className="flex items-center justify-between gap-3 p-2 bg-muted/40 dark:bg-muted/20 border border-border/40 hover:border-border/80 rounded-xl transition-all duration-200 select-none group w-full"
+              className="flex items-center justify-between gap-3 p-2 bg-muted/30 border border-border/40 hover:border-border/70 rounded-2xl transition-all duration-150 select-none group w-full"
             >
               <Link
                 to="/settings?tab=profile"
@@ -461,16 +469,16 @@ export default function MainLayout() {
                 }}
                 className="flex items-center gap-3 min-w-0 flex-grow"
               >
-                <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-sm shrink-0 shadow-sm transition-all group-hover:scale-105">
+                <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs shrink-0 shadow-2xs transition-transform group-hover:scale-105">
                   {user?.is_admin
                     ? "💬"
                     : `${user?.first_name?.[0] ?? ""}${user?.last_name?.[0] ?? ""}`}
                 </div>
                 <div className="flex flex-col min-w-0 text-right">
-                  <span className="text-xs font-black text-foreground truncate leading-none mb-1 group-hover:text-primary transition-colors">
+                  <span className="text-xs font-bold text-foreground truncate leading-tight group-hover:text-primary transition-colors">
                     {user?.first_name} {user?.last_name}
                   </span>
-                  <span className="text-[9px] font-bold text-muted-foreground truncate uppercase tracking-tighter">
+                  <span className="text-[10px] font-medium text-muted-foreground truncate leading-none mt-0.5">
                     {user?.is_admin
                       ? "ניהול מערכת"
                       : user?.commands_department_id
@@ -484,11 +492,11 @@ export default function MainLayout() {
                 </div>
               </Link>
 
-              {/* Logout Button (Open State) */}
+              {/* Logout Button */}
               <button
                 onClick={() => logout()}
                 title="התנתק"
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all border border-transparent shrink-0 active:scale-95"
+                className="w-8 h-8 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all shrink-0 active:scale-95 cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -502,7 +510,7 @@ export default function MainLayout() {
               onClick={() => {
                 if (window.innerWidth < 1024) setIsSidebarOpen(false);
               }}
-              className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-sm shrink-0 shadow-sm transition-all hover:scale-105 hover:bg-primary/20 active:scale-95"
+              className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs shrink-0 transition-transform hover:scale-105 active:scale-95"
             >
               {user?.is_admin
                 ? "💬"
@@ -510,14 +518,14 @@ export default function MainLayout() {
             </Link>
           )}
 
-          {/* Action Area below profile */}
+          {/* Action Area below profile (Collapsed) */}
           {!isSidebarOpen && (
-            <div className="flex flex-col items-center gap-2.5 w-full">
+            <div className="flex flex-col items-center gap-2 w-full pt-1">
               <ThemeToggle variant="minimal" />
               <button
                 onClick={() => logout()}
                 title="התנתק"
-                className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all border border-border bg-background shadow-sm active:scale-95"
+                className="w-10 h-10 rounded-2xl flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all border border-border/40 bg-background/50 active:scale-95 cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -526,7 +534,7 @@ export default function MainLayout() {
 
           {/* Watermark in Sidebar */}
           {isSidebarOpen && (
-            <div className="w-full text-center pt-2 pb-1 text-[11px] font-normal text-muted-foreground/60 select-none border-t border-border/30 mt-1">
+            <div className="w-full text-center pt-1.5 pb-0.5 text-xs font-bold text-foreground/80 dark:text-muted-foreground select-none transition-colors">
               פותח ע"י צבי בטיטו
             </div>
           )}

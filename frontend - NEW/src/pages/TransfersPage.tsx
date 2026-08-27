@@ -46,6 +46,7 @@ import {
   CornerDownLeft,
   Filter,
   X,
+  RotateCcw,
 } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
@@ -487,6 +488,63 @@ export default function TransfersPage() {
           </button>
         </div>
 
+        {/* Active Filter Glass Pill Banner */}
+        {activeTab !== "new" && (activeTab === "pending" || historyFilter !== null) && (
+          <div className="flex items-center justify-between p-2.5 sm:p-3 px-3.5 sm:px-4 rounded-2xl bg-card/80 backdrop-blur-xl border border-border/60 shadow-xs mb-3 transition-all animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div
+                className={cn(
+                  "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border",
+                  activeTab === "pending"
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                    : historyFilter === "approved"
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                      : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                )}
+              >
+                {activeTab === "pending" ? (
+                  <Clock className="w-4 h-4" />
+                ) : historyFilter === "approved" ? (
+                  <CheckCircle className="w-4 h-4" />
+                ) : (
+                  <XCircle className="w-4 h-4" />
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 truncate text-xs sm:text-sm">
+                <span className="text-muted-foreground font-medium">סינון פעיל:</span>
+                <span className="font-black text-foreground truncate">
+                  {activeTab === "pending"
+                    ? "בהמתנה"
+                    : historyFilter === "approved"
+                      ? "אושרו"
+                      : "נדחו"}
+                </span>
+                <span className="px-2 py-0.5 rounded-lg bg-muted/60 text-[11px] font-black text-foreground/80 shrink-0">
+                  {activeTab === "pending"
+                    ? stats.pending
+                    : historyFilter === "approved"
+                      ? stats.approved
+                      : stats.rejected}
+                </span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setActiveTab("history");
+                setHistoryFilter(null);
+              }}
+              className="h-8 px-3 text-xs font-bold text-primary hover:text-primary-foreground hover:bg-primary border-primary/30 rounded-xl flex items-center gap-1.5 transition-all shadow-2xs shrink-0 cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>חזרה לכלל הבקשות</span>
+            </Button>
+          </div>
+        )}
+
         {/* Main Toolbar */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-4 bg-card/40 backdrop-blur-2xl p-2 sm:px-4 rounded-3xl border border-primary/5 overflow-hidden min-h-[64px]">
           {/* Top Line on Mobile: Primary Action + Search + History Toggle side-by-side */}
@@ -831,38 +889,6 @@ export default function TransfersPage() {
         {/* History Table */}
         {activeTab === "history" && (
           <>
-            {historyFilter && (
-              <div className="flex items-center justify-between bg-card/80 backdrop-blur border border-border/50 p-3 px-4 rounded-2xl mb-4 shadow-sm transition-all">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-                    <Filter className="w-4 h-4" />
-                  </div>
-                  <span className="text-xs font-bold text-foreground">
-                    מציג בקשות בסטטוס:{" "}
-                    <span
-                      className={cn(
-                        "font-black text-sm mr-1",
-                        historyFilter === "approved"
-                          ? "text-emerald-500"
-                          : "text-rose-500",
-                      )}
-                    >
-                      {historyFilter === "approved" ? "אושרו" : "נדחו"}
-                    </span>
-                  </span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setHistoryFilter(null)}
-                  className="h-8 px-3 text-xs font-bold text-muted-foreground hover:text-foreground bg-muted/30 hover:bg-muted/60 border-border/60 rounded-xl flex items-center gap-1.5 transition-all"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  <span>הצג את כל ההיסטוריה</span>
-                </Button>
-              </div>
-            )}
-
             {/* Mobile View - History Cards */}
             <div className="md:hidden space-y-3">
               {filteredHistory.length === 0 ? (

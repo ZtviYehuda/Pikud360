@@ -6,3 +6,4 @@ export * from "./StatusUpdateModal";
 export * from "./ExportReportDialog";
 export * from "./WhatsAppBroadcastModal";
 export * from "./GlobalEventModal";
+export * from "./ImportEmployeesModal";

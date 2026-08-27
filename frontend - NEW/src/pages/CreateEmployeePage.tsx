@@ -1369,32 +1369,47 @@ export default function CreateEmployeePage() {
   return (
     <div id="create-page-root" className="flex flex-col pb-10">
       {/* Page Header - matches system layout */}
-      <div className="pt-4 pb-3 px-4 sm:px-6 shrink-0 flex items-center justify-between gap-3 sm:gap-4 border-b border-border/40 mb-4 sm:mb-6">
-        <PageHeader
-          icon={UserPlus}
-          title="הוספת שוטר חדש"
-          className="mb-0"
-          hideMobile={true}
-        />
+      <div className="pt-3 sm:pt-4 pb-3 px-4 sm:px-6 shrink-0 flex items-center justify-between gap-3 sm:gap-4 border-b border-border/40 mb-3 sm:mb-6">
+        {/* Right side (RTL start) */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/employees")}
+            className="h-9 px-2 sm:px-3 rounded-xl font-bold text-muted-foreground hover:text-foreground hover:bg-muted"
+            title="חזרה לרשימה"
+          >
+            <ArrowRight className="w-4 h-4 ml-1" />
+            <span className="text-xs sm:text-sm">חזרה</span>
+          </Button>
 
-        {/* Inline Header Tabs */}
-        <div className="hidden sm:flex items-stretch bg-slate-100/50 dark:bg-slate-900/50 rounded-xl p-0.5 min-w-[280px] h-10 relative">
+          <div className="hidden sm:block">
+            <PageHeader
+              icon={UserPlus}
+              title="הוספת שוטר חדש"
+              className="mb-0"
+              hideMobile={true}
+            />
+          </div>
+        </div>
+
+        {/* Center: Inline Header Tabs for Desktop */}
+        <div className="hidden sm:flex items-stretch bg-slate-100/50 dark:bg-slate-900/50 rounded-xl p-1 min-w-[280px] h-10 relative">
           <TabButton
             active={activeTab === "personal"}
             onClick={() => setActiveTab("personal")}
             icon={User}
             label="פרטים אישיים"
-            small
           />
           <TabButton
             active={activeTab === "professional"}
             onClick={() => setActiveTab("professional")}
             icon={Shield}
             label="מקצועי והרשאות"
-            small
           />
         </div>
 
+        {/* Left side (RTL end): Draft & Save */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {hasDraft && (
             <div className="hidden md:flex items-center gap-2">
@@ -1414,15 +1429,7 @@ export default function CreateEmployeePage() {
           )}
 
           <Button
-            variant="ghost"
-            onClick={() => navigate("/employees")}
-            className="h-8.5 sm:h-9 px-3 sm:px-4 rounded-xl font-bold text-muted-foreground hover:text-foreground hover:bg-muted"
-          >
-            <X className="w-4 h-4 ml-1" />
-            <span className="text-xs sm:text-sm">ביטול</span>
-          </Button>
-          <Button
-            className="h-8.5 sm:h-9 px-3.5 sm:px-6 rounded-xl font-black hover:scale-[1.02] active:scale-[0.98] transition-all gap-1.5 sm:gap-2"
+            className="h-9 px-3.5 sm:px-6 rounded-xl font-black bg-primary hover:bg-primary/90 text-primary-foreground hover:scale-[1.02] active:scale-[0.98] transition-all gap-1.5 sm:gap-2 shadow-xs"
             onClick={handleSubmit}
             disabled={saving}
           >
@@ -1438,22 +1445,20 @@ export default function CreateEmployeePage() {
         </div>
       </div>
 
-      {/* Mobile-only tabs (original style) */}
-      <div className="flex sm:hidden justify-center w-full mb-4 px-4 pt-0">
-        <div className="bg-slate-100/50 dark:bg-slate-900/50 rounded-xl p-0.5 flex w-full h-9">
+      {/* Mobile Tabs */}
+      <div className="flex sm:hidden justify-center w-full mb-3 px-4 pt-0">
+        <div className="bg-slate-100/60 dark:bg-slate-900/60 rounded-xl p-1 flex w-full h-10 shadow-2xs">
           <TabButton
             active={activeTab === "personal"}
             onClick={() => setActiveTab("personal")}
             icon={User}
             label="פרטים אישיים"
-            small
           />
           <TabButton
             active={activeTab === "professional"}
             onClick={() => setActiveTab("professional")}
             icon={Shield}
             label="מקצועי והרשאות"
-            small
           />
         </div>
       </div>

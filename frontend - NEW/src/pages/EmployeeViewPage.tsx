@@ -393,20 +393,20 @@ const Section = ({
 }) => (
   <div
     className={cn(
-      "bg-card/40 backdrop-blur-xl border border-border/40 rounded-[2rem] overflow-hidden flex flex-col",
+      "bg-card/40 backdrop-blur-xl border border-border/40 rounded-2xl sm:rounded-[2rem] overflow-hidden flex flex-col shadow-2xs sm:shadow-none",
       className,
     )}
   >
-    <div className="flex items-center justify-between px-6 py-5 border-b border-border/40 shrink-0">
-      <div className="flex items-center gap-3">
-        <div className="w-1 h-5 bg-primary rounded-full" />
-        <span className="text-base font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">
+    <div className="flex items-center justify-between px-3.5 py-3 sm:px-6 sm:py-5 border-b border-border/40 shrink-0">
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="w-1 h-4 sm:h-5 bg-primary rounded-full" />
+        <span className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">
           {title}
         </span>
       </div>
       {action}
     </div>
-    <div className={cn("p-6 flex-1", contentClassName)}>{children}</div>
+    <div className={cn("p-3 sm:p-6 flex-1", contentClassName)}>{children}</div>
   </div>
 );
 
@@ -632,27 +632,16 @@ const TabButton = ({ active, onClick, icon: Icon, label }: any) => (
   </button>
 );
 
-// ── Mobile Profile Header (Compact) ──────────────────────────────────────────
+// ── Mobile Profile Header (Compact & Streamlined) ───────────────────────────
 const MobileProfileHeader = ({
   employee,
   displayName,
   commanderTitle,
-  formData,
-  editMode,
-  handleFieldChange,
-  onSave,
-  onCancel,
-  onEdit,
-  onToggleActive,
-  isActive,
-  userIsAdmin,
 }: any) => (
-  <div className="flex flex-col items-center text-center p-6 bg-card/40 backdrop-blur-xl rounded-3xl border border-border/40 mb-6 lg:hidden relative overflow-hidden">
-    <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-primary/5 to-transparent -z-10" />
-
+  <div className="flex items-center gap-3.5 p-3.5 sm:p-4 bg-card/50 backdrop-blur-xl rounded-2xl border border-border/40 mb-3 lg:hidden relative overflow-hidden shadow-2xs">
     <div
       className={cn(
-        "w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-black border-[4px] border-white dark:border-slate-900 mb-4 relative",
+        "w-13 h-13 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-lg sm:text-xl font-black shrink-0 border-2 border-white dark:border-slate-900 shadow-xs",
         employee.is_active
           ? "bg-primary text-primary-foreground"
           : "bg-slate-200 text-slate-500",
@@ -662,67 +651,40 @@ const MobileProfileHeader = ({
       {employee.last_name?.[0]}
     </div>
 
-    <h2 className="text-xl font-black">{displayName}</h2>
-    <p className="text-sm font-bold text-muted-foreground mt-0.5">
-      {commanderTitle}
-    </p>
-
-    <div className="flex items-center gap-2 mt-4">
-      <Badge
-        variant="secondary"
-        className="rounded-full px-3 py-1 font-bold text-xs"
-      >
-        {employee.position}
-      </Badge>
-      <Badge
-        variant={employee.is_active ? "outline" : "destructive"}
-        className="rounded-full px-3 py-1 font-bold text-xs"
-      >
-        {employee.is_active ? "פעיל" : "לא פעיל"}
-      </Badge>
-    </div>
-
-    {editMode ? (
-      <div className="flex gap-2 w-full mt-6">
-        <Button
-          variant="outline"
-          onClick={onCancel}
-          className="flex-1 rounded-xl h-12 font-black"
+    <div className="flex-1 min-w-0 text-right">
+      <div className="flex items-center gap-2 flex-wrap">
+        <h2 className="text-base sm:text-lg font-black tracking-tight text-foreground truncate">
+          {displayName}
+        </h2>
+        <Badge
+          variant={employee.is_active ? "outline" : "destructive"}
+          className="rounded-full px-2 py-0.5 font-bold text-[10px] h-5"
         >
-          ביטול
-        </Button>
-        <Button onClick={onSave} className="flex-1 rounded-xl h-12 font-black">
-          <Save className="w-4 h-4 ml-2" /> שמירה
-        </Button>
+          {employee.is_active ? "פעיל" : "לא פעיל"}
+        </Badge>
       </div>
-    ) : (
-      <div className="flex gap-2 w-full mt-6">
-        <Button onClick={onEdit} className="flex-1 rounded-xl h-12 font-black">
-          <Settings className="w-4 h-4 ml-2" /> עריכת פרופיל
-        </Button>
-        {isActive ? (
-          <Button
-            variant="outline"
-            onClick={onToggleActive}
-            className="flex-1 rounded-xl h-12 font-black border bg-rose-50 border-rose-200 text-rose-600 dark:bg-rose-950/20 dark:border-rose-900/50 dark:text-rose-400 transition-all active:scale-[0.98]"
+
+      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap text-xs">
+        {commanderTitle && (
+          <span className="font-bold text-primary">
+            {commanderTitle}
+          </span>
+        )}
+        {employee.position && (
+          <span className="text-muted-foreground font-medium truncate">
+            {commanderTitle ? "• " : ""}{employee.position}
+          </span>
+        )}
+        {employee.service_type_name && (
+          <Badge
+            variant="secondary"
+            className="rounded-md px-1.5 py-0 text-[10px] font-bold h-4 bg-muted text-muted-foreground border-0"
           >
-            העבר ללא פעיל
-          </Button>
-        ) : userIsAdmin ? (
-          <Button
-            variant="outline"
-            onClick={onToggleActive}
-            className="flex-1 rounded-xl h-12 font-black border bg-emerald-50 border-emerald-200 text-emerald-600 dark:bg-emerald-950/20 dark:border-emerald-900/50 dark:text-emerald-400 transition-all active:scale-[0.98]"
-          >
-            החזר לפעיל
-          </Button>
-        ) : (
-          <div className="flex-1 rounded-xl h-12 flex items-center justify-center bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-muted-foreground text-[11px] font-bold px-2 text-center">
-            לא פעיל (שחזור ע״י אדמין בלבד)
-          </div>
+            {employee.service_type_name}
+          </Badge>
         )}
       </div>
-    )}
+    </div>
   </div>
 );
 
@@ -1586,15 +1548,6 @@ export default function EmployeeViewPage() {
           employee={employee}
           displayName={displayName}
           commanderTitle={commanderTitle}
-          formData={formData}
-          editMode={editMode}
-          handleFieldChange={handleFieldChange}
-          onSave={handleSubmit}
-          onCancel={handleCancelEdit}
-          onEdit={() => setEditMode(true)}
-          onToggleActive={handleActiveToggleRequest}
-          isActive={employee.is_active}
-          userIsAdmin={Boolean(user?.is_admin)}
         />
 
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
@@ -1816,7 +1769,7 @@ export default function EmployeeViewPage() {
           {/* ── MAIN CONTENT AREA ── */}
           <div className="flex-1 w-full min-w-0">
             {/* Mobile Tab Control — Visible in both modes on small screens */}
-            <div className="mb-6 lg:hidden bg-slate-100/50 dark:bg-slate-900/50 rounded-2xl p-1 flex h-12 items-stretch overflow-x-auto scrollbar-none">
+            <div className="mb-3.5 lg:hidden bg-slate-100/60 dark:bg-slate-900/60 rounded-xl p-1 flex h-10 items-stretch overflow-x-auto scrollbar-none">
               <TabButton
                 active={activeTab === "personal"}
                 onClick={() => setActiveTab("personal")}
@@ -1874,17 +1827,17 @@ export default function EmployeeViewPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="space-y-6"
+                  className="space-y-3.5 sm:space-y-6"
                 >
-                  <div className="grid grid-cols-1 gap-6">
+                  <div className="grid grid-cols-1 gap-3.5 sm:gap-6">
                     {/* PERSONAL TAB SECTION (Mobile Tab or Desktop Always) */}
                     {activeTab === "personal" && (
                       <div
-                        className={cn("grid grid-cols-1 md:grid-cols-2 gap-6")}
+                        className={cn("grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6")}
                       >
                         <Section title="פרטים אישיים">
-                          <div className="grid grid-cols-1 gap-4">
-                            <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 gap-2.5 sm:gap-4">
+                            <div className="grid grid-cols-2 gap-2 sm:gap-4">
                               <Field
                                 label="שם מלא *"
                                 value={`${employee.first_name} ${employee.last_name}`}
@@ -1896,7 +1849,7 @@ export default function EmployeeViewPage() {
                                 onSave={handleInlineFieldSave}
                               />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-2 sm:gap-4">
                               <Field
                                 label="מין"
                                 value={
@@ -1919,7 +1872,7 @@ export default function EmployeeViewPage() {
                         </Section>
 
                         <Section title="פרטי קשר">
-                          <div className="grid grid-cols-1 gap-4">
+                          <div className="grid grid-cols-1 gap-2.5 sm:gap-4">
                             <Field
                               label="טלפון נייד"
                               value={employee.phone_number}
@@ -1943,12 +1896,12 @@ export default function EmployeeViewPage() {
                     )}
 
                     {activeTab === "personal" && (
-                      <div className={cn("grid grid-cols-1 gap-6")}>
+                      <div className={cn("grid grid-cols-1 gap-3.5 sm:gap-6")}>
                         <Section
                           title="איש קשר לחירום"
                           className="border-rose-100 dark:border-rose-900/30"
                         >
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
                             <Field
                               label="שם וקרבה"
                               value={
@@ -1983,57 +1936,55 @@ export default function EmployeeViewPage() {
                     {/* PRO TAB SECTION */}
                     {activeTab === "pro" && (
                       <div
-                        className={cn("grid grid-cols-1 md:grid-cols-2 gap-6")}
+                        className={cn("grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6")}
                       >
                         <Section title="הגדרות תפקיד">
-                          <div className="grid grid-cols-1 gap-6">
-                            <div className="grid grid-cols-1 gap-4">
-                              <Field
-                                label="רישיון משטרתי"
-                                value={
-                                  employee.police_license
-                                    ? "✓ אישור"
-                                    : "✗ לא אושר"
-                                }
-                                icon={BadgeCheck}
-                                valueClassName={
-                                  employee.police_license
-                                    ? "text-emerald-600"
-                                    : "text-slate-500"
-                                }
-                              />
-                              <Field
-                                label="סיווג ביטחוני"
-                                value={
-                                  employee.security_clearance
-                                    ? "✓ אישור"
-                                    : "✗ לא אושר"
-                                }
-                                icon={Shield}
-                                valueClassName={
-                                  employee.security_clearance
-                                    ? "text-emerald-600"
-                                    : "text-slate-500"
-                                }
-                              />
-                              <Field
-                                label="דרגת פיקוד"
-                                value={
-                                  employee.is_commander ? "✓ מפקד" : "שוטר"
-                                }
-                                icon={Shield}
-                                valueClassName={
-                                  employee.is_commander
-                                    ? "text-emerald-600"
-                                    : "text-slate-500"
-                                }
-                              />
-                            </div>
+                          <div className="grid grid-cols-1 gap-2.5 sm:gap-4">
+                            <Field
+                              label="רישיון משטרתי"
+                              value={
+                                employee.police_license
+                                  ? "✓ אישור"
+                                  : "✗ לא אושר"
+                              }
+                              icon={BadgeCheck}
+                              valueClassName={
+                                employee.police_license
+                                  ? "text-emerald-600"
+                                  : "text-slate-500"
+                              }
+                            />
+                            <Field
+                              label="סיווג ביטחוני"
+                              value={
+                                employee.security_clearance
+                                  ? "✓ אישור"
+                                  : "✗ לא אושר"
+                              }
+                              icon={Shield}
+                              valueClassName={
+                                employee.security_clearance
+                                  ? "text-emerald-600"
+                                  : "text-slate-500"
+                              }
+                            />
+                            <Field
+                              label="דרגת פיקוד"
+                              value={
+                                employee.is_commander ? "✓ מפקד" : "שוטר"
+                              }
+                              icon={Shield}
+                              valueClassName={
+                                employee.is_commander
+                                  ? "text-emerald-600"
+                                  : "text-slate-500"
+                              }
+                            />
                           </div>
                         </Section>
 
                         <Section title="שיבוץ וסטטוס">
-                          <div className="grid grid-cols-1 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
                             <Field
                               label="מחלקה"
                               value={cleanUnitName(employee.department_name)}

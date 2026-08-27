@@ -643,7 +643,7 @@ export function StatusAndServiceSettings() {
                         handleAddSubStatus();
                       }
                     }}
-                    placeholder="שם תת-סטטוס (למשל: מהבית, שטח)"
+                    placeholder="שם תת-סטטוס"
                     className="h-9 rounded-xl text-xs font-bold bg-background"
                   />
                   <Button

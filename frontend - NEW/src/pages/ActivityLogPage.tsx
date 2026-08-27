@@ -29,6 +29,10 @@ import {
   X,
   UserCheck,
   Zap,
+  Eye,
+  Copy,
+  Check,
+  RotateCcw,
 } from "lucide-react";
 import apiClient from "@/config/api.client";
 import { format } from "date-fns";
@@ -41,6 +45,13 @@ import { useAuthContext } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 // Mapping action types to Hebrew labels and icons
 const ACTION_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
@@ -100,6 +111,7 @@ export default function ActivityLogPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "success" | "error">("all");
   const [showFilters, setShowFilters] = useState(false);
   const [limit, setLimit] = useState(100);
+  const [previewArchive, setPreviewArchive] = useState<any | null>(null);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -518,24 +530,27 @@ export default function ActivityLogPage() {
                             </div>
 
                             <div className="flex items-center justify-between pt-3 border-t border-border/10">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground bg-background/50 border border-border/40 px-2.5 py-1 rounded-full">
-                                        <Zap className="w-3 h-3 text-amber-500" />
-                                        נמצאו <span className="font-black text-foreground">{filteredLogs.length}</span> תוצאות מתאימות
+                                <div className="flex items-center gap-2.5">
+                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-background/50 border border-border/40 px-2.5 py-1 rounded-xl">
+                                        <Zap className="w-3.5 h-3.5 text-amber-500" />
+                                        נמצאו <span className="font-black text-foreground">{filteredLogs.length}</span> תוצאות
                                     </div>
                                     {hasActiveFilters && (
-                                        <button 
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
                                             onClick={clearFilters}
-                                            className="text-[10px] font-black text-destructive hover:underline flex items-center gap-1"
+                                            className="h-7 px-2.5 text-xs font-bold text-primary hover:text-primary-foreground hover:bg-primary border-primary/30 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer"
                                         >
-                                            <X className="w-3 h-3" />
-                                            נקה מסננים
-                                        </button>
+                                            <RotateCcw className="w-3 h-3" />
+                                            <span>חזרה לכל הפעילות</span>
+                                        </Button>
                                     )}
                                 </div>
                                 <Button 
                                     size="sm" 
-                                    className="rounded-lg h-8 px-4 font-black text-[10px]"
+                                    className="rounded-xl h-8 px-4 font-bold text-xs"
                                     onClick={() => setShowFilters(false)}
                                 >
                                     החל וסגור
@@ -562,6 +577,7 @@ export default function ActivityLogPage() {
                     archive={archive} 
                     index={idx}
                     onDownload={handleDownloadArchive} 
+                    onPreview={setPreviewArchive}
                   />
                 ))}
                 {filteredLogs.length === 0 && (
@@ -611,6 +627,14 @@ export default function ActivityLogPage() {
           </div>
         </Card>
       </main>
+
+      {/* In-browser Archive Content Preview Modal */}
+      <ArchivePreviewModal
+        archive={previewArchive}
+        open={!!previewArchive}
+        onOpenChange={(open) => !open && setPreviewArchive(null)}
+        onDownload={handleDownloadArchive}
+      />
     </div>
   );
 }
@@ -637,7 +661,7 @@ function StatItem({ label, value, sub, color, className }: any) {
   );
 }
 
-function ArchiveCard({ archive, onDownload, index }: any) {
+function ArchiveCard({ archive, onDownload, onPreview, index }: any) {
   // Extract date from filename audit_2026-04-19_111709.json.gz
   const extractReadableDate = (filename: string) => {
     try {
@@ -687,16 +711,240 @@ function ArchiveCard({ archive, onDownload, index }: any) {
                         <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">נוצר ב-</span>
                         <span className="text-xs font-bold">{format(new Date(archive.created_at), "HH:mm")}</span>
                     </div>
-                    <Button 
-                        onClick={() => onDownload(archive.filename)}
-                        className="rounded-xl h-9 w-9 p-0 hover:scale-105 transition-transform"
-                    >
-                        <Download className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center gap-1.5">
+                        <Button 
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onPreview && onPreview(archive)}
+                            className="rounded-xl h-9 px-2.5 text-xs font-bold gap-1 text-primary border-primary/30 hover:bg-primary/5"
+                            title="צפייה בתוכן הקובץ ללא הורדה"
+                        >
+                            <Eye className="w-4 h-4" />
+                            <span className="text-[11px]">צפייה</span>
+                        </Button>
+                        <Button 
+                            onClick={() => onDownload(archive.filename)}
+                            className="rounded-xl h-9 w-9 p-0 hover:scale-105 transition-transform"
+                            title="הורד קובץ"
+                        >
+                            <Download className="w-4 h-4" />
+                        </Button>
+                    </div>
                 </div>
             </div>
         </Card>
     </motion.div>
+  );
+}
+
+function ArchivePreviewModal({
+  archive,
+  open,
+  onOpenChange,
+  onDownload,
+}: {
+  archive: any;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDownload: (filename: string) => void;
+}) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (open && archive?.filename) {
+      setLoading(true);
+      apiClient
+        .get(`/audit/archives/${archive.filename}/preview`)
+        .then((res) => {
+          setData(res.data?.data || res.data);
+        })
+        .catch(() => {
+          toast.error("נכשל בטעינת תצוגה מקדימה של הקובץ");
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    } else {
+      setData(null);
+      setSelectedLog(null);
+      setSearch("");
+    }
+  }, [open, archive?.filename]);
+
+  const records = data?.records || [];
+  const filteredRecords = useMemo(() => {
+    if (!search.trim()) return records;
+    const q = search.toLowerCase();
+    return records.filter(
+      (r: any) =>
+        (r.description || "").toLowerCase().includes(q) ||
+        (r.user_name || "").toLowerCase().includes(q) ||
+        (r.action_type || "").toLowerCase().includes(q) ||
+        (r.ip_address || "").toLowerCase().includes(q)
+    );
+  }, [records, search]);
+
+  const handleCopyJson = () => {
+    if (!data) return;
+    navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+    setCopied(true);
+    toast.success("תוכן ה-JSON המלא הועתק ללוח");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="w-full max-w-full sm:w-[95vw] sm:max-w-4xl lg:max-w-5xl rounded-t-3xl rounded-b-none sm:rounded-3xl p-4 sm:p-6 text-right max-h-[92svh] flex flex-col bg-card border-0 sm:border border-border/50 shadow-2xl"
+        dir="rtl"
+      >
+        {/* Mobile Drag Indicator Handle */}
+        <div className="w-12 h-1 bg-muted-foreground/20 rounded-full mx-auto -mt-1 mb-1 sm:hidden shrink-0" />
+
+        <DialogHeader className="text-right pb-3 border-b border-border/40 space-y-1 shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shrink-0">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-base sm:text-lg font-black text-foreground">
+                  צפייה בקובץ ארכיון
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground font-mono">
+                  {archive?.filename}
+                </DialogDescription>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyJson}
+                disabled={!data}
+                className="h-8 px-2.5 rounded-xl text-xs gap-1.5 font-bold"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                <span className="hidden sm:inline">העתק JSON</span>
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => onDownload(archive.filename)}
+                className="h-8 px-3 rounded-xl text-xs gap-1.5 font-bold bg-primary text-primary-foreground"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>הורד קובץ</span>
+              </Button>
+            </div>
+          </div>
+        </DialogHeader>
+
+        {/* Metadata summary cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 py-2 shrink-0">
+          <div className="p-2.5 rounded-xl bg-muted/30 border border-border/40 text-right">
+            <span className="text-[10px] text-muted-foreground font-bold">גודל דחוס:</span>
+            <p className="text-xs font-black text-foreground">{archive?.size_kb} KB</p>
+          </div>
+          <div className="p-2.5 rounded-xl bg-muted/30 border border-border/40 text-right">
+            <span className="text-[10px] text-muted-foreground font-bold">סה"כ רשומות:</span>
+            <p className="text-xs font-black text-foreground">{data?.total_records || records.length || archive?.records_count || 0}</p>
+          </div>
+          <div className="p-2.5 rounded-xl bg-muted/30 border border-border/40 text-right">
+            <span className="text-[10px] text-muted-foreground font-bold">פורמט:</span>
+            <p className="text-xs font-black text-foreground">JSON Snapshot (.gz)</p>
+          </div>
+          <div className="p-2.5 rounded-xl bg-muted/30 border border-border/40 text-right">
+            <span className="text-[10px] text-muted-foreground font-bold">מועד יצירה:</span>
+            <p className="text-xs font-black text-foreground">{archive?.created_at ? format(new Date(archive.created_at), "dd/MM/yyyy HH:mm") : "-"}</p>
+          </div>
+        </div>
+
+        {/* Search Bar inside archive */}
+        <div className="relative shrink-0 pb-1">
+          <Search className="w-4 h-4 absolute right-3 top-2.5 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="חיפוש ברשומות הקובץ (שם משתמש, פעולה, תיאור, כתובת IP)..."
+            className="h-9 pr-9 text-xs rounded-xl bg-muted/20 border-border/40"
+          />
+        </div>
+
+        {/* Records list / viewer */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar border border-border/40 rounded-2xl bg-muted/10 divide-y divide-border/20 min-h-[220px]">
+          {loading ? (
+            <div className="h-full min-h-[200px] flex flex-col items-center justify-center gap-2 text-muted-foreground">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <span className="text-xs font-bold">טוען ומפענח קובץ ארכיון...</span>
+            </div>
+          ) : filteredRecords.length === 0 ? (
+            <div className="h-full min-h-[200px] flex flex-col items-center justify-center gap-1 text-muted-foreground text-center p-6">
+              <Archive className="w-8 h-8 opacity-30" />
+              <p className="text-xs font-bold">לא נמצאו רשומות תואמות</p>
+            </div>
+          ) : (
+            filteredRecords.map((r: any, idx: number) => {
+              const isSelected = selectedLog?.id === r.id;
+              return (
+                <div
+                  key={r.id || idx}
+                  onClick={() => setSelectedLog(isSelected ? null : r)}
+                  className={cn(
+                    "p-3 text-right transition-colors cursor-pointer hover:bg-muted/30 flex flex-col gap-1.5",
+                    isSelected && "bg-primary/5 border-r-2 border-primary"
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-black text-foreground truncate">{r.user_name || "מערכת"}</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary shrink-0">
+                        {r.action_type || "פעולה"}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-muted-foreground shrink-0 font-mono">
+                      {r.created_at ? format(new Date(r.created_at), "HH:mm:ss") : ""}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground leading-relaxed">{r.description}</p>
+
+                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground/70 font-mono">
+                    <span>IP: {r.ip_address}</span>
+                    {r.table_name && <span>טבלה: {r.table_name}</span>}
+                    {r.record_id && <span>מזהה: {r.record_id}</span>}
+                  </div>
+
+                  {isSelected && (
+                    <div className="mt-2 p-2.5 rounded-xl bg-background border border-border/40 text-[11px] font-mono overflow-x-auto text-left ltr" dir="ltr">
+                      <pre className="whitespace-pre-wrap">{JSON.stringify(r, null, 2)}</pre>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Modal Footer */}
+        <div className="flex items-center justify-between pt-2 border-t border-border/40 shrink-0">
+          <span className="text-[11px] text-muted-foreground font-bold">
+            מציג {filteredRecords.length} מתוך {records.length} רשומות
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+            className="h-8 px-4 rounded-xl text-xs font-bold"
+          >
+            סגור
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

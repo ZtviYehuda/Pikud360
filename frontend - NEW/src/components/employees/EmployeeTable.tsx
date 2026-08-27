@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import type { Employee } from "@/types/employee.types";
 import { cn, cleanUnitName, calculateAge, getWhatsAppUrl } from "@/lib/utils";
-import { FilterModal } from "./modals";
+import { FilterModal, ImportEmployeesModal } from "./modals";
 import type { EmployeeFilters } from "./modals/FilterModal";
 import { EmployeeLink } from "@/components/common/EmployeeLink";
 import { WhatsAppIcon } from "@/components/common/WhatsAppIcon";
@@ -72,6 +72,7 @@ export const EmployeeTable = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<EmployeeFilters>(
     initialFilters || {},
   );
@@ -319,14 +320,14 @@ export const EmployeeTable = ({
   return (
     <div className="space-y-3 sm:space-y-5">
       {/* Search & Filter Bar */}
-      <div id="employees-search-container" className="flex flex-col sm:flex-row items-center justify-between gap-3 p-0 bg-transparent w-full">
+      <div id="employees-search-container" className="flex items-center justify-between gap-1.5 sm:gap-3 p-0 bg-transparent w-full">
         {/* Right side: Search & Filter */}
-        <div className="flex flex-row items-center gap-2 w-full sm:w-auto sm:flex-1 max-w-md md:max-w-xl">
-          <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0 max-w-[200px] sm:max-w-md md:max-w-xl">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground pointer-events-none" />
             <Input
-              placeholder="חיפוש שם או שם משתמש..."
-              className="pr-10 h-10 text-right border-input focus:ring-ring/20 focus:border-ring rounded-xl text-sm w-full"
+              placeholder="חיפוש..."
+              className="pr-8 sm:pr-10 h-10 text-right border-input focus:ring-ring/20 focus:border-ring rounded-xl text-xs sm:text-sm w-full truncate"
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -339,15 +340,16 @@ export const EmployeeTable = ({
             variant="outline"
             size="sm"
             className={cn(
-              "h-10 text-xs sm:text-sm border-border/60 dark:border-slate-800 hover:bg-muted rounded-xl px-4 flex items-center justify-center shrink-0 relative",
+              "h-10 w-10 sm:w-auto p-0 sm:px-3.5 text-xs sm:text-sm border-border/60 dark:border-slate-800 hover:bg-muted rounded-xl flex items-center justify-center shrink-0 relative",
               Object.keys(activeFilters).length > 0
                 ? "text-primary border-primary"
                 : "text-muted-foreground",
             )}
             onClick={() => setFilterModalOpen(true)}
+            title="סינון מתקדם"
           >
-            <Filter className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1.5" />
-            <span>סינון</span>
+            <Filter className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:ml-1.5" />
+            <span className="hidden sm:inline">סינון</span>
             {Object.keys(activeFilters).filter(k => {
               const val = activeFilters[k as keyof EmployeeFilters];
               if (Array.isArray(val)) return val.length > 0;
@@ -369,39 +371,32 @@ export const EmployeeTable = ({
         </div>
 
         {/* Left side: Import & Add */}
-        <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-start sm:mr-auto">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {!user?.is_temp_commander && (
             <>
               {user?.is_admin && (
-                <>
-                  <Button
-                    id="import-employees-button"
-                    variant="outline"
-                    className="h-10 text-xs sm:text-sm bg-background border-border/60 hover:bg-muted text-foreground rounded-xl flex items-center justify-center"
-                    onClick={() => document.getElementById('employee-upload-input')?.click()}
-                  >
-                    <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1.5 text-primary" />
-                    ייבוא מקובץ
-                  </Button>
-                  <input 
-                    type="file" 
-                    id="employee-upload-input" 
-                    className="hidden" 
-                    accept=".csv, .xlsx, .xls"
-                    onChange={handleFileUpload}
-                  />
-                </>
+                <Button
+                  id="import-employees-button"
+                  variant="outline"
+                  className="h-10 text-xs sm:text-sm bg-background border-border/60 hover:bg-muted text-foreground rounded-xl px-2.5 sm:px-4 flex items-center justify-center shrink-0 font-medium whitespace-nowrap"
+                  onClick={() => setImportModalOpen(true)}
+                  title="ייבוא עובדים מקובץ"
+                >
+                  <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1 sm:ml-1.5 text-primary" />
+                  <span>ייבוא מקובץ</span>
+                </Button>
               )}
               <Button
                 id="add-employee-button"
                 className={cn(
-                  "h-10 text-xs sm:text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl flex items-center justify-center",
+                  "h-10 text-xs sm:text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-2.5 sm:px-4 flex items-center justify-center shrink-0 shadow-xs font-medium whitespace-nowrap",
                   searchParams.get("tutorial") === "add-employee" && "tutorial-highlight"
                 )}
                 onClick={() => navigate("/employees/new")}
+                title="הוספת עובד חדש"
               >
-                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1.5" />
-                הוספה
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1 sm:ml-1.5" />
+                <span>הוספה</span>
               </Button>
             </>
           )}
@@ -868,6 +863,14 @@ export const EmployeeTable = ({
         onOpenChange={setFilterModalOpen}
         onApply={handleApplyFilters}
         employees={employees}
+      />
+
+      <ImportEmployeesModal
+        open={importModalOpen}
+        onOpenChange={setImportModalOpen}
+        onSuccess={() => {
+          if (fetchEmployees) fetchEmployees();
+        }}
       />
     </div>
   );

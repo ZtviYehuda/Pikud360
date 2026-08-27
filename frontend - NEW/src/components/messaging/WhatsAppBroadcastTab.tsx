@@ -1574,14 +1574,14 @@ export const WhatsAppBroadcastTab: React.FC = () => {
   );
 
   return (
-    <div className="space-y-4 pb-24 lg:pb-8">
-      {/* ── Main Layout: Clean shadcn Composition ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
-        {/* Right Column (Desktop Tree): Clean shadcn Card */}
+    <div className="space-y-4 pb-20 lg:pb-6 px-1 sm:px-0">
+      {/* ── Main Layout: 2 Columns on Desktop, Native Seamless View on Mobile ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-start">
+        {/* Right Column (Desktop Tree): Clean Card */}
         <div className="hidden lg:block lg:col-span-5">
-          <Card className="rounded-xl border">
-            <CardHeader className="pb-3 border-b">
-              <CardTitle className="text-base font-semibold">
+          <Card className="rounded-2xl border border-border/50 bg-card/60 shadow-xs">
+            <CardHeader className="pb-3 border-b border-border/40">
+              <CardTitle className="text-base font-bold">
                 עץ יחידות ושוטרים
               </CardTitle>
               <CardDescription className="text-xs">
@@ -1592,322 +1592,372 @@ export const WhatsAppBroadcastTab: React.FC = () => {
           </Card>
         </div>
 
-        {/* Left Column (Main Composer): Pure shadcn Card */}
+        {/* Left Column (Main Composer): Borderless on Mobile, Clean Card on Desktop */}
         <div className="lg:col-span-7">
-          <Card className="rounded-none sm:rounded-2xl border-0 sm:border bg-transparent sm:bg-card shadow-none sm:shadow-xs flex flex-col justify-between p-0">
-            <CardHeader className="px-0 sm:px-6 py-1 sm:py-4 pb-2 sm:pb-3 border-b-0 sm:border-b">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-base sm:text-lg font-bold">
-                    ניסוח והפצת הודעה
-                  </CardTitle>
-                  <CardDescription className="text-xs mt-0.5">
-                    הפצה מיידית לקבוצות וואטסאפ יחידתיות או לשוטרים
-                  </CardDescription>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {gatewayStatus.status === "connected" ? (
-                    <div className="flex items-center gap-1.5">
-                      <Badge
-                        variant="outline"
-                        className="text-xs font-normal border-emerald-500/30 text-emerald-600 gap-1.5 py-1"
-                      >
-                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                        וואטסאפ מחובר
-                      </Badge>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleGatewayLogout}
-                        className="h-7 px-2 text-xs font-medium text-destructive hover:text-destructive hover:bg-destructive/10 gap-1 rounded-lg transition-colors"
-                        title="נתק חשבון וואטסאפ"
-                      >
-                        <LogOut className="w-3.5 h-3.5" />
-                        <span>התנתק</span>
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowQrModal(true)}
-                      className="h-8 text-xs font-medium gap-1.5"
-                    >
-                      <QrCode className="w-3.5 h-3.5" />
-                      חבר QR
-                    </Button>
-                  )}
-                </div>
+          <div className="rounded-2xl sm:rounded-3xl lg:border lg:border-border/50 lg:bg-card/50 lg:shadow-xs flex flex-col space-y-5 sm:space-y-6 p-0 sm:p-2 lg:p-6">
+            
+            {/* Desktop Header Section (Hidden on Mobile since page header already exists) */}
+            <div className="hidden sm:flex sm:items-center justify-between gap-2.5 pb-3 border-b border-border/30">
+              <div>
+                <h2 className="text-base sm:text-lg font-black text-foreground">
+                  ניסוח והפצת הודעה
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  הפצה מיידית לקבוצות וואטסאפ יחידתיות או לשוטרים
+                </p>
               </div>
-            </CardHeader>
 
-            <CardContent className="px-0 sm:px-6 py-2 sm:py-4 space-y-3.5 sm:space-y-4 flex-1">
-              {/* Form Row 1: Template Selector & AI Smart Draft */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs gap-2">
-                  <label className="font-semibold text-foreground">
-                    תבנית וניסוח הודעה
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
+              <div className="flex items-center gap-2">
+                {gatewayStatus.status === "connected" ? (
+                  <div className="flex items-center gap-1.5">
+                    <Badge
                       variant="outline"
-                      size="sm"
-                      onClick={() => setShowAiDraftModal(true)}
-                      className="h-7 text-xs font-semibold text-primary border-primary/30 bg-primary/5 hover:bg-primary/10 gap-1.5 rounded-lg transition-all"
+                      className="text-xs font-semibold border-emerald-500/30 text-emerald-600 bg-emerald-500/5 gap-1.5 py-1 px-2.5 rounded-xl"
                     >
-                      <FileText className="w-3.5 h-3.5" />
-                      מחולל הודעות
-                    </Button>
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      וואטסאפ מחובר
+                    </Badge>
                     <Button
-                      variant="link"
+                      variant="ghost"
                       size="sm"
-                      onClick={handleOpenNewTemplateModal}
-                      className="p-0 h-auto text-xs text-muted-foreground hover:text-foreground font-medium"
+                      onClick={handleGatewayLogout}
+                      className="h-7 px-2 text-xs font-semibold text-destructive hover:text-destructive hover:bg-destructive/10 gap-1 rounded-xl transition-colors cursor-pointer"
+                      title="נתק חשבון וואטסאפ"
                     >
-                      + תבנית
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>התנתק</span>
                     </Button>
                   </div>
-                </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setTemplatePopoverOpen(true)}
-                  className="w-full justify-between h-10 text-xs sm:text-sm font-normal bg-background border px-3"
-                >
-                  <span className="truncate">
-                    {activeTemplate
-                      ? activeTemplate.label
-                      : "בחר תבנית מוכנה מראש (או לחץ לניסוח חופשי)..."}
-                  </span>
-                  <ChevronDown className="w-4 h-4 text-muted-foreground opacity-60 shrink-0" />
-                </Button>
-
-                {isTemplateModified && (
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300">
-                    <span className="truncate">
-                      שינית את הניסוח לתבנית '{activeTemplate?.label}'
-                    </span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleSaveActiveTemplateChanges}
-                      className="h-6 text-xs px-2"
-                    >
-                      <Save className="w-3 h-3 ml-1" />
-                      שמור
-                    </Button>
-                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowQrModal(true)}
+                    className="h-8 text-xs font-semibold gap-1.5 rounded-xl border-border/60 cursor-pointer"
+                  >
+                    <QrCode className="w-3.5 h-3.5" />
+                    חבר QR
+                  </Button>
                 )}
               </div>
+            </div>
 
-              {/* Form Row 4: Subject */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground block">
-                  נושא / כותרת (אופציונלי)
-                </label>
-                <Input
-                  placeholder="לדוגמה: עדכון יומי, תזכורת נוכחות..."
-                  value={messageTitle}
-                  onChange={(e) => setMessageTitle(e.target.value)}
-                  className="h-10 text-sm"
-                />
-              </div>
-
-              {/* Form Row 5: Message Content */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <label className="font-semibold text-foreground">
-                    תוכן ההודעה
-                  </label>
-                  <span className="text-muted-foreground font-mono text-[10px]">
-                    {messageBody.length} תווים
-                  </span>
+            {/* Mobile Top Controls Bar: WhatsApp Connection Status + Direct Target Picker */}
+            <div className="flex sm:hidden items-center justify-between gap-2 pb-2.5 border-b border-border/30">
+              {gatewayStatus.status === "connected" ? (
+                <div className="flex items-center gap-1">
+                  <Badge
+                    variant="outline"
+                    className="text-[11px] font-bold border-emerald-500/30 text-emerald-600 bg-emerald-500/5 gap-1.5 py-1 px-2 rounded-xl"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    וואטסאפ מחובר
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleGatewayLogout}
+                    className="h-7 px-1.5 text-[11px] font-bold text-destructive hover:text-destructive hover:bg-destructive/10 gap-0.5 rounded-lg cursor-pointer"
+                    title="נתק חשבון וואטסאפ"
+                  >
+                    <LogOut className="w-3 h-3" />
+                    <span>התנתק</span>
+                  </Button>
                 </div>
-                <Textarea
-                  placeholder="כתוב כאן את תוכן ההודעה..."
-                  rows={6}
-                  value={messageBody}
-                  onChange={(e) => setMessageBody(e.target.value)}
-                  className="min-h-[160px] sm:min-h-[180px] text-sm leading-relaxed resize-none custom-scrollbar"
-                />
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowQrModal(true)}
+                  className="h-7 text-xs font-semibold gap-1.5 rounded-xl border-border/60"
+                >
+                  <QrCode className="w-3 h-3" />
+                  חבר QR
+                </Button>
+              )}
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setMobileTreeOpen(true)}
+                className="h-7 px-2.5 rounded-xl border-border/60 bg-muted/20 hover:bg-muted/40 text-xs font-bold gap-1 text-foreground cursor-pointer shadow-2xs"
+              >
+                <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span>
+                  {selectedTargets.length + selectedCustomGroupIds.size + selectedIndividuals.size > 0
+                    ? `${selectedTargets.length + selectedCustomGroupIds.size + selectedIndividuals.size} נמענים`
+                    : "בחר נמענים ▾"}
+                </span>
+              </Button>
+            </div>
+
+            {/* Form Row 1: Template Selector & AI Smart Draft */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs gap-2">
+                <label className="font-bold text-foreground text-xs sm:text-sm">
+                  תבנית וניסוח הודעה
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAiDraftModal(true)}
+                    className="h-8 text-xs font-bold text-primary border-primary/30 bg-primary/5 hover:bg-primary/10 gap-1.5 rounded-xl transition-all shadow-2xs cursor-pointer"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>מחולל הודעות</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleOpenNewTemplateModal}
+                    className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground font-semibold rounded-xl cursor-pointer"
+                  >
+                    + תבנית
+                  </Button>
+                </div>
               </div>
 
-              {/* Mode A: Group targets quick list */}
-              {(selectedTargets.length > 0 ||
-                selectedCustomGroupIds.size > 0) && (
-                <div className="space-y-2 pt-2 border-t">
-                  <span className="text-xs font-semibold text-foreground block">
-                    קבוצות יעד לשליחה (
-                    {selectedTargets.length + selectedCustomGroupIds.size}):
-                  </span>
-                  <div className="space-y-1.5 max-h-[160px] overflow-y-auto custom-scrollbar">
-                    {/* Custom Groups */}
-                    {customGroups
-                      .filter((g) => selectedCustomGroupIds.has(g.id))
-                      .map((group) => (
-                        <div
-                          key={group.id}
-                          className="flex items-center justify-between p-2 rounded-lg border bg-primary/5 border-primary/20 text-xs"
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="font-semibold truncate">
-                              {group.name}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground shrink-0">
-                              (קבוצה מותאמת)
-                            </span>
-                          </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setTemplatePopoverOpen(true)}
+                className="w-full justify-between h-11 text-xs sm:text-sm font-medium bg-background border-border/50 rounded-2xl px-3.5 hover:bg-muted/30 cursor-pointer shadow-2xs"
+              >
+                <span className="truncate">
+                  {activeTemplate
+                    ? activeTemplate.label
+                    : "בחר תבנית מוכנה מראש (או לחץ לניסוח חופשי)..."}
+                </span>
+                <ChevronDown className="w-4 h-4 text-muted-foreground opacity-60 shrink-0" />
+              </Button>
 
-                          <div className="flex items-center gap-1.5 shrink-0">
+              {isTemplateModified && (
+                <div className="flex items-center justify-between p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300">
+                  <span className="truncate">
+                    שינית את הניסוח לתבנית '{activeTemplate?.label}'
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleSaveActiveTemplateChanges}
+                    className="h-7 text-xs px-2.5 rounded-xl"
+                  >
+                    <Save className="w-3 h-3 ml-1" />
+                    שמור
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Form Row 2: Subject */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-foreground block">
+                נושא / כותרת (אופציונלי)
+              </label>
+              <Input
+                placeholder="לדוגמה: עדכון יומי, תזכורת נוכחות..."
+                value={messageTitle}
+                onChange={(e) => setMessageTitle(e.target.value)}
+                className="h-11 text-xs sm:text-sm rounded-2xl bg-background border-border/50 shadow-2xs"
+              />
+            </div>
+
+            {/* Form Row 3: Message Content */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <label className="font-bold text-foreground">
+                  תוכן ההודעה <span className="text-primary">*</span>
+                </label>
+                <span className="text-muted-foreground font-mono text-[10px]">
+                  {messageBody.length} תווים
+                </span>
+              </div>
+              <Textarea
+                placeholder="כתוב כאן את תוכן ההודעה..."
+                rows={6}
+                value={messageBody}
+                onChange={(e) => setMessageBody(e.target.value)}
+                className="min-h-[160px] sm:min-h-[190px] text-xs sm:text-sm leading-relaxed resize-y custom-scrollbar rounded-2xl bg-background border-border/50 p-3.5 sm:p-4 shadow-2xs"
+              />
+            </div>
+
+            {/* Mode A: Group targets quick list */}
+            {(selectedTargets.length > 0 ||
+              selectedCustomGroupIds.size > 0) && (
+              <div className="space-y-2 pt-2 border-t border-border/30">
+                <span className="text-xs font-bold text-foreground block">
+                  קבוצות יעד לשליחה (
+                  {selectedTargets.length + selectedCustomGroupIds.size}):
+                </span>
+                <div className="space-y-1.5 max-h-[160px] overflow-y-auto custom-scrollbar">
+                  {/* Custom Groups */}
+                  {customGroups
+                    .filter((g) => selectedCustomGroupIds.has(g.id))
+                    .map((group) => (
+                      <div
+                        key={group.id}
+                        className="flex items-center justify-between p-2.5 rounded-2xl border bg-primary/5 border-primary/20 text-xs"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-bold truncate">
+                            {group.name}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground shrink-0">
+                            (מותאמת)
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              handleOpenEditCustomGroupModal(group)
+                            }
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground rounded-xl"
+                            title="ערוך קבוצה / קישור"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </Button>
+
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => handleAutoSendToCustomGroup(group)}
+                            disabled={autoSending}
+                            className="h-8 text-xs bg-[#25D366] hover:bg-[#1faa53] text-white font-bold rounded-xl px-3"
+                          >
+                            {autoSending ? (
+                              <Loader2 className="w-3 h-3 animate-spin ml-1" />
+                            ) : (
+                              <WhatsAppIcon className="w-3 h-3 ml-1" />
+                            )}
+                            שלח
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+
+                  {/* Organizational Units */}
+                  {selectedTargets.map((target) => {
+                    const key = `${target.level}_${target.id}`;
+                    const hasLink = Boolean(groupLinks[key]);
+                    const canEdit = canCommanderEditUnit(
+                      user,
+                      target,
+                      structure,
+                    );
+
+                    return (
+                      <div
+                        key={key}
+                        className="flex items-center justify-between p-2.5 rounded-2xl border border-border/40 bg-muted/20 text-xs"
+                      >
+                        <span className="font-bold truncate">
+                          {target.name}
+                        </span>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {canEdit && (
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
-                              onClick={() =>
-                                handleOpenEditCustomGroupModal(group)
-                              }
-                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                              title="ערוך קבוצה / קישור"
+                              onClick={() => handleOpenEditGroupLink(target)}
+                              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground rounded-xl"
+                              title="ערוך קישור קבוצה"
                             >
-                              <Edit2 className="w-3.5 h-3.5" />
+                              <Link2 className="w-3.5 h-3.5" />
                             </Button>
-
-                            <Button
-                              type="button"
-                              size="sm"
-                              onClick={() => handleAutoSendToCustomGroup(group)}
-                              disabled={autoSending}
-                              className="h-7 text-xs bg-[#25D366] hover:bg-[#1faa53] text-white font-medium"
-                            >
-                              {autoSending ? (
-                                <Loader2 className="w-3 h-3 animate-spin ml-1" />
-                              ) : (
-                                <WhatsAppIcon className="w-3 h-3 ml-1" />
-                              )}
-                              שלח לקבוצה
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-
-                    {/* Organizational Units */}
-                    {selectedTargets.map((target) => {
-                      const key = `${target.level}_${target.id}`;
-                      const hasLink = Boolean(groupLinks[key]);
-                      const canEdit = canCommanderEditUnit(
-                        user,
-                        target,
-                        structure,
-                      );
-
-                      return (
-                        <div
-                          key={key}
-                          className="flex items-center justify-between p-2 rounded-lg border bg-muted/20 text-xs"
-                        >
-                          <span className="font-medium truncate">
-                            {target.name}
-                          </span>
-
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            {canEdit && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleOpenEditGroupLink(target)}
-                                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                                title="ערוך קישור קבוצה"
-                              >
-                                <Link2 className="w-3.5 h-3.5" />
-                              </Button>
-                            )}
-
-                            <Button
-                              type="button"
-                              size="sm"
-                              onClick={() => handleAutoSendToGroup(target)}
-                              disabled={autoSending}
-                              className="h-7 text-xs bg-[#25D366] hover:bg-[#1faa53] text-white font-medium"
-                            >
-                              {autoSending ? (
-                                <Loader2 className="w-3 h-3 animate-spin ml-1" />
-                              ) : (
-                                <WhatsAppIcon className="w-3 h-3 ml-1" />
-                              )}
-                              שלח לקבוצה
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Mode B: Individual officers quick list */}
-              {(selectedIndividuals.size > 0 ||
-                (selectedTargets.length === 0 &&
-                  selectedCustomGroupIds.size === 0 &&
-                  recipientEmployees.length > 0)) && (
-                <div className="space-y-2 pt-2 border-t">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-foreground">
-                      שוטרים ({recipientEmployees.length}):
-                    </span>
-                    <Button
-                      size="sm"
-                      onClick={handleAutoBroadcastToAll}
-                      disabled={autoSending || validPhoneCount === 0}
-                      className="h-7 text-xs bg-[#25D366] hover:bg-[#1faa53] text-white"
-                    >
-                      <WhatsAppIcon className="w-3 h-3 ml-1" />
-                      שלח לכולם ({validPhoneCount})
-                    </Button>
-                  </div>
-
-                  <div className="max-h-[140px] overflow-y-auto space-y-1">
-                    {recipientEmployees.map((emp) => {
-                      const isSent = sentMap[emp.id];
-                      const hasPhone = Boolean(emp.phone_number);
-
-                      return (
-                        <div
-                          key={emp.id}
-                          className="flex items-center justify-between p-1.5 px-2 rounded-lg border bg-muted/20 text-xs"
-                        >
-                          <span className="font-medium truncate block">
-                            {emp.dominant_name ||
-                              `${emp.first_name} ${emp.last_name}`}
-                          </span>
+                          )}
 
                           <Button
+                            type="button"
                             size="sm"
-                            variant={isSent ? "secondary" : "outline"}
-                            onClick={() => handleOpenIndividualWhatsApp(emp)}
-                            disabled={!hasPhone}
-                            className="h-6 text-xs px-2"
+                            onClick={() => handleAutoSendToGroup(target)}
+                            disabled={autoSending}
+                            className="h-8 text-xs bg-[#25D366] hover:bg-[#1faa53] text-white font-bold rounded-xl px-3"
                           >
-                            {isSent ? "נשלח ✓" : "שלח"}
+                            {autoSending ? (
+                              <Loader2 className="w-3 h-3 animate-spin ml-1" />
+                            ) : (
+                              <WhatsAppIcon className="w-3 h-3 ml-1" />
+                            )}
+                            שלח
                           </Button>
                         </div>
-                      );
-                    })}
-                  </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-            </CardContent>
+              </div>
+            )}
 
-            <CardFooter className="px-0 sm:px-6 py-3 sm:py-4 border-t-0 sm:border-t flex items-center gap-2">
+            {/* Mode B: Individual officers quick list */}
+            {(selectedIndividuals.size > 0 ||
+              (selectedTargets.length === 0 &&
+                selectedCustomGroupIds.size === 0 &&
+                recipientEmployees.length > 0)) && (
+              <div className="space-y-2 pt-2 border-t border-border/30">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-foreground">
+                    שוטרים ({recipientEmployees.length}):
+                  </span>
+                  <Button
+                    size="sm"
+                    onClick={handleAutoBroadcastToAll}
+                    disabled={autoSending || validPhoneCount === 0}
+                    className="h-8 text-xs bg-[#25D366] hover:bg-[#1faa53] text-white font-bold rounded-xl px-3"
+                  >
+                    <WhatsAppIcon className="w-3 h-3 ml-1" />
+                    שלח לכולם ({validPhoneCount})
+                  </Button>
+                </div>
+
+                <div className="max-h-[140px] overflow-y-auto space-y-1 custom-scrollbar">
+                  {recipientEmployees.map((emp) => {
+                    const isSent = sentMap[emp.id];
+                    const hasPhone = Boolean(emp.phone_number);
+
+                    return (
+                      <div
+                        key={emp.id}
+                        className="flex items-center justify-between p-2 px-2.5 rounded-2xl border border-border/40 bg-muted/20 text-xs"
+                      >
+                        <span className="font-medium truncate block">
+                          {emp.dominant_name ||
+                            `${emp.first_name} ${emp.last_name}`}
+                        </span>
+
+                        <Button
+                          size="sm"
+                          variant={isSent ? "secondary" : "outline"}
+                          onClick={() => handleOpenIndividualWhatsApp(emp)}
+                          disabled={!hasPhone}
+                          className="h-7 text-xs px-2.5 rounded-xl font-semibold"
+                        >
+                          {isSent ? "נשלח ✓" : "שלח"}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons Footer */}
+            <div className="pt-3 border-t border-border/30 flex flex-wrap sm:flex-nowrap items-center gap-2">
               <Button
                 onClick={handleDirectWhatsAppShare}
                 disabled={!messageBody.trim()}
-                className="flex-1 h-11 text-sm font-semibold bg-[#25D366] hover:bg-[#1faa53] text-white shadow-xs"
+                className="flex-1 h-12 text-sm font-bold bg-[#25D366] hover:bg-[#20ba59] text-white rounded-2xl shadow-sm transition-all active:scale-[0.99] cursor-pointer"
               >
-                <WhatsAppIcon className="w-4 h-4 ml-1.5" />
+                <WhatsAppIcon className="w-4 h-4 ml-2" />
                 שתף בוואטסאפ
               </Button>
 
@@ -1915,9 +1965,9 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                 onClick={handleCopyMessage}
                 disabled={!messageBody.trim()}
                 variant="outline"
-                className="h-11 px-4 text-xs sm:text-sm font-medium"
+                className="h-12 px-4 text-xs sm:text-sm font-bold rounded-2xl border-border/50 hover:bg-muted/40 cursor-pointer"
               >
-                <Copy className="w-3.5 h-3.5 ml-1" />
+                <Copy className="w-3.5 h-3.5 ml-1.5" />
                 העתק
               </Button>
 
@@ -1929,13 +1979,13 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                   sendingInternal
                 }
                 variant="secondary"
-                className="h-11 px-4 text-xs sm:text-sm font-medium"
+                className="h-12 px-4 text-xs sm:text-sm font-bold rounded-2xl cursor-pointer"
               >
-                <Bell className="w-3.5 h-3.5 ml-1" />
-                שידור ({resolvedRecipients.length})
+                <Bell className="w-3.5 h-3.5 ml-1.5" />
+                שידור במערכת ({resolvedRecipients.length})
               </Button>
-            </CardFooter>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2265,11 +2315,11 @@ export const WhatsAppBroadcastTab: React.FC = () => {
         onOpenChange={setShowNewTemplateModal}
       >
         <DialogContent
-          className="sm:max-w-md text-right rounded-2xl p-6 space-y-3"
+          className="w-[95vw] sm:max-w-lg text-right rounded-3xl p-4 sm:p-6 space-y-3.5 max-h-[92vh] flex flex-col bg-card"
           dir="rtl"
         >
-          <DialogHeader className="text-right space-y-1 pb-2 border-b">
-            <DialogTitle className="text-base font-semibold">
+          <DialogHeader className="text-right space-y-1 pb-2 border-b border-border/30">
+            <DialogTitle className="text-base sm:text-lg font-black text-foreground">
               שמירת תבנית הודעה חדשה
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
@@ -2277,58 +2327,60 @@ export const WhatsAppBroadcastTab: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3 my-1">
+          <div className="space-y-3 my-1 flex-1 overflow-y-auto custom-scrollbar pr-0.5">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground block">
+              <label className="text-xs font-bold text-foreground block">
                 שם התבנית:
               </label>
               <Input
-                placeholder="הזן שם מזהה לתבנית..."
+                placeholder="הזן שם מזהה לתבנית (למשל: תזכורת שיבוץ)..."
                 value={newTemplateLabel}
                 onChange={(e) => setNewTemplateLabel(e.target.value)}
-                className="h-9 text-xs"
+                className="h-10 sm:h-11 text-xs sm:text-sm rounded-xl bg-background border-border/50"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground block">
+              <label className="text-xs font-bold text-foreground block">
                 נושא / כותרת (אופציונלי):
               </label>
               <Input
                 placeholder="הזן כותרת..."
                 value={newTemplateTitle}
                 onChange={(e) => setNewTemplateTitle(e.target.value)}
-                className="h-9 text-xs"
+                className="h-10 sm:h-11 text-xs sm:text-sm rounded-xl bg-background border-border/50"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground block">
+              <label className="text-xs font-bold text-foreground block">
                 תוכן ההודעה:
               </label>
               <Textarea
                 placeholder="כתוב כאן את תוכן התבנית..."
-                rows={4}
+                rows={7}
                 value={newTemplateContent}
                 onChange={(e) => setNewTemplateContent(e.target.value)}
-                className="text-xs resize-none"
+                className="min-h-[160px] sm:min-h-[200px] text-xs sm:text-sm leading-relaxed resize-y custom-scrollbar rounded-2xl bg-background border-border/50 p-3.5 sm:p-4 shadow-2xs"
               />
             </div>
           </div>
 
-          <DialogFooter className="flex flex-row justify-end gap-2 pt-2 border-t">
+          <DialogFooter className="flex flex-row justify-end gap-2 pt-2.5 border-t border-border/30">
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={() => setShowNewTemplateModal(false)}
-              className="text-xs"
+              className="text-xs h-9 px-4 rounded-xl cursor-pointer"
             >
               ביטול
             </Button>
             <Button
+              type="button"
               size="sm"
               onClick={handleCreateNewTemplate}
-              className="text-xs font-semibold"
+              className="text-xs font-bold h-9 px-5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer shadow-sm"
             >
               שמור תבנית
             </Button>
