@@ -1,0 +1,7 @@
+{
+  "name": "pikud360-root",
+  "private": true,
+  "scripts": {
+    "build": "cd \"frontend - NEW\" && npm install --legacy-peer-deps && npm run build"
+  }
+}
