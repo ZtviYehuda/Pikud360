@@ -9,6 +9,7 @@ import { DateProvider } from "./context/DateContext";
 import { FeedbackProvider } from "./context/FeedbackContext";
 import { ChatProvider } from "./context/ChatContext";
 import { Credits } from "./components/common/Credits";
+import { OfflineIndicator } from "./components/common/OfflineIndicator";
 
 createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>
@@ -17,6 +18,7 @@ createRoot(document.getElementById("root")!).render(
         <DateProvider>
           <FeedbackProvider>
             <ChatProvider>
+              <OfflineIndicator />
               <AppRouter />
               <Credits />
               <Toaster duration={1800} richColors position="top-center" dir="rtl" />

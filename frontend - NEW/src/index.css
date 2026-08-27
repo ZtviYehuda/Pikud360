@@ -41,6 +41,22 @@ body {
   padding: 0;
 }
 
+/* Mobile Safe Areas for Notch, Dynamic Island, and Home Indicator */
+.safe-area-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-area-inset {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
 /* Base transitions - scoped for better performance */
 .btn-transition {
   transition-property: all;

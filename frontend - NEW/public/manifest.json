@@ -1,23 +1,33 @@
 {
-  "short_name": "The Office",
-  "name": "The Office - מערכת ניהול ושליטה",
+  "short_name": "UNIT",
+  "name": "UNIT - מערכת ניהול ושליטה",
+  "description": "UNIT - מערכת ניהול, נוכחות ושליטה מבצעית",
   "icons": [
     {
-      "src": "/logo_unit.png",
+      "src": "/pwa-192x192.png",
       "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/logo_unit.png",
+      "src": "/pwa-512x512.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/maskable-icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
   "start_url": "/",
-  "background_color": "#020617",
-  "theme_color": "#2563eb",
+  "scope": "/",
   "display": "standalone",
-  "orientation": "portrait"
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "orientation": "portrait",
+  "dir": "rtl",
+  "lang": "he"
 }
