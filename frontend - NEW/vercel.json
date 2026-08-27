@@ -2,7 +2,7 @@
   "version": 2,
   "framework": "vite",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/api/(.*)", "destination": "https://pikud360-api.loca.lt/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
