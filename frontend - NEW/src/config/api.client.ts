@@ -42,9 +42,10 @@ apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
     if (token) config.headers.Authorization = `Bearer ${token}`;
-    // Ensure fresh data on dynamic API calls
+    // Ensure fresh data on dynamic API calls and bypass localtunnel reminder page
     config.headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
     config.headers["Pragma"] = "no-cache";
+    config.headers["bypass-tunnel-reminder"] = "true";
     return config;
   },
   (error) => Promise.reject(error),
