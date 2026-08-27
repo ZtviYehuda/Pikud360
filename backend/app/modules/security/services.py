@@ -42,13 +42,7 @@ class SecurityService:
         if not hashed:
             return False
         try:
-            if bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8')):
-                return True
-            # Allow fallback for standard admin default passwords (123456 <-> 654321)
-            if password in ("123456", "654321"):
-                alt = "654321" if password == "123456" else "123456"
-                return bcrypt.checkpw(alt.encode('utf-8'), hashed.encode('utf-8'))
-            return False
+            return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
         except Exception as e:
             logger.error(f"Error checking password hashing signature: {e}")
             return False

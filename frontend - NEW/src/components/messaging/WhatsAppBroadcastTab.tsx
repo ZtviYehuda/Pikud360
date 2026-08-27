@@ -29,6 +29,7 @@ import {
   FileText,
 } from "lucide-react";
 import { AiMessageGeneratorModal } from "./AiMessageGeneratorModal";
+import { WhatsAppIcon } from "@/components/common/WhatsAppIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -68,12 +69,7 @@ import type {
 
 const GATEWAY_URL = "http://localhost:3001";
 
-// Authentic WhatsApp vector icon
-const WhatsAppIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.44 0-2.84-.38-4.08-1.1l-.29-.17-3.03.79.81-2.95-.19-.3a8.16 8.16 0 0 1-1.25-4.33c0-4.54 3.7-8.24 8.24-8.24h.02zm-3.5 3.6c-.2 0-.41.02-.6.08-.22.07-.46.22-.61.41-.33.41-.85 1.07-.85 2.14 0 1.33.91 2.76 1.07 2.97.16.21 2.06 3.2 5.08 4.38 2.5 1 3.01.8 3.56.75.54-.06 1.76-.72 2.01-1.42.25-.7.25-1.3.18-1.42-.07-.12-.26-.2-.55-.34-.29-.15-1.74-.86-2.01-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.95 1.15-.17.2-.35.22-.64.08-.29-.15-1.23-.45-2.35-1.45-.87-.78-1.46-1.74-1.63-2.03-.17-.3-.02-.46.13-.6.13-.13.29-.35.44-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51-.17-.01-.37-.01-.57-.01z" />
-  </svg>
-);
+
 
 type OrgLevel = "department" | "section" | "team";
 
@@ -1647,36 +1643,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
             </CardHeader>
 
             <CardContent className="px-0 sm:px-6 py-2 sm:py-4 space-y-3.5 sm:space-y-4 flex-1">
-              {/* Form Row 1: Target Selector Trigger (Standard shadcn form style) */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground block">
-                  נמענים ויחידות יעד
-                </label>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setMobileTreeOpen(true)}
-                    className="w-full justify-between h-10 text-xs sm:text-sm font-normal lg:pointer-events-none"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-muted-foreground" />
-                      <span>
-                        {selectedTargets.length + selectedCustomGroupIds.size > 0 || selectedIndividuals.size > 0
-                          ? selectedIndividuals.size > 0
-                            ? `נבחרו ${selectedIndividuals.size} שוטרים`
-                            : `נבחרו ${selectedTargets.length + selectedCustomGroupIds.size} יחידות/קבוצות`
-                          : "בחר יחידות ושוטרים..."}
-                      </span>
-                    </div>
-                    <span className="text-xs text-primary font-semibold lg:hidden">
-                      שנה
-                    </span>
-                  </Button>
-                </div>
-              </div>
-
-              {/* Form Row 2: Template Selector & AI Smart Draft */}
+              {/* Form Row 1: Template Selector & AI Smart Draft */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs gap-2">
                   <label className="font-semibold text-foreground">

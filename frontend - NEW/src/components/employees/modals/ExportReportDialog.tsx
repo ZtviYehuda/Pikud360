@@ -12,11 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Download,
-  MessageCircle,
   FileSpreadsheet,
   Filter,
   Info,
 } from "lucide-react";
+import { WhatsAppIcon } from "@/components/common/WhatsAppIcon";
 import apiClient from "@/config/api.client";
 import { EMPLOYEES_EXPORT_ENDPOINT } from "@/config/employees.endpoints";
 import { useDateContext } from "@/context/DateContext";
@@ -342,7 +342,7 @@ export function ExportReportDialog({
                     }}
                     className="h-10 rounded-xl border-emerald-600/20 bg-emerald-50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white font-bold text-xs gap-2 cursor-pointer pointer-events-auto transition-all"
                   >
-                    <MessageCircle className="w-3.5 h-3.5" />
+                    <WhatsAppIcon className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">סיכום טקסט</span>
                     <span className="sm:hidden">סיכום טקסט</span>
                   </Button>

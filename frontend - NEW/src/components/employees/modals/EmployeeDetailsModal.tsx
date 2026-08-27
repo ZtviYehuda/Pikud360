@@ -20,10 +20,11 @@ import {
   Star,
   AlertCircle,
   Network,
+  MessageCircle,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { WhatsAppButton } from "@/components/common/WhatsAppButton";
+import { WhatsAppIcon } from "@/components/common/WhatsAppIcon";
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeedback } from "@/context/FeedbackContext";
 
@@ -50,12 +51,57 @@ const InfoRow = ({
   if (!value || value === "---") return null;
   const cleanValue = typeof value === "string" ? value.trim() : value;
 
+  const rawPhone = type === "phone" && typeof cleanValue === "string" ? cleanValue.replace(/\D/g, "") : "";
+  const whatsAppPhone = rawPhone.startsWith("0")
+    ? "972" + rawPhone.substring(1)
+    : rawPhone.startsWith("972")
+      ? rawPhone
+      : rawPhone
+        ? "972" + rawPhone
+        : "";
+
   return (
     <div className="flex items-center justify-between gap-3 py-3 group">
       <div className="flex items-center gap-3 min-w-0 flex-1">
-        <div className="w-8 h-8 rounded-xl bg-muted/60 flex items-center justify-center shrink-0">
-          <Icon className="w-4 h-4 text-muted-foreground" />
-        </div>
+        {type === "email" && typeof cleanValue === "string" ? (
+          <a
+            href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(cleanValue)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            title="פתח ב-Gmail"
+            className="w-8 h-8 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 flex items-center justify-center shrink-0 transition-all hover:scale-105 active:scale-95"
+          >
+            <Icon className="w-4 h-4" />
+          </a>
+        ) : type === "phone" && typeof cleanValue === "string" ? (
+          <div className="flex items-center gap-1.5 shrink-0">
+            <a
+              href={`tel:${cleanValue.replace(/\s/g, "")}`}
+              onClick={(e) => e.stopPropagation()}
+              title="חייג"
+              className="w-8 h-8 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 flex items-center justify-center shrink-0 transition-all hover:scale-105 active:scale-95"
+            >
+              <Icon className="w-4 h-4" />
+            </a>
+            {whatsAppPhone && (
+              <a
+                href={`https://wa.me/${whatsAppPhone}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                title="פתח שיחה בוואטסאפ"
+                className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 hover:text-emerald-700 flex items-center justify-center shrink-0 transition-all hover:scale-105 active:scale-95 shadow-2xs"
+              >
+                <WhatsAppIcon className="w-4 h-4" />
+              </a>
+            )}
+          </div>
+        ) : (
+          <div className="w-8 h-8 rounded-xl bg-muted/60 flex items-center justify-center shrink-0">
+            <Icon className="w-4 h-4 text-muted-foreground" />
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">
             {label}
@@ -70,7 +116,9 @@ const InfoRow = ({
             </a>
           ) : type === "email" && typeof cleanValue === "string" ? (
             <a
-              href={`mailto:${cleanValue}`}
+              href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(cleanValue)}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-sm font-black leading-snug truncate text-primary hover:underline block"
               onClick={(e) => e.stopPropagation()}
             >

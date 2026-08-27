@@ -56,6 +56,7 @@ import { cn, cleanUnitName, isValidIsraeliPhone } from "@/lib/utils";
 import * as endpoints from "@/config/employees.endpoints";
 import { format } from "date-fns";
 import { BirthdayGreetingsModal } from "@/components/dashboard/BirthdayGreetingsModal";
+import { WhatsAppIcon } from "@/components/common/WhatsAppIcon";
 import {
   Popover,
   PopoverContent,
@@ -144,17 +145,40 @@ const Field = ({
   };
 
   const normalizedHref = href?.trim();
+  const isEmail =
+    label?.includes("אימייל") ||
+    label?.includes("דואר אלקטרוני") ||
+    fieldKey === "email" ||
+    (normalizedHref && normalizedHref.startsWith("mailto:"));
+
+  const isPhone =
+    label?.includes("טלפון") ||
+    fieldKey?.includes("phone") ||
+    (normalizedHref && normalizedHref.startsWith("tel:"));
+
   const safeHref =
-    hasValue && normalizedHref
-      ? normalizedHref.startsWith("mailto:")
-        ? `mailto:${normalizedHref.slice(7).trim()}`
-        : normalizedHref.startsWith("tel:")
-          ? `tel:${normalizedHref.slice(4).trim().replace(/\s+/g, "")}`
+    hasValue && (normalizedHref || isEmail || isPhone)
+      ? isEmail
+        ? `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+            (normalizedHref || String(value)).replace(/^mailto:/i, "").trim()
+          )}`
+        : isPhone || normalizedHref?.startsWith("tel:")
+          ? `tel:${(normalizedHref || String(value)).slice(normalizedHref?.startsWith("tel:") ? 4 : 0).trim().replace(/\s+/g, "")}`
           : normalizedHref
       : undefined;
 
+  const rawPhone = hasValue && isPhone ? String(value).replace(/\D/g, "") : "";
+  const whatsAppPhone = rawPhone.startsWith("0")
+    ? "972" + rawPhone.substring(1)
+    : rawPhone.startsWith("972")
+      ? rawPhone
+      : rawPhone
+        ? "972" + rawPhone
+        : "";
+  const whatsAppUrl = whatsAppPhone ? `https://wa.me/${whatsAppPhone}` : null;
+
   const isExternalLink =
-    safeHref?.startsWith("mailto:") || safeHref?.startsWith("tel:");
+    safeHref?.startsWith("http") || safeHref?.startsWith("tel:") || safeHref?.startsWith("mailto:");
 
   const isEditable = !!(fieldKey && onSave);
 
@@ -216,20 +240,54 @@ const Field = ({
       title={isEditable ? "לחץ פעמיים לעריכה" : undefined}
     >
       {Icon && (
-        <div
-          className={cn(
-            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-            hasValue ? "bg-primary/5" : "bg-slate-100/60 dark:bg-slate-800/40",
+        <div className="flex items-center gap-1.5 shrink-0">
+          {safeHref ? (
+            <a
+              href={safeHref}
+              target={isExternalLink ? "_blank" : undefined}
+              rel={isExternalLink ? "noopener noreferrer" : undefined}
+              onClick={(e) => e.stopPropagation()}
+              className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-105 active:scale-95",
+                hasValue
+                  ? "bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer"
+                  : "bg-slate-100/60 dark:bg-slate-800/40 text-slate-400",
+              )}
+              title={isEmail ? "פתח ב-Gmail" : isPhone ? "חייג" : undefined}
+            >
+              <Icon className="w-4 h-4" />
+            </a>
+          ) : (
+            <div
+              className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                hasValue ? "bg-primary/5" : "bg-slate-100/60 dark:bg-slate-800/40",
+              )}
+            >
+              <Icon
+                className={cn(
+                  "w-4 h-4 transition-colors",
+                  hasValue
+                    ? "text-slate-400 group-hover:text-primary"
+                    : "text-slate-300 dark:text-slate-600",
+                )}
+              />
+            </div>
           )}
-        >
-          <Icon
-            className={cn(
-              "w-4 h-4 transition-colors",
-              hasValue
-                ? "text-slate-400 group-hover:text-primary"
-                : "text-slate-300 dark:text-slate-600",
-            )}
-          />
+
+          {/* WhatsApp Direct Action Button */}
+          {isPhone && whatsAppUrl && (
+            <a
+              href={whatsAppUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 hover:text-emerald-700 transition-all hover:scale-105 active:scale-95 shadow-2xs"
+              title="פתח שיחה בוואטסאפ"
+            >
+              <WhatsAppIcon className="w-5 h-5" />
+            </a>
+          )}
         </div>
       )}
       <div className="flex-1 flex flex-col justify-center">

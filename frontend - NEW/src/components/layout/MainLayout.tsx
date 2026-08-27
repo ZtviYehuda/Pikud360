@@ -40,6 +40,7 @@ import { DateHeader } from "@/components/common/DateHeader";
 import { InternalMessageDialog } from "@/components/dashboard/InternalMessageDialog";
 import { SickLeaveDetailsDialog } from "@/components/dashboard/SickLeaveDetailsDialog";
 import { BirthdayGreetingsModal } from "@/components/dashboard/BirthdayGreetingsModal";
+import { WhatsAppIcon } from "@/components/common/WhatsAppIcon";
 import { toast } from "sonner";
 import { Send, Eye, Mail } from "lucide-react";
 import {
@@ -1025,7 +1026,7 @@ export default function MainLayout() {
                                       className="w-8 h-8 rounded-lg flex items-center justify-center transition-all text-emerald-600 hover:bg-emerald-50 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 shrink-0 mr-1"
                                       title="שלח תזכורת בווטסאפ"
                                     >
-                                      <MessageCircle className="w-4 h-4" />
+                                      <WhatsAppIcon className="w-4 h-4" />
                                     </button>
                                   )}
                                 <button
