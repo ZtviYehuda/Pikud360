@@ -1,5 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
-import { useParams, useNavigate, useLocation, useBlocker } from "react-router-dom";
+import {
+  useParams,
+  useNavigate,
+  useLocation,
+  useBlocker,
+} from "react-router-dom";
 import apiClient from "@/config/api.client";
 import type { Employee } from "@/types/employee.types";
 import { generateUniqueUsername } from "@/utils/usernameGenerator";
@@ -160,10 +165,13 @@ const Field = ({
     hasValue && (normalizedHref || isEmail || isPhone)
       ? isEmail
         ? `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
-            (normalizedHref || String(value)).replace(/^mailto:/i, "").trim()
+            (normalizedHref || String(value)).replace(/^mailto:/i, "").trim(),
           )}`
         : isPhone || normalizedHref?.startsWith("tel:")
-          ? `tel:${(normalizedHref || String(value)).slice(normalizedHref?.startsWith("tel:") ? 4 : 0).trim().replace(/\s+/g, "")}`
+          ? `tel:${(normalizedHref || String(value))
+              .slice(normalizedHref?.startsWith("tel:") ? 4 : 0)
+              .trim()
+              .replace(/\s+/g, "")}`
           : normalizedHref
       : undefined;
 
@@ -178,7 +186,9 @@ const Field = ({
   const whatsAppUrl = whatsAppPhone ? `https://wa.me/${whatsAppPhone}` : null;
 
   const isExternalLink =
-    safeHref?.startsWith("http") || safeHref?.startsWith("tel:") || safeHref?.startsWith("mailto:");
+    safeHref?.startsWith("http") ||
+    safeHref?.startsWith("tel:") ||
+    safeHref?.startsWith("mailto:");
 
   const isEditable = !!(fieldKey && onSave);
 
@@ -261,7 +271,9 @@ const Field = ({
             <div
               className={cn(
                 "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-                hasValue ? "bg-primary/5" : "bg-slate-100/60 dark:bg-slate-800/40",
+                hasValue
+                  ? "bg-primary/5"
+                  : "bg-slate-100/60 dark:bg-slate-800/40",
               )}
             >
               <Icon
@@ -666,13 +678,12 @@ const MobileProfileHeader = ({
 
       <div className="flex items-center gap-1.5 mt-0.5 flex-wrap text-xs">
         {commanderTitle && (
-          <span className="font-bold text-primary">
-            {commanderTitle}
-          </span>
+          <span className="font-bold text-primary">{commanderTitle}</span>
         )}
         {employee.position && (
           <span className="text-muted-foreground font-medium truncate">
-            {commanderTitle ? "• " : ""}{employee.position}
+            {commanderTitle ? "• " : ""}
+            {employee.position}
           </span>
         )}
         {employee.service_type_name && (
@@ -761,7 +772,9 @@ export default function EmployeeViewPage() {
   // Unsaved changes & Draft state
   const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
-  const [pendingNavigationPath, setPendingNavigationPath] = useState<string | null>(null);
+  const [pendingNavigationPath, setPendingNavigationPath] = useState<
+    string | null
+  >(null);
 
   // Form State
   const [formData, setFormData] = useState<any>({});
@@ -941,9 +954,10 @@ export default function EmployeeViewPage() {
   }, [isDirty, editMode]);
 
   // Intercept any internal React Router navigation if there are unsaved changes in editMode
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      Boolean(isDirty && editMode && currentLocation.pathname !== nextLocation.pathname)
+  const blocker = useBlocker(({ currentLocation, nextLocation }) =>
+    Boolean(
+      isDirty && editMode && currentLocation.pathname !== nextLocation.pathname,
+    ),
   );
 
   const isBlocked = blocker.state === "blocked";
@@ -1030,17 +1044,29 @@ export default function EmployeeViewPage() {
           ...prev,
           ...updatedData,
           [field]: value,
-          ...(field === "phone_number" || field === "phone" ? { phone: value, phone_number: value } : {}),
-          ...(field === "email" || field === "personal_email" ? { email: value, personal_email: value } : {}),
-          ...(field === "birth_date" || field === "birthdate" ? { birth_date: value, birthdate: value } : {}),
+          ...(field === "phone_number" || field === "phone"
+            ? { phone: value, phone_number: value }
+            : {}),
+          ...(field === "email" || field === "personal_email"
+            ? { email: value, personal_email: value }
+            : {}),
+          ...(field === "birth_date" || field === "birthdate"
+            ? { birth_date: value, birthdate: value }
+            : {}),
         }));
         setFormData((prev: any) => ({
           ...prev,
           ...updatedData,
           [field]: value,
-          ...(field === "phone_number" || field === "phone" ? { phone: value, phone_number: value } : {}),
-          ...(field === "email" || field === "personal_email" ? { email: value, personal_email: value } : {}),
-          ...(field === "birth_date" || field === "birthdate" ? { birth_date: value, birthdate: value } : {}),
+          ...(field === "phone_number" || field === "phone"
+            ? { phone: value, phone_number: value }
+            : {}),
+          ...(field === "email" || field === "personal_email"
+            ? { email: value, personal_email: value }
+            : {}),
+          ...(field === "birth_date" || field === "birthdate"
+            ? { birth_date: value, birthdate: value }
+            : {}),
         }));
       }
       // If inline saved, clear draft for this field
@@ -1124,7 +1150,12 @@ export default function EmployeeViewPage() {
                 `${employee.first_name || ""} ${employee.last_name || ""}`,
           user: generatedCreds.user,
           pass: generatedCreds.pass,
-          phone: formData.phone || formData.phone_number || employee.phone || employee.phone_number || "",
+          phone:
+            formData.phone ||
+            formData.phone_number ||
+            employee.phone ||
+            employee.phone_number ||
+            "",
         });
       } else {
         toast.success("כרטיס שוטר עודכן בהצלחה");
@@ -1524,12 +1555,14 @@ export default function EmployeeViewPage() {
         {/* Top bar with back button */}
         <div className="flex items-center justify-between mb-6">
           <button
-            onClick={() => (editMode ? handleCancelEdit() : handleSafeNavigation("/employees"))}
+            onClick={() =>
+              editMode ? handleCancelEdit() : handleSafeNavigation("/employees")
+            }
             className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-primary transition-colors bg-white dark:bg-slate-900 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800"
           >
             <ArrowRight className="w-4 h-4" />{" "}
             <span className="hidden sm:inline">
-              {editMode ? "ביטול וחזרה לכרטיס" : "חזרה לרשימה"}
+              {editMode ? "ביטול וחזרה לרשימה" : "חזרה לרשימה"}
             </span>
           </button>
 
@@ -1806,7 +1839,8 @@ export default function EmployeeViewPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      if (id) localStorage.removeItem(`employee_edit_draft_${id}`);
+                      if (id)
+                        localStorage.removeItem(`employee_edit_draft_${id}`);
                       setFormData(employee);
                       setHasRestoredDraft(false);
                       toast.info("הטיוטה נמחקה ושוחזרו הנתונים המקוריים");
@@ -1833,7 +1867,9 @@ export default function EmployeeViewPage() {
                     {/* PERSONAL TAB SECTION (Mobile Tab or Desktop Always) */}
                     {activeTab === "personal" && (
                       <div
-                        className={cn("grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6")}
+                        className={cn(
+                          "grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6",
+                        )}
                       >
                         <Section title="פרטים אישיים">
                           <div className="grid grid-cols-1 gap-2.5 sm:gap-4">
@@ -1936,7 +1972,9 @@ export default function EmployeeViewPage() {
                     {/* PRO TAB SECTION */}
                     {activeTab === "pro" && (
                       <div
-                        className={cn("grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6")}
+                        className={cn(
+                          "grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6",
+                        )}
                       >
                         <Section title="הגדרות תפקיד">
                           <div className="grid grid-cols-1 gap-2.5 sm:gap-4">
@@ -1970,9 +2008,7 @@ export default function EmployeeViewPage() {
                             />
                             <Field
                               label="דרגת פיקוד"
-                              value={
-                                employee.is_commander ? "✓ מפקד" : "שוטר"
-                              }
+                              value={employee.is_commander ? "✓ מפקד" : "שוטר"}
                               icon={Shield}
                               valueClassName={
                                 employee.is_commander
@@ -2002,7 +2038,11 @@ export default function EmployeeViewPage() {
                             />
                             <Field
                               label="מעמד ארגוני"
-                              value={employee.service_type || employee.service_type_name || "לא הוגדר"}
+                              value={
+                                employee.service_type ||
+                                employee.service_type_name ||
+                                "לא הוגדר"
+                              }
                               icon={Briefcase}
                             />
                             <Field
@@ -2236,12 +2276,15 @@ export default function EmployeeViewPage() {
                                   (st: any) =>
                                     st.id?.toString() === val ||
                                     st.name === val ||
-                                    st.code === val
+                                    st.code === val,
                                 );
                                 const nameVal = matched?.name || val;
                                 handleFieldChange("service_type", nameVal);
                                 handleFieldChange("service_type_name", nameVal);
-                                handleFieldChange("service_type_id", matched?.id || val);
+                                handleFieldChange(
+                                  "service_type_id",
+                                  matched?.id || val,
+                                );
                               }}
                             >
                               <SelectTrigger className="w-full h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-right px-4 shadow-sm hover:border-primary/50 transition-all flex items-center justify-between">
@@ -2255,25 +2298,43 @@ export default function EmployeeViewPage() {
                                       { id: "קבע - קצין", name: "קבע - קצין" },
                                       { id: "קבע - נגד", name: "קבע - נגד" },
                                       { id: "חובה", name: "חובה" },
-                                      { id: "שח\"מ", name: "שח\"מ" },
-                                      { id: "שמ\"ז", name: "שמ\"ז" },
+                                      { id: 'שח"מ', name: 'שח"מ' },
+                                      { id: 'שמ"ז', name: 'שמ"ז' },
                                       { id: "מילואים", name: "מילואים" },
-                                      { id: "אזרח עובד משטרה (אע\"מ)", name: "אזרח עובד משטרה (אע\"מ)" },
-                                      { id: "שירות לאומי", name: "שירות לאומי" },
+                                      {
+                                        id: 'אזרח עובד משטרה (אע"מ)',
+                                        name: 'אזרח עובד משטרה (אע"מ)',
+                                      },
+                                      {
+                                        id: "שירות לאומי",
+                                        name: "שירות לאומי",
+                                      },
                                       { id: "מתנדב", name: "מתנדב" },
-                                      ...(user?.is_admin ? [{ id: "מנהל מערכת", name: "מנהל מערכת" }] : []),
+                                      ...(user?.is_admin
+                                        ? [
+                                            {
+                                              id: "מנהל מערכת",
+                                              name: "מנהל מערכת",
+                                            },
+                                          ]
+                                        : []),
                                     ]
                                 )
-                                .filter((st: any) => user?.is_admin || (st.name !== "מנהל מערכת" && st.name !== "אדמין"))
-                                .map((st: any) => (
-                                  <SelectItem
-                                    key={st.id || st.name}
-                                    value={st.name || st.id?.toString()}
-                                    className="font-bold py-2.5 cursor-pointer text-right"
-                                  >
-                                    <span>{st.name}</span>
-                                  </SelectItem>
-                                ))}
+                                  .filter(
+                                    (st: any) =>
+                                      user?.is_admin ||
+                                      (st.name !== "מנהל מערכת" &&
+                                        st.name !== "אדמין"),
+                                  )
+                                  .map((st: any) => (
+                                    <SelectItem
+                                      key={st.id || st.name}
+                                      value={st.name || st.id?.toString()}
+                                      className="font-bold py-2.5 cursor-pointer text-right"
+                                    >
+                                      <span>{st.name}</span>
+                                    </SelectItem>
+                                  ))}
                               </SelectContent>
                             </Select>
                           </div>

@@ -258,23 +258,6 @@ export const StatsComparisonCard = forwardRef(
               <div className="flex items-center gap-2 min-w-0">
                 <CardTitle className="text-[11px] sm:text-base font-black text-foreground tracking-tight flex items-center flex-wrap gap-1.5 sm:gap-3 truncate">
                   <span>השוואת כוח אדם</span>
-                  {filterTags.length > 0 && (
-                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar ml-1">
-                      <div className="flex items-center gap-1.5 text-[9px] text-primary/60 font-black uppercase tracking-tight ml-1 hidden sm:flex">
-                        <Filter className="w-3 h-3" />
-                        <span>סינון פעיל:</span>
-                      </div>
-                      {filterTags.map((tag, idx) => (
-                        <Badge
-                          key={idx}
-                          variant="outline"
-                          className="text-[9px] h-5 px-2 font-black bg-primary/10 text-primary border-primary/30 shadow-sm whitespace-nowrap rounded-md hover:bg-primary/15 transition-all"
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
                 </CardTitle>
                 <TooltipProvider>
                   <Tooltip delayDuration={300}>
@@ -285,7 +268,7 @@ export const StatsComparisonCard = forwardRef(
                       className="max-w-[250px] text-right"
                       dir="rtl"
                     >
-                      <p className="font-bold mb-1">כיצד מחושב?</p>
+                    <p className="font-bold mb-1">כיצד מחושב?</p>
                       <ul className="text-xs space-y-1 list-disc list-inside">
                         <li>
                           <span className="font-semibold">נוכחים:</span> משרד, תגבור, קורס

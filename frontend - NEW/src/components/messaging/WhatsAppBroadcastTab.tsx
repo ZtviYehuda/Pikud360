@@ -1642,51 +1642,50 @@ export const WhatsAppBroadcastTab: React.FC = () => {
               </div>
             </div>
 
-            {/* Mobile Top Controls Bar: WhatsApp Connection Status + Direct Target Picker */}
-            <div className="flex sm:hidden items-center justify-between gap-2 pb-2.5 border-b border-border/30">
-              {gatewayStatus.status === "connected" ? (
-                <div className="flex items-center gap-1">
-                  <Badge
-                    variant="outline"
-                    className="text-[11px] font-bold border-emerald-500/30 text-emerald-600 bg-emerald-500/5 gap-1.5 py-1 px-2 rounded-xl"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    וואטסאפ מחובר
-                  </Badge>
+            {/* Mobile Top Controls Bar: WhatsApp Connection Status + Direct Target Picker (Flat & Clean) */}
+            <div className="flex sm:hidden items-center justify-between gap-2 py-0.5">
+              <div className="flex items-center gap-1">
+                {gatewayStatus.status === "connected" ? (
+                  <>
+                    <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 gap-1.5 py-1 px-2.5 rounded-xl flex items-center">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      וואטסאפ מחובר
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleGatewayLogout}
+                      className="h-7 px-1.5 text-[11px] font-bold text-destructive hover:text-destructive hover:bg-destructive/10 gap-0.5 rounded-lg cursor-pointer"
+                      title="נתק חשבון וואטסאפ"
+                    >
+                      <LogOut className="w-3 h-3" />
+                      <span>התנתק</span>
+                    </Button>
+                  </>
+                ) : (
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    onClick={handleGatewayLogout}
-                    className="h-7 px-1.5 text-[11px] font-bold text-destructive hover:text-destructive hover:bg-destructive/10 gap-0.5 rounded-lg cursor-pointer"
-                    title="נתק חשבון וואטסאפ"
+                    onClick={() => setShowQrModal(true)}
+                    className="h-7 text-xs font-semibold gap-1.5 rounded-xl border-border/40"
                   >
-                    <LogOut className="w-3 h-3" />
-                    <span>התנתק</span>
+                    <QrCode className="w-3 h-3" />
+                    חבר QR
                   </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowQrModal(true)}
-                  className="h-7 text-xs font-semibold gap-1.5 rounded-xl border-border/60"
-                >
-                  <QrCode className="w-3 h-3" />
-                  חבר QR
-                </Button>
-              )}
+                )}
+              </div>
 
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => setMobileTreeOpen(true)}
-                className="h-7 px-2.5 rounded-xl border-border/60 bg-muted/20 hover:bg-muted/40 text-xs font-bold gap-1 text-foreground cursor-pointer shadow-2xs"
+                className="h-8 px-2.5 rounded-xl bg-muted/40 hover:bg-muted/60 text-xs font-bold gap-1.5 text-foreground cursor-pointer shrink-0"
               >
                 <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
                 <span>
                   {selectedTargets.length + selectedCustomGroupIds.size + selectedIndividuals.size > 0
-                    ? `${selectedTargets.length + selectedCustomGroupIds.size + selectedIndividuals.size} נמענים`
+                    ? `${selectedTargets.length + selectedCustomGroupIds.size + selectedIndividuals.size} נמענים ▾`
                     : "בחר נמענים ▾"}
                 </span>
               </Button>
@@ -1950,26 +1949,28 @@ export const WhatsAppBroadcastTab: React.FC = () => {
               </div>
             )}
 
-            {/* Action Buttons Footer */}
-            <div className="pt-3 border-t border-border/30 flex flex-wrap sm:flex-nowrap items-center gap-2">
-              <Button
-                onClick={handleDirectWhatsAppShare}
-                disabled={!messageBody.trim()}
-                className="flex-1 h-12 text-sm font-bold bg-[#25D366] hover:bg-[#20ba59] text-white rounded-2xl shadow-sm transition-all active:scale-[0.99] cursor-pointer"
-              >
-                <WhatsAppIcon className="w-4 h-4 ml-2" />
-                שתף בוואטסאפ
-              </Button>
+            {/* Action Buttons Footer: Structured 2-Row Layout */}
+            <div className="pt-3 border-t border-border/30 space-y-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleDirectWhatsAppShare}
+                  disabled={!messageBody.trim()}
+                  className="flex-1 h-12 text-sm font-bold bg-[#25D366] hover:bg-[#20ba59] text-white rounded-2xl shadow-sm transition-all active:scale-[0.99] cursor-pointer gap-2"
+                >
+                  <WhatsAppIcon className="w-4 h-4 ml-1" />
+                  <span>שתף בוואטסאפ</span>
+                </Button>
 
-              <Button
-                onClick={handleCopyMessage}
-                disabled={!messageBody.trim()}
-                variant="outline"
-                className="h-12 px-4 text-xs sm:text-sm font-bold rounded-2xl border-border/50 hover:bg-muted/40 cursor-pointer"
-              >
-                <Copy className="w-3.5 h-3.5 ml-1.5" />
-                העתק
-              </Button>
+                <Button
+                  onClick={handleCopyMessage}
+                  disabled={!messageBody.trim()}
+                  variant="outline"
+                  className="h-12 px-4 text-xs sm:text-sm font-bold rounded-2xl border-border/50 hover:bg-muted/40 cursor-pointer gap-1.5"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>העתק</span>
+                </Button>
+              </div>
 
               <Button
                 onClick={handleSendInternalAlert}
@@ -1978,11 +1979,11 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                   resolvedRecipients.length === 0 ||
                   sendingInternal
                 }
-                variant="secondary"
-                className="h-12 px-4 text-xs sm:text-sm font-bold rounded-2xl cursor-pointer"
+                variant="outline"
+                className="w-full h-11 text-xs sm:text-sm font-bold rounded-2xl border border-border/50 bg-muted/20 hover:bg-muted/40 text-foreground cursor-pointer gap-2"
               >
-                <Bell className="w-3.5 h-3.5 ml-1.5" />
-                שידור במערכת ({resolvedRecipients.length})
+                <Bell className="w-3.5 h-3.5 text-primary" />
+                <span>שידור התראה במערכת ({resolvedRecipients.length} נמענים)</span>
               </Button>
             </div>
           </div>

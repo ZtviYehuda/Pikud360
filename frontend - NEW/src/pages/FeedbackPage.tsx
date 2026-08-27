@@ -23,6 +23,8 @@ import {
   Plus,
   Users,
   GitPullRequest,
+  ArrowRight,
+  RotateCcw,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
@@ -143,6 +145,7 @@ const FeedbackPage = () => {
   // System Updates State
   const [systemUpdates, setSystemUpdates] = useState<any[]>([]);
   const [isLoadingUpdates, setIsLoadingUpdates] = useState(false);
+  const [isCreatingTicket, setIsCreatingTicket] = useState(false);
   const [addUpdateOpen, setAddUpdateOpen] = useState(false);
   const [newUpdateVersion, setNewUpdateVersion] = useState("");
   const [newUpdateDate, setNewUpdateDate] = useState(
@@ -906,35 +909,6 @@ const FeedbackPage = () => {
           />
         </div>
         <div className="flex-1 min-h-0 flex flex-col">
-          {/* Mobile Messaging Sub-Tabs (Visible ONLY on Messaging pages on mobile) */}
-          {(activeTab === "messages" || activeTab === "whatsapp-broadcast") && (
-            <div className="sticky top-0 bg-background/95 backdrop-blur-md z-30 pt-0.5 pb-2 px-2.5 border-b border-border/40 md:hidden">
-              <div className="grid grid-cols-2 items-center gap-1.5 bg-muted/50 p-1 rounded-2xl border border-border/50 w-full shadow-2xs">
-                <TabItem
-                  icon={MessageSquare}
-                  label="צ'אט מפקדים"
-                  active={activeTab === "messages"}
-                  onClick={() => {
-                    setActiveTab("messages");
-                    setSearchParams({ tab: "messages" });
-                  }}
-                  badge={totalUnreadCount}
-                  className="flex-1 justify-center py-2 h-10 rounded-xl"
-                />
-                <TabItem
-                  icon={Send}
-                  label="וואטסאפ"
-                  active={activeTab === "whatsapp-broadcast"}
-                  onClick={() => {
-                    setActiveTab("whatsapp-broadcast");
-                    setSearchParams({ tab: "whatsapp-broadcast" });
-                  }}
-                  className="flex-1 justify-center py-2 h-10 rounded-xl"
-                />
-              </div>
-            </div>
-          )}
-
           {/* Main Card */}
           <main
             className={cn(
@@ -947,7 +921,9 @@ const FeedbackPage = () => {
             <div
               className={cn(
                 "flex flex-col flex-grow",
-                activeTab === "messages" ? "overflow-hidden flex-1 min-h-0" : "min-h-0",
+                activeTab === "messages"
+                  ? "overflow-hidden flex-1 min-h-0"
+                  : "min-h-0",
               )}
             >
               {/* Tab Content */}
@@ -1111,7 +1087,7 @@ const FeedbackPage = () => {
                               <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
                               <input
                                 type="text"
-                                placeholder="חיפוש פנייה לפי שם שוטר, נושא או תיאור..."
+                                placeholder="חיפוש פנייה..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full h-10 pr-10 pl-4 bg-background border border-border/40 rounded-xl text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground/50 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
@@ -1119,7 +1095,10 @@ const FeedbackPage = () => {
                             </div>
 
                             {/* Category Filter Popover Menu (shadcn) */}
-                            <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
+                            <Popover
+                              open={categoryPopoverOpen}
+                              onOpenChange={setCategoryPopoverOpen}
+                            >
                               <PopoverTrigger asChild>
                                 <Button
                                   variant="outline"
@@ -1133,7 +1112,9 @@ const FeedbackPage = () => {
                                   <div className="flex items-center gap-1.5 truncate">
                                     <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                                     <span className="truncate">
-                                      {categoryOptions.find((c) => c.value === adminCategoryFilter)?.label || "כל הסוגים"}
+                                      {categoryOptions.find(
+                                        (c) => c.value === adminCategoryFilter,
+                                      )?.label || "כל הסוגים"}
                                     </span>
                                   </div>
                                   <ChevronDown className="w-3 h-3 text-muted-foreground mr-1 opacity-60 shrink-0" />
@@ -1146,7 +1127,8 @@ const FeedbackPage = () => {
                               >
                                 <div className="space-y-1">
                                   {categoryOptions.map((opt) => {
-                                    const isSelected = adminCategoryFilter === opt.value;
+                                    const isSelected =
+                                      adminCategoryFilter === opt.value;
                                     return (
                                       <button
                                         key={opt.value}
@@ -1200,14 +1182,18 @@ const FeedbackPage = () => {
                           </div>
 
                           {/* Active Filter Glass Pill Banner */}
-                          {(adminCategoryFilter !== "all" || searchQuery.trim() !== "" || adminFilter !== "all") && (
+                          {(adminCategoryFilter !== "all" ||
+                            searchQuery.trim() !== "" ||
+                            adminFilter !== "all") && (
                             <div className="flex items-center justify-between p-2.5 px-3 rounded-2xl bg-card/80 backdrop-blur-md border border-border/60 shadow-xs transition-all animate-in fade-in slide-in-from-top-1 duration-200">
                               <div className="flex items-center gap-2 min-w-0">
                                 <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
                                   <Filter className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="flex items-center gap-1.5 truncate text-xs">
-                                  <span className="text-muted-foreground font-medium">סינון פעיל:</span>
+                                  <span className="text-muted-foreground font-medium">
+                                    סינון פעיל:
+                                  </span>
                                   <span className="font-bold text-foreground truncate">
                                     {adminFilter === "pending"
                                       ? "ממתין לטיפול"
@@ -1364,11 +1350,13 @@ const FeedbackPage = () => {
                             {availableCommanders
                               .filter((contact: any) => {
                                 const name =
-                                  contact.first_name && contact.first_name !== "צוות"
+                                  contact.first_name &&
+                                  contact.first_name !== "צוות"
                                     ? `${contact.first_name} ${contact.last_name || ""}`.trim()
                                     : contact.is_admin
                                       ? "צוות תמיכה"
-                                      : `${contact.first_name || ""} ${contact.last_name || ""}`.trim() || contact.employee_number;
+                                      : `${contact.first_name || ""} ${contact.last_name || ""}`.trim() ||
+                                        contact.employee_number;
                                 return (
                                   !contactSearch ||
                                   name
@@ -1380,10 +1368,13 @@ const FeedbackPage = () => {
                                 const isSelected =
                                   selectedChatContact?.id === contact.id;
                                 const isGenericSupport =
-                                  contact.is_admin && (!contact.first_name || contact.first_name === "צוות");
+                                  contact.is_admin &&
+                                  (!contact.first_name ||
+                                    contact.first_name === "צוות");
                                 const displayName = isGenericSupport
                                   ? "צוות תמיכה"
-                                  : `${contact.first_name || ""} ${contact.last_name || ""}`.trim() || contact.employee_number;
+                                  : `${contact.first_name || ""} ${contact.last_name || ""}`.trim() ||
+                                    contact.employee_number;
                                 const lastMsg = internalMessages.find(
                                   (m: any) =>
                                     String(m.other_id) === String(contact.id),
@@ -1529,14 +1520,23 @@ const FeedbackPage = () => {
                                   {/* Name & Subtitle */}
                                   <div className="min-w-0 text-right">
                                     <h4 className="font-black text-sm text-foreground truncate">
-                                      {selectedChatContact.is_admin && (!selectedChatContact.first_name || selectedChatContact.first_name === "צוות")
+                                      {selectedChatContact.is_admin &&
+                                      (!selectedChatContact.first_name ||
+                                        selectedChatContact.first_name ===
+                                          "צוות")
                                         ? "צוות תמיכה"
-                                        : `${selectedChatContact.first_name || ""} ${selectedChatContact.last_name || ""}`.trim() || selectedChatContact.employee_number}
+                                        : `${selectedChatContact.first_name || ""} ${selectedChatContact.last_name || ""}`.trim() ||
+                                          selectedChatContact.employee_number}
                                     </h4>
                                     <p className="text-[10px] text-muted-foreground truncate font-semibold">
-                                      {selectedChatContact.is_admin && (!selectedChatContact.first_name || selectedChatContact.first_name === "צוות")
+                                      {selectedChatContact.is_admin &&
+                                      (!selectedChatContact.first_name ||
+                                        selectedChatContact.first_name ===
+                                          "צוות")
                                         ? "צוות תמיכה וניהול פניות"
-                                        : selectedChatContact.rank || selectedChatContact.department_name || "מנהל מערכת"}
+                                        : selectedChatContact.rank ||
+                                          selectedChatContact.department_name ||
+                                          "מנהל מערכת"}
                                     </p>
                                   </div>
                                 </div>
@@ -2812,73 +2812,111 @@ const FeedbackPage = () => {
             </>
           )}
         </AnimatePresence>
-        {/* Mobile Bottom Navigation Bar - Standard Fixed */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border flex justify-around items-center h-16 px-2 safe-area-bottom">
-          {isAdmin && (
-            <MobileBottomNavLink
-              label="ניהול"
-              icon={Settings}
-              active={activeTab === "admin-view"}
-              onClick={() => {
-                setActiveTab("admin-view");
-                setSearchParams({ tab: "admin-view" });
-              }}
-            />
-          )}
-          {isAdmin && (
-            <MobileBottomNavLink
-              label="גיבוי"
-              icon={ShieldCheck}
-              active={activeTab === "chat-admin"}
-              onClick={() => {
-                setActiveTab("chat-admin");
-                setSearchParams({ tab: "chat-admin" });
-              }}
-            />
-          )}
-          <MobileBottomNavLink
-            label="הודעות"
-            icon={MessageSquare}
-            active={activeTab === "messages"}
-            onClick={() => {
-              setActiveTab("messages");
-              setSearchParams({ tab: "messages" });
-            }}
-            badge={totalUnreadCount}
-          />
-          {!isAdmin && (
-            <MobileBottomNavLink
-              label="הפניות שלי"
-              icon={History}
-              active={activeTab === "my-tickets"}
-              onClick={() => {
-                setActiveTab("my-tickets");
-                setSearchParams({ tab: "my-tickets" });
-                fetchMyTickets();
-              }}
-            />
-          )}
-          {!isAdmin && (
-            <MobileBottomNavLink
-              label="פנייה"
-              icon={Send}
-              active={activeTab === "send"}
-              onClick={() => {
-                setActiveTab("send");
-                setSearchParams({ tab: "send" });
-              }}
-            />
-          )}
-          {!isAdmin && (
-            <MobileBottomNavLink
-              label="מה חדש?"
-              icon={Activity}
-              active={activeTab === "whats-new"}
-              onClick={() => {
-                setActiveTab("whats-new");
-                setSearchParams({ tab: "whats-new" });
-              }}
-            />
+        {/* Mobile Bottom Navigation Bar - Dynamic Contextual */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border/50 flex justify-around items-center h-16 px-2 safe-area-bottom">
+          {activeTab === "messages" || activeTab === "whatsapp-broadcast" ? (
+            <>
+              <MobileBottomNavLink
+                label="חזרה"
+                icon={ArrowRight}
+                active={false}
+                onClick={() => {
+                  const fallbackTab = isAdmin ? "admin-view" : "my-tickets";
+                  setActiveTab(fallbackTab);
+                  setSearchParams({ tab: fallbackTab });
+                }}
+              />
+              <MobileBottomNavLink
+                label="צ'אט מפקדים"
+                icon={MessageSquare}
+                active={activeTab === "messages"}
+                onClick={() => {
+                  setActiveTab("messages");
+                  setSearchParams({ tab: "messages" });
+                }}
+                badge={totalUnreadCount}
+              />
+              <MobileBottomNavLink
+                label="וואטסאפ"
+                icon={Send}
+                active={activeTab === "whatsapp-broadcast"}
+                onClick={() => {
+                  setActiveTab("whatsapp-broadcast");
+                  setSearchParams({ tab: "whatsapp-broadcast" });
+                }}
+              />
+            </>
+          ) : (
+            <>
+              {isAdmin && (
+                <MobileBottomNavLink
+                  label="ניהול"
+                  icon={Settings}
+                  active={activeTab === "admin-view"}
+                  onClick={() => {
+                    setActiveTab("admin-view");
+                    setSearchParams({ tab: "admin-view" });
+                  }}
+                />
+              )}
+              {isAdmin && (
+                <MobileBottomNavLink
+                  label="גיבוי"
+                  icon={ShieldCheck}
+                  active={activeTab === "chat-admin"}
+                  onClick={() => {
+                    setActiveTab("chat-admin");
+                    setSearchParams({ tab: "chat-admin" });
+                  }}
+                />
+              )}
+              <MobileBottomNavLink
+                label="הודעות"
+                icon={MessageSquare}
+                active={
+                  activeTab === "messages" || activeTab === "whatsapp-broadcast"
+                }
+                onClick={() => {
+                  setActiveTab("messages");
+                  setSearchParams({ tab: "messages" });
+                }}
+                badge={totalUnreadCount}
+              />
+              {!isAdmin && (
+                <MobileBottomNavLink
+                  label="הפניות שלי"
+                  icon={History}
+                  active={activeTab === "my-tickets"}
+                  onClick={() => {
+                    setActiveTab("my-tickets");
+                    setSearchParams({ tab: "my-tickets" });
+                    fetchMyTickets();
+                  }}
+                />
+              )}
+              {!isAdmin && (
+                <MobileBottomNavLink
+                  label="פנייה"
+                  icon={Send}
+                  active={activeTab === "send"}
+                  onClick={() => {
+                    setActiveTab("send");
+                    setSearchParams({ tab: "send" });
+                  }}
+                />
+              )}
+              {!isAdmin && (
+                <MobileBottomNavLink
+                  label="מה חדש?"
+                  icon={Activity}
+                  active={activeTab === "whats-new"}
+                  onClick={() => {
+                    setActiveTab("whats-new");
+                    setSearchParams({ tab: "whats-new" });
+                  }}
+                />
+              )}
+            </>
           )}
         </div>
       </div>
@@ -2910,8 +2948,8 @@ function TabItem({
       className={cn(
         "relative flex items-center gap-2 h-9 px-3.5 rounded-xl transition-all font-semibold text-xs whitespace-nowrap shrink-0 select-none cursor-pointer",
         active
-          ? "bg-primary text-primary-foreground shadow-sm font-black border border-primary/40"
-          : "text-muted-foreground hover:text-foreground hover:bg-background/40",
+          ? "bg-background text-foreground font-bold"
+          : "text-muted-foreground hover:text-foreground",
         className,
       )}
     >
@@ -2919,17 +2957,17 @@ function TabItem({
         <Icon
           className={cn(
             "w-4 h-4 shrink-0 transition-colors",
-            active ? "text-primary-foreground" : "text-muted-foreground",
+            active ? "text-primary" : "text-muted-foreground",
           )}
         />
       )}
-      <span className={cn(active && "font-black")}>{label}</span>
+      <span className={cn(active && "font-bold text-foreground")}>{label}</span>
       {badge !== undefined && badge > 0 && (
         <span
           className={cn(
             "text-[10px] font-black h-4 min-w-[16px] px-1.5 rounded-full flex items-center justify-center leading-none",
             active
-              ? "bg-background text-primary"
+              ? "bg-primary/10 text-primary"
               : "bg-destructive text-destructive-foreground",
           )}
         >
