@@ -98,9 +98,24 @@ export const useEmployees = () => {
         const { data } = await apiClient.get<any>(
           `${endpoints.EMPLOYEES_BASE_ENDPOINT}?${params}`,
         );
-        const list = Array.isArray(data)
+        const rawList = Array.isArray(data)
           ? data
           : (data?.data || data?.employees || data?.items || []);
+        const list = rawList.filter((emp: any) => {
+          const empNum = (emp.employee_number || emp.employeeNumber || "").toString().toUpperCase();
+          const first = (emp.first_name || emp.firstName || "");
+          const last = (emp.last_name || emp.lastName || "");
+          const name = `${first} ${last}`;
+          if (
+            empNum === "ADMIN_SUPPORT" ||
+            empNum.includes("ADMIN") ||
+            name.includes("צוות תמיכה") ||
+            name.includes("ADMIN_SUPPORT")
+          ) {
+            return false;
+          }
+          return true;
+        });
         setEmployees(list);
         setError(null);
       } catch (err: any) {

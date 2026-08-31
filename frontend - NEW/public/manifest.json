@@ -1,7 +1,7 @@
 {
-  "short_name": "UNIT",
-  "name": "UNIT - מערכת ניהול ושליטה",
-  "description": "UNIT - מערכת ניהול, נוכחות ושליטה מבצעית",
+  "short_name": "The Office",
+  "name": "The Office - מערכת ניהול ושליטה",
+  "description": "The Office - מערכת ניהול, נוכחות ושליטה מבצעית",
   "icons": [
     {
       "src": "/pwa-192x192.png",

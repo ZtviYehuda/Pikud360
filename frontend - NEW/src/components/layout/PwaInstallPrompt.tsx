@@ -113,7 +113,7 @@ export function PwaInstallPrompt() {
 
               <div className="space-y-1.5 flex-1 pr-1">
                 <h3 className="font-black text-[15px] tracking-tight text-white">
-                  התקנת אפליקציית Unit
+                  התקנת אפליקציית The Office
                 </h3>
                 <p className="text-[13px] text-slate-300 leading-relaxed">
                   {isIOS ? (

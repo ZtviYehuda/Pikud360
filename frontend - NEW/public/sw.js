@@ -1,4 +1,4 @@
-const CACHE_NAME = 'the-office-cache-v3';
+const CACHE_NAME = 'unit-cache-v30';
 const OFFLINE_URL = '/offline.html';
 
 // Core assets to pre-cache immediately

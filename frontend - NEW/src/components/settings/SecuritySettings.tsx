@@ -20,6 +20,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+import React, { useState } from "react";
+import { TermsStatusModal } from "./TermsStatusModal";
+
 interface SecuritySettingsProps {
   user: any;
   passwordData: any;
@@ -47,6 +50,8 @@ export function SecuritySettings({
   onForgotPassword,
   handleConfirmCurrentPassword,
 }: SecuritySettingsProps) {
+  const [showTermsStatusModal, setShowTermsStatusModal] = useState(false);
+  const isAdmin = user?.is_admin || user?.username === "admin";
   // Calculate days since last password change
   const daysSinceChange = user?.last_password_change
     ? Math.floor(
@@ -302,6 +307,19 @@ export function SecuritySettings({
                 color="text-amber-600"
               />
 
+              {isAdmin && (
+                <div className="pt-4 sm:pt-6 border-t border-border/40">
+                  <Button
+                    type="button"
+                    onClick={() => setShowTermsStatusModal(true)}
+                    className="w-full h-12 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-2xl shadow-lg shadow-amber-500/20 text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all"
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    מעקב אישור תקנון משתמשים (צוות תמיכה בלבד) 🛡️
+                  </Button>
+                </div>
+              )}
+
               <div className="pt-4 sm:pt-8 border-t border-primary/5">
                 <div className="p-4 sm:p-6 bg-primary/5 rounded-2xl sm:rounded-[2.5rem] border border-border/40 relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16 transition-all group-hover:bg-primary/20" />
@@ -316,6 +334,10 @@ export function SecuritySettings({
         </div>
       </div>
 
+      <TermsStatusModal
+        open={showTermsStatusModal}
+        onOpenChange={setShowTermsStatusModal}
+      />
     </div>
   );
 }

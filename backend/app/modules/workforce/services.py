@@ -338,6 +338,12 @@ class WorkforceService:
         is_admin = (ctx.scope_type == ScopeType.GLOBAL) or (str(operator_user_id) == "admin")
 
         for emp in all_emps:
+            emp_num = (emp.employee_number or "").upper()
+            first = (emp.first_name or "")
+            last = (emp.last_name or "")
+            if emp_num == "ADMIN_SUPPORT" or "ADMIN" in emp_num or "תמיכה" in first or "תמיכה" in last:
+                continue
+
             # If not admin, the commander/user must not see their own record in the workforce management list
             if not is_admin:
                 if str(emp.user_id) == str(operator_user_id) or str(emp.id) == str(operator_user_id):

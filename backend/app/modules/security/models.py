@@ -15,6 +15,8 @@ class User:
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None
+    terms_accepted: bool = False
+    terms_accepted_at: Optional[datetime] = None
 
 @dataclass
 class UserSession:

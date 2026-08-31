@@ -78,7 +78,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md font-sans" dir="rtl">
+      <DialogContent className="sm:max-w-md font-sans p-4 sm:p-6 rounded-t-[2.2rem] rounded-b-none sm:rounded-2xl" dir="rtl">
         <DialogHeader className="text-right">
           <DialogTitle className="text-lg font-bold flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
@@ -93,7 +93,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="לדוגמה: צוות מבצעי צפון"
+              placeholder="צוות מבצעי צפון"
               className="h-10 rounded-xl text-xs"
             />
           </div>

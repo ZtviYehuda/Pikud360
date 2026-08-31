@@ -89,7 +89,7 @@ export function RestorationRequestDialog({
             </Label>
             <Textarea
               id="reason"
-              placeholder="לדוגמה: צורך בבירור משמעתי, השלמת דוחות חודשיים..."
+              placeholder="צורך בבירור משמעתי, השלמת דוחות חודשיים..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               className="resize-none min-h-[140px] bg-muted/30 border-border/50 rounded-2xl focus:ring-primary/20 p-4 text-sm leading-relaxed"

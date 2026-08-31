@@ -3,6 +3,7 @@ import apiClient from "@/config/api.client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Loader2,
   AlertCircle,
@@ -13,6 +14,7 @@ import {
   EyeOff,
   Crosshair,
   Fingerprint,
+  ShieldAlert,
   Sun,
   Moon,
 } from "lucide-react";
@@ -22,6 +24,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { PinVerificationModal } from "@/components/auth/PinVerificationModal";
+import { TermsModal } from "@/components/auth/TermsModal";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 interface LockedUser {
@@ -254,6 +257,10 @@ export default function LoginPage() {
   const { theme, setTheme, accentColor } = useTheme();
   const [isBiometricAvailable, setIsBiometricAvailable] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState<boolean>(() => {
+    return localStorage.getItem("the_office_terms_accepted_v1") === "true";
+  });
   const [pinUsername, setPinUsername] = useState("");
   const { login, refreshUser } = useAuthContext();
 
@@ -528,6 +535,19 @@ export default function LoginPage() {
     }
   }, []);
 
+  // Check if terms were previously accepted for entered username
+  useEffect(() => {
+    if (username.trim()) {
+      const u = username.trim();
+      const isAccepted =
+        localStorage.getItem(`terms_accepted_${u}`) === "true" ||
+        localStorage.getItem("the_office_terms_accepted_v1") === "true";
+      if (isAccepted) {
+        setHasAcceptedTerms(true);
+      }
+    }
+  }, [username]);
+
   // Save credentials after successful login (triggers browser's native biometric save)
   const saveCredentials = async (uname: string, pass: string) => {
     if (!isCredentialManagerSupported) return;
@@ -548,6 +568,12 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
+    if (!hasAcceptedTerms) {
+      setError("על מנת להתחבר למערכת, חובה לקרוא ולאשר את תקנון המערכת והנחיות אבטחת מידע");
+      setShowTermsModal(true);
+      return;
+    }
+
     if (!username.trim() || !password.trim()) {
       setError("יש למלא שם משתמש וסיסמה");
       return;
@@ -560,6 +586,15 @@ export default function LoginPage() {
       const trimmedPass = password.trim();
       const success = await login(trimmedUser, trimmedPass);
       if (success) {
+        // Record terms acceptance in DB & localStorage permanently for this user
+        localStorage.setItem("the_office_terms_accepted_v1", "true");
+        localStorage.setItem(`terms_accepted_${trimmedUser}`, "true");
+        try {
+          await apiClient.post("/security/accept-terms");
+        } catch (e) {
+          console.log("Terms DB recording status:", e);
+        }
+
         // Save credentials for biometric login next time
         await saveCredentials(trimmedUser, trimmedPass);
         navigate("/", { replace: true });
@@ -796,6 +831,41 @@ export default function LoginPage() {
                       )}
                     </AnimatePresence>
 
+                    {/* Mandatory Terms Agreement Checkbox */}
+                    <div className="flex items-start gap-2.5 text-right select-none pt-1">
+                      <Checkbox
+                        id="terms-checkbox-locked"
+                        checked={hasAcceptedTerms}
+                        onCheckedChange={(checked) => {
+                          const val = !!checked;
+                          setHasAcceptedTerms(val);
+                          if (val) {
+                            localStorage.setItem("the_office_terms_accepted_v1", "true");
+                            setError("");
+                          } else {
+                            localStorage.removeItem("the_office_terms_accepted_v1");
+                          }
+                        }}
+                        className="mt-0.5 shrink-0 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 cursor-pointer"
+                      />
+                      <label
+                        htmlFor="terms-checkbox-locked"
+                        className="text-xs text-muted-foreground leading-snug cursor-pointer font-medium"
+                      >
+                        אישור{" "}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowTermsModal(true);
+                          }}
+                          className="font-bold text-primary underline hover:opacity-80 inline-flex items-center gap-0.5 cursor-pointer"
+                        >
+                          תקנון המערכת והנחיות אבטחת מידע
+                        </button>
+                      </label>
+                    </div>
+
                     <div className="flex gap-2">
                       {isBiometricAvailable && (
                         <Button
@@ -989,6 +1059,41 @@ export default function LoginPage() {
                       )}
                     </AnimatePresence>
 
+                    {/* Mandatory Terms Agreement Checkbox */}
+                    <div className="flex items-start gap-2.5 text-right select-none pt-1">
+                      <Checkbox
+                        id="terms-checkbox-regular"
+                        checked={hasAcceptedTerms}
+                        onCheckedChange={(checked) => {
+                          const val = !!checked;
+                          setHasAcceptedTerms(val);
+                          if (val) {
+                            localStorage.setItem("the_office_terms_accepted_v1", "true");
+                            setError("");
+                          } else {
+                            localStorage.removeItem("the_office_terms_accepted_v1");
+                          }
+                        }}
+                        className="mt-0.5 shrink-0 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 cursor-pointer"
+                      />
+                      <label
+                        htmlFor="terms-checkbox-regular"
+                        className="text-xs text-muted-foreground leading-snug cursor-pointer font-medium"
+                      >
+                        קראתי ואישרתי את{" "}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowTermsModal(true);
+                          }}
+                          className="font-bold text-primary underline hover:opacity-80 inline-flex items-center gap-0.5 cursor-pointer"
+                        >
+                          תקנון המערכת והנחיות אבטחת מידע
+                        </button>
+                      </label>
+                    </div>
+
                     {/* Submit Button & Biometric */}
                     <div className="pt-2 flex gap-3">
                       {isBiometricAvailable && (
@@ -1033,7 +1138,16 @@ export default function LoginPage() {
             {/* Form Footer - Removed */}
           </div>
 
-          <div className="mt-2 text-center px-4">
+          <div className="mt-3 flex flex-col items-center justify-center gap-2 text-center px-4">
+            <button
+              type="button"
+              onClick={() => setShowTermsModal(true)}
+              className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground/90 hover:text-primary transition-colors cursor-pointer bg-muted/20 hover:bg-muted/40 px-3 py-1.5 rounded-full border border-border/40"
+            >
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
+              <span>תקנון המערכת והנחיות אבטחת מידע</span>
+            </button>
+
             <p className="text-[10px] text-muted-foreground/70 font-medium font-mono uppercase tracking-[0.2em] leading-relaxed select-none">
               © 2026 • THE OFFICE • v1.0.4
             </p>
@@ -1047,6 +1161,18 @@ export default function LoginPage() {
         onClose={() => setShowPinModal(false)}
         onVerify={handleVerifyPin}
         username={pinUsername}
+        theme={theme}
+      />
+
+      {/* Terms & Regulations Modal */}
+      <TermsModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        onAccept={() => {
+          setHasAcceptedTerms(true);
+          localStorage.setItem("the_office_terms_accepted_v1", "true");
+          setError("");
+        }}
         theme={theme}
       />
     </div>

@@ -240,6 +240,8 @@ def login():
         "section_name": sect_name,
         "team_name": team_name,
         "role_name": "מנהל מערכת ראשי" if is_admin else ("מפקד" if is_commander else "שוטר"),
+        "terms_accepted": bool(user.terms_accepted),
+        "terms_accepted_at": user.terms_accepted_at.isoformat() if user.terms_accepted_at else None,
     }
 
     response = jsonify({
@@ -920,6 +922,89 @@ def exit_impersonation():
         "success": True,
         "message": "חזרת בהצלחה לחשבון מנהל המערכת"
     }), 200
+
+
+@security_bp.route("/accept-terms", methods=["POST"])
+@jwt_required()
+def accept_terms():
+    """Marks terms as accepted for the currently logged in user in security.users DB."""
+    current_user_id = get_jwt_identity()
+    if not current_user_id:
+        return jsonify({"success": False, "error": "משתמש לא מחובר"}), 401
+        
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE security.users 
+                    SET terms_accepted = TRUE, terms_accepted_at = NOW(), updated_at = NOW()
+                    WHERE id::text = %s;
+                """, (str(current_user_id),))
+                conn.commit()
+        return jsonify({
+            "success": True,
+            "message": "תקנון המערכת והנחיות אבטחת המידע אושרו בהצלחה!"
+        }), 200
+    except Exception as e:
+        logger.error(f"Error accepting terms for user {current_user_id}: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@security_bp.route("/terms-status", methods=["GET"])
+@jwt_required()
+def get_users_terms_status():
+    """Returns terms acceptance status for all users in the system (Support team / Admin only)."""
+    current_user_id = get_jwt_identity()
+    claims = get_jwt() or {}
+    roles = claims.get("roles") or []
+    
+    # Check if user is admin
+    user = user_repo.get_by_id(current_user_id) if current_user_id else None
+    is_admin = (user and user.username == "admin") or ("ADMIN" in roles)
+    if not is_admin:
+        return jsonify({"success": False, "error": "גישה מורשית לצוות תמיכה בלבד"}), 403
+
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT 
+                        u.id::text,
+                        u.username,
+                        u.email,
+                        u.terms_accepted,
+                        u.terms_accepted_at,
+                        u.created_at,
+                        COALESCE(e.first_name, '') as first_name,
+                        COALESCE(e.last_name, '') as last_name,
+                        COALESCE(e.position, 'משתמש מערכת') as position
+                    FROM security.users u
+                    LEFT JOIN workforce.employees e ON e.user_id = u.id
+                    WHERE u.deleted_at IS NULL
+                    ORDER BY u.created_at DESC;
+                """)
+                rows = cur.fetchall()
+                results = []
+                for r in rows:
+                    results.append({
+                        "id": r[0],
+                        "username": r[1],
+                        "email": r[2],
+                        "terms_accepted": bool(r[3]),
+                        "terms_accepted_at": r[4].isoformat() if r[4] else None,
+                        "created_at": r[5].isoformat() if r[5] else None,
+                        "first_name": r[6],
+                        "last_name": r[7],
+                        "position": r[8]
+                    })
+        return jsonify({
+            "success": True,
+            "users": results
+        }), 200
+    except Exception as e:
+        logger.error(f"Error fetching terms status list: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 
 

@@ -528,7 +528,7 @@ export function ProfileSettings({
                         })
                       }
                       className="h-11 sm:h-13 bg-background/30 rounded-xl border-border/40 pl-4 font-bold text-sm sm:text-base focus:bg-background/80 transition-all"
-                      placeholder="לדוגמה: משה כהן"
+                      placeholder="משה כהן"
                     />
                   </InputItem>
                 </div>

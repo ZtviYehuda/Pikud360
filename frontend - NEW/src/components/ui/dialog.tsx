@@ -70,6 +70,11 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
 }) {
+  const [translateY, setTranslateY] = React.useState(0);
+  const [isSwiping, setIsSwiping] = React.useState(false);
+  const touchStartY = React.useRef(0);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
   // Mobile popstate back-button interceptor:
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -100,16 +105,65 @@ function DialogContent({
     };
   }, []);
 
+  const triggerClose = () => {
+    const escapeEvent = new KeyboardEvent("keydown", {
+      key: "Escape",
+      code: "Escape",
+      keyCode: 27,
+      which: 27,
+      bubbles: true,
+      cancelable: true,
+    });
+    document.dispatchEvent(escapeEvent);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (typeof window !== "undefined" && window.innerWidth >= 640) return;
+    const target = contentRef.current;
+    if (!target || target.scrollTop <= 5) {
+      touchStartY.current = e.touches[0].clientY;
+      setIsSwiping(true);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isSwiping) return;
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - touchStartY.current;
+    if (deltaY > 0) {
+      setTranslateY(deltaY);
+    } else {
+      setTranslateY(0);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isSwiping) return;
+    setIsSwiping(false);
+    if (translateY > 90) {
+      triggerClose();
+    }
+    setTranslateY(0);
+  };
+
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
       <DialogPrimitive.Content
+        ref={contentRef}
         data-slot="dialog-content"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          transform: translateY > 0 ? `translateY(${translateY}px)` : undefined,
+          transition: isSwiping ? "none" : "transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)",
+          ...(props.style || {}),
+        }}
         className={cn(
-          // ── Mobile: Native Bottom Sheet ──
-          "bg-background text-foreground fixed z-50 flex flex-col w-full outline-none overflow-hidden border-none",
-          // Edge-to-edge, dynamic height, safe-area bottom padding
-          "bottom-0 left-0 right-0 max-h-[92svh] rounded-t-2xl",
+          // ── Mobile: Native Edge-to-Edge Bottom Sheet ──
+          "bg-background text-foreground fixed z-50 flex flex-col outline-none overflow-y-auto custom-scrollbar border-none shadow-2xl transition-all",
+          "bottom-0 left-0 right-0 w-full max-w-full max-h-[94dvh] rounded-t-[2.2rem] rounded-b-none p-4 sm:p-6",
           // Mobile slide-up animation
           "data-[state=open]:animate-slide-up-mobile data-[state=closed]:animate-slide-down-mobile",
           // ── Desktop: Centered Modal ──
@@ -120,7 +174,13 @@ function DialogContent({
         )}
         {...props}
       >
+        {/* Swipe Handle Indicator at top on Mobile */}
+        <div className="w-full pt-1 pb-3 flex justify-center items-center shrink-0 sm:hidden touch-none select-none">
+          <div className="w-12 h-1.5 rounded-full bg-foreground/20 hover:bg-foreground/30 transition-colors" />
+        </div>
+
         {children}
+
         {/* Close button: hidden on mobile (drag handle replaces it), visible on desktop */}
         {showCloseButton && (
           <DialogPrimitive.Close

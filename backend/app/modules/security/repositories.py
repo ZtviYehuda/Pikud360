@@ -61,12 +61,14 @@ class UserRepository(BaseRepository[User, str]):
             locked_until=row[7],
             created_at=row[8],
             updated_at=row[9],
-            deleted_at=row[10]
+            deleted_at=row[10],
+            terms_accepted=row[11] if len(row) > 11 and row[11] is not None else False,
+            terms_accepted_at=row[12] if len(row) > 12 else None
         )
 
     def get_by_id(self, entity_id: str) -> Optional[User]:
         query = """
-            SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at
+            SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at, terms_accepted, terms_accepted_at
             FROM security.users
             WHERE id::text = %s AND deleted_at IS NULL;
         """
@@ -83,19 +85,18 @@ class UserRepository(BaseRepository[User, str]):
 
     def get_by_username(self, username: str) -> Optional[User]:
         query = """
-            SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at
+            SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at, terms_accepted, terms_accepted_at
             FROM security.users
             WHERE (
                 LOWER(username) = LOWER(%s)
                 OR LOWER(REPLACE(username, ' ', '_')) = LOWER(REPLACE(%s, ' ', '_'))
                 OR LOWER(REPLACE(username, ' ', '.')) = LOWER(REPLACE(%s, ' ', '.'))
-                OR (LOWER(%s) IN ('ravit', 'ravit_admin', 'ravit.admin', 'ravit admin') AND LOWER(username) IN ('ravit admin', 'ravit_admin', 'ravit.admin', 'ravit'))
             ) AND deleted_at IS NULL;
         """
         try:
             with get_db_connection() as conn:
                 with conn.cursor() as cur:
-                    cur.execute(query, (username.strip(), username.strip(), username.strip(), username.strip()))
+                    cur.execute(query, (username.strip(), username.strip(), username.strip()))
                     row = cur.fetchone()
                     if row:
                         return self._row_to_entity(row)
@@ -105,7 +106,7 @@ class UserRepository(BaseRepository[User, str]):
 
     def get_by_username_and_tenant(self, username: str, tenant_id: str) -> Optional[User]:
         query = """
-            SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at
+            SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at, terms_accepted, terms_accepted_at
             FROM security.users
             WHERE LOWER(username) = LOWER(%s) AND tenant_id = %s AND deleted_at IS NULL;
         """
@@ -119,7 +120,7 @@ class UserRepository(BaseRepository[User, str]):
 
     def get_by_email_and_tenant(self, email: str, tenant_id: str) -> Optional[User]:
         query = """
-            SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at
+            SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at, terms_accepted, terms_accepted_at
             FROM security.users
             WHERE LOWER(email) = LOWER(%s) AND tenant_id = %s AND deleted_at IS NULL;
         """
@@ -133,7 +134,7 @@ class UserRepository(BaseRepository[User, str]):
 
     def get_by_email(self, email: str) -> Optional[User]:
         query = """
-            SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at
+            SELECT id, tenant_id, username, email, password_hash, is_active, failed_login_attempts, locked_until, created_at, updated_at, deleted_at, terms_accepted, terms_accepted_at
             FROM security.users
             WHERE LOWER(email) = LOWER(%s) AND deleted_at IS NULL;
         """

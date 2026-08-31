@@ -2723,7 +2723,7 @@ const FeedbackPage = () => {
                         type="text"
                         value={newUpdateVersion}
                         onChange={(e) => setNewUpdateVersion(e.target.value)}
-                        placeholder="לדוגמה: v2.4.1"
+                        placeholder="v2.4.1"
                         className="w-full h-11 px-3 bg-background border border-border/50 rounded-xl text-sm font-bold text-foreground focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                         dir="ltr"
                       />

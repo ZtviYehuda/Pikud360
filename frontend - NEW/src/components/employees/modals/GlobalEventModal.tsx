@@ -409,7 +409,7 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
               </span>
             </Label>
             <Textarea
-              placeholder="לדוגמה: יום מחלקה..."
+              placeholder="יום מחלקה..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
               className="resize-none min-h-[80px] bg-background border-border/50 rounded-xl p-3 text-sm leading-relaxed"

@@ -572,7 +572,7 @@ export function StatusAndServiceSettings() {
                 <Input
                   value={editingStatus.name}
                   onChange={(e) => setEditingStatus({ ...editingStatus, name: e.target.value })}
-                  placeholder="לדוגמה: משרד, חופשה, השתלמות..."
+                  placeholder="משרד, חופשה, השתלמות..."
                   className="h-10 rounded-xl font-bold text-sm bg-background"
                 />
               </div>
@@ -718,7 +718,7 @@ export function StatusAndServiceSettings() {
                   onChange={(e) =>
                     setEditingServiceType({ ...editingServiceType, name: e.target.value })
                   }
-                  placeholder='לדוגמה: קבע - קצין, שירות לאומי, שח"מ...'
+                  placeholder='קבע - קצין, שירות לאומי, שח"מ...'
                   className="h-10 rounded-xl font-bold text-sm bg-background"
                 />
               </div>

@@ -30,7 +30,7 @@ export const ImpersonationBanner = () => {
       localStorage.setItem("token", adminToken);
       localStorage.removeItem("admin_token");
       localStorage.removeItem("dashboard_filters");
-      window.location.replace("/");
+      window.location.href = "/";
     } else {
       logout();
     }

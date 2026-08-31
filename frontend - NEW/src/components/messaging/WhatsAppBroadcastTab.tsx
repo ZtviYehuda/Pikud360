@@ -67,7 +67,24 @@ import type {
   Employee,
 } from "@/types/employee.types";
 
-const GATEWAY_URL = "http://localhost:3001";
+const getGatewayUrl = () => {
+  if (
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+  ) {
+    return "http://localhost:3001";
+  }
+  return "/api";
+};
+
+const getEndpoint = (path: string) => {
+  const base = getGatewayUrl();
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  if (base.endsWith("/api")) {
+    return cleanPath.startsWith("/api") ? cleanPath : `/api${cleanPath}`;
+  }
+  return `${base}${cleanPath.startsWith("/api") ? cleanPath : `/api${cleanPath}`}`;
+};
 
 
 
@@ -330,7 +347,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
   // Fetch Gateway Status
   const fetchGatewayStatus = useCallback(async () => {
     try {
-      const res = await fetch(`${GATEWAY_URL}/api/whatsapp/status`);
+      const res = await fetch(getEndpoint("/api/whatsapp/status"));
       if (res.ok) {
         const data = await res.json();
         setGatewayStatus((prev) => {
@@ -354,7 +371,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
 
   const handleGatewayLogout = async () => {
     try {
-      await fetch(`${GATEWAY_URL}/api/whatsapp/logout`, { method: "POST" });
+      await fetch(getEndpoint("/api/whatsapp/logout"), { method: "POST" });
       toast.info("הוואטסאפ נותק מהשרת");
       fetchGatewayStatus();
     } catch {
@@ -667,11 +684,35 @@ export const WhatsAppBroadcastTab: React.FC = () => {
     }
 
     const fullText = getFullFormattedMessage();
+
+    if (gatewayStatus.status === "connected") {
+      setAutoSending(true);
+      try {
+        const res = await fetch(getEndpoint("/api/whatsapp/send"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ target: group.link, message: fullText }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          toast.success(`ההודעה נשלחה בהצלחה לקבוצת ${group.name}`);
+          return;
+        }
+      } catch (err) {
+        console.error("Gateway group send error:", err);
+      } finally {
+        setAutoSending(false);
+      }
+    }
+
     await copyToClipboardSafe(fullText);
-    toast.success(`ההודעה הועתקה ללוח. פותח את קבוצת ${group.name}`, {
+    toast.info(`וואטסאפ אינו מחובר בסריקת QR. פותח את קבוצת ${group.name} בדפדפן...`, {
       duration: 4000,
     });
-    window.open(group.link, "_blank");
+    const win = window.open(group.link, "_blank");
+    if (!win || win.closed || typeof win.closed === "undefined") {
+      window.location.href = group.link;
+    }
   };
 
   const formatIsraeliPhone = (phone: string | null | undefined): string => {
@@ -720,18 +761,12 @@ export const WhatsAppBroadcastTab: React.FC = () => {
     }
   };
 
-  const handleAutoSendToGroup = async (target: OrgTarget) => {
+  const handleSendBroadcastToGroup = async (
+    target: OrgTarget,
+    link: string,
+  ) => {
     if (!messageBody.trim()) {
       toast.error("יש להזין תוכן להודעה");
-      return;
-    }
-
-    const key = `${target.level}_${target.id}`;
-    const link = groupLinks[key];
-
-    if (!link) {
-      handleOpenEditGroupLink(target);
-      toast.info(`אנא הגדר קישור לקבוצת הוואטסאפ של ${target.name}`);
       return;
     }
 
@@ -744,7 +779,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
     setAutoSending(true);
     try {
       const fullText = getFullFormattedMessage();
-      const res = await fetch(`${GATEWAY_URL}/api/whatsapp/send`, {
+      const res = await fetch(getEndpoint("/api/whatsapp/send"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ target: link, message: fullText }),
@@ -787,7 +822,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
       const fullText = getFullFormattedMessage();
       const targets = validOfficers.map((e) => e.phone_number!);
 
-      const res = await fetch(`${GATEWAY_URL}/api/whatsapp/broadcast`, {
+      const res = await fetch(getEndpoint("/api/whatsapp/broadcast"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ targets, message: fullText, delayMs: 400 }),
@@ -828,13 +863,37 @@ export const WhatsAppBroadcastTab: React.FC = () => {
     }
 
     const fullText = getFullFormattedMessage();
+
+    if (gatewayStatus.status === "connected") {
+      setAutoSending(true);
+      try {
+        const res = await fetch(getEndpoint("/api/whatsapp/send"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ target: link, message: fullText }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          toast.success(`ההודעה נשלחה בהצלחה לקבוצת ${target.name}`);
+          return;
+        }
+      } catch (err) {
+        console.error("Gateway group send error:", err);
+      } finally {
+        setAutoSending(false);
+      }
+    }
+
     await copyToClipboardSafe(fullText);
 
-    toast.success(`ההודעה הועתקה ללוח. פותח את קבוצת ${target.name}`, {
+    toast.info(`וואטסאפ אינו מחובר בסריקת QR. פותח את קבוצת ${target.name} בדפדפן...`, {
       duration: 4000,
     });
 
-    window.open(link, "_blank");
+    const win = window.open(link, "_blank");
+    if (!win || win.closed || typeof win.closed === "undefined") {
+      window.location.href = link;
+    }
   };
 
   const handleDirectWhatsAppShare = () => {
@@ -844,10 +903,13 @@ export const WhatsAppBroadcastTab: React.FC = () => {
     }
     const fullText = getFullFormattedMessage();
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(fullText)}`;
-    window.open(url, "_blank");
+    const win = window.open(url, "_blank");
+    if (!win || win.closed || typeof win.closed === "undefined") {
+      window.location.href = url;
+    }
   };
 
-  const handleOpenIndividualWhatsApp = (emp: Employee) => {
+  const handleOpenIndividualWhatsApp = async (emp: Employee) => {
     if (!messageBody.trim()) {
       toast.error("יש להזין תוכן להודעה");
       return;
@@ -864,7 +926,10 @@ export const WhatsAppBroadcastTab: React.FC = () => {
     const fullText = getFullFormattedMessage(empName);
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(fullText)}`;
 
-    window.open(url, "_blank");
+    const win = window.open(url, "_blank");
+    if (!win || win.closed || typeof win.closed === "undefined") {
+      window.location.href = url;
+    }
     setSentMap((prev) => ({ ...prev, [emp.id]: true }));
   };
 
@@ -1758,7 +1823,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                 נושא / כותרת (אופציונלי)
               </label>
               <Input
-                placeholder="לדוגמה: עדכון יומי, תזכורת נוכחות..."
+                placeholder="עדכון יומי, תזכורת נוכחות..."
                 value={messageTitle}
                 onChange={(e) => setMessageTitle(e.target.value)}
                 className="h-11 text-xs sm:text-sm rounded-2xl bg-background border-border/50 shadow-2xs"
@@ -2465,7 +2530,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                 שם הקבוצה: <span className="text-destructive">*</span>
               </label>
               <Input
-                placeholder="לדוגמה: צוות כוננות שבת, מפקדי תורנות, יחידת חילוץ..."
+                placeholder="צוות כוננות שבת, מפקדי תורנות, יחידת חילוץ..."
                 value={customGroupName}
                 onChange={(e) => setCustomGroupName(e.target.value)}
                 className="h-10 text-sm"

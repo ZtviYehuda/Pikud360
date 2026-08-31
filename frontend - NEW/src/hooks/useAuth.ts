@@ -100,9 +100,10 @@ export const useAuth = () => {
 
     localStorage.removeItem("token");
     localStorage.removeItem("admin_token");
+    localStorage.removeItem("dashboard_filters");
     setUser(null);
     if (window.location.pathname !== "/login") {
-      window.location.replace("/login");
+      window.location.href = "/login";
     }
   };
 

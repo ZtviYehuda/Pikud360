@@ -256,3 +256,67 @@ def search_messaging():
     except Exception as e:
         logger.error(f"Search error: {e}", exc_info=True)
         return jsonify({"conversations": [], "messages": [], "files": []}), 200
+
+
+# ==========================================
+# WHATSAPP GATEWAY PROXY ROUTES (For Mobile & Remote)
+# ==========================================
+
+import urllib.request
+import json
+
+LOCAL_GATEWAY_URL = "http://localhost:3001"
+
+@messaging_bp.route("/whatsapp/status", methods=["GET"])
+@messaging_bp.route("/employees/whatsapp/status", methods=["GET"])
+def whatsapp_proxy_status():
+    """Proxies status check to local WhatsApp Gateway daemon."""
+    try:
+        req = urllib.request.Request(f"{LOCAL_GATEWAY_URL}/api/whatsapp/status")
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            return jsonify(data), 200
+    except Exception as e:
+        logger.warning(f"WhatsApp gateway status check failed: {e}")
+        return jsonify({"status": "disconnected", "qr": None, "user": None}), 200
+
+
+@messaging_bp.route("/whatsapp/broadcast", methods=["POST"])
+@messaging_bp.route("/employees/whatsapp/broadcast", methods=["POST"])
+def whatsapp_proxy_broadcast():
+    """Proxies broadcast requests to local WhatsApp Gateway daemon."""
+    try:
+        data = request.get_json() or {}
+        req_data = json.dumps(data).encode("utf-8")
+        req = urllib.request.Request(
+            f"{LOCAL_GATEWAY_URL}/api/whatsapp/broadcast",
+            data=req_data,
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            resp_data = json.loads(resp.read().decode("utf-8"))
+            return jsonify(resp_data), 200
+    except Exception as e:
+        logger.error(f"WhatsApp gateway broadcast failed: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@messaging_bp.route("/whatsapp/send", methods=["POST"])
+@messaging_bp.route("/employees/whatsapp/send", methods=["POST"])
+def whatsapp_proxy_send():
+    """Proxies single message/group send to local WhatsApp Gateway daemon."""
+    try:
+        data = request.get_json() or {}
+        req_data = json.dumps(data).encode("utf-8")
+        req = urllib.request.Request(
+            f"{LOCAL_GATEWAY_URL}/api/whatsapp/send",
+            data=req_data,
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            resp_data = json.loads(resp.read().decode("utf-8"))
+            return jsonify(resp_data), 200
+    except Exception as e:
+        logger.error(f"WhatsApp gateway send failed: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
