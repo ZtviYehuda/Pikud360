@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AgeDistributionChartProps {
@@ -151,44 +152,41 @@ export const AgeDistributionChart = ({
   }, [chartData]);
 
   return (
-    <Card id="age-distribution-card" className="bg-card text-card-foreground rounded-2xl border border-border/40 flex flex-col overflow-hidden h-full relative transition-all shadow-none">
-      <div className="pt-4 pb-3 px-0 flex-1 flex flex-col relative overflow-visible">
-      
-      {/* Header */}
-      <div className="flex flex-row justify-between items-center gap-3 mb-4 relative z-10 px-5 sm:px-6">
-        <div className="flex gap-3 items-center min-w-0">
-          <div className="text-right flex flex-col min-w-0">
-            <h3 className="text-sm sm:text-base font-black text-foreground tracking-tight flex items-center flex-wrap gap-2 truncate">
-              <span>חתך גילאים</span>
-              {filterTags.length > 0 && (
-                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                  {filterTags.map((tag, idx) => (
-                    <Badge 
-                      key={idx} 
-                      variant="outline" 
-                      className="text-[9px] h-5 px-2 font-bold bg-background/25 text-primary border-primary/20 backdrop-blur-sm whitespace-nowrap rounded-md hover:bg-primary/5 transition-all animate-fade-in"
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
+    <Card id="age-distribution-card" className="bg-card/70 dark:bg-card/50 backdrop-blur-md text-card-foreground rounded-2xl border border-border/60 shadow-xs flex flex-col overflow-hidden h-full relative transition-all">
+      {/* Header matching Attendance Trend */}
+      <div className="px-4 sm:px-6 py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3">
+        <div className="space-y-1 min-w-0 flex-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Users className="w-4 h-4" />
+            </div>
+            <h3 className="text-sm sm:text-base font-bold text-foreground tracking-tight truncate">
+              חתך גילאים
             </h3>
+            {filterTags.length > 0 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                {filterTags.map((tag, idx) => (
+                  <Badge 
+                    key={idx} 
+                    variant="outline" 
+                    className="text-[9px] h-5 px-2 font-bold bg-background/25 text-primary border-primary/20 backdrop-blur-sm whitespace-nowrap rounded-md hover:bg-primary/5 transition-all"
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
+          <p className="text-xs text-muted-foreground truncate">
+            התפלגות שוטרים לפי קבוצות גיל
+          </p>
         </div>
         
         {/* Average Age Badge */}
-        <div className="relative shrink-0">
-          <div className="relative bg-muted/40 px-3 py-1.5 rounded-xl border border-border/40 flex flex-col items-end min-w-[70px] sm:min-w-[80px]">
-            <span className="text-[7px] sm:text-[9px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">
-              גיל ממוצע
-            </span>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs sm:text-base font-black text-foreground tabular-nums leading-none tracking-tight">
-                {averageAge}
-              </span>
-            </div>
-          </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Badge variant="secondary" className="text-xs font-bold bg-primary/10 text-primary border border-primary/20 py-1 px-2.5 rounded-lg">
+            גיל ממוצע: {averageAge}
+          </Badge>
         </div>
       </div>
 
@@ -217,7 +215,7 @@ export const AgeDistributionChart = ({
               tickLine={false}
               interval={0}
               height={isMobile ? 15 : 20}
-              tick={{ fontSize: isMobile ? 11 : 12, fontWeight: 900, fill: "var(--foreground)" }}
+              tick={{ fontSize: isMobile ? 11 : 12, fontWeight: 700, fontFamily: "Noto Sans Hebrew, sans-serif", fill: "var(--foreground)" }}
               tickFormatter={(tick) => tick === "36-99" ? "36+" : tick}
             />
             <YAxis hide domain={[0, maxCount + 1]} />
@@ -310,7 +308,8 @@ export const AgeDistributionChart = ({
                       x={x + width / 2}
                       y={y - 8}
                       textAnchor="middle"
-                      className="text-[10px] sm:text-xs font-black fill-slate-700 dark:fill-slate-300 font-mono tracking-tighter"
+                      className="text-[10px] sm:text-xs font-bold fill-slate-700 dark:fill-slate-300"
+                      style={{ fontFamily: "Noto Sans Hebrew, sans-serif", fontWeight: 700 }}
                     >
                       {value}
                     </text>
@@ -321,7 +320,6 @@ export const AgeDistributionChart = ({
           </BarChart>
         </ResponsiveContainer>
         )}
-      </div>
       </div>
     </Card>
   );

@@ -368,7 +368,7 @@ export default function ForgotPasswordPage() {
               <img 
                 src="/logo_unit.png" 
                 alt="סמל היחידה" 
-                className="w-32 h-auto md:w-36 object-contain toren-logo-img" 
+                className="w-32 h-auto md:w-36 object-contain" 
               />
             </div>
             

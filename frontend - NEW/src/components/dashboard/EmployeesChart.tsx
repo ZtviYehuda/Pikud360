@@ -6,7 +6,7 @@ import {
   useState,
   useEffect,
 } from "react";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, BarChart2, PieChart as PieChartIcon, X } from "lucide-react";
 import {
@@ -254,66 +254,62 @@ const EmployeesChartComponent = (
       ref={cardRef}
       id="attendance-snapshot-card"
       className={cn(
-        "bg-card text-card-foreground rounded-2xl border border-border/40 flex flex-col overflow-visible h-full relative transition-all shadow-none",
+        "bg-card/70 dark:bg-card/50 backdrop-blur-md text-card-foreground rounded-2xl border border-border/60 shadow-xs flex flex-col overflow-visible h-full relative transition-all",
         compact && "bg-transparent border-0 shadow-none",
       )}
     >
-      <div
-        className={cn(
-          "pt-1.5 pb-0 px-0 sm:pt-2 sm:pb-3 sm:px-0 md:pt-2.5 md:pb-3 md:px-0 flex-1 flex flex-col relative overflow-visible",
-          compact && "pt-1 pb-1.5 sm:pt-1.5 sm:pb-2 px-0 sm:px-0",
-        )}
-      >
-        {/* Header */}
+        {/* Standardized Header */}
         {!hideHeader ? (
-          <div className="flex flex-row justify-between items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2.5 relative z-10 px-3 sm:px-4 md:px-6">
-            <div className="flex gap-2 sm:gap-3 items-center min-w-0">
-              {isOfficeSelected && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    onStatusClick?.(null as any, "", "");
-                    setIsOfficeSelected(false);
-                  }}
-                  className="h-7 px-2.5 rounded-xl text-[10px] font-black text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all gap-1.5 border border-border/40 shrink-0 ml-1.5"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  <span>חזרה</span>
-                </Button>
-              )}
-              <div className="text-right flex flex-col min-w-0">
-                <h3 className="text-[11.5px] sm:text-base font-black text-foreground tracking-tight flex items-center flex-wrap gap-1 sm:gap-2 truncate">
-                  {isOfficeSelected ? (
-                    <span className="text-primary font-black">פירוט משרד</span>
-                  ) : (
-                    <span>{title}</span>
-                  )}
-                  {filterTags.length > 0 && (
-                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                      {filterTags.map((tag, idx) => (
-                        <Badge
-                          key={idx}
-                          variant="outline"
-                          className="text-[9px] h-5 px-2 font-black bg-primary/10 text-primary border-primary/30 rounded-md shadow-sm"
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </h3>
+          <CardHeader className="px-4 sm:px-6 py-3 sm:py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3">
+            <div className="space-y-0.5 min-w-0 flex-1">
+              <div className="flex items-center gap-2 min-w-0">
+                {isOfficeSelected && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      onStatusClick?.(null as any, "", "");
+                      setIsOfficeSelected(false);
+                    }}
+                    className="h-7 px-2 rounded-lg text-xs font-bold text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all gap-1 border border-border/40 shrink-0"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>חזרה</span>
+                  </Button>
+                )}
+                <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <PieChartIcon className="w-4 h-4" />
+                </div>
+                <CardTitle className="text-sm sm:text-base font-bold text-foreground tracking-tight whitespace-nowrap truncate">
+                  {isOfficeSelected ? "פירוט משרד" : title}
+                </CardTitle>
+                {filterTags.length > 0 && (
+                  <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                    {filterTags.map((tag, idx) => (
+                      <Badge
+                        key={idx}
+                        variant="outline"
+                        className="text-[9px] h-5 px-2 font-bold bg-primary/10 text-primary border-primary/30 rounded-md"
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
+              <CardDescription className="text-xs text-muted-foreground truncate">
+                {unitName} • {format(selectedDate, "dd/MM/yyyy")}
+              </CardDescription>
             </div>
 
-            <div className="bg-slate-100/80 dark:bg-slate-800/80 p-0.5 rounded-lg flex border border-border/50 backdrop-blur-md shrink-0 hidden sm:flex">
+            <div className="bg-muted/60 p-0.5 rounded-lg flex border border-border/40 shrink-0 hidden sm:flex">
               <button
                 onClick={() => setChartType("pie")}
                 className={cn(
                   "p-1.5 rounded-md transition-all",
                   chartType === "pie"
-                    ? "bg-white dark:bg-slate-700 text-primary shadow-sm"
-                    : "text-slate-400",
+                    ? "bg-card text-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 <PieChartIcon className="w-3.5 h-3.5" />
@@ -323,14 +319,14 @@ const EmployeesChartComponent = (
                 className={cn(
                   "p-1.5 rounded-md transition-all",
                   chartType === "bar"
-                    ? "bg-white dark:bg-slate-700 text-primary shadow-sm"
-                    : "text-slate-400",
+                    ? "bg-card text-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 <BarChart2 className="w-3.5 h-3.5" />
               </button>
             </div>
-          </div>
+          </CardHeader>
         ) : (
           <div className="absolute left-2 sm:left-4 top-2 sm:top-3 z-20 bg-slate-100/80 dark:bg-slate-800/80 p-0.5 rounded-lg flex border border-border/40 backdrop-blur-md shrink-0 no-export">
             {isOfficeSelected && (
@@ -565,8 +561,9 @@ const EmployeesChartComponent = (
                       interval={0}
                       height={isMobile ? 15 : 20}
                       tick={{
-                        fontSize: isMobile ? 11 : 13,
-                        fontWeight: 900,
+                        fontSize: isMobile ? 11 : 12,
+                        fontWeight: 700,
+                        fontFamily: "Noto Sans Hebrew, sans-serif",
                         fill: "var(--foreground)",
                       }}
                     />
@@ -588,13 +585,13 @@ const EmployeesChartComponent = (
                           >
                             <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: d.fill }} />
                             <div className="flex flex-col min-w-0">
-                              <span className="font-black text-slate-800 dark:text-slate-100 text-sm leading-tight">{d.name}</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-100 text-sm leading-tight">{d.name}</span>
                               <span className="text-[10px] text-slate-400 font-medium mt-0.5">{isOfficeSelected ? "מפירוט משרד" : "מכלל היחידה"}</span>
                             </div>
                             <div className="mr-auto flex items-baseline gap-1">
                               <span className="font-extrabold text-primary dark:text-blue-400 text-base tabular-nums">{d.value}</span>
                               <span className="text-[10px] text-slate-400 font-bold">שוטרים</span>
-                              <span className="text-[10px] font-black text-slate-500 mr-1">{d.percentage}%</span>
+                              <span className="text-[10px] font-bold text-slate-500 mr-1">{d.percentage}%</span>
                             </div>
                           </div>
                         );
@@ -617,7 +614,8 @@ const EmployeesChartComponent = (
                               y={y - 8}
                               fill="var(--foreground)"
                               textAnchor="middle"
-                              className="text-[10px] sm:text-xs font-black fill-slate-700 dark:fill-slate-300"
+                              className="text-[10px] sm:text-xs font-bold fill-slate-700 dark:fill-slate-300"
+                              style={{ fontFamily: "Noto Sans Hebrew, sans-serif", fontWeight: 700 }}
                             >
                               {value}
                             </text>
@@ -693,9 +691,8 @@ const EmployeesChartComponent = (
             </div>
           )}
         </div>
-      </div>
-    </Card>
-  );
+      </Card>
+    );
 };
 
 export const EmployeesChart = forwardRef(EmployeesChartComponent);

@@ -52,7 +52,22 @@ const getGatewayUrl = () => {
   ) {
     return "http://localhost:3001";
   }
-  return "/api";
+  return "/api/messaging";
+};
+
+const getEndpoint = (path: string) => {
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  if (
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+  ) {
+    const target = cleanPath.startsWith("/api") ? cleanPath : `/api${cleanPath}`;
+    return `http://localhost:3001${target.replace("/api/messaging", "/api")}`;
+  }
+  if (cleanPath.startsWith("/api/messaging")) {
+    return cleanPath;
+  }
+  return cleanPath.replace("/api/whatsapp", "/api/messaging/whatsapp");
 };
 
 const TEMPLATE_PRESETS = [
@@ -124,8 +139,7 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
   // Check Gateway Connection Status
   const checkGatewayStatus = useCallback(async () => {
     try {
-      const gwUrl = getGatewayUrl();
-      const endpoint = gwUrl.endsWith("/api") ? `${gwUrl}/whatsapp/status` : `${gwUrl}/api/whatsapp/status`;
+      const endpoint = getEndpoint("/api/whatsapp/status");
       const res = await fetch(endpoint);
       if (res.ok) {
         const data = await res.json();
@@ -409,8 +423,7 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
           const targets = selectedEmployeesList.map((e) => e.phone_number!).filter(Boolean);
           setAutoSendProgress({ sent: 0, total: targets.length });
 
-          const gwUrl = getGatewayUrl();
-          const endpoint = gwUrl.endsWith("/api") ? `${gwUrl}/whatsapp/broadcast` : `${gwUrl}/api/whatsapp/broadcast`;
+          const endpoint = getEndpoint("/api/whatsapp/broadcast");
 
           const res = await fetch(endpoint, {
             method: "POST",
@@ -431,8 +444,7 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
           const totalGroups = selectedGroupsList.length;
           setAutoSendProgress({ sent: 0, total: totalGroups });
 
-          const gwUrl = getGatewayUrl();
-          const endpoint = gwUrl.endsWith("/api") ? `${gwUrl}/whatsapp/send` : `${gwUrl}/api/whatsapp/send`;
+          const endpoint = getEndpoint("/api/whatsapp/send");
 
           for (let i = 0; i < selectedGroupsList.length; i++) {
             const group = selectedGroupsList[i];

@@ -340,27 +340,27 @@ export const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-xl p-5 sm:p-6 rounded-[2rem] border border-border/50 shadow-2xl bg-card max-h-[90vh] overflow-y-auto"
+        className="sm:max-w-xl p-0 rounded-2xl border border-border/50 shadow-2xl bg-card max-h-[90vh] overflow-hidden flex flex-col"
         dir="rtl"
       >
-        <DialogHeader className="text-right space-y-2">
+        <DialogHeader className="px-6 py-5 border-b border-border/40 bg-muted/20 text-right shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20 shadow-xs">
-              <FileSpreadsheet className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <FileSpreadsheet className="w-5 h-5 text-primary" />
             </div>
-            <div>
-              <DialogTitle className="text-lg sm:text-xl font-black text-foreground tracking-tight">
+            <div className="space-y-0.5 text-right">
+              <DialogTitle className="text-base sm:text-lg font-bold text-foreground tracking-tight">
                 ייבוא שוטרים מקובץ
               </DialogTitle>
-              <DialogDescription className="text-xs font-bold text-muted-foreground mt-0.5">
+              <DialogDescription className="text-xs font-normal text-muted-foreground">
                 העלאת קובץ Excel או CSV להזנה מהירה של שוטרים למערכת
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        {/* Instructions Box */}
-        <div className="space-y-3 py-1">
+        <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+          {/* Instructions Box */}
           <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/40 space-y-2.5 text-right">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black text-foreground flex items-center gap-1.5">
@@ -511,13 +511,13 @@ export const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({
         </div>
 
         {/* Modal Actions */}
-        <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/40">
+        <div className="px-6 py-4 bg-muted/20 border-t border-border/40 flex items-center justify-end gap-2 shrink-0">
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isUploading}
-            className="h-10 px-4 rounded-xl text-xs font-bold text-muted-foreground"
+            className="h-10 px-4 rounded-xl text-xs font-bold border-border/60 hover:bg-muted/50"
           >
             ביטול
           </Button>
@@ -525,12 +525,12 @@ export const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({
             type="button"
             onClick={handleUpload}
             disabled={parsedRows.length === 0 || isUploading}
-            className="h-10 px-5 rounded-xl text-xs font-black bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 shadow-xs"
+            className="h-10 px-5 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 shadow-xs transition-all active:scale-95"
           >
             {isUploading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Upload className="w-4 h-4" />
+              <Upload className="w-4 h-4 ml-1" />
             )}
             <span>
               {isUploading

@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  DialogDescription,
   DialogDragHandle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -173,16 +174,19 @@ export function ExportReportDialog({
           dir="rtl"
         >
           <DialogDragHandle />
-          {/* Header - Premium Minimalist */}
-          <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-4 sm:px-8 py-4 sm:py-6 shrink-0">
-            <div className="flex items-center gap-3 sm:gap-5">
-              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-[16px] sm:rounded-[20px] bg-primary flex items-center justify-center text-white">
-                <FileSpreadsheet className="w-5 h-5 sm:w-7 sm:h-7" />
+          {/* Header - Standard Enterprise */}
+          <div className="px-6 py-5 border-b border-border/40 bg-muted/20 shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                <FileSpreadsheet className="w-5 h-5 text-primary" />
               </div>
-              <div className="space-y-1">
-                <DialogTitle className="text-lg sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              <div className="space-y-0.5 text-right">
+                <DialogTitle className="text-base sm:text-lg font-bold text-foreground tracking-tight">
                   מרכז ייצוא נתונים
                 </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground font-normal">
+                  ייצוא דוחות נוכחות וסידור עבודה לאקסל ולתפוצה
+                </DialogDescription>
               </div>
             </div>
           </div>

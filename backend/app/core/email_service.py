@@ -19,21 +19,21 @@ def send_password_reset_email(to_email: str, code: str) -> bool:
 
     try:
         msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"קוד אימות לאיפוס סיסמה - Unit: {code}"
+        msg["Subject"] = f"קוד אימות לאיפוס סיסמה - The Office: {code}"
         msg["From"] = settings.SMTP_FROM_EMAIL or settings.SMTP_USER
         msg["To"] = to_email
 
         text_content = f"""
 שלום,
 
-קיבלנו בקשה לאיפוס הסיסמה שלך במערכת Unit.
+קיבלנו בקשה לאיפוס הסיסמה שלך במערכת The Office.
 קוד האימות שלך הוא: {code}
 
 קוד זה תקף למשך 15 דקות.
 אם לא ביקשת לאפס את הסיסמה, ניתן להתעלם מהודעה זו.
 
 בברכה,
-צוות Unit
+צוות The Office
 """
         html_content = f"""
 <!DOCTYPE html>
@@ -44,7 +44,7 @@ def send_password_reset_email(to_email: str, code: str) -> bool:
 <body style="font-family: Arial, sans-serif; background-color: #f8fafc; padding: 20px; color: #1e293b; direction: rtl; text-align: right;">
     <div style="max-width: 500px; margin: 0 auto; background: #ffffff; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
         <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="color: #2563eb; margin: 0; font-size: 24px; font-weight: 800;">Unit</h1>
+            <h1 style="color: #2563eb; margin: 0; font-size: 24px; font-weight: 800;">The Office</h1>
             <p style="color: #64748b; margin: 4px 0 0 0; font-size: 14px;">מערכת שליטה ומצבת כוח אדם</p>
         </div>
         
@@ -68,7 +68,7 @@ def send_password_reset_email(to_email: str, code: str) -> bool:
         <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
         
         <p style="font-size: 11px; color: #94a3b8; text-align: center; margin: 0;">
-            הודעה אוטומטית ממערכת Unit • אין להשיב להודעה זו
+            הודעה אוטומטית ממערכת The Office • אין להשיב להודעה זו
         </p>
     </div>
 </body>

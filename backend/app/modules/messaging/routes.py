@@ -320,3 +320,22 @@ def whatsapp_proxy_send():
         logger.error(f"WhatsApp gateway send failed: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+
+@messaging_bp.route("/whatsapp/logout", methods=["POST"])
+@messaging_bp.route("/employees/whatsapp/logout", methods=["POST"])
+def whatsapp_proxy_logout():
+    """Proxies logout request to local WhatsApp Gateway daemon."""
+    try:
+        req = urllib.request.Request(
+            f"{LOCAL_GATEWAY_URL}/api/whatsapp/logout",
+            data=b"{}",
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            resp_data = json.loads(resp.read().decode("utf-8"))
+            return jsonify(resp_data), 200
+    except Exception as e:
+        logger.error(f"WhatsApp gateway logout failed: {e}")
+        return jsonify({"success": True, "status": "disconnected"}), 200
+
+

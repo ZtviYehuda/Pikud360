@@ -738,7 +738,7 @@ export function GlobalAiSupport() {
     id: "welcome",
     isBot: true,
     text: `שלום ${user?.first_name || user?.username || "משתמש"}!
-אני עוזר הניווט והתמיכה של מערכת Unit.
+אני עוזר הניווט והתמיכה של מערכת The Office.
 
 **שאלות בזמן אמת על נתוני נוכחות וכוח אדם (בהתאם להרשאות פיקודך):**
 • *"מי לא נמצא היום?"*

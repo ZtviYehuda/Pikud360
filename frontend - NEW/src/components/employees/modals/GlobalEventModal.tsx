@@ -6,12 +6,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import * as SelectPrimitive from "@radix-ui/react-select";
 import {
   Select,
   SelectContent,
   SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,11 +22,13 @@ import {
   Building2,
   LayoutPanelLeft,
   AlertCircle,
+  CheckCircle2,
+  RotateCcw,
 } from "lucide-react";
 import { useAuthContext } from "@/context/AuthContext";
 import { useEmployees } from "@/hooks/useEmployees";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, cleanUnitName, formatUnitName, formatUnitToName } from "@/lib/utils";
 
 interface GlobalEventModalProps {
   isOpen: boolean;
@@ -59,25 +60,20 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
 
   const isAdmin = user?.is_admin;
 
-  const [scope, setScope] = useState<"team" | "section" | "department">(() => {
-    if (user?.commands_department_id || isAdmin) return "department";
-    if (user?.commands_section_id) return "section";
-    return "team";
-  });
-
-  const [targetId, setTargetId] = useState<string>("");
+  // Hierarchical selection state
   const [selectedDeptId, setSelectedDeptId] = useState<string>("");
   const [selectedSectionId, setSelectedSectionId] = useState<string>("");
+  const [selectedTeamId, setSelectedTeamId] = useState<string>("");
 
-  // --- Accessible lists per scope (flat, no cascading UI needed) ---
+  // Accessible departments
   const departments = useMemo(() => {
     if (isAdmin) return structure;
     if (user?.commands_department_id)
       return structure.filter((d: any) => d.id === user.commands_department_id);
-    return [];
+    return structure;
   }, [structure, isAdmin, user]);
 
-  // All accessible sections (flat list with parent dept name for grouping display)
+  // All accessible sections
   const allSections = useMemo(() => {
     const result: any[] = [];
     for (const d of structure) {
@@ -93,7 +89,8 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
           !isAdmin &&
           !commandsDept &&
           !commandsSec &&
-          !commandsAnyTeamInSection
+          !commandsAnyTeamInSection &&
+          user?.commands_department_id
         )
           continue;
 
@@ -103,7 +100,7 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
     return result;
   }, [structure, isAdmin, user]);
 
-  // All accessible teams (flat list with parent section name)
+  // All accessible teams
   const allTeams = useMemo(() => {
     const result: any[] = [];
     for (const d of structure) {
@@ -112,18 +109,22 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
           const commandsDept = user?.commands_department_id === d.id;
           const commandsSec = user?.commands_section_id === s.id;
           const commandsTeam = user?.commands_team_id === t.id;
-          if (!isAdmin && !commandsDept && !commandsSec && !commandsTeam)
+          if (
+            !isAdmin &&
+            !commandsDept &&
+            !commandsSec &&
+            !commandsTeam &&
+            user?.commands_department_id
+          )
             continue;
-          result.push({ ...t, section_id: s.id, section_name: s.name });
+          result.push({ ...t, section_id: s.id, section_name: s.name, dept_id: d.id, dept_name: d.name });
         }
       }
     }
     return result;
   }, [structure, isAdmin, user]);
 
-
-
-  // Smart filtering for cascading behavior
+  // Available sections based on department selection
   const availableSections = useMemo(() => {
     if (selectedDeptId) {
       return allSections.filter((s: any) => s.dept_id.toString() === selectedDeptId);
@@ -131,68 +132,108 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
     return allSections;
   }, [allSections, selectedDeptId]);
 
+  // Available teams based on section and department selection
   const availableTeams = useMemo(() => {
     if (selectedSectionId) {
       return allTeams.filter((t: any) => t.section_id.toString() === selectedSectionId);
     }
     if (selectedDeptId) {
-      const validSections = allSections
-        .filter((s: any) => s.dept_id.toString() === selectedDeptId)
-        .map((s: any) => s.id);
-      return allTeams.filter((t: any) => validSections.includes(t.section_id));
+      return allTeams.filter((t: any) => t.dept_id.toString() === selectedDeptId);
     }
     return allTeams;
-  }, [allTeams, selectedSectionId, selectedDeptId, allSections]);
+  }, [allTeams, selectedSectionId, selectedDeptId]);
 
-  // Auto-select when only one option in active filtered list
-  useEffect(() => {
-    if (scope === "department" && departments.length === 1) {
-      setTargetId(departments[0].id.toString());
-      setSelectedDeptId(departments[0].id.toString());
-    } else if (scope === "section" && availableSections.length === 1) {
-      setTargetId(availableSections[0].id.toString());
-      setSelectedSectionId(availableSections[0].id.toString());
-      if (!selectedDeptId) setSelectedDeptId(availableSections[0].dept_id.toString());
-    } else if (scope === "team" && availableTeams.length === 1) {
-      setTargetId(availableTeams[0].id.toString());
+  // Selected entities names
+  const selectedDept = useMemo(
+    () => departments.find((d: any) => d.id.toString() === selectedDeptId),
+    [departments, selectedDeptId]
+  );
+  const selectedSection = useMemo(
+    () => allSections.find((s: any) => s.id.toString() === selectedSectionId),
+    [allSections, selectedSectionId]
+  );
+  const selectedTeam = useMemo(
+    () => allTeams.find((t: any) => t.id.toString() === selectedTeamId),
+    [allTeams, selectedTeamId]
+  );
+
+  // Active target calculation (most specific selected level)
+  const activeTarget = useMemo(() => {
+    if (selectedTeamId && selectedTeam) {
+      return {
+        scope: "team" as const,
+        targetId: selectedTeamId,
+        name: selectedTeam.name,
+        parent: `${selectedDept?.name || ""} > ${selectedSection?.name || ""}`,
+        label: formatUnitName("team", selectedTeam.name),
+        toLabel: formatUnitToName("team", selectedTeam.name),
+      };
     }
-  }, [scope, departments, availableSections, availableTeams]);
+    if (selectedSectionId && selectedSection) {
+      return {
+        scope: "section" as const,
+        targetId: selectedSectionId,
+        name: selectedSection.name,
+        parent: selectedDept?.name || "",
+        label: formatUnitName("section", selectedSection.name),
+        toLabel: formatUnitToName("section", selectedSection.name),
+      };
+    }
+    if (selectedDeptId && selectedDept) {
+      return {
+        scope: "department" as const,
+        targetId: selectedDeptId,
+        name: selectedDept.name,
+        parent: "כלל המחלקה",
+        label: formatUnitName("department", selectedDept.name),
+        toLabel: formatUnitToName("department", selectedDept.name),
+      };
+    }
+    return null;
+  }, [selectedDeptId, selectedSectionId, selectedTeamId, selectedDept, selectedSection, selectedTeam]);
 
-  const isScopeDisabled = (scopeType: "team" | "section" | "department") => {
-    if (isAdmin) return false;
-    if (scopeType === "department") return !user?.commands_department_id;
-    if (scopeType === "section")
-      return !user?.commands_department_id && !user?.commands_section_id;
-    return (
-      !user?.commands_department_id &&
-      !user?.commands_section_id &&
-      !user?.commands_team_id
-    );
-  };
+  // Initial user default scope
+  useEffect(() => {
+    if (user?.commands_department_id && !selectedDeptId) {
+      setSelectedDeptId(user.commands_department_id.toString());
+    }
+    if (user?.commands_section_id && !selectedSectionId) {
+      setSelectedSectionId(user.commands_section_id.toString());
+    }
+    if (user?.commands_team_id && !selectedTeamId) {
+      setSelectedTeamId(user.commands_team_id.toString());
+    }
+  }, [user]);
 
   const handleSubmit = async () => {
     if (!unitDayStatus) {
       toast.error("סטטוס יום יחידה לא נמצא במערכת");
       return;
     }
-    if (!targetId) {
+    if (!activeTarget) {
       toast.error("נא לבחור יחידה לביצוע הפעולה");
       return;
     }
     const success = await logScopeStatus(
-      scope,
-      parseInt(targetId),
+      activeTarget.scope,
+      parseInt(activeTarget.targetId),
       unitDayStatus.id,
       startDate,
       endDate,
       note,
     );
     if (success) {
-      toast.success("אירוע היחידה עודכן בהצלחה לכלל השוטרים ביחידה שנבחרה");
+      toast.success(`אירוע יחידה עודכן בהצלחה ${activeTarget.toLabel}`);
       onClose();
     } else {
       toast.error("שגיאה בעדכון אירוע היחידה");
     }
+  };
+
+  const handleResetSelection = () => {
+    setSelectedDeptId("");
+    setSelectedSectionId("");
+    setSelectedTeamId("");
   };
 
   const hasCommandPower =
@@ -202,172 +243,237 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
     user?.commands_section_id ||
     user?.commands_team_id;
 
-  // Shared card base styles
-  const cardBase =
-    "flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl border-2 transition-all w-full text-right";
-  const cardActive =
-    "border-primary bg-primary/10 text-primary scale-[1.02]";
-  const cardInactive =
-    "border-border/50 hover:border-border hover:bg-muted/50 text-muted-foreground";
-  const cardDisabled =
-    "opacity-40 cursor-not-allowed border-dashed grayscale pointer-events-none";
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg p-0 overflow-hidden bg-background border-border/40 flex flex-col">
         <DialogDragHandle />
 
-        {/* ── Slim inline header ── */}
-        <div className="px-5 pt-3 pb-3 sm:px-6 sm:pt-5 sm:pb-4 border-b border-border/30 text-right shrink-0">
+        {/* ── Header ── */}
+        <div className="px-6 py-5 border-b border-border/40 bg-muted/20 text-right shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-              <Calendar className="w-[18px] h-[18px]" />
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+              <Calendar className="w-5 h-5 text-primary" />
             </div>
-            <div className="min-w-0 flex-1">
-              <DialogTitle className="text-[15px] sm:text-lg font-black tracking-tight leading-none mb-0.5">
+            <div className="space-y-0.5 text-right">
+              <DialogTitle className="text-base sm:text-lg font-bold text-foreground tracking-tight">
                 הוספת אירוע יחידה
               </DialogTitle>
-              <DialogDescription className="text-[11px] font-medium text-muted-foreground/70 leading-none">
+              <DialogDescription className="text-xs font-normal text-muted-foreground">
                 קביעת יום מחלקה, מדור או חוליה
               </DialogDescription>
             </div>
           </div>
         </div>
 
-        {/* ── Scrollable body ── */}
+        {/* ── Body ── */}
         <div className="flex-1 flex flex-col px-5 py-4 sm:px-6 sm:py-5 space-y-4 overflow-y-auto custom-scrollbar">
           {hasCommandPower ? (
             <>
-              {/* Scope selection — compact inline dropdowns */}
-              {(isAdmin ||
-                user?.commands_department_id ||
-                user?.commands_section_id) && (
-                <div className="space-y-3">
-                  <span className="text-[10px] font-black text-muted-foreground/70 uppercase tracking-widest pr-0.5">
-                    בחר יחידה
+              {/* ── Hierarchical Unit Selector ── */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-foreground">
+                    בחר רמת יחידה לאירוע
                   </span>
-                  <div className="grid grid-cols-3 gap-2.5 w-full min-w-0">
-                    {/* Department */}
-                    <Select
-                      value={scope === "department" && targetId ? targetId : undefined}
-                      onValueChange={(val) => {
-                        setScope("department");
-                        setTargetId(val);
-                        setSelectedDeptId(val);
-                        setSelectedSectionId("");
-                      }}
-                      disabled={isScopeDisabled("department") || departments.length === 0}
+                  {activeTarget && (
+                    <button
+                      onClick={handleResetSelection}
+                      className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium transition-colors"
                     >
-                      <SelectTrigger
-                        className={cn(
-                          "h-24 w-full min-w-0 overflow-hidden flex flex-col items-center justify-center gap-2 rounded-2xl border text-center font-bold text-xs transition-all duration-300",
-                          "hover:scale-[1.02] hover:shadow-md cursor-pointer",
-                          scope === "department" && targetId
-                            ? "border-primary bg-primary/5 text-primary"
-                            : "border-border/50 bg-background/50 hover:bg-background hover:border-border",
-                          (isScopeDisabled("department") || departments.length === 0) && "opacity-40 pointer-events-none",
-                        )}
-                      >
-                        <Building2 className={cn("w-6 h-6 shrink-0", scope === "department" && targetId ? "text-primary" : "text-muted-foreground")} />
-                        <div className="w-full truncate text-center px-1 font-black leading-tight text-[11px]">
-                          <div className="hidden"><SelectValue /></div>
-                          {scope === "department" && targetId 
-                            ? (departments.find((d: any) => d.id.toString() === targetId)?.name || "מחלקה") 
-                            : "מחלקה"}
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent position="popper" className="rounded-xl border-border/40 max-h-48 custom-scrollbar relative z-[100]">
-                        {departments.map((d: any) => (
-                          <SelectItem key={d.id} value={d.id.toString()} className="font-bold cursor-pointer">
-                            {d.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    {/* Section */}
-                    <Select
-                      value={scope === "section" && targetId ? targetId : undefined}
-                      onValueChange={(val) => {
-                        setScope("section");
-                        setTargetId(val);
-                        setSelectedSectionId(val);
-                        const s = allSections.find((x: any) => x.id.toString() === val);
-                        if (s) setSelectedDeptId(s.dept_id.toString());
-                      }}
-                      disabled={isScopeDisabled("section") || availableSections.length === 0}
-                    >
-                      <SelectTrigger
-                        className={cn(
-                          "h-24 w-full min-w-0 overflow-hidden flex flex-col items-center justify-center gap-2 rounded-2xl border text-center font-bold text-xs transition-all duration-300",
-                          "hover:scale-[1.02] hover:shadow-md cursor-pointer",
-                          scope === "section" && targetId
-                            ? "border-primary bg-primary/5 text-primary"
-                            : "border-border/50 bg-background/50 hover:bg-background hover:border-border",
-                          (isScopeDisabled("section") || availableSections.length === 0) && "opacity-40 pointer-events-none",
-                        )}
-                      >
-                        <LayoutPanelLeft className={cn("w-6 h-6 shrink-0", scope === "section" && targetId ? "text-primary" : "text-muted-foreground")} />
-                        <div className="w-full truncate text-center px-1 font-black leading-tight text-[11px]">
-                          <div className="hidden"><SelectValue /></div>
-                          {scope === "section" && targetId 
-                            ? (allSections.find((s: any) => s.id.toString() === targetId)?.name || "מדור") 
-                            : "מדור"}
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent position="popper" className="rounded-xl border-border/40 max-h-48 custom-scrollbar relative z-[100]">
-                        {availableSections.map((s: any) => (
-                          <SelectItem key={s.id} value={s.id.toString()} className="font-bold cursor-pointer">
-                            {s.name} <span className="text-[9px] text-muted-foreground mr-1">({s.dept_name})</span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    {/* Team */}
-                    <Select
-                      value={scope === "team" && targetId ? targetId : undefined}
-                      onValueChange={(val) => {
-                        setScope("team");
-                        setTargetId(val);
-                        const t = allTeams.find((x: any) => x.id.toString() === val);
-                        if (t) {
-                          setSelectedSectionId(t.section_id.toString());
-                          const s = allSections.find((x: any) => x.id === t.section_id);
-                          if (s) setSelectedDeptId(s.dept_id.toString());
-                        }
-                      }}
-                      disabled={isScopeDisabled("team") || availableTeams.length === 0}
-                    >
-                      <SelectTrigger
-                        className={cn(
-                          "h-24 w-full min-w-0 overflow-hidden flex flex-col items-center justify-center gap-2 rounded-2xl border text-center font-bold text-xs transition-all duration-300",
-                          "hover:scale-[1.02] hover:shadow-md cursor-pointer",
-                          scope === "team" && targetId
-                            ? "border-primary bg-primary/5 text-primary"
-                            : "border-border/50 bg-background/50 hover:bg-background hover:border-border",
-                          (isScopeDisabled("team") || availableTeams.length === 0) && "opacity-40 pointer-events-none",
-                        )}
-                      >
-                        <Users className={cn("w-6 h-6 shrink-0", scope === "team" && targetId ? "text-primary" : "text-muted-foreground")} />
-                        <div className="w-full truncate text-center px-1 font-black leading-tight text-[11px]">
-                          <div className="hidden"><SelectValue /></div>
-                          {scope === "team" && targetId 
-                            ? (allTeams.find((t: any) => t.id.toString() === targetId)?.name || "חוליה") 
-                            : "חוליה"}
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent position="popper" className="rounded-xl border-border/40 max-h-48 custom-scrollbar relative z-[100]">
-                        {availableTeams.map((t: any) => (
-                          <SelectItem key={t.id} value={t.id.toString()} className="font-bold cursor-pointer">
-                            {t.name} <span className="text-[9px] text-muted-foreground mr-1">({t.section_name})</span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      <RotateCcw className="w-3 h-3" />
+                      איפוס בחירה
+                    </button>
+                  )}
                 </div>
-              )}
+
+                <div className="grid grid-cols-3 gap-2 w-full min-w-0">
+                  {/* Department Card */}
+                  <Select
+                    value={selectedDeptId || undefined}
+                    onValueChange={(val) => {
+                      setSelectedDeptId(val);
+                      setSelectedSectionId("");
+                      setSelectedTeamId("");
+                    }}
+                  >
+                    <SelectPrimitive.Trigger
+                      className={cn(
+                        "h-20 w-full min-w-0 px-2 py-2 flex flex-col items-center justify-between rounded-xl border text-center transition-all duration-200 cursor-pointer outline-none",
+                        "hover:shadow-xs",
+                        selectedDeptId
+                          ? "border-primary/80 bg-primary/[0.04] text-foreground shadow-xs ring-1 ring-primary/20"
+                          : "border-border/60 bg-card/60 hover:bg-card hover:border-border text-muted-foreground"
+                      )}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className={cn(
+                          "w-6 h-6 rounded-lg flex items-center justify-center",
+                          selectedDeptId ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                        )}>
+                          <Building2 className="w-3.5 h-3.5" />
+                        </div>
+                        {selectedDeptId && (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                        )}
+                      </div>
+
+                      <div className="w-full text-right">
+                        <span className="text-[10px] font-medium text-muted-foreground block">
+                          מחלקה
+                        </span>
+                        <p className={cn(
+                          "text-xs font-bold truncate leading-tight",
+                          selectedDeptId ? "text-primary" : "text-foreground"
+                        )}>
+                          {selectedDept ? cleanUnitName(selectedDept.name) : "בחר מחלקה"}
+                        </p>
+                      </div>
+                    </SelectPrimitive.Trigger>
+
+                    <SelectContent position="popper" className="rounded-xl border-border/40 max-h-56 custom-scrollbar z-[100]">
+                      {departments.map((d: any) => (
+                        <SelectItem key={d.id} value={d.id.toString()} className="font-bold cursor-pointer text-xs">
+                          {d.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Section Card */}
+                  <Select
+                    value={selectedSectionId || undefined}
+                    onValueChange={(val) => {
+                      setSelectedSectionId(val);
+                      setSelectedTeamId("");
+                      const s = allSections.find((x: any) => x.id.toString() === val);
+                      if (s && !selectedDeptId) {
+                        setSelectedDeptId(s.dept_id.toString());
+                      }
+                    }}
+                    disabled={availableSections.length === 0}
+                  >
+                    <SelectPrimitive.Trigger
+                      className={cn(
+                        "h-20 w-full min-w-0 px-2 py-2 flex flex-col items-center justify-between rounded-xl border text-center transition-all duration-200 cursor-pointer outline-none",
+                        "hover:shadow-xs",
+                        selectedSectionId
+                          ? "border-primary/80 bg-primary/[0.04] text-foreground shadow-xs ring-1 ring-primary/20"
+                          : "border-border/60 bg-card/60 hover:bg-card hover:border-border text-muted-foreground",
+                        availableSections.length === 0 && "opacity-40 cursor-not-allowed pointer-events-none"
+                      )}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className={cn(
+                          "w-6 h-6 rounded-lg flex items-center justify-center",
+                          selectedSectionId ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                        )}>
+                          <LayoutPanelLeft className="w-3.5 h-3.5" />
+                        </div>
+                        {selectedSectionId && (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                        )}
+                      </div>
+
+                      <div className="w-full text-right">
+                        <span className="text-[10px] font-medium text-muted-foreground block">
+                          מדור
+                        </span>
+                        <p className={cn(
+                          "text-xs font-bold truncate leading-tight",
+                          selectedSectionId ? "text-primary" : "text-foreground"
+                        )}>
+                          {selectedSection ? cleanUnitName(selectedSection.name) : "בחר מדור"}
+                        </p>
+                      </div>
+                    </SelectPrimitive.Trigger>
+
+                    <SelectContent position="popper" className="rounded-xl border-border/40 max-h-56 custom-scrollbar z-[100]">
+                      {availableSections.map((s: any) => (
+                        <SelectItem key={s.id} value={s.id.toString()} className="font-bold cursor-pointer text-xs">
+                          <span>{s.name}</span>
+                          {!selectedDeptId && (
+                            <span className="text-[10px] text-muted-foreground mr-1">({s.dept_name})</span>
+                          )}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Team Card */}
+                  <Select
+                    value={selectedTeamId || undefined}
+                    onValueChange={(val) => {
+                      setSelectedTeamId(val);
+                      const t = allTeams.find((x: any) => x.id.toString() === val);
+                      if (t) {
+                        if (!selectedSectionId) setSelectedSectionId(t.section_id.toString());
+                        if (!selectedDeptId) setSelectedDeptId(t.dept_id.toString());
+                      }
+                    }}
+                    disabled={availableTeams.length === 0}
+                  >
+                    <SelectPrimitive.Trigger
+                      className={cn(
+                        "h-20 w-full min-w-0 px-2 py-2 flex flex-col items-center justify-between rounded-xl border text-center transition-all duration-200 cursor-pointer outline-none",
+                        "hover:shadow-xs",
+                        selectedTeamId
+                          ? "border-primary/80 bg-primary/[0.04] text-foreground shadow-xs ring-1 ring-primary/20"
+                          : "border-border/60 bg-card/60 hover:bg-card hover:border-border text-muted-foreground",
+                        availableTeams.length === 0 && "opacity-40 cursor-not-allowed pointer-events-none"
+                      )}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className={cn(
+                          "w-6 h-6 rounded-lg flex items-center justify-center",
+                          selectedTeamId ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                        )}>
+                          <Users className="w-3.5 h-3.5" />
+                        </div>
+                        {selectedTeamId && (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                        )}
+                      </div>
+
+                      <div className="w-full text-right">
+                        <span className="text-[10px] font-medium text-muted-foreground block">
+                          חוליה
+                        </span>
+                        <p className={cn(
+                          "text-xs font-bold truncate leading-tight",
+                          selectedTeamId ? "text-primary" : "text-foreground"
+                        )}>
+                          {selectedTeam ? cleanUnitName(selectedTeam.name) : "בחר חוליה"}
+                        </p>
+                      </div>
+                    </SelectPrimitive.Trigger>
+
+                    <SelectContent position="popper" className="rounded-xl border-border/40 max-h-56 custom-scrollbar z-[100]">
+                      {availableTeams.map((t: any) => (
+                        <SelectItem key={t.id} value={t.id.toString()} className="font-bold cursor-pointer text-xs">
+                          <span>{t.name}</span>
+                          {!selectedSectionId && (
+                            <span className="text-[10px] text-muted-foreground mr-1">({t.section_name})</span>
+                          )}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* ── Active Target Breadcrumb / Feedback ── */}
+                {activeTarget ? (
+                  <div className="p-2.5 rounded-xl bg-primary/5 border border-primary/20 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-muted-foreground shrink-0">האירוע יחול על:</span>
+                      <span className="font-bold text-primary truncate">{activeTarget.label}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground text-right pr-1">
+                    בחר מחלקה, מדור או חוליה לקביעת האירוע
+                  </p>
+                )}
+              </div>
             </>
           ) : (
             <div className="flex items-center justify-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive">
@@ -378,65 +484,65 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
             </div>
           )}
 
-          {/* Date Selection — compact */}
+          {/* Date Selection */}
           <div className="grid grid-cols-2 gap-2.5">
             <div className="space-y-1.5">
-              <Label className="text-[10px] font-black text-muted-foreground/70 uppercase tracking-widest">תאריך התחלה</Label>
+              <Label className="text-[11px] font-bold text-muted-foreground">תאריך התחלה</Label>
               <Input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="bg-background border-border/50 h-10 rounded-xl font-bold px-2 text-xs w-full block text-center"
+                className="bg-background border-border/60 h-10 rounded-xl font-bold px-3 text-xs w-full block text-center shadow-xs"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[10px] font-black text-muted-foreground/70 uppercase tracking-widest">תאריך סיום</Label>
+              <Label className="text-[11px] font-bold text-muted-foreground">תאריך סיום</Label>
               <Input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="bg-background border-border/50 h-10 rounded-xl font-bold px-2 text-xs w-full block text-center"
+                className="bg-background border-border/60 h-10 rounded-xl font-bold px-3 text-xs w-full block text-center shadow-xs"
               />
             </div>
           </div>
 
           {/* Note */}
           <div className="space-y-1.5">
-            <Label className="text-[10px] font-black text-muted-foreground/70 uppercase tracking-widest flex items-center gap-1.5">
+            <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-1.5">
               תוכן האירוע
-              <span className="text-[9px] text-muted-foreground/40 font-normal normal-case tracking-normal">
+              <span className="text-[10px] text-muted-foreground/60 font-normal">
                 (יופיע ביומן)
               </span>
             </Label>
             <Textarea
-              placeholder="יום מחלקה..."
+              placeholder="יום מחלקה, גיבוש, תרגיל..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="resize-none min-h-[80px] bg-background border-border/50 rounded-xl p-3 text-sm leading-relaxed"
+              className="resize-none min-h-[75px] bg-background border-border/60 rounded-xl p-3 text-sm leading-relaxed shadow-xs"
             />
           </div>
         </div>
 
-        {/* ── Pinned footer — safe area ── */}
-        <div className="px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-5 border-t border-border/30 shrink-0">
+        {/* ── Footer ── */}
+        <div className="px-6 py-4 border-t border-border/40 bg-muted/20 shrink-0 space-y-2">
           <Button
-            className="w-full rounded-xl h-12 font-black text-sm transition-all active:scale-[0.98]"
+            className="w-full rounded-xl h-10 font-bold text-xs transition-all active:scale-[0.98] shadow-xs bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={handleSubmit}
-            disabled={isUpdatingScope || !hasCommandPower || !targetId}
+            disabled={isUpdatingScope || !hasCommandPower || !activeTarget}
           >
             {isUpdatingScope ? (
-              <span className="flex items-center gap-2.5">
+              <span className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 מעדכן...
               </span>
             ) : (
-              "עדכן אירוע לכולם"
+              activeTarget ? `עדכן אירוע ${activeTarget.toLabel}` : "עדכן אירוע"
             )}
           </Button>
           <button
             type="button"
             onClick={onClose}
-            className="w-full text-[11px] font-bold text-muted-foreground/50 hover:text-muted-foreground transition-colors py-2 text-center"
+            className="w-full text-xs font-medium text-muted-foreground hover:text-foreground transition-colors py-1 text-center"
           >
             ביטול
           </button>
@@ -445,4 +551,3 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
     </Dialog>
   );
 };
-

@@ -2,7 +2,7 @@
   "version": 2,
   "framework": "vite",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://interests-targeted-seemed-jacksonville.trycloudflare.com/api/$1" },
+    { "source": "/api/(.*)", "destination": "https://discount-plasma-identifies-millions.trycloudflare.com/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [

@@ -821,11 +821,10 @@ const FeedbackPage = () => {
         dir="rtl"
       >
         {/* Page Header with Integrated Desktop Segmented Tabs */}
-        <div className="pt-5 pb-3 px-4 sm:px-6 shrink-0 border-b border-border/40 bg-background/95 backdrop-blur">
+        <div className="hidden sm:block pt-6 pb-4 px-4 sm:px-6 shrink-0 border-b border-border/40 bg-background/95 backdrop-blur">
           <PageHeader
             icon={MessageSquare}
             title="מרכז הודעות ותקשורת"
-            subtitle="הודעות מפקדים, תפוצה בוואטסאפ ופניות לצוות התמיכה"
             className="mb-0"
             hideMobile={true}
             badge={

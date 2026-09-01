@@ -1369,7 +1369,7 @@ export default function CreateEmployeePage() {
   return (
     <div id="create-page-root" className="flex flex-col pb-10">
       {/* Page Header - matches system layout */}
-      <div className="pt-3 sm:pt-4 pb-3 px-4 sm:px-6 shrink-0 flex items-center justify-between gap-3 sm:gap-4 border-b border-border/40 mb-3 sm:mb-6">
+      <div className="pt-6 pb-4 px-4 sm:px-6 shrink-0 flex items-center justify-between gap-3 sm:gap-4 border-b border-border/40 mb-3 sm:mb-6">
         {/* Right side (RTL start) */}
         <div className="flex items-center gap-2 sm:gap-3">
           <Button

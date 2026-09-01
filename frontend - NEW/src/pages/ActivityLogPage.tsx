@@ -43,6 +43,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuthContext } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { TermsStatusModal } from "@/components/settings/TermsStatusModal";
+import { ShieldCheck } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/card";
 import {
@@ -100,6 +102,7 @@ export default function ActivityLogPage() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -284,46 +287,58 @@ export default function ActivityLogPage() {
   return (
     <div className="flex flex-col h-full bg-background/50 overflow-hidden" dir="rtl">
       {/* Header Bar */}
-      <div className="pt-3 sm:pt-5 pb-2 sm:pb-3 px-3 sm:px-6 shrink-0 transition-all">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shrink-0">
-              <History className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-base sm:text-lg font-bold text-foreground">מרכז ניטור וביקורת</h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">מעקב ובקרה אחר פעולות, אבטחה וכניסות למערכת</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 self-end sm:self-auto w-full sm:w-auto justify-between sm:justify-end">
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="rounded-xl h-9 border-border/40 bg-card hover:bg-muted/50 font-semibold text-xs gap-1.5 flex-1 sm:flex-initial"
-              onClick={fetchData}
-              disabled={isLoading}
-            >
-              <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
-              <span>רענן</span>
-            </Button>
-            {user?.is_admin && (
+      <div className="hidden sm:block pt-6 pb-4 px-4 sm:px-6 shrink-0 transition-all">
+        <PageHeader
+          icon={History}
+          title="מרכז ניטור וביקורת"
+          className="mb-0"
+          badge={
+            <div className="flex items-center gap-2 self-end sm:self-auto w-full sm:w-auto justify-between sm:justify-end">
               <Button 
+                variant="outline" 
                 size="sm"
-                onClick={handleExport}
-                disabled={isExporting}
-                className="rounded-xl h-9 font-semibold text-xs gap-1.5 flex-1 sm:flex-initial"
+                className="rounded-xl h-9 border-border/40 bg-card hover:bg-muted/50 font-semibold text-xs gap-1.5 flex-1 sm:flex-initial"
+                onClick={fetchData}
+                disabled={isLoading}
               >
-                {isExporting ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Download className="w-3.5 h-3.5" />
-                )}
-                <span>ייצוא דוח ביקורת</span>
+                <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
+                <span>רענן</span>
               </Button>
-            )}
-          </div>
-        </div>
+              {user?.is_admin && (
+                <>
+                  <Button 
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowTermsModal(true)}
+                    className="rounded-xl h-9 font-black text-xs gap-1.5 border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>אישורי תקנון משתמשים</span>
+                  </Button>
+
+                  <Button 
+                    size="sm"
+                    onClick={handleExport}
+                    disabled={isExporting}
+                    className="rounded-xl h-9 font-semibold text-xs gap-1.5 flex-1 sm:flex-initial"
+                  >
+                    {isExporting ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Download className="w-3.5 h-3.5" />
+                    )}
+                    <span>ייצוא דוח ביקורת</span>
+                  </Button>
+                </>
+              )}
+            </div>
+          }
+        />
+
+        <TermsStatusModal
+          open={showTermsModal}
+          onOpenChange={setShowTermsModal}
+        />
       </div>
 
       <main className="flex-1 overflow-y-auto custom-scrollbar px-2.5 sm:px-6 pb-6 space-y-4">

@@ -342,13 +342,11 @@ export default function MainLayout() {
             aria-label="תפריט ניווט"
             title={isSidebarOpen ? "כווץ תפריט" : "הרחב תפריט"}
           >
-            <div className="w-9 h-9 rounded-xl bg-primary/5 flex items-center justify-center shrink-0 border border-border/50">
-              <img
-                src="/logo_unit.png"
-                alt="סמל היחידה"
-                className="w-7 h-7 object-contain filter drop-shadow-xs group-hover:scale-105 transition-transform duration-200"
-              />
-            </div>
+            <img
+              src="/logo_unit.png"
+              alt="סמל היחידה"
+              className="w-9 h-9 sm:w-10 sm:h-10 object-contain shrink-0 group-hover:scale-105 transition-transform duration-200"
+            />
 
             {/* System Title */}
             {isSidebarOpen && (
@@ -563,12 +561,12 @@ export default function MainLayout() {
               <img
                 src="/logo_unit.png"
                 alt="סמל היחידה"
-                className="w-10 h-10 sm:w-12 sm:h-12 object-contain toren-logo-img"
+                className="w-10 h-10 sm:w-11 sm:h-11 object-contain shrink-0"
               />
             </button>
 
             {/* Mobile page title & status dot — sits between logo and date/notifications */}
-            <div className="lg:hidden flex-1 flex flex-col items-start pr-1.5 min-w-0">
+            <div className="lg:hidden flex-1 flex flex-col items-start pr-2 min-w-0">
               {/* Green status dot above the name */}
               <div className="mb-0.5 flex items-center gap-1">
                 <Popover>
@@ -578,9 +576,9 @@ export default function MainLayout() {
                       title="סטטוס מערכת"
                       className="flex items-center shrink-0 focus:outline-none p-0.5"
                     >
-                      <span className="relative flex h-1.5 w-1.5">
+                      <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                       </span>
                     </button>
                   </PopoverTrigger>
@@ -636,11 +634,11 @@ export default function MainLayout() {
                     </div>
                   </PopoverContent>
                 </Popover>
-                <span className="text-[7.5px] font-black text-emerald-500/90 leading-none">
+                <span className="text-[9px] font-black text-emerald-500/90 leading-none">
                   פעיל
                 </span>
               </div>
-              <h2 className="text-sm font-black text-foreground tracking-tight leading-none whitespace-nowrap">
+              <h2 className="text-base sm:text-lg font-black text-foreground tracking-tight leading-tight whitespace-nowrap">
                 {currentPageName}
               </h2>
             </div>
@@ -771,10 +769,10 @@ export default function MainLayout() {
                   </button>
                 </PopoverTrigger>
                 <PopoverContent
-                  className="w-[450px] max-w-[95vw] p-0 overflow-hidden rounded-2xl border-border shadow-2xl"
+                  className="w-[450px] max-w-[95vw] p-0 overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-300/90 dark:border-slate-700/90 shadow-[0_20px_60px_-10px_rgba(15,23,42,0.25),0_0_0_1px_rgba(15,23,42,0.1)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85),0_0_0_1px_rgba(255,255,255,0.12)] z-50 animate-in fade-in-0 zoom-in-95"
                   align="start"
                 >
-                  <div className="p-4 border-b border-border bg-card sticky top-0 z-10">
+                  <div className="p-4 border-b border-slate-200/80 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-10">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-black text-foreground text-right">
@@ -814,29 +812,29 @@ export default function MainLayout() {
                         </button>
                       </div>
                     </div>
-                    <div className="flex gap-1 border-b border-border/40 -mb-px">
+                    <div className="flex gap-1 border-b border-slate-200/80 dark:border-slate-800 -mb-px">
                       <button
                         onClick={() => setNotificationTab("active")}
                         className={cn(
-                          "flex-1 px-2 py-2 text-[10px] sm:text-[11px] font-black rounded-t-lg transition-all flex items-center justify-center gap-1.5",
+                          "flex-1 px-2 py-2 text-[10px] sm:text-[11px] font-black rounded-t-xl transition-all flex items-center justify-center gap-1.5",
                           notificationTab === "active"
-                            ? "bg-background text-primary border-b-2 border-primary"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                            ? "bg-white dark:bg-slate-800 text-primary border-b-2 border-primary shadow-xs"
+                            : "text-muted-foreground hover:text-foreground hover:bg-slate-200/60 dark:hover:bg-slate-800/60",
                         )}
                       >
-                        <Activity className="w-3 h-3" />
+                        <Activity className="w-3.5 h-3.5" />
                         פעילות ({alerts.length})
                       </button>
                       <button
                         onClick={() => setNotificationTab("messages")}
                         className={cn(
-                          "flex-1 px-2 py-2 text-[10px] sm:text-[11px] font-black rounded-t-lg transition-all flex items-center justify-center gap-1.5",
+                          "flex-1 px-2 py-2 text-[10px] sm:text-[11px] font-black rounded-t-xl transition-all flex items-center justify-center gap-1.5",
                           notificationTab === "messages"
-                            ? "bg-background text-primary border-b-2 border-primary"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                            ? "bg-white dark:bg-slate-800 text-primary border-b-2 border-primary shadow-xs"
+                            : "text-muted-foreground hover:text-foreground hover:bg-slate-200/60 dark:hover:bg-slate-800/60",
                         )}
                       >
-                        <MessageSquare className="w-3 h-3" />
+                        <MessageSquare className="w-3.5 h-3.5" />
                         הודעות{" "}
                         {unreadMessagesCount > 0 && `(${unreadMessagesCount})`}
                       </button>
@@ -846,13 +844,13 @@ export default function MainLayout() {
                           fetchHistory();
                         }}
                         className={cn(
-                          "flex-1 px-2 py-2 text-[10px] sm:text-[11px] font-black rounded-t-lg transition-all flex items-center justify-center gap-1.5",
+                          "flex-1 px-2 py-2 text-[10px] sm:text-[11px] font-black rounded-t-xl transition-all flex items-center justify-center gap-1.5",
                           notificationTab === "history"
-                            ? "bg-background text-primary border-b-2 border-primary"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                            ? "bg-white dark:bg-slate-800 text-primary border-b-2 border-primary shadow-xs"
+                            : "text-muted-foreground hover:text-foreground hover:bg-slate-200/60 dark:hover:bg-slate-800/60",
                         )}
                       >
-                        <History className="w-3 h-3" />
+                        <History className="w-3.5 h-3.5" />
                         היסטוריה ({history.length})
                       </button>
                     </div>

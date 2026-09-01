@@ -697,12 +697,10 @@ export default function RosterPage() {
     >
       <div className="flex flex-col h-full">
         {/* Unified Page Header - Premium Layout Style */}
-        {/* Unified Page Header - Hyper Minimalist */}
-        <div className="pt-6 pb-2 shrink-0 transition-all px-4 sm:px-6">
+        <div className="hidden sm:block pt-6 pb-4 shrink-0 transition-all px-4 sm:px-6">
           <PageHeader
             icon={CalendarRange}
             title="סידור עבודה שבועי"
-            subtitle={null}
             className="mb-0"
             hideMobile={true}
             badge={

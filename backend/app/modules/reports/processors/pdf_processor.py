@@ -39,7 +39,7 @@ class NumberedCanvas(canvas.Canvas):
         self.setFillColor(colors.HexColor("#555555"))
         
         # Header text
-        self.drawString(54, 750, "Matzevet System Report")
+        self.drawString(54, 750, "The Office System Report")
         self.drawRightString(558, 750, datetime.now().strftime("%Y-%m-%d %H:%M"))
         
         # Header rule

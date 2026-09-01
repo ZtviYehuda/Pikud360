@@ -657,88 +657,69 @@ export default function AttendancePage() {
       className="flex flex-col min-h-full selection:bg-primary/10 selection:text-primary transition-all"
       dir="rtl"
     >
+      {/* Top Header & Actions Section */}
       <div className="pt-6 pb-4 px-4 sm:px-6 shrink-0 transition-all">
-        {/* Premium Page Header Section */}
-        <PageHeader
-          icon={CalendarDays}
-          title="מעקב נוכחות"
-          className="mb-0"
-          hideMobile={true}
-          badge={
-            <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-6 w-full lg:w-auto mt-4 lg:mt-0">
-              {/* Unified Date Selector (Removed as it is now Global) */}
-              {/* Mobile-First Action Bar */}
-              <div className="lg:hidden">
-                {/* Mobile buttons outside PageHeader to achieve full screen width */}
-              </div>
-
-              {/* Desktop Action Bar */}
-              {!isViewingDayDetails && (
-                <div className="hidden lg:flex items-center gap-2 w-full lg:w-auto">
-                  {/* Calendar toggle button */}
+        {/* Desktop Page Header Section */}
+        <div className="hidden sm:block">
+          <PageHeader
+            icon={CalendarDays}
+            title="מעקב נוכחות"
+            className="mb-0"
+            badge={
+              !isViewingDayDetails && (
+                <div className="hidden lg:flex items-center gap-2">
                   <Button
                     id="attendance-calendar-btn"
-                    variant="ghost"
+                    variant="outline"
                     className={cn(
-                      "h-11 rounded-xl flex-col gap-0.5 font-black transition-all px-2 xl:px-4 py-1 justify-center min-w-[64px] border-none bg-transparent text-primary hover:bg-primary/5",
-                      calendarOpen && "bg-primary/10",
+                      "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs",
+                      calendarOpen && "border-primary bg-primary/10 text-primary"
                     )}
                     onClick={openCalendar}
                   >
-                    <CalendarRange className="w-4 h-4" />
-                    <span className="text-[9px] xl:text-[10px] leading-tight mt-0.5">
-                      לוח שנה
-                    </span>
+                    <CalendarRange className="w-3.5 h-3.5 text-primary" />
+                    <span>לוח שנה</span>
                   </Button>
 
                   {!user?.is_temp_commander && (
                     <Button
                       id="attendance-export-btn"
-                      variant="ghost"
-                      className="h-11 rounded-xl flex-col gap-0.5 font-black transition-all px-2 xl:px-4 py-1 justify-center min-w-[64px] border-none bg-transparent text-primary hover:bg-primary/5"
+                      variant="outline"
+                      className="h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs"
                       onClick={() => setExportDialogOpen(true)}
                     >
-                      <Download className="w-4 h-4" />
-                      <span className="text-[9px] xl:text-[10px] leading-tight mt-0.5">
-                        ייצוא
-                      </span>
+                      <Download className="w-3.5 h-3.5 text-primary" />
+                      <span>ייצוא</span>
                     </Button>
                   )}
 
                   <Button
                     id="self-report-button"
-                    variant={isReportedToday ? "default" : "ghost"}
+                    variant="outline"
                     className={cn(
-                      "h-11 rounded-xl flex-col gap-0.5 font-black transition-all px-2 xl:px-4 py-1 justify-center min-w-[64px]",
-                      isReportedToday
-                        ? "bg-emerald-500/90 hover:bg-emerald-600 text-white"
-                        : "border-none bg-transparent text-primary hover:bg-primary/5",
-                      searchParams.get("tutorial") === "self-report" &&
-                        "tutorial-highlight",
+                      "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs",
+                      isReportedToday && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+                      searchParams.get("tutorial") === "self-report" && "tutorial-highlight"
                     )}
                     onClick={handleSelfReport}
                   >
                     {isReportedToday ? (
                       <>
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span className="text-[9px] xl:text-[10px] leading-tight mt-0.5">
-                          דווח
-                        </span>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>דווח</span>
                       </>
                     ) : (
                       <>
-                        <ClipboardCheck className="w-4 h-4" />
-                        <span className="text-[9px] xl:text-[10px] leading-tight mt-0.5">
-                          דיווח עצמי
-                        </span>
+                        <ClipboardCheck className="w-3.5 h-3.5 text-primary" />
+                        <span>דיווח עצמי</span>
                       </>
                     )}
                   </Button>
 
                   {unverifiedEmployees.length > 0 && (
                     <Button
-                      variant="default"
-                      className="h-11 rounded-xl flex-col gap-0.5 font-black px-2 xl:px-4 py-1 justify-center transition-all bg-primary hover:bg-primary/90 text-white min-w-[64px]"
+                      variant="outline"
+                      className="h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30 text-xs shadow-xs"
                       onClick={async () => {
                         const success = await verifyRoster(
                           format(selectedDate, "yyyy-MM-dd"),
@@ -752,41 +733,36 @@ export default function AttendancePage() {
                         }
                       }}
                     >
-                      <CheckCheck className="w-4 h-4" />
-                      <span className="text-[9px] xl:text-[10px] leading-tight mt-0.5">
-                        אישור ({unverifiedEmployees.length})
-                      </span>
+                      <CheckCheck className="w-3.5 h-3.5 text-blue-500" />
+                      <span>אישור ({unverifiedEmployees.length})</span>
                     </Button>
                   )}
 
                   <Button
                     id="bulk-update-btn"
-                    variant="ghost"
+                    variant="outline"
                     className={cn(
-                      "h-11 rounded-xl flex-col gap-0.5 font-black transition-all px-2 xl:px-4 py-1 justify-center min-w-[64px] border-none bg-transparent text-primary hover:bg-primary/5",
-                      selectedEmployeeIds.length > 0 && "bg-primary/10",
+                      "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs",
+                      selectedEmployeeIds.length > 0 && "border-primary bg-primary/10 text-primary"
                     )}
                     onClick={() => {
                       setAlertContext(null);
                       setBulkModalOpen(true);
                     }}
                   >
-                    <ClipboardCheck className="w-4 h-4" />
-                    <span className="text-[9px] xl:text-[10px] leading-tight mt-0.5">
-                      עדכון מרוכז
-                    </span>
+                    <ClipboardCheck className="w-3.5 h-3.5 text-primary" />
+                    <span>עדכון מרוכז</span>
                   </Button>
                 </div>
-              )}
-            </div>
-          }
-        />
+              )
+            }
+          />
+        </div>
 
-        {/* Mobile Action Buttons & Reminders */}
+        {/* Mobile Action Buttons — Exact matching layout and styling to Dashboard */}
         {!isViewingDayDetails && (
           <>
-            {/* Mobile Action Buttons - Full Screen Width */}
-            <div className="lg:hidden w-full px-0 mb-2">
+            <div className="sm:hidden w-full mb-2">
               <div
                 className={cn(
                   "grid gap-2",
@@ -800,56 +776,57 @@ export default function AttendancePage() {
                 {/* Calendar button mobile */}
                 <Button
                   id="mobile-attendance-calendar-btn"
-                  variant="ghost"
+                  variant="outline"
                   className={cn(
-                    "h-11 rounded-xl gap-1 font-black text-[10px] flex-col py-2 px-1 border-none bg-transparent text-primary hover:bg-primary/5",
-                    calendarOpen && "bg-primary/10",
+                    "flex flex-col items-center justify-center gap-1 h-14 rounded-2xl bg-card/80 dark:bg-card/60 backdrop-blur-md border-border/60 text-foreground hover:bg-accent/50 active:scale-95 transition-all p-1 shadow-xs",
+                    calendarOpen && "border-primary ring-1 ring-primary/20 bg-primary/10"
                   )}
                   onClick={openCalendar}
                 >
-                  <CalendarRange className="w-4 h-4" />
-                  <span>לוח שנה</span>
+                  <CalendarRange className="w-4 h-4 text-primary shrink-0" />
+                  <span className="text-[11px] font-bold leading-none">לוח שנה</span>
                 </Button>
+
                 {!user?.is_temp_commander && (
                   <Button
                     id="mobile-attendance-export-btn"
-                    variant="ghost"
-                    className="h-11 rounded-xl text-primary hover:bg-primary/5 gap-1 font-black text-[10px] flex-col py-2 px-1 border-none bg-transparent"
+                    variant="outline"
+                    className="flex flex-col items-center justify-center gap-1 h-14 rounded-2xl bg-card/80 dark:bg-card/60 backdrop-blur-md border-border/60 text-foreground hover:bg-accent/50 active:scale-95 transition-all p-1 shadow-xs"
                     onClick={() => setExportDialogOpen(true)}
                   >
-                    <Download className="w-4 h-4" />
-                    <span>ייצוא</span>
+                    <Download className="w-4 h-4 text-primary shrink-0" />
+                    <span className="text-[11px] font-bold leading-none">ייצוא</span>
                   </Button>
                 )}
 
                 <Button
                   id="mobile-self-report-btn"
-                  variant={isReportedToday ? "default" : "ghost"}
+                  variant="outline"
                   className={cn(
-                    "h-11 rounded-xl gap-1 font-black text-[10px] flex-col py-2 px-1",
+                    "flex flex-col items-center justify-center gap-1 h-14 rounded-2xl backdrop-blur-md border-border/60 text-foreground hover:bg-accent/50 active:scale-95 transition-all p-1 shadow-xs",
                     isReportedToday
-                      ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                      : "border-none bg-transparent text-primary hover:bg-primary/5",
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                      : "bg-card/80 dark:bg-card/60"
                   )}
                   onClick={handleSelfReport}
                 >
                   {isReportedToday ? (
                     <>
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>דווח</span>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span className="text-[11px] font-bold leading-none text-emerald-600 dark:text-emerald-400">דווח</span>
                     </>
                   ) : (
                     <>
-                      <ClipboardCheck className="w-4 h-4" />
-                      <span>דיווח עצמי</span>
+                      <ClipboardCheck className="w-4 h-4 text-primary shrink-0" />
+                      <span className="text-[11px] font-bold leading-none">דיווח עצמי</span>
                     </>
                   )}
                 </Button>
 
                 {unverifiedEmployees.length > 0 && (
                   <Button
-                    variant="default"
-                    className="h-11 rounded-xl gap-1 font-black text-[10px] flex-col py-2 px-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    variant="outline"
+                    className="flex flex-col items-center justify-center gap-1 h-14 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 backdrop-blur-md hover:bg-blue-500/20 active:scale-95 transition-all p-1 shadow-xs"
                     onClick={async () => {
                       const success = await verifyRoster(
                         format(selectedDate, "yyyy-MM-dd"),
@@ -863,25 +840,25 @@ export default function AttendancePage() {
                       }
                     }}
                   >
-                    <CheckCheck className="w-4 h-4" />
-                    <span>אישור ({unverifiedEmployees.length})</span>
+                    <CheckCheck className="w-4 h-4 text-blue-500 shrink-0" />
+                    <span className="text-[11px] font-bold leading-none">אישור ({unverifiedEmployees.length})</span>
                   </Button>
                 )}
 
                 <Button
                   id="mobile-bulk-update-btn"
-                  variant="ghost"
+                  variant="outline"
                   className={cn(
-                    "h-11 text-primary hover:bg-primary/5 gap-1 font-black text-[10px] flex-col py-2 px-1 border-none bg-transparent",
-                    selectedEmployeeIds.length > 0 && "bg-primary/10",
+                    "flex flex-col items-center justify-center gap-1 h-14 rounded-2xl bg-card/80 dark:bg-card/60 backdrop-blur-md border-border/60 text-foreground hover:bg-accent/50 active:scale-95 transition-all p-1 shadow-xs",
+                    selectedEmployeeIds.length > 0 && "border-primary ring-1 ring-primary/20 bg-primary/10"
                   )}
                   onClick={() => {
                     setAlertContext(null);
                     setBulkModalOpen(true);
                   }}
                 >
-                  <ClipboardCheck className="w-4 h-4" />
-                  <span>עדכון מרוכז</span>
+                  <ClipboardCheck className="w-4 h-4 text-primary shrink-0" />
+                  <span className="text-[11px] font-bold leading-none">עדכון מרוכז</span>
                 </Button>
               </div>
             </div>

@@ -454,17 +454,17 @@ export const BulkStatusUpdateModal: React.FC<BulkStatusUpdateModalProps> = ({
         >
           <DialogDragHandle />
           {/* Sticky Header */}
-          <div className="flex-none p-4 sm:p-6 border-b border-border/40 bg-background/80 backdrop-blur-xl z-20">
-            <div className="flex items-center justify-between gap-4 mb-4">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+          <div className="flex-none px-6 py-5 border-b border-border/40 bg-muted/20 z-20">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <User className="w-5 h-5 text-primary" />
                 </div>
-                <div>
-                  <DialogTitle className="text-lg sm:text-2xl font-black text-foreground tracking-tight">
+                <div className="space-y-0.5 text-right">
+                  <DialogTitle className="text-base sm:text-lg font-bold text-foreground tracking-tight">
                     ניהול ועדכון נוכחות
                   </DialogTitle>
-                  <DialogDescription className="text-xs sm:text-sm font-bold text-muted-foreground mt-0.5">
+                  <DialogDescription className="text-xs text-muted-foreground font-normal">
                     {filteredList.length} מתוך {employees.length} שוטרים מופיעים
                     {selectedIds.length > 0 && ` • ${selectedIds.length} נבחרו`}
                   </DialogDescription>
@@ -1388,9 +1388,9 @@ export const BulkStatusUpdateModal: React.FC<BulkStatusUpdateModalProps> = ({
                   <Button
                     variant="outline"
                     onClick={() => handleSelectAll(true)}
-                    className="flex-1 sm:flex-none border-dashed border-primary/30 text-primary hover:bg-primary/5 h-11 sm:h-10 rounded-xl text-xs font-black group transition-all"
+                    className="flex-1 sm:flex-none border border-border/60 bg-background text-foreground hover:bg-muted/50 h-10 px-4 rounded-xl text-xs font-bold transition-all shadow-xs"
                   >
-                    <Check className="w-3.5 h-3.5 mr-1.5 group-hover:scale-125 transition-transform" />
+                    <Check className="w-3.5 h-3.5 ml-1.5" />
                     בחר הכל
                   </Button>
                 )}
@@ -1404,22 +1404,22 @@ export const BulkStatusUpdateModal: React.FC<BulkStatusUpdateModalProps> = ({
                     ) &&
                       batchStatusId === "")
                   }
-                  className="flex-1 sm:flex-none h-11 sm:h-10 px-8 rounded-xl font-black text-sm   hover: active:scale-95 transition-all order-last sm:order-none bg-primary hover:bg-primary/90"
+                  className="flex-1 sm:flex-none h-10 px-6 rounded-xl font-bold text-xs shadow-xs active:scale-95 transition-all order-last sm:order-none bg-primary text-white hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none"
                 >
                   {loading ? (
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      מעדכן...
+                    <div className="flex items-center gap-2 text-white">
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>מעדכן...</span>
                     </div>
                   ) : (
-                    "שמור שינויים"
+                    <span className="text-white font-bold">שמור שינויים</span>
                   )}
                 </Button>
 
                 <Button
                   variant="outline"
                   onClick={handleCloseAttempt}
-                  className="flex-1 sm:flex-none sm:hidden h-11 rounded-xl font-black text-xs border-border/60 hover:bg-muted/50 transition-all"
+                  className="flex-1 sm:flex-none sm:hidden h-10 rounded-xl font-bold text-xs border-border/60 hover:bg-muted/50 transition-all"
                 >
                   ביטול
                 </Button>

@@ -11,10 +11,30 @@ export function cleanUnitName(name?: string | null): string {
     name
       .replace(/מחלקת|מחלקה/g, "")
       .replace(/מדור/g, "")
-      .replace(/חוליית|חולייה/g, "")
+      .replace(/חוליית|חולייה|חוליה/g, "")
       .replace(/צוות/g, "")
       .trim() || "—"
   );
+}
+
+export function formatUnitName(type: "department" | "section" | "team", rawName?: string | null): string {
+  if (!rawName) return "—";
+  const cleaned = cleanUnitName(rawName);
+  if (cleaned === "—") return rawName.trim();
+  if (type === "department") return `מחלקת ${cleaned}`;
+  if (type === "section") return `מדור ${cleaned}`;
+  if (type === "team") return `חוליית ${cleaned}`;
+  return cleaned;
+}
+
+export function formatUnitToName(type: "department" | "section" | "team", rawName?: string | null): string {
+  if (!rawName) return "—";
+  const cleaned = cleanUnitName(rawName);
+  if (cleaned === "—") return rawName.trim();
+  if (type === "department") return `למחלקת ${cleaned}`;
+  if (type === "section") return `למדור ${cleaned}`;
+  if (type === "team") return `לחוליית ${cleaned}`;
+  return `ל${cleaned}`;
 }
 
 export function getHexColor(color: string) {

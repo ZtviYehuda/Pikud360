@@ -71,7 +71,7 @@ export default function TransfersPage() {
     cancelTransfer,
   } = useTransfers();
 
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState("history");
   const [structure, setStructure] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
@@ -235,9 +235,15 @@ export default function TransfersPage() {
   }, [pendingTransfers, history]);
 
   const filteredHistory = useMemo(() => {
-    let result = Array.isArray(history) ? history : [];
+    const safePending = Array.isArray(pendingTransfers) ? pendingTransfers : [];
+    const safeHistory = Array.isArray(history) ? history : [];
+    const historyIds = new Set(safeHistory.map((h) => h.id));
+    const uniquePending = safePending.filter((p) => !historyIds.has(p.id));
+    const allList = [...uniquePending, ...safeHistory];
+
+    let result = allList;
     if (historyFilter) {
-      result = result.filter((h) => h.status === historyFilter);
+      result = result.filter((h) => h.status?.toLowerCase() === historyFilter.toLowerCase());
     }
     if (searchTerm && activeTab === "history") {
       const lowerSearch = searchTerm.toLowerCase();
@@ -246,7 +252,7 @@ export default function TransfersPage() {
       );
     }
     return result;
-  }, [history, historyFilter, searchTerm, activeTab]);
+  }, [history, pendingTransfers, historyFilter, searchTerm, activeTab]);
 
   const handleCreateRequest = async () => {
     if (!selectedEmployee || !targetDeptId) {
@@ -384,12 +390,11 @@ export default function TransfersPage() {
 
   return (
     <div className="flex flex-col" dir="rtl">
-      <div className="pt-6 pb-4 px-4 sm:px-6 shrink-0 transition-all">
+      <div className="hidden sm:block pt-6 pb-4 px-4 sm:px-6 shrink-0 transition-all">
         <PageHeader
           icon={ArrowLeftRight}
           title="בקשות העברה ושיבוץ"
           className="mb-0"
-          hideMobile={true}
         />
       </div>
 
@@ -399,17 +404,16 @@ export default function TransfersPage() {
           <button
             type="button"
             onClick={() => {
-              if (activeTab === "pending" && !historyFilter) {
-                setActiveTab("history");
+              if (historyFilter === "pending") {
                 setHistoryFilter(null);
               } else {
-                setActiveTab("pending");
-                setHistoryFilter(null);
+                setActiveTab("history");
+                setHistoryFilter("pending");
               }
             }}
             className={cn(
               "bg-card rounded-xl sm:rounded-2xl p-2.5 sm:py-3 sm:px-4 border flex items-center justify-between transition-all text-right w-full cursor-pointer active:scale-[0.98]",
-              activeTab === "pending" && !historyFilter
+              historyFilter === "pending"
                 ? "border-amber-500/80 bg-amber-500/10 shadow-md shadow-amber-500/10 ring-2 ring-amber-500/20"
                 : "border-border hover:border-amber-500/40 hover:bg-amber-500/5 hover:scale-[1.01]",
             )}
@@ -430,7 +434,7 @@ export default function TransfersPage() {
           <button
             type="button"
             onClick={() => {
-              if (activeTab === "history" && historyFilter === "approved") {
+              if (historyFilter === "approved") {
                 setHistoryFilter(null);
               } else {
                 setActiveTab("history");
@@ -439,7 +443,7 @@ export default function TransfersPage() {
             }}
             className={cn(
               "bg-card rounded-xl sm:rounded-2xl p-2.5 sm:py-3 sm:px-4 border flex items-center justify-between transition-all text-right w-full cursor-pointer active:scale-[0.98]",
-              activeTab === "history" && historyFilter === "approved"
+              historyFilter === "approved"
                 ? "border-emerald-500/80 bg-emerald-500/10 shadow-md shadow-emerald-500/10 ring-2 ring-emerald-500/20"
                 : "border-border hover:border-emerald-500/40 hover:bg-emerald-500/5 hover:scale-[1.01]",
             )}
@@ -460,7 +464,7 @@ export default function TransfersPage() {
           <button
             type="button"
             onClick={() => {
-              if (activeTab === "history" && historyFilter === "rejected") {
+              if (historyFilter === "rejected") {
                 setHistoryFilter(null);
               } else {
                 setActiveTab("history");
@@ -469,7 +473,7 @@ export default function TransfersPage() {
             }}
             className={cn(
               "bg-card rounded-xl sm:rounded-2xl p-2.5 sm:py-3 sm:px-4 border flex items-center justify-between transition-all text-right w-full cursor-pointer active:scale-[0.98]",
-              activeTab === "history" && historyFilter === "rejected"
+              historyFilter === "rejected"
                 ? "border-rose-500/80 bg-rose-500/10 shadow-md shadow-rose-500/10 ring-2 ring-rose-500/20"
                 : "border-border hover:border-rose-500/40 hover:bg-rose-500/5 hover:scale-[1.01]",
             )}
@@ -489,20 +493,20 @@ export default function TransfersPage() {
         </div>
 
         {/* Active Filter Glass Pill Banner */}
-        {activeTab !== "new" && (activeTab === "pending" || historyFilter !== null) && (
+        {activeTab !== "new" && historyFilter !== null && (
           <div className="flex items-center justify-between p-2.5 sm:p-3 px-3.5 sm:px-4 rounded-2xl bg-card/80 backdrop-blur-xl border border-border/60 shadow-xs mb-3 transition-all animate-in fade-in slide-in-from-top-1 duration-200">
             <div className="flex items-center gap-2.5 min-w-0">
               <div
                 className={cn(
                   "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border",
-                  activeTab === "pending"
+                  historyFilter === "pending"
                     ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
                     : historyFilter === "approved"
                       ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                       : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
                 )}
               >
-                {activeTab === "pending" ? (
+                {historyFilter === "pending" ? (
                   <Clock className="w-4 h-4" />
                 ) : historyFilter === "approved" ? (
                   <CheckCircle className="w-4 h-4" />
@@ -513,14 +517,14 @@ export default function TransfersPage() {
               <div className="flex items-center gap-1.5 truncate text-xs sm:text-sm">
                 <span className="text-muted-foreground font-medium">סינון פעיל:</span>
                 <span className="font-black text-foreground truncate">
-                  {activeTab === "pending"
+                  {historyFilter === "pending"
                     ? "בהמתנה"
                     : historyFilter === "approved"
                       ? "אושרו"
                       : "נדחו"}
                 </span>
                 <span className="px-2 py-0.5 rounded-lg bg-muted/60 text-[11px] font-black text-foreground/80 shrink-0">
-                  {activeTab === "pending"
+                  {historyFilter === "pending"
                     ? stats.pending
                     : historyFilter === "approved"
                       ? stats.approved
@@ -533,10 +537,7 @@ export default function TransfersPage() {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => {
-                setActiveTab("history");
-                setHistoryFilter(null);
-              }}
+              onClick={() => setHistoryFilter(null)}
               className="h-8 px-3 text-xs font-bold text-primary hover:text-primary-foreground hover:bg-primary border-primary/30 rounded-xl flex items-center gap-1.5 transition-all shadow-2xs shrink-0 cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -1001,8 +1002,8 @@ export default function TransfersPage() {
                             <History className="w-12 h-12 opacity-20" />
                             <p className="text-sm font-bold italic">
                               {historyFilter
-                                ? "אין בקשות שנדחו"
-                                : "אין היסטוריה זמינה"}
+                                ? "אין בקשות התואמות לסינון הנבחר"
+                                : "אין בקשות העברה זמינות"}
                             </p>
                           </div>
                         </TableCell>
@@ -1011,7 +1012,8 @@ export default function TransfersPage() {
                       filteredHistory.map((req) => (
                         <TableRow
                           key={req.id}
-                          className="hover:bg-background/60 border-b last:border-0 transition-colors"
+                          onClick={() => setSelectedRequest(req)}
+                          className="hover:bg-muted/40 border-b last:border-0 transition-colors cursor-pointer"
                         >
                           <TableCell className="px-6 py-4 align-middle">
                             <button

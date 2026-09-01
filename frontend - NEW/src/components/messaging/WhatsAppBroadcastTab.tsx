@@ -74,16 +74,22 @@ const getGatewayUrl = () => {
   ) {
     return "http://localhost:3001";
   }
-  return "/api";
+  return "/api/messaging";
 };
 
 const getEndpoint = (path: string) => {
-  const base = getGatewayUrl();
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  if (base.endsWith("/api")) {
-    return cleanPath.startsWith("/api") ? cleanPath : `/api${cleanPath}`;
+  if (
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+  ) {
+    const target = cleanPath.startsWith("/api") ? cleanPath : `/api${cleanPath}`;
+    return `http://localhost:3001${target.replace("/api/messaging", "/api")}`;
   }
-  return `${base}${cleanPath.startsWith("/api") ? cleanPath : `/api${cleanPath}`}`;
+  if (cleanPath.startsWith("/api/messaging")) {
+    return cleanPath;
+  }
+  return cleanPath.replace("/api/whatsapp", "/api/messaging/whatsapp");
 };
 
 
@@ -372,10 +378,12 @@ export const WhatsAppBroadcastTab: React.FC = () => {
   const handleGatewayLogout = async () => {
     try {
       await fetch(getEndpoint("/api/whatsapp/logout"), { method: "POST" });
-      toast.info("הוואטסאפ נותק מהשרת");
-      fetchGatewayStatus();
+      setGatewayStatus({ status: "disconnected", qr: null, user: null });
+      toast.info("הוואטסאפ נותק בהצלחה מהשרת");
+      setTimeout(fetchGatewayStatus, 400);
     } catch {
-      toast.error("שגיאה בניתוק וואטסאפ");
+      setGatewayStatus({ status: "disconnected", qr: null, user: null });
+      toast.info("הוואטסאפ נותק");
     }
   };
 
@@ -710,8 +718,52 @@ export const WhatsAppBroadcastTab: React.FC = () => {
       duration: 4000,
     });
     const win = window.open(group.link, "_blank");
+  };
+
+  const handleAutoSendToGroup = async (target: OrgTarget) => {
+    if (!messageBody.trim()) {
+      toast.error("יש להזין תוכן להודעה");
+      return;
+    }
+
+    const key = `${target.level}_${target.id}`;
+    const link = groupLinks[key];
+
+    if (!link) {
+      handleOpenEditGroupLink(target);
+      toast.info(`אנא הגדר קישור קבוצה עבור ${target.name}`);
+      return;
+    }
+
+    const fullText = getFullFormattedMessage();
+
+    if (gatewayStatus.status === "connected") {
+      setAutoSending(true);
+      try {
+        const res = await fetch(getEndpoint("/api/whatsapp/send"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ target: link, message: fullText }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          toast.success(`ההודעה נשלחה בהצלחה לקבוצת ${target.name}`);
+          return;
+        }
+      } catch (err) {
+        console.error("Gateway group send error:", err);
+      } finally {
+        setAutoSending(false);
+      }
+    }
+
+    await copyToClipboardSafe(fullText);
+    toast.info(`תוכן ההודעה הועתק ללוח! פותח את קבוצת ${target.name} בדפדפן...`, {
+      duration: 4000,
+    });
+    const win = window.open(link, "_blank");
     if (!win || win.closed || typeof win.closed === "undefined") {
-      window.location.href = group.link;
+      window.location.href = link;
     }
   };
 
@@ -2478,11 +2530,21 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                   className="w-48 sm:w-52 h-48 sm:h-52 object-contain"
                 />
               </div>
+            ) : gatewayStatus.status === "connecting" ? (
+              <div className="w-48 sm:w-52 h-48 sm:h-52 flex flex-col items-center justify-center space-y-2 bg-muted/30 rounded-xl border border-dashed text-center p-4">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                <span className="text-xs font-medium text-muted-foreground">
+                  מייצר קוד QR...
+                </span>
+              </div>
             ) : (
-              <div className="w-48 sm:w-52 h-48 sm:h-52 flex flex-col items-center justify-center space-y-2 bg-muted/30 rounded-xl border border-dashed">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">
-                  טוען קוד QR...
+              <div className="w-48 sm:w-52 h-48 sm:h-52 flex flex-col items-center justify-center space-y-2 bg-amber-500/5 text-amber-600 dark:text-amber-400 rounded-xl border border-amber-500/20 text-center p-4">
+                <AlertCircle className="w-8 h-8 text-amber-500 mb-1" />
+                <span className="text-xs font-bold">
+                  שרת הוואטסאפ מנותק
+                </span>
+                <span className="text-[10px] text-muted-foreground leading-tight">
+                  להתחברות וסריקת QR יש לוודא שבוט ה-Gateway מופעל במחשב/שרת היחידה
                 </span>
               </div>
             )}

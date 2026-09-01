@@ -787,14 +787,11 @@ export default function DashboardPage() {
     >
       <div className="relative z-10 space-y-4 pt-6 pb-4 px-4 sm:px-6 max-w-full mx-auto transition-all">
 
-        {/* Header section: hidden on mobile (title is in the TopBar), visible on sm+ */}
         <div className="hidden sm:block">
           <PageHeader
             icon={LayoutDashboard}
             title="לוח בקרה"
-            subtitle={holiday || undefined}
-            className="mb-4 sm:mb-6"
-            iconClassName="hidden sm:flex"
+            className="mb-0"
             badge={
               // Desktop only — mobile uses the grid below
               <div className="hidden lg:flex items-center gap-2">
@@ -827,46 +824,44 @@ export default function DashboardPage() {
 
                 <Button
                   id="event-button"
-                  variant="ghost"
+                  variant="outline"
                   onClick={() => setGlobalEventOpen(true)}
                   className={cn(
-                    "h-9 rounded-xl flex-col gap-0.5 font-black transition-all px-2 xl:px-3.5 text-primary hover:bg-primary/5 text-sm min-w-[60px] py-1",
+                    "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs",
                     activeTutorial === "event" && "tutorial-highlight"
                   )}
                 >
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span className="text-[8.5px] xl:text-[9.5px] leading-tight">אירוע</span>
+                  <Calendar className="w-3.5 h-3.5 text-primary" />
+                  <span>אירוע</span>
                 </Button>
 
                 <Button
                   id="broadcast-button"
-                  variant="ghost"
+                  variant="outline"
                   onClick={() => setWhatsappBroadcastOpen(true)}
                   className={cn(
-                    "h-9 rounded-xl flex-col gap-0.5 font-black transition-all px-2 xl:px-3.5 text-primary hover:bg-primary/5 text-sm min-w-[60px] py-1",
+                    "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs",
                     activeTutorial === "broadcast" && "tutorial-highlight"
                   )}
                 >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span className="text-[8.5px] xl:text-[9.5px] leading-tight text-center">רשימת תפוצה</span>
+                  <MessageSquare className="w-3.5 h-3.5 text-primary" />
+                  <span>רשימת תפוצה</span>
                 </Button>
               </div>
             }
           />
         </div>
 
-        {/* Mobile Quick Actions Bar — only visible on small screens */}
-        <div className="grid grid-cols-4 gap-1.5 sm:hidden mb-2">
+        {/* Mobile Quick Actions Bar — Modern Elevated App Bar */}
+        <div className="grid grid-cols-4 gap-2 sm:hidden mb-2">
           <Button
             id="mobile-filter-trigger"
-            variant="ghost"
+            variant="outline"
             onClick={() => setFilterOpen(true)}
-            className="flex flex-col items-center justify-center gap-1 h-[52px] rounded-xl bg-transparent border-none text-primary hover:bg-primary/5 active:scale-95 transition-all px-0"
+            className="flex flex-col items-center justify-center gap-1 h-14 rounded-2xl bg-card/80 dark:bg-card/60 backdrop-blur-md border-border/60 text-foreground hover:bg-accent/50 active:scale-95 transition-all p-1 shadow-xs"
           >
-            <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Filter className="w-3.5 h-3.5" />
-            </div>
-            <span className="text-[10px] font-black leading-none">סינון</span>
+            <Filter className="w-4 h-4 text-primary shrink-0" />
+            <span className="text-[11px] font-bold leading-none">סינון</span>
           </Button>
 
           <ReportHub
@@ -874,37 +869,33 @@ export default function DashboardPage() {
             onShareBirthdays={() => setWhatsAppDialogOpen(true)}
             filters={memoizedFilters}
             initialDate={selectedDate}
-            className="flex flex-col items-center justify-center gap-1 h-[52px] rounded-xl bg-transparent border-none text-primary hover:bg-primary/5 active:scale-95 transition-all px-0"
+            className="flex flex-col items-center justify-center gap-1 h-14 rounded-2xl bg-card/80 dark:bg-card/60 backdrop-blur-md border border-border/60 text-foreground hover:bg-accent/50 active:scale-95 transition-all p-1 shadow-xs"
           />
 
           <Button
             id="mobile-event-button"
-            variant="ghost"
+            variant="outline"
             onClick={() => setGlobalEventOpen(true)}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 h-[52px] rounded-xl bg-transparent border-none text-primary hover:bg-primary/5 active:scale-95 transition-all px-0",
+              "flex flex-col items-center justify-center gap-1 h-14 rounded-2xl bg-card/80 dark:bg-card/60 backdrop-blur-md border-border/60 text-foreground hover:bg-accent/50 active:scale-95 transition-all p-1 shadow-xs",
               activeTutorial === "event" && "tutorial-highlight"
             )}
           >
-            <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Calendar className="w-3.5 h-3.5" />
-            </div>
-            <span className="text-[10px] font-black leading-none">אירוע</span>
+            <Calendar className="w-4 h-4 text-primary shrink-0" />
+            <span className="text-[11px] font-bold leading-none">אירוע</span>
           </Button>
 
           <Button
             id="mobile-broadcast-button"
-            variant="ghost"
+            variant="outline"
             onClick={() => setWhatsappBroadcastOpen(true)}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 h-[52px] rounded-xl bg-transparent border-none text-primary hover:bg-primary/5 active:scale-95 transition-all px-0",
+              "flex flex-col items-center justify-center gap-1 h-14 rounded-2xl bg-card/80 dark:bg-card/60 backdrop-blur-md border-border/60 text-foreground hover:bg-accent/50 active:scale-95 transition-all p-1 shadow-xs",
               activeTutorial === "broadcast" && "tutorial-highlight"
             )}
           >
-            <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <MessageSquare className="w-3.5 h-3.5" />
-            </div>
-            <span className="text-[10px] font-black leading-none">תפוצה</span>
+            <MessageSquare className="w-4 h-4 text-primary shrink-0" />
+            <span className="text-[11px] font-bold leading-none">תפוצה</span>
           </Button>
         </div>
 

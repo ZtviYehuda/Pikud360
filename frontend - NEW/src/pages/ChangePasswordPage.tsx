@@ -345,7 +345,7 @@ export default function ChangePasswordPage() {
           
           <div className="text-center">
             <p className="text-[10px] text-muted-foreground/40 font-bold uppercase tracking-widest leading-tight">
-              Matzevet Security System
+              The Office Security System
             </p>
           </div>
         </motion.div>

@@ -587,7 +587,7 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col min-h-full pb-20">
-      <div className="hidden lg:block pt-6 pb-4 shrink-0 transition-all px-4 sm:px-6">
+      <div className="hidden sm:block pt-6 pb-4 shrink-0 transition-all px-4 sm:px-6">
         <PageHeader
           icon={SettingsIcon}
           title="הגדרות מערכת"

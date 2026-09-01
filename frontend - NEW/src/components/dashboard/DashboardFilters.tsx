@@ -898,13 +898,19 @@ export const DashboardFilters = ({
               <PopoverTrigger asChild>
                 <Button
                   id="dashboard-filter-trigger"
-                  variant="ghost"
-                  className="h-9 rounded-xl flex-col gap-0.5 font-black transition-all px-2 xl:px-3.5 text-primary hover:bg-primary/5 text-sm min-w-[60px] py-1 relative border-none bg-transparent"
+                  variant="outline"
+                  className={cn(
+                    "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs flex items-center",
+                    hasActiveFilters && "border-primary/50 text-primary bg-primary/5 dark:bg-primary/10",
+                  )}
                 >
-                  <Filter className="w-3.5 h-3.5" />
-                  <span className="text-[8.5px] xl:text-[9.5px] leading-tight">
+                  <Filter className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="text-xs font-bold">
                     סינון
                   </span>
+                  {hasActiveFilters && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse mr-0.5" />
+                  )}
                 </Button>
               </PopoverTrigger>
 

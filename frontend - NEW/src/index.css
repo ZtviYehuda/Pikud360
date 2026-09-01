@@ -17,16 +17,49 @@
 }
 
 .grid-background {
-  background-image: radial-gradient(circle at 1px 1px, #e5e7eb 1px, transparent 0);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    #e5e7eb 1px,
+    transparent 0
+  );
   background-size: 24px 24px;
 }
 
 .dark .grid-background {
-  background-image: radial-gradient(circle at 1px 1px, #1e293b 1px, transparent 0);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    #1e293b 1px,
+    transparent 0
+  );
 }
 
-* {
-  font-family: "Noto Sans Hebrew", sans-serif;
+*,
+*::before,
+*::after,
+html,
+body,
+button,
+input,
+select,
+textarea,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+label,
+td,
+th,
+svg text,
+svg tspan,
+.recharts-text,
+.recharts-cartesian-axis-tick-value,
+.recharts-legend-item-text {
+  font-family: "Noto Sans Hebrew", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-optical-sizing: auto;
 }
 
 html,
@@ -318,7 +351,7 @@ body {
   * {
     @apply border-border;
   }
-  
+
   /* Focus management - remove browser defaults, use focus-visible */
   :focus {
     outline: none;
@@ -336,8 +369,8 @@ body {
     outline: none !important;
     -webkit-tap-highlight-color: transparent;
   }
-  
-  button, 
+
+  button,
   [role="button"],
   a,
   select,
@@ -407,8 +440,15 @@ body {
 }
 
 @keyframes birthday-pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.05); opacity: 0.8; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
 }
 
 .animate-birthday-pulse {
@@ -473,13 +513,22 @@ body[data-scroll-locked] .global-ai-support-btn {
 }
 
 @keyframes tutorial-pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
-    background-color: color-mix(in srgb, var(--primary) 10%, transparent) !important;
+    background-color: color-mix(
+      in srgb,
+      var(--primary) 10%,
+      transparent
+    ) !important;
   }
   50% {
     transform: scale(1.02);
-    background-color: color-mix(in srgb, var(--primary) 22%, transparent) !important;
+    background-color: color-mix(
+      in srgb,
+      var(--primary) 22%,
+      transparent
+    ) !important;
   }
 }
 
@@ -532,7 +581,6 @@ body[data-scroll-locked] .global-ai-support-btn {
   border: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 
-
 /* Hide dialog overlay completely during the tour so targeted cells are not blurred or covered */
 body.tour-active [data-slot="dialog-overlay"],
 body.tour-active [class*="dialog-overlay"],
@@ -543,7 +591,7 @@ body.tour-active [data-radix-portal] > [class*="bg-black/50"] {
   -webkit-backdrop-filter: none !important;
 }
 
-.toren-spin-container {
+.unit-spin-container {
   position: relative;
   width: 140px;
   height: 140px;
@@ -554,11 +602,12 @@ body.tour-active [data-radix-portal] > [class*="bg-black/50"] {
 }
 
 /* Instant 0ms Theme Switch - Zero delay and no background thrashing */
-html, body {
+html,
+body {
   transition: none !important;
 }
 
-.toren-spin-logo {
+.unit-spin-logo {
   width: 100px;
   height: 100px;
   object-fit: contain;
@@ -566,26 +615,16 @@ html, body {
   z-index: 5;
 }
 
-.toren-spin-logo,
-img[src*="/toren_logo_base.png"],
-img[src*="/toren_logo.png"],
-img[src*="/matzevet_logo.png"],
-img[src*="/matzevet_icon.png"],
+.unit-spin-logo,
 img[src*="/logo_unit.png"],
-.toren-logo-img {
-  filter: drop-shadow(0 4px 16px rgba(59, 130, 246, 0.25));
+.unit-logo-img {
+  filter: drop-shadow(0 2px 8px rgba(59, 130, 246, 0.15));
+  mix-blend-mode: multiply;
 }
 
-.dark .toren-spin-logo,
-.dark img[src*="/toren_logo_base.png"],
-.dark img[src*="/toren_logo.png"],
-.dark img[src*="/matzevet_logo.png"],
-.dark img[src*="/matzevet_icon.png"],
+.dark .unit-spin-logo,
 .dark img[src*="/logo_unit.png"],
-.dark .toren-logo-img {
-  filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.35));
+.dark .unit-logo-img {
+  filter: drop-shadow(0 0 15px rgba(56, 189, 248, 0.25));
+  mix-blend-mode: screen;
 }
-
-
-
-

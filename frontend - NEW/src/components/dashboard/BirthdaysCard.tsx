@@ -82,57 +82,58 @@ export const BirthdaysCard = forwardRef(
         <Card
           id={id || "birthdays-card"}
           className={cn(
-            "bg-card/60 dark:bg-slate-900/60 backdrop-blur-2xl text-card-foreground rounded-[1.5rem] border-0 shadow-sm flex flex-col overflow-hidden h-full relative",
+            "bg-card/70 dark:bg-card/50 backdrop-blur-md text-card-foreground rounded-2xl border border-border/60 shadow-xs flex flex-col overflow-hidden h-full relative transition-all",
             className
           )}
         >
-          <CardHeader className="px-4 sm:px-6 py-3 flex flex-row items-center justify-between space-y-0">
-            <div className="flex justify-between items-center gap-4 w-full">
-              <div className="flex items-center gap-3">
-                <div>
-                  <CardTitle className="text-sm sm:text-base font-black text-foreground mb-0.5 flex items-center flex-wrap gap-2">
-                    <span>ימי הולדת</span>
-                    {filterTags.length > 0 && (
-                      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar ml-1">
-                        {filterTags.map((tag, idx) => (
-                          <Badge 
-                            key={idx} 
-                            variant="outline" 
-                            className="text-[10px] h-6 px-2.5 font-black bg-primary/10 text-primary border-primary/30 rounded-lg whitespace-nowrap shadow-sm"
-                          >
-                           {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </CardTitle>
-                  <CardDescription className="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wide">
-                    חוגגים השבוע
-                  </CardDescription>
+          <CardHeader className="px-4 sm:px-6 py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3">
+            <div className="space-y-1 min-w-0 flex-1">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <Gift className="w-4 h-4" />
                 </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {birthdays.length > 0 && (
-                  <>
-                    <Button
-                      onClick={() => setIsGreetingsModalOpen(true)}
-                      variant="outline"
-                      size="sm"
-                      className="hidden sm:flex h-9 rounded-xl gap-2 font-black text-xs border-primary/20 hover:bg-primary/5 text-primary"
-                    >
-                      <Gift className="w-3.5 h-3.5" />
-                      <span>שליחת ברכה</span>
-                    </Button>
-                    <WhatsAppButton
-                      onClick={handleSendWhatsApp}
-                      variant="outline"
-                      className="h-9 w-9 p-0 rounded-xl border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all"
-                      skipDirectLink={true}
-                    />
-                  </>
+                <CardTitle className="text-sm sm:text-base font-bold text-foreground tracking-tight truncate">
+                  ימי הולדת
+                </CardTitle>
+                {filterTags.length > 0 && (
+                  <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                    {filterTags.map((tag, idx) => (
+                      <Badge 
+                        key={idx} 
+                        variant="outline" 
+                        className="text-[9px] h-5 px-2 font-bold bg-primary/10 text-primary border-primary/30 rounded-md whitespace-nowrap"
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
                 )}
               </div>
+              <CardDescription className="text-xs text-muted-foreground truncate">
+                חוגגים השבוע
+              </CardDescription>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {birthdays.length > 0 && (
+                <>
+                  <Button
+                    onClick={() => setIsGreetingsModalOpen(true)}
+                    variant="outline"
+                    size="sm"
+                    className="hidden sm:flex h-8 px-2.5 rounded-lg gap-1.5 font-bold text-xs border-primary/20 hover:bg-primary/5 text-primary"
+                  >
+                    <Gift className="w-3.5 h-3.5" />
+                    <span>שליחת ברכה</span>
+                  </Button>
+                  <WhatsAppButton
+                    onClick={handleSendWhatsApp}
+                    variant="outline"
+                    className="h-8 w-8 p-0 rounded-lg border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all"
+                    skipDirectLink={true}
+                  />
+                </>
+              )}
             </div>
           </CardHeader>
 

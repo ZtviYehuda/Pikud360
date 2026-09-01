@@ -227,7 +227,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 
             {/* Name */}
             <div className="flex flex-col items-center gap-1.5">
-              <DialogTitle className="text-[22px] font-black text-foreground tracking-tight leading-tight">
+              <DialogTitle className="text-xl font-bold text-foreground tracking-tight leading-tight">
                 {employee.first_name} {employee.last_name}
               </DialogTitle>
 

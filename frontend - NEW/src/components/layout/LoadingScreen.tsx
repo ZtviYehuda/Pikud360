@@ -63,13 +63,10 @@ export const LoadingScreen = () => {
           }}
           className="relative flex items-center justify-center p-3"
         >
-          {/* Subtle outer shield border glow */}
-          <div className="absolute inset-0 rounded-3xl bg-blue-500/10 dark:bg-blue-400/10 blur-xl -z-10" />
-
           <img
             src="/logo_unit.png"
             alt="סמל היחידה"
-            className="w-28 h-28 sm:w-32 sm:h-32 object-contain filter drop-shadow-[0_10px_25px_rgba(59,130,246,0.35)] transition-all duration-300"
+            className="w-28 h-28 sm:w-32 sm:h-32 object-contain transition-all duration-300"
           />
         </motion.div>
 

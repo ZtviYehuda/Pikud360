@@ -294,25 +294,22 @@ export const ReportHub: React.FC<ReportHubProps> = ({
         <DialogTrigger asChild>
           <Button 
             id={id || "report-hub-card"}
-            variant="ghost" 
+            variant="outline" 
             className={cn(
-              "rounded-xl font-black transition-all text-primary hover:bg-primary/5 min-w-[60px] border-none bg-transparent",
-              !className && "h-9 flex-col gap-0.5 px-2 xl:px-3.5 text-sm py-1",
+              "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs flex items-center",
               className,
               (searchParams.get("tutorial") === "report-hub" || activeTutorial === "report-hub") && "tutorial-highlight"
             )}
           >
             {className?.includes("flex-col") ? (
               <>
-                <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <FileText className="w-3.5 h-3.5" />
-                </div>
-                <span className="text-[10px] font-black leading-none">דוחות</span>
+                <FileText className="w-4 h-4 text-primary shrink-0" />
+                <span className="text-[11px] font-bold leading-none">דוחות</span>
               </>
             ) : (
               <>
-                <FileText className="w-3.5 h-3.5" />
-                <span className="text-[8.5px] xl:text-[9.5px] leading-tight">מרכז דוחות</span>
+                <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span className="text-xs font-bold">מרכז דוחות</span>
               </>
             )}
           </Button>

@@ -1,10 +1,10 @@
-const CACHE_NAME = 'unit-cache-v36';
+const CACHE_NAME = 'unit-cache-v56';
 const OFFLINE_URL = '/offline.html';
 
 // Core assets to pre-cache immediately
 const PRECACHE_ASSETS = [
   OFFLINE_URL,
-  '/matzevet_logo.png',
+  '/logo_unit.png',
   '/',
 ];
 

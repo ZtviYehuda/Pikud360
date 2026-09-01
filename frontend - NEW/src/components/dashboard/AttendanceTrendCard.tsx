@@ -1,4 +1,4 @@
-import { useRef, useMemo, forwardRef, useImperativeHandle, useState, useEffect } from "react";
+import { useRef, useMemo, forwardRef, useImperativeHandle } from "react";
 import {
   Card,
   CardContent,
@@ -6,7 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { TrendingUp, Activity, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   XAxis,
@@ -17,16 +19,16 @@ import {
   Area,
   AreaChart,
 } from "recharts";
-import { format, parseISO, startOfMonth, isSameDay } from "date-fns";
-import { he } from "date-fns/locale";
-import { toPng, toBlob } from "html-to-image";
-import { toast } from "sonner";
+import { format, parseISO } from "date-fns";
 
 interface TrendData {
-  date_str: string;
-  date: string;
-  total_employees: number;
+  date?: string;
+  date_str?: string;
+  total_count?: number;
+  total_employees?: number;
   present_count: number;
+  absent_count?: number;
+  percentage?: number;
 }
 
 interface AttendanceTrendCardProps {
@@ -50,426 +52,207 @@ export const AttendanceTrendCard = forwardRef(
     {
       data = [],
       loading,
-      range,
+      range = 30,
       className,
       unitName = "כלל היחידה",
-      subtitle,
       selectedDate = new Date(),
       onDateSelect,
       onRangeChange,
       hideHeader = false,
-      compact = false,
-      filterTags = [],
       totalEmployees = 0,
     }: AttendanceTrendCardProps,
     ref: any
   ) {
     const cardRef = useRef<HTMLDivElement>(null);
 
-    const [isMobile, setIsMobile] = useState(false);
-    useEffect(() => {
-      const handleResize = () => setIsMobile(window.innerWidth < 640);
-      handleResize();
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
-    }, []);
-
     const chartData = useMemo(() => {
-      if (!data || range < 365) return data || [];
+      const rawList = Array.isArray(data) 
+        ? data 
+        : ((data as any)?.trend || (data as any)?.data || []);
 
-      const monthlyMap = new Map<
-        string,
-        { month: string; present: number; total: number; count: number }
-      >();
-
-      (data || []).forEach((item) => {
-        const date = parseISO(item.date);
-        const monthKey = format(startOfMonth(date), "yyyy-MM");
-        const existing = monthlyMap.get(monthKey) || {
-          month: format(date, "MMMM", { locale: he }),
-          present: 0,
-          total: 0,
-          count: 0,
-        };
-
-        monthlyMap.set(monthKey, {
-          month: existing.month,
-          present: existing.present + item.present_count,
-          total: existing.total + item.total_employees,
-          count: existing.count + 1,
-        });
-      });
-
-      return Array.from(monthlyMap.values()).map((m) => ({
-        date_str: m.month,
-        present_count: Math.round(m.present / m.count),
-        total_employees: Math.round(m.total / m.count),
-      }));
-    }, [data, range]);
-
-    const stats = useMemo(() => {
-      if (!data || !data.length) return null;
-      const avgPresence = Math.round(
-        data.reduce((acc, curr) => acc + curr.present_count, 0) / data.length,
-      );
-      const maxPresence = Math.max(...data.map((d) => d.present_count));
-      const peakDay = data.find((d) => d.present_count === maxPresence);
-
-      return {
-        avgPresence,
-        peakDay: peakDay ? format(parseISO(peakDay.date), "dd/MM") : "-",
-        maxPresence,
-      };
-    }, [data]);
-
-    const handleDownload = async () => {
-      if (cardRef.current === null) return;
-
-      try {
-        const dataUrl = await toPng(cardRef.current, {
-          cacheBust: true,
-          backgroundColor: "#ffffff",
-          onClone: (clonedNode: any) => {
-            const dateEl = clonedNode.querySelector(".export-date-hidden");
-            if (dateEl) {
-              dateEl.style.position = "static";
-              dateEl.style.opacity = "1";
-              dateEl.style.marginTop = "1rem";
-              dateEl.innerText = `תאריך דוח: ${format(selectedDate, "dd/MM/yyyy")}`;
-            }
-            const hideEls = clonedNode.querySelectorAll(".export-hide");
-            hideEls.forEach((el: any) => (el.style.display = "none"));
-            const noExportEls = clonedNode.querySelectorAll(".no-export");
-            noExportEls.forEach((el: any) => (el.style.display = "none"));
-          },
-        } as any);
-        const link = document.createElement("a");
-        link.download = `attendance-trend-${range}-days.png`;
-        link.href = dataUrl;
-        link.click();
-        toast.success("הגרף יוצא כתמונה בהצלחה");
-      } catch (err) {
-        console.error("Failed to download image", err);
-        toast.error("שגיאה בייצוא הגרף");
-      }
-    };
-
-    const handleWhatsAppShare = async () => {
-      if (cardRef.current === null) return;
-
-      try {
-        const blob = await toBlob(cardRef.current, {
-          cacheBust: true,
-          backgroundColor: "#ffffff",
-          onClone: (clonedNode: any) => {
-            const dateEl = clonedNode.querySelector(".export-date-hidden");
-            if (dateEl) {
-              dateEl.style.position = "static";
-              dateEl.style.opacity = "1";
-              dateEl.style.marginTop = "1rem";
-              dateEl.innerText = `תאריך דוח: ${format(selectedDate, "dd/MM/yyyy")}`;
-            }
-            const hideEls = clonedNode.querySelectorAll(".export-hide");
-            hideEls.forEach((el: any) => (el.style.display = "none"));
-            const noExportEls = clonedNode.querySelectorAll(".no-export");
-            noExportEls.forEach((el: any) => (el.style.display = "none"));
-          },
-        } as any);
-
-        if (!blob) throw new Error("Failed to capture image");
-
-        const rangeText =
-          range === 7 ? "שבועית" : range === 30 ? "חודשית" : "שנתית";
-        const statsText = stats
-          ? `\n*נתונים עיקריים:* \n- ממוצע נוכחות: ${stats.avgPresence} שוטרים\n- שיא נוכחות: ${stats.maxPresence} (${stats.peakDay})`
-          : "";
-        const filterText = subtitle ? `\n*סינון:* ${subtitle}` : "";
-        const title = `דוח מגמת זמינות ${rangeText} - ${unitName}`;
-        const message = `*${title}*\nתאריך הפקה: ${format(new Date(), "dd/MM/yyyy")}\nתאריך דוח: ${format(selectedDate, "dd/MM/yyyy")}${filterText}${statsText}`;
-
-        const file = new File([blob], `trend-${range}.png`, {
-          type: "image/png",
-        });
-
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: title,
-              text: message,
-            });
-            toast.success("הדוח שותף בהצלחה");
-            return;
-          } catch (shareErr) {
-            if ((shareErr as Error).name !== "AbortError") {
-              console.warn("Web Share failed:", shareErr);
-            } else {
-              return;
-            }
-          }
-        }
-
+      return rawList.map((item: any) => {
+        const rawDate = item.date || item.date_str || "";
+        let formattedDate = rawDate;
         try {
-          const item = new ClipboardItem({ "image/png": blob });
-          await navigator.clipboard.write([item]);
-        } catch (clipErr) {
-          console.warn("Clipboard copy failed:", clipErr);
+          if (rawDate.includes("-")) {
+            const d = parseISO(rawDate);
+            formattedDate = format(d, "dd/MM");
+          }
+        } catch {
+          formattedDate = rawDate;
         }
 
-        const dataUrl = await toPng(cardRef.current, {
-          backgroundColor: "#ffffff",
-          onClone: (clonedNode: any) => {
-            const dateEl = clonedNode.querySelector(".export-date-hidden");
-            if (dateEl) {
-              dateEl.style.position = "static";
-              dateEl.style.opacity = "1";
-            }
-            const hideEls = clonedNode.querySelectorAll(".export-hide");
-            hideEls.forEach((el: any) => (el.style.display = "none"));
-            const noExportEls = clonedNode.querySelectorAll(".no-export");
-            noExportEls.forEach((el: any) => (el.style.display = "none"));
-          },
-        } as any);
-        const link = document.createElement("a");
-        link.download = `מגמת_זמינות_${format(new Date(), "dd-MM-yyyy")}.png`;
-        link.href = dataUrl;
-        link.click();
+        const total = item.total_count ?? item.total_employees ?? totalEmployees ?? 0;
+        const present = item.present_count ?? 0;
+        const pct = item.percentage ?? (total > 0 ? Math.round((present / total) * 100) : 0);
 
-        const encodedMessage = encodeURIComponent(message);
-        window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
+        return {
+          rawDate,
+          formattedDate,
+          present,
+          total,
+          percentage: pct,
+        };
+      });
+    }, [data, totalEmployees]);
 
-        toast.success("התמונה הועתקה! נא לבצע 'הדבק' (Ctrl+V) בווצאפ");
-      } catch (err) {
-        console.error("WhatsApp share failed", err);
-        toast.error("שגיאה בהכנת הדוח ל-WhatsApp");
-      }
-    };
+    const averagePct = useMemo(() => {
+      if (!chartData.length) return 0;
+      const sum = chartData.reduce((acc, curr) => acc + curr.percentage, 0);
+      return Math.round(sum / chartData.length);
+    }, [chartData]);
 
-    useImperativeHandle(ref, () => ({
-      download: handleDownload,
-      share: handleWhatsAppShare,
-    }));
-
-
-
-
-    if (loading) {
-      return (
-        <Card className={cn("h-full min-h-[300px]", className)}>
-          <CardHeader>
-            <CardTitle className="text-lg animate-pulse bg-muted h-6 w-32 rounded"></CardTitle>
-            <CardDescription className="animate-pulse bg-muted h-4 w-48 rounded mt-2"></CardDescription>
-          </CardHeader>
-          <CardContent className="h-[300px] flex items-center justify-center">
-            <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-          </CardContent>
-        </Card>
-      );
-    }
+    const ranges = [
+      { label: "7 ימים", value: 7 },
+      { label: "30 ימים", value: 30 },
+      { label: "90 ימים", value: 90 },
+    ];
 
     return (
       <Card
-        id="attendance-chart"
         ref={cardRef}
+        id="attendance-trend-card"
         className={cn(
-          "bg-card text-card-foreground rounded-2xl border border-border/40 flex flex-col overflow-hidden h-full relative transition-all shadow-none",
-          className,
-          hideHeader && "border-none bg-transparent py-0",
-          compact && "bg-transparent border-0 shadow-none"
+          "bg-card/70 dark:bg-card/50 backdrop-blur-md text-card-foreground rounded-2xl border border-border/60 shadow-xs flex flex-col overflow-hidden h-full relative transition-all",
+          className
         )}
       >
-        <div className={cn(
-          "pt-1.5 pb-3 px-3 sm:pt-2 sm:pb-4 sm:px-4 md:pt-2.5 md:pb-6 md:px-6 flex-1 flex flex-col",
-          compact && "pt-1 pb-1.5 px-2 sm:pt-1.5 sm:pb-2 sm:px-3",
-          hideHeader && "p-0"
-        )}>
-          {!hideHeader && (
-            <div className="flex flex-row justify-between items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2.5 relative z-10">
-              <div className="flex gap-2 sm:gap-3 items-center">
-                <div className="text-right flex flex-col">
-                  <h3 className="text-sm sm:text-base font-black text-foreground tracking-tight flex items-center flex-wrap gap-2">
-                    <span>מגמת זמינות</span>
-                    <span className="hidden sm:inline text-muted-foreground font-medium text-xs sm:text-sm">— {range === 7 ? "שבועי" : "חודשי"}</span>
-                    {filterTags.length > 0 && (
-                      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar ml-1">
-                        {filterTags.map((tag, idx) => (
-                          <Badge 
-                            key={idx} 
-                            variant="outline" 
-                            className="text-[10px] h-6 px-2.5 font-black bg-primary/10 text-primary border-primary/30 rounded-lg whitespace-nowrap shadow-sm"
-                          >
-                           {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </h3>
+        {!hideHeader && (
+          <CardHeader className="px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-0 border-b border-border/40 gap-2.5 sm:gap-3">
+            <div className="flex items-center justify-between gap-2 w-full sm:w-auto min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-4 h-4" />
                 </div>
+                <CardTitle className="text-sm sm:text-base font-bold text-foreground tracking-tight whitespace-nowrap">
+                  מגמת נוכחות וזמינות
+                </CardTitle>
               </div>
-
-              {/* Toggle Row */}
-              {onRangeChange && (
-                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg no-export shrink-0">
-                  <button
-                    onClick={() => onRangeChange(7)}
-                    className={cn(
-                      "px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold rounded-md transition-all",
-                      range === 7
-                        ? "bg-white text-primary dark:bg-slate-700 dark:text-white shadow-sm"
-                        : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                    )}
-                  >
-                    שבועי
-                  </button>
-                  <button
-                    onClick={() => onRangeChange(30)}
-                    className={cn(
-                      "px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold rounded-md transition-all",
-                      range === 30
-                        ? "bg-white text-primary dark:bg-slate-700 dark:text-white shadow-sm"
-                        : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                    )}
-                  >
-                    חודשי
-                  </button>
-                </div>
-              )}
+              <Badge variant="secondary" className="text-[11px] font-bold bg-primary/10 text-primary border border-primary/20 shrink-0">
+                ממוצע {averagePct}%
+              </Badge>
             </div>
-          )}
 
-          <div className="flex-1 flex flex-col relative p-0 mt-0 min-h-[170px] sm:min-h-[240px] md:min-h-[320px]">
-            {!data || data.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center py-12 text-center text-muted-foreground font-bold tracking-tight">
-                אין נתונים להצגה
+            <div className="flex items-center justify-between gap-3 w-full sm:w-auto">
+              <CardDescription className="text-xs text-muted-foreground truncate">
+                {unitName} • {range} ימים אחרונים
+              </CardDescription>
+
+              {/* Range Selector Pills */}
+              <div className="flex items-center gap-1 bg-muted/60 p-0.5 sm:p-1 rounded-xl border border-border/40 shrink-0">
+                {ranges.map((r) => (
+                  <button
+                    key={r.value}
+                    onClick={() => onRangeChange?.(r.value)}
+                    className={cn(
+                      "px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all",
+                      range === r.value
+                        ? "bg-card text-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {r.label}
+                  </button>
+                ))}
               </div>
-            ) : (
-              <div className="w-full h-full flex-1" style={{ direction: "ltr", minHeight: compact ? "150px" : "200px" }}>
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={compact ? 150 : 200} initialDimension={{ width: 320, height: compact ? 150 : 200 }}>
+            </div>
+          </CardHeader>
+        )}
+
+        <CardContent className="flex-1 p-4 sm:p-6 flex flex-col justify-center min-h-[220px]">
+          {loading && chartData.length === 0 ? (
+            <div className="py-12 flex flex-col items-center justify-center space-y-3 text-center">
+              <div className="w-7 h-7 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+              <p className="text-xs font-semibold text-muted-foreground">טוען מגמת נוכחות...</p>
+            </div>
+          ) : chartData.length === 0 ? (
+            <div className="py-12 flex flex-col items-center justify-center space-y-2 text-center text-muted-foreground">
+              <p className="text-xs font-semibold">אין נתוני מגמה לתקופה זו</p>
+            </div>
+          ) : (
+            <div className="w-full h-[200px] sm:h-[240px]">
+              <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                   data={chartData}
-                  margin={{ top: 10, right: isMobile ? 5 : 10, left: -25, bottom: isMobile ? 0 : 5 }}
-                  style={{ cursor: 'pointer' }}
-                  onMouseDown={(state: any) => {
-                    if (state && state.activePayload && state.activePayload.length > 0) {
-                      const dateStr = state.activePayload[0].payload.date;
-                      if (dateStr) {
-                        onDateSelect?.(parseISO(dateStr));
+                  margin={{ top: 12, right: 8, left: -20, bottom: 0 }}
+                  onClick={(e) => {
+                    if (e && e.activePayload && e.activePayload.length && onDateSelect) {
+                      const item = e.activePayload[0].payload;
+                      if (item.rawDate) {
+                        try {
+                          onDateSelect(parseISO(item.rawDate));
+                        } catch {}
                       }
-                    } else if (state && state.activeLabel) {
-                      onDateSelect?.(parseISO(state.activeLabel));
                     }
                   }}
                 >
                   <defs>
-                    <linearGradient id="colorPresent" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.22} />
-                      <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.02} />
+                    <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--color-primary, #3b82f6)" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="var(--color-primary, #3b82f6)" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="var(--border)"
-                    strokeOpacity={0.3}
-                  />
+
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.15)" />
+
                   <XAxis
-                    dataKey="date"
-                    tickFormatter={(value) => {
-                      if (!value) return "";
-                      try {
-                        const date = parseISO(value);
-                        if (!isNaN(date.getTime())) {
-                           return isMobile ? format(date, "d/M") : format(date, "dd/MM");
-                        }
-                      } catch (e) {
-                        return value;
-                      }
-                      return value;
-                    }}
-                    tick={{
-                      fontSize: isMobile ? 11 : 13,
-                      fill: "var(--foreground)",
-                      fontWeight: 900,
-                    }}
-                    tickLine={false}
+                    dataKey="formattedDate"
                     axisLine={false}
-                    dy={isMobile ? 8 : 12}
-                    minTickGap={isMobile ? 15 : 20}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: "var(--color-muted-foreground, #94a3b8)", fontFamily: "Noto Sans Hebrew, sans-serif" }}
+                    dy={5}
                   />
+
                   <YAxis
+                    width={34}
+                    domain={[0, 100]}
+                    axisLine={false}
+                    tickLine={false}
                     tick={{
                       fontSize: 11,
-                      fill: "var(--foreground)",
-                      fontWeight: 900,
+                      fill: "var(--color-muted-foreground, #94a3b8)",
+                      fontFamily: "Noto Sans Hebrew, sans-serif",
+                      fontWeight: 600,
+                      dx: -2,
+                      textAnchor: "end",
                     }}
-                    tickLine={false}
-                    axisLine={false}
-                    domain={[
-                      0,
-                      totalEmployees > 0
-                        ? totalEmployees
-                        : (dataMax: number) => Math.floor(Math.max(dataMax, 10) * 1.2),
-                    ]}
+                    tickFormatter={(val) => `${val}%`}
                   />
+
                   <Tooltip
-                    cursor={{ stroke: "var(--primary)", strokeWidth: 1, strokeDasharray: "4 4" }}
-                    contentStyle={{
-                      borderRadius: "12px",
-                      border: "1px solid var(--border)",
-                      backgroundColor: "rgba(255, 255, 255, 0.98)",
-                      boxShadow: "none",
-                      fontSize: "12px",
-                      fontWeight: "bold",
+                    content={({ active, payload }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const d = payload[0].payload;
+                      return (
+                        <div className="bg-popover/95 backdrop-blur-md border border-border/60 shadow-lg rounded-xl p-3 text-right text-xs space-y-1" dir="rtl">
+                          <p className="font-bold text-foreground">{d.formattedDate}</p>
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-muted-foreground">זמינות:</span>
+                            <span className="font-black text-primary">{d.percentage}%</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-muted-foreground">נוכחים:</span>
+                            <span className="font-bold text-foreground">{d.present} / {d.total}</span>
+                          </div>
+                        </div>
+                      );
                     }}
-                    labelFormatter={(label) =>
-                      format(parseISO(label), "dd/MM/yyyy")
-                    }
-                    formatter={(value: any, name: any) => [
-                      value,
-                      name === "present_count" ? "נוכחים" : name,
-                    ]}
                   />
+
                   <Area
                     type="monotone"
-                    dataKey="present_count"
-                    stroke="var(--primary)"
+                    dataKey="percentage"
+                    stroke="var(--color-primary, #3b82f6)"
                     strokeWidth={2.5}
                     fillOpacity={1}
-                    fill="url(#colorPresent)"
-                    isAnimationActive={false}
-                    dot={(props: any) => {
-                      const { cx, cy, payload } = props;
-                      if (!payload || !payload.date) return null as any;
-                      const isSelected = isSameDay(parseISO(payload.date), selectedDate);
-                      if (isSelected) {
-                        return (
-                          <circle
-                            key={`dot-${payload.date}`}
-                            cx={cx}
-                            cy={cy}
-                            r={6}
-                            fill="var(--primary)"
-                            stroke="white"
-                            strokeWidth={3}
-                            style={{ filter: "drop-shadow(0 0 4px rgba(var(--primary-rgb), 0.5))" }}
-                          />
-                        );
-                      }
-                      return null as any;
-                    }}
-                    activeDot={{
-                      r: 6,
-                      fill: "var(--primary)",
-                      stroke: "white",
-                      strokeWidth: 2,
-                    }}
+                    fill="url(#trendGradient)"
+                    activeDot={{ r: 5, strokeWidth: 2, stroke: "#ffffff" }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           )}
-          </div>
-        </div>
+        </CardContent>
       </Card>
     );
   }

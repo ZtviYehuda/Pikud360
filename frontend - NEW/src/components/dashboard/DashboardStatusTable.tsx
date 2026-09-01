@@ -77,7 +77,7 @@ export const DashboardStatusTable = ({
             className="w-3 h-3 rounded-full  "
             style={{ backgroundColor: statusColor }}
           />
-          <CardTitle className="text-lg font-black text-foreground">
+          <CardTitle className="text-sm sm:text-base font-bold text-foreground">
             פירוט שוטרים בסטטוס: {(statusName === "חופשה חול" || statusName === "חופשה חו\"ל") ? "חו' חול" : statusName}
           </CardTitle>
           <span className="text-xs font-bold text-muted-foreground mr-auto bg-muted px-2 py-0.5 rounded-full">
