@@ -547,10 +547,10 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
       >
         <DialogContent
           className={cn(
-            "p-0 border-none sm:border sm:border-border/40 bg-background flex flex-col overflow-hidden transition-all duration-300",
+            "p-0 border-none sm:border sm:border-border/40 bg-background flex flex-col overflow-hidden transition-all duration-300 w-full sm:w-auto rounded-t-[2.2rem] rounded-b-none sm:rounded-3xl max-h-[94dvh]",
             showAiView
-              ? "sm:max-w-5xl lg:max-w-6xl w-[92vw] sm:h-[80vh] sm:max-h-[760px] p-2 sm:p-3"
-              : "sm:max-w-4xl lg:max-w-5xl w-[90vw] sm:h-auto sm:max-h-[85vh]"
+              ? "sm:max-w-5xl lg:max-w-6xl sm:h-[80vh] sm:max-h-[760px] p-2 sm:p-3"
+              : "sm:max-w-4xl lg:max-w-5xl sm:h-auto sm:max-h-[85vh]"
           )}
           dir="rtl"
         >
@@ -791,7 +791,7 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
                     {/* Search Bar */}
                     <div className="relative group shrink-0">
                       <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                      <input
+                      <Input
                         type="text"
                         placeholder={
                           targetType === "employees"

@@ -10,6 +10,8 @@ from flask_jwt_extended import (
 from datetime import timedelta
 import uuid
 import logging
+import os
+import json
 
 from app.modules.security.repositories import (
     UserRepository, 
@@ -924,15 +926,47 @@ def exit_impersonation():
     }), 200
 
 
+TERMS_LOG_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "terms_acceptances_log.json")
+
+def _update_terms_log_file(user_id, username, email, first_name, last_name, is_accepted):
+    try:
+        os.makedirs(os.path.dirname(TERMS_LOG_FILE), exist_ok=True)
+        log_entries = []
+        if os.path.exists(TERMS_LOG_FILE):
+            try:
+                with open(TERMS_LOG_FILE, "r", encoding="utf-8") as f:
+                    log_entries = json.load(f)
+            except Exception:
+                log_entries = []
+
+        log_entries = [e for e in log_entries if e.get("user_id") != str(user_id)]
+        if is_accepted:
+            log_entries.append({
+                "user_id": str(user_id),
+                "username": username,
+                "email": email,
+                "full_name": f"{first_name or ''} {last_name or ''}".strip() or username,
+                "terms_version": "v1.0",
+                "accepted": True,
+                "accepted_at": datetime.now().isoformat()
+            })
+
+        with open(TERMS_LOG_FILE, "w", encoding="utf-8") as f:
+            json.dump(log_entries, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logger.error(f"Failed to write to terms_acceptances_log.json: {e}")
+
+
 @security_bp.route("/accept-terms", methods=["POST"])
 @jwt_required()
 def accept_terms():
-    """Marks terms as accepted for the currently logged in user in security.users DB."""
+    """Marks terms as accepted for the currently logged in user in security.users DB and logs to JSON file."""
     current_user_id = get_jwt_identity()
     if not current_user_id:
         return jsonify({"success": False, "error": "משתמש לא מחובר"}), 401
         
     try:
+        user = user_repo.get_by_id(current_user_id)
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
@@ -941,6 +975,10 @@ def accept_terms():
                     WHERE id::text = %s;
                 """, (str(current_user_id),))
                 conn.commit()
+
+        if user:
+            _update_terms_log_file(user.id, user.username, user.email, getattr(user, "first_name", user.username), getattr(user, "last_name", ""), True)
+
         return jsonify({
             "success": True,
             "message": "תקנון המערכת והנחיות אבטחת המידע אושרו בהצלחה!"
@@ -958,7 +996,6 @@ def get_users_terms_status():
     claims = get_jwt() or {}
     roles = claims.get("roles") or []
     
-    # Check if user is admin
     user = user_repo.get_by_id(current_user_id) if current_user_id else None
     is_admin = (user and user.username == "admin") or ("ADMIN" in roles)
     if not is_admin:
@@ -1003,6 +1040,44 @@ def get_users_terms_status():
         }), 200
     except Exception as e:
         logger.error(f"Error fetching terms status list: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@security_bp.route("/reset-all-terms", methods=["POST"])
+@jwt_required()
+def reset_all_terms():
+    """Resets terms acceptance for ALL users (Admin only) when a new terms version is issued."""
+    current_user_id = get_jwt_identity()
+    claims = get_jwt() or {}
+    roles = claims.get("roles") or []
+    
+    user = user_repo.get_by_id(current_user_id) if current_user_id else None
+    is_admin = (user and user.username == "admin") or ("ADMIN" in roles)
+    if not is_admin:
+        return jsonify({"success": False, "error": "הרשאה נדרשת: מנהל מערכת"}), 403
+
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE security.users 
+                    SET terms_accepted = FALSE, terms_accepted_at = NULL, updated_at = NOW();
+                """)
+                conn.commit()
+
+        if os.path.exists(TERMS_LOG_FILE):
+            try:
+                with open(TERMS_LOG_FILE, "w", encoding="utf-8") as f:
+                    json.dump([], f, ensure_ascii=False, indent=2)
+            except Exception:
+                pass
+
+        return jsonify({
+            "success": True,
+            "message": "כל המשתתפים ידרשו לאשר מחדש את התקנון המעודכן בכניסתם הבאה למערכת."
+        }), 200
+    except Exception as e:
+        logger.error(f"Error resetting all terms: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 

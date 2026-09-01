@@ -1377,7 +1377,7 @@ export default function TransfersPage() {
           onOpenChange={(open) => !open && setViewingEmployee(null)}
         >
           <DialogContent
-            className="max-w-lg p-0 overflow-hidden border border-border  rounded-2xl bg-background"
+            className="w-full sm:w-auto sm:max-w-lg p-0 overflow-hidden border border-border rounded-t-[2.2rem] rounded-b-none sm:rounded-2xl bg-background"
             dir="rtl"
           >
             {viewingEmployee && (
@@ -1544,23 +1544,6 @@ export default function TransfersPage() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Organizational Hierarchy Card */}
-                  <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
-                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block mb-2">
-                      שיוך ארגוני
-                    </span>
-                    <div
-                      className="flex items-center gap-2 font-bold text-xs text-primary"
-                      dir="ltr"
-                    >
-                      <span>{viewingEmployee?.team_name || "כללי"}</span>
-                      <span className="opacity-30">/</span>
-                      <span>{viewingEmployee?.section_name || "כללי"}</span>
-                      <span className="opacity-30">/</span>
-                      <span>{viewingEmployee?.department_name}</span>
-                    </div>
-                  </div>
                 </div>
 
                 <div className="p-4 bg-background/20 border-t border-border/50 flex justify-end">
@@ -1583,7 +1566,7 @@ export default function TransfersPage() {
           onOpenChange={(open) => !open && setSelectedRequest(null)}
         >
           <DialogContent
-            className="max-w-4xl p-0 overflow-hidden border border-border rounded-2xl bg-background flex flex-col max-h-[90vh]"
+            className="w-full sm:w-auto sm:max-w-4xl p-0 overflow-hidden border border-border rounded-t-[2.2rem] rounded-b-none sm:rounded-2xl bg-background flex flex-col max-h-[94dvh] sm:max-h-[90vh]"
             dir="rtl"
           >
             {selectedRequest && (

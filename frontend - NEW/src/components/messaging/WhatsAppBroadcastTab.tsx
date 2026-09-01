@@ -2381,7 +2381,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
         onOpenChange={setShowNewTemplateModal}
       >
         <DialogContent
-          className="w-[95vw] sm:max-w-lg text-right rounded-3xl p-4 sm:p-6 space-y-3.5 max-h-[92vh] flex flex-col bg-card"
+          className="w-full sm:w-auto sm:max-w-lg text-right rounded-t-[2.2rem] rounded-b-none sm:rounded-3xl p-4 sm:p-6 space-y-3.5 max-h-[94dvh] sm:max-h-[92vh] flex flex-col bg-card"
           dir="rtl"
         >
           <DialogHeader className="text-right space-y-1 pb-2 border-b border-border/30">

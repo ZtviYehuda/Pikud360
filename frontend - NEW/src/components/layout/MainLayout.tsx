@@ -344,8 +344,8 @@ export default function MainLayout() {
           >
             <div className="w-9 h-9 rounded-xl bg-primary/5 flex items-center justify-center shrink-0 border border-border/50">
               <img
-                src="/matzevet_icon.png"
-                alt="סמל The Office"
+                src="/logo_unit.png"
+                alt="סמל היחידה"
                 className="w-7 h-7 object-contain filter drop-shadow-xs group-hover:scale-105 transition-transform duration-200"
               />
             </div>
@@ -561,8 +561,8 @@ export default function MainLayout() {
               aria-label="Open menu"
             >
               <img
-                src="/matzevet_logo.png"
-                alt="לוגו The Office"
+                src="/logo_unit.png"
+                alt="סמל היחידה"
                 className="w-10 h-10 sm:w-12 sm:h-12 object-contain toren-logo-img"
               />
             </button>

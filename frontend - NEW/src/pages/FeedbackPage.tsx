@@ -2509,7 +2509,7 @@ const FeedbackPage = () => {
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] md:w-[850px] max-h-[90vh] bg-card border border-border/50 rounded-3xl shadow-2xl z-[250] overflow-hidden flex flex-col"
+                className="fixed bottom-0 left-0 right-0 w-full rounded-t-[2.2rem] rounded-b-none md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:bottom-auto md:w-[850px] md:rounded-3xl max-h-[94dvh] bg-card border border-border/50 shadow-2xl z-[250] overflow-hidden flex flex-col"
                 dir="rtl"
               >
                 {/* Header */}

@@ -5,7 +5,17 @@ import { cn } from "@/lib/utils";
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, ...props }, ref) => {
+  ({ className, onFocus, ...props }, ref) => {
+    const handleFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+      if (typeof window !== "undefined" && window.innerWidth < 640) {
+        const target = e.currentTarget;
+        setTimeout(() => {
+          target.scrollIntoView({ block: "center", behavior: "smooth" });
+        }, 150);
+      }
+      if (onFocus) onFocus(e);
+    };
+
     return (
       <textarea
         className={cn(
@@ -13,6 +23,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           className,
         )}
         ref={ref}
+        onFocus={handleFocus}
         {...props}
       />
     );

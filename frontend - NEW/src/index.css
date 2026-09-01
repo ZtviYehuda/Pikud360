@@ -570,6 +570,8 @@ html, body {
 img[src*="/toren_logo_base.png"],
 img[src*="/toren_logo.png"],
 img[src*="/matzevet_logo.png"],
+img[src*="/matzevet_icon.png"],
+img[src*="/logo_unit.png"],
 .toren-logo-img {
   filter: drop-shadow(0 4px 16px rgba(59, 130, 246, 0.25));
 }
@@ -578,6 +580,8 @@ img[src*="/matzevet_logo.png"],
 .dark img[src*="/toren_logo_base.png"],
 .dark img[src*="/toren_logo.png"],
 .dark img[src*="/matzevet_logo.png"],
+.dark img[src*="/matzevet_icon.png"],
+.dark img[src*="/logo_unit.png"],
 .dark .toren-logo-img {
   filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.35));
 }

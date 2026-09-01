@@ -366,8 +366,8 @@ export default function ForgotPasswordPage() {
           <div className="text-center mb-4 md:mb-6 relative flex flex-col items-center">
             <div className="flex justify-center mb-2">
               <img 
-                src="/matzevet_logo.png" 
-                alt="Matzevet Logo" 
+                src="/logo_unit.png" 
+                alt="סמל היחידה" 
                 className="w-32 h-auto md:w-36 object-contain toren-logo-img" 
               />
             </div>

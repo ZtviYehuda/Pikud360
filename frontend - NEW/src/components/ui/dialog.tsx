@@ -72,8 +72,73 @@ function DialogContent({
 }) {
   const [translateY, setTranslateY] = React.useState(0);
   const [isSwiping, setIsSwiping] = React.useState(false);
+  const [keyboardOffset, setKeyboardOffset] = React.useState(0);
   const touchStartY = React.useRef(0);
   const contentRef = React.useRef<HTMLDivElement>(null);
+
+  // Mobile virtualViewport & Keyboard Focus Manager
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleFocusIn = (e: FocusEvent) => {
+      if (window.innerWidth >= 640) return;
+      const target = e.target as HTMLElement;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        setTimeout(() => {
+          target.scrollIntoView({ block: "center", behavior: "smooth" });
+        }, 150);
+      }
+    };
+
+    const handleViewportChange = () => {
+      if (window.innerWidth >= 640) {
+        setKeyboardOffset(0);
+        return;
+      }
+      if (window.visualViewport) {
+        const offset = window.innerHeight - window.visualViewport.height;
+        if (offset > 100) {
+          setKeyboardOffset(offset);
+          const activeEl = document.activeElement as HTMLElement;
+          if (
+            activeEl &&
+            (activeEl.tagName === "INPUT" ||
+              activeEl.tagName === "TEXTAREA" ||
+              activeEl.isContentEditable)
+          ) {
+            activeEl.scrollIntoView({ block: "center", behavior: "smooth" });
+          }
+        } else {
+          setKeyboardOffset(0);
+        }
+      }
+    };
+
+    const container = contentRef.current;
+    if (container) {
+      container.addEventListener("focusin", handleFocusIn);
+    }
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", handleViewportChange);
+      window.visualViewport.addEventListener("scroll", handleViewportChange);
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener("focusin", handleFocusIn);
+      }
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", handleViewportChange);
+        window.visualViewport.removeEventListener("scroll", handleViewportChange);
+      }
+    };
+  }, []);
 
   // Mobile popstate back-button interceptor:
   React.useEffect(() => {
@@ -157,7 +222,9 @@ function DialogContent({
         onTouchEnd={handleTouchEnd}
         style={{
           transform: translateY > 0 ? `translateY(${translateY}px)` : undefined,
-          transition: isSwiping ? "none" : "transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)",
+          bottom: keyboardOffset > 0 ? `${keyboardOffset}px` : undefined,
+          maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset + 12}px)` : undefined,
+          transition: isSwiping ? "none" : "all 0.25s cubic-bezier(0.32, 0.72, 0, 1)",
           ...(props.style || {}),
         }}
         className={cn(

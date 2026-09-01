@@ -181,9 +181,28 @@ export function AppRouter() {
     try {
       localStorage.removeItem("read_notifications");
     } catch (err) {
-      // ignore localStorage failures in old browsers or strict mode
       console.warn("Failed to clear read_notifications", err);
     }
+
+    const handleGlobalFocus = (e: FocusEvent) => {
+      if (window.innerWidth >= 640) return;
+      const target = e.target as HTMLElement;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        setTimeout(() => {
+          target.scrollIntoView({ block: "center", behavior: "smooth" });
+        }, 200);
+      }
+    };
+
+    document.addEventListener("focusin", handleGlobalFocus);
+    return () => {
+      document.removeEventListener("focusin", handleGlobalFocus);
+    };
   }, []);
 
   return <RouterProvider router={router} />;

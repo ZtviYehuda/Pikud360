@@ -3,7 +3,6 @@ import apiClient from "@/config/api.client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Loader2,
   AlertCircle,
@@ -35,7 +34,7 @@ interface LockedUser {
 
 const HexagonPatrolGrid = ({ theme, accentColor }: { theme: string; accentColor: string }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const mousePosRef = useRef({ x: -1000, y: -1000 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -45,26 +44,23 @@ const HexagonPatrolGrid = ({ theme, accentColor }: { theme: string; accentColor:
     if (!ctx) return;
 
     const isDark = theme === "dark";
-    
-    // Hardcoded to always be cyber blue (59, 130, 246) and red
-    const blueRgb = "59, 130, 246";
 
     const colors = isDark
       ? {
-          bg: "#020617", // slate-950
-          hexOutline: `rgba(${blueRgb}, 0.12)`, 
-          hexActiveBlue: `rgba(${blueRgb}, 0.4)`, 
-          hexActiveRed: "rgba(220, 38, 38, 0.4)", 
+          bg: "#020617",
+          hexOutline: "rgba(56, 189, 248, 0.08)",
+          hexActiveBlue: "rgba(56, 189, 248, 0.25)",
+          hexActiveRed: "rgba(248, 113, 113, 0.25)",
         }
       : {
-          bg: "#f8fafc", // slate-50
-          hexOutline: `rgba(${blueRgb}, 0.08)`, 
-          hexActiveBlue: `rgba(${blueRgb}, 0.2)`, 
-          hexActiveRed: "rgba(220, 38, 38, 0.2)", 
+          bg: "#f8fafc",
+          hexOutline: "rgba(59, 130, 246, 0.05)",
+          hexActiveBlue: "rgba(59, 130, 246, 0.18)",
+          hexActiveRed: "rgba(239, 68, 68, 0.18)",
         };
 
     let animationFrameId: number;
-    const hexSize = 30; // Radius of hexagon
+    const hexSize = 32; // Larger size for cleaner, roomier grid
     const hexWidth = Math.sqrt(3) * hexSize;
     const hexHeight = 2 * hexSize;
     const xStep = hexWidth;
@@ -74,10 +70,9 @@ const HexagonPatrolGrid = ({ theme, accentColor }: { theme: string; accentColor:
     let grid: {
       x: number;
       y: number;
-      active: number; // 0 to 1 opacity
+      active: number;
       targetActive: number;
       isRed: boolean;
-      delay: number;
     }[] = [];
 
     const initGrid = () => {
@@ -96,8 +91,7 @@ const HexagonPatrolGrid = ({ theme, accentColor }: { theme: string; accentColor:
             y,
             active: 0,
             targetActive: 0,
-            isRed: Math.random() > 0.9, // 10% chance to be red when active
-            delay: Math.random() * 100,
+            isRed: Math.random() > 0.85, // 15% red, 85% blue
           });
         }
       }
@@ -106,7 +100,7 @@ const HexagonPatrolGrid = ({ theme, accentColor }: { theme: string; accentColor:
     const drawHexagon = (x: number, y: number, r: number) => {
       ctx.beginPath();
       for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 3) * i - Math.PI / 6; // Start at 30 degrees for flat top
+        const angle = (Math.PI / 3) * i - Math.PI / 6;
         ctx.lineTo(x + r * Math.cos(angle), y + r * Math.sin(angle));
       }
       ctx.closePath();
@@ -131,59 +125,56 @@ const HexagonPatrolGrid = ({ theme, accentColor }: { theme: string; accentColor:
     };
 
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear only, rely on canvas CSS for bg
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       ctx.strokeStyle = colors.hexOutline;
       ctx.lineWidth = 1;
 
-      grid.forEach((hex) => {
-        // Update Logic
+      const mouseX = mousePosRef.current.x;
+      const mouseY = mousePosRef.current.y;
 
-        // Random breathing (more subtle)
+      grid.forEach((hex) => {
+        // Very subtle random breathing (~0.3% chance per frame)
         if (Math.random() < 0.003) {
-          hex.targetActive = Math.random() * 0.3 + 0.1;
-          hex.isRed = Math.random() > 0.92; // Less frequent red
+          hex.targetActive = Math.random() * 0.18 + 0.05;
+          hex.isRed = Math.random() > 0.85;
         }
 
         // Decay
-        if (hex.active > 0.005) {
-          hex.active -= 0.008;
+        if (hex.active > 0.003) {
+          hex.active -= 0.003;
         } else {
           hex.active = 0;
         }
 
         // Rise to target
         if (hex.targetActive > hex.active) {
-          hex.active += 0.015;
+          hex.active += 0.01;
         } else {
           hex.targetActive = 0;
         }
 
-        // Mouse Interaction (flashlight effect)
-        const dx = mousePos.x - hex.x;
-        const dy = mousePos.y - hex.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
         // Draw Outline
         drawHexagon(hex.x, hex.y, hexSize - 2);
 
-        // Draw Active Fill
+        // Mouse Interaction (subtle halo)
+        const dx = mouseX - hex.x;
+        const dy = mouseY - hex.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
         let fillOpacity = hex.active;
 
-        // Mouse hover boosts opacity
-        if (dist < 200) {
-          fillOpacity += (200 - dist) / 500;
+        if (dist < 180) {
+          fillOpacity += (180 - dist) / 600;
         }
 
-        if (fillOpacity > 0.03) {
-          // Cap opacity
-          fillOpacity = Math.min(fillOpacity, 0.5);
+        if (fillOpacity > 0.02) {
+          fillOpacity = Math.min(fillOpacity, 0.22); // Cap low to prevent glare
 
           const baseColor = hex.isRed
             ? colors.hexActiveRed
             : colors.hexActiveBlue;
-          // Hacky RGBA replace to inject dynamic opacity
-          const finalColor = baseColor.replace(/[\d.]+\)$/, `${fillOpacity})`);
+          const finalColor = baseColor.replace(/[\d.]+\)$/, `${fillOpacity.toFixed(2)})`);
 
           fillHexagon(hex.x, hex.y, hexSize - 3, finalColor);
         }
@@ -192,27 +183,26 @@ const HexagonPatrolGrid = ({ theme, accentColor }: { theme: string; accentColor:
       animationFrameId = requestAnimationFrame(draw);
     };
 
-    window.addEventListener("mousemove", (e) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
-    });
+    const handleMouseMove = (e: MouseEvent) => {
+      mousePosRef.current = { x: e.clientX, y: e.clientY };
+    };
 
+    window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("resize", resize);
     resize();
     draw();
 
     return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("resize", resize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [mousePos, theme, accentColor]);
+  }, [theme, accentColor]);
 
   return (
     <canvas
       ref={canvasRef}
-      className={cn(
-        "fixed inset-0 pointer-events-none z-0 transition-colors",
-        theme === "dark" ? "bg-slate-950" : "bg-slate-50/80",
-      )}
+      className="fixed inset-0 pointer-events-none z-0 transition-opacity duration-500"
     />
   );
 };
@@ -568,12 +558,6 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    if (!hasAcceptedTerms) {
-      setError("על מנת להתחבר למערכת, חובה לקרוא ולאשר את תקנון המערכת והנחיות אבטחת מידע");
-      setShowTermsModal(true);
-      return;
-    }
-
     if (!username.trim() || !password.trim()) {
       setError("יש למלא שם משתמש וסיסמה");
       return;
@@ -673,10 +657,10 @@ export default function LoginPage() {
               className="relative flex items-center justify-center -mb-1"
             >
               <img 
-                src="/matzevet_icon.png" 
-                alt="Matzevet Shield Emblem" 
+                src="/logo_unit.png" 
+                alt="סמל היחידה" 
                 className={cn(
-                  "w-24 h-24 md:w-28 md:h-28 object-contain transition-all duration-300 hover:scale-105",
+                  "w-28 h-28 md:w-32 md:h-32 object-contain transition-all duration-300 hover:scale-105",
                   isDark
                     ? "filter drop-shadow-[0_4px_24px_rgba(56,189,248,0.5)]"
                     : "filter drop-shadow-[0_4px_16px_rgba(37,99,235,0.25)]"
@@ -831,40 +815,7 @@ export default function LoginPage() {
                       )}
                     </AnimatePresence>
 
-                    {/* Mandatory Terms Agreement Checkbox */}
-                    <div className="flex items-start gap-2.5 text-right select-none pt-1">
-                      <Checkbox
-                        id="terms-checkbox-locked"
-                        checked={hasAcceptedTerms}
-                        onCheckedChange={(checked) => {
-                          const val = !!checked;
-                          setHasAcceptedTerms(val);
-                          if (val) {
-                            localStorage.setItem("the_office_terms_accepted_v1", "true");
-                            setError("");
-                          } else {
-                            localStorage.removeItem("the_office_terms_accepted_v1");
-                          }
-                        }}
-                        className="mt-0.5 shrink-0 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 cursor-pointer"
-                      />
-                      <label
-                        htmlFor="terms-checkbox-locked"
-                        className="text-xs text-muted-foreground leading-snug cursor-pointer font-medium"
-                      >
-                        אישור{" "}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowTermsModal(true);
-                          }}
-                          className="font-bold text-primary underline hover:opacity-80 inline-flex items-center gap-0.5 cursor-pointer"
-                        >
-                          תקנון המערכת והנחיות אבטחת מידע
-                        </button>
-                      </label>
-                    </div>
+
 
                     <div className="flex gap-2">
                       {isBiometricAvailable && (
@@ -1059,40 +1010,7 @@ export default function LoginPage() {
                       )}
                     </AnimatePresence>
 
-                    {/* Mandatory Terms Agreement Checkbox */}
-                    <div className="flex items-start gap-2.5 text-right select-none pt-1">
-                      <Checkbox
-                        id="terms-checkbox-regular"
-                        checked={hasAcceptedTerms}
-                        onCheckedChange={(checked) => {
-                          const val = !!checked;
-                          setHasAcceptedTerms(val);
-                          if (val) {
-                            localStorage.setItem("the_office_terms_accepted_v1", "true");
-                            setError("");
-                          } else {
-                            localStorage.removeItem("the_office_terms_accepted_v1");
-                          }
-                        }}
-                        className="mt-0.5 shrink-0 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 cursor-pointer"
-                      />
-                      <label
-                        htmlFor="terms-checkbox-regular"
-                        className="text-xs text-muted-foreground leading-snug cursor-pointer font-medium"
-                      >
-                        קראתי ואישרתי את{" "}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowTermsModal(true);
-                          }}
-                          className="font-bold text-primary underline hover:opacity-80 inline-flex items-center gap-0.5 cursor-pointer"
-                        >
-                          תקנון המערכת והנחיות אבטחת מידע
-                        </button>
-                      </label>
-                    </div>
+
 
                     {/* Submit Button & Biometric */}
                     <div className="pt-2 flex gap-3">

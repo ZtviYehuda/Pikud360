@@ -1,4 +1,4 @@
-const CACHE_NAME = 'unit-cache-v30';
+const CACHE_NAME = 'unit-cache-v36';
 const OFFLINE_URL = '/offline.html';
 
 // Core assets to pre-cache immediately

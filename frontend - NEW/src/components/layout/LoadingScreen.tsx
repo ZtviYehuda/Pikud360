@@ -67,9 +67,9 @@ export const LoadingScreen = () => {
           <div className="absolute inset-0 rounded-3xl bg-blue-500/10 dark:bg-blue-400/10 blur-xl -z-10" />
 
           <img
-            src="/matzevet_icon.png"
-            alt="סמל The Office"
-            className="w-24 h-24 sm:w-28 sm:h-28 object-contain filter drop-shadow-[0_10px_25px_rgba(59,130,246,0.35)] transition-all duration-300"
+            src="/logo_unit.png"
+            alt="סמל היחידה"
+            className="w-28 h-28 sm:w-32 sm:h-32 object-contain filter drop-shadow-[0_10px_25px_rgba(59,130,246,0.35)] transition-all duration-300"
           />
         </motion.div>
 

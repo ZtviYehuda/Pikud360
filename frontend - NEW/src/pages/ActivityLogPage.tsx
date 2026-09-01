@@ -799,7 +799,7 @@ function ArchivePreviewModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="w-full max-w-full sm:w-[95vw] sm:max-w-4xl lg:max-w-5xl rounded-t-3xl rounded-b-none sm:rounded-3xl p-4 sm:p-6 text-right max-h-[92svh] flex flex-col bg-card border-0 sm:border border-border/50 shadow-2xl"
+        className="w-full sm:w-auto sm:max-w-4xl lg:max-w-5xl rounded-t-[2.2rem] rounded-b-none sm:rounded-3xl p-4 sm:p-6 text-right max-h-[94dvh] sm:max-h-[90vh] flex flex-col bg-card border-0 sm:border border-border/50 shadow-2xl"
         dir="rtl"
       >
         {/* Mobile Drag Indicator Handle */}

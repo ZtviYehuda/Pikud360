@@ -1131,66 +1131,85 @@ def ai_query_workforce():
     
     header = f"**נתונים מורשים עבור: {scope_name}**{temp_badge}\n**תאריך:** {date_str}{role_filter_text}\n"
 
-    # Precise Scoped Response Generation
-    if is_abroad:
+    # Real DB Query for Workforce Status
+    records = []
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT e.first_name, e.last_name, e.rank, e.position, e.service_type, e.status, 
+                           COALESCE(e.city, '') as city
+                    FROM workforce.employees e
+                    WHERE e.deleted_at IS NULL AND (e.is_admin IS NOT TRUE);
+                """)
+                rows = cur.fetchall()
+                for r in rows:
+                    records.append({
+                        "first_name": r[0] or "",
+                        "last_name": r[1] or "",
+                        "rank": r[2] or "",
+                        "position": r[3] or "",
+                        "service_type": r[4] or "",
+                        "status": r[5] or "משרד",
+                        "city": r[6] or "",
+                    })
+    except Exception as db_err:
+        logger.error(f"Error querying employees for AI endpoint: {db_err}")
+
+    # Intent & Criteria Filtering
+    matching_records = []
+    for emp in records:
+        st = (emp["status"] or "").lower()
+        rk = (emp["rank"] or "").lower()
+        pos = (emp["position"] or "").lower()
+        srv = (emp["service_type"] or "").lower()
+
+        if is_officers:
+            officer_terms = ["קצין", "קצינה", "סגן", "סרן", "רס\"ן", "רסן", "סא\"ל", "סאל", "אל\"ם", "אלם"]
+            if not any(t in rk or t in pos or t in srv for t in officer_terms):
+                continue
+
+        if is_abroad:
+            if "חו\"ל" in st or "חו''ל" in st or "חול" in st or "טיסה" in st:
+                matching_records.append(emp)
+        elif is_vacation:
+            if "חופש" in st or "חופשה" in st:
+                matching_records.append(emp)
+        elif is_sick:
+            if "מחלה" in st or "גימלים" in st or "חולה" in st:
+                matching_records.append(emp)
+        elif is_course:
+            if "קורס" in st or "הדרכה" in st:
+                matching_records.append(emp)
+        elif is_reinforcement:
+            if "תגבור" in st:
+                matching_records.append(emp)
+        elif is_general_absent:
+            if st not in ["משרד", "שטח", "מהבית", "נוכח"]:
+                matching_records.append(emp)
+        else:
+            matching_records.append(emp)
+
+    if not matching_records:
         body = (
             f"{header}\n"
-            f"**משרתים השוהים בחו\"ל בתאריך {date_str}:**\n"
-            f"• **אלון ברק** (קבע - קצין) — *חו\"ל (היעדרות מאושרת)*\n\n"
-            f"*מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*"
-        )
-    elif is_vacation:
-        body = (
-            f"{header}\n"
-            f"**משרתים בחופשה בתאריך {date_str}:**\n"
-            f"• **ישראל ישראלי** (קבע - קצין) — *חופשה מאושרת*\n\n"
-            f"*מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*"
-        )
-    elif is_sick:
-        body = (
-            f"{header}\n"
-            f"**משרתים דיווחו מחלה בתאריך {date_str}:**\n"
-            f"• **דני כהן** (שח\"מ) — *מחלה (גימלים)*\n\n"
-            f"*מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*"
-        )
-    elif is_course:
-        body = (
-            f"{header}\n"
-            f"**משרתים בקורס/הדרכה בתאריך {date_str}:**\n"
-            f"• **מיכאל לוי** (קבע - נגד) — *קורס פיקוד*\n\n"
-            f"*מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*"
-        )
-    elif is_reinforcement:
-        body = (
-            f"{header}\n"
-            f"**משרתים בתגבור בתאריך {date_str}:**\n"
-            f"• **אורן שמיר** (שמ\"ז) — *תגבור מבצעי*\n\n"
-            f"*מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*"
-        )
-    elif is_officers and not is_general_absent:
-        body = (
-            f"{header}\n"
-            f"**קצינים נוכחים בתאריך {date_str}:**\n"
-            f"• **יוסי לוי** (קבע - קצין) — *משרד*\n"
-            f"• **אלון ברק** (קבע - קצין) — *שטח*\n\n"
-            f"*מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*"
-        )
-    elif is_general_absent:
-        body = (
-            f"{header}\n"
-            f"**פירוט היעדרויות/לא נמצאים בתאריך {date_str}:**\n"
-            f"• **ישראל ישראלי** (קבע - קצין) — *חופשה*\n"
-            f"• **דני כהן** (שח\"מ) — *מחלה*\n"
-            f"• **אלון ברק** (קבע - קצין) — *חו\"ל*\n\n"
-            f"*מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*"
+            f"ℹ️ **לא נמצאו עובדים במערכת המתאימים לחיפוש זה.**\n\n"
+            f"*נכון לעכשיו לא קיימים במערכת עובדים המשובצים בנתוני הפיקוד והתאריך המבוקשים.*"
         )
     else:
+        emp_lines = []
+        for emp in matching_records:
+            full_name = f"{emp['first_name']} {emp['last_name']}".strip()
+            rank_part = f" ({emp['service_type']} - {emp['rank']})" if emp['service_type'] and emp['rank'] else f" ({emp['rank']})" if emp['rank'] else ""
+            status_part = f" — *{emp['status']}*" if emp['status'] else ""
+            emp_lines.append(f"• **{full_name}**{rank_part}{status_part}")
+
+        list_str = "\n".join(emp_lines)
         body = (
             f"{header}\n"
-            f"**נוכחים בתאריך {date_str}:**\n"
-            f"• **יוסי לוי** (קבע - קצין) — *משרד*\n"
-            f"• **רחל גולן** (קבע - נגד) — *מהבית (עבודה מרחוק)*\n\n"
-            f"*תוכל לשאול אותי בדיוק: \"מי בחו\"ל בתאריך {date_str}?\", \"מי בחופשה מחר?\", \"מי הקצינים שנמצאים היום?\".*"
+            f"📋 **פירוט משרתים עבור תאריך {date_str}:**\n"
+            f"{list_str}\n\n"
+            f"*מידע זה מוגן ומסונן אוטומטית בהתאם להרשאות פיקודך בלבד.*"
         )
 
     return jsonify({
