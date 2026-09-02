@@ -791,16 +791,16 @@ export default function RosterPage() {
                       variant="outline"
                       onClick={() => setFilterModalOpen(true)}
                       className={cn(
-                        "h-9 rounded-full px-4 border-border/40 hover:bg-muted/30 font-bold text-xs gap-2 shrink-0 shadow-sm transition-all bg-background",
+                        "h-9 rounded-xl px-3 border-border/60 hover:bg-accent/60 font-bold text-xs gap-1.5 shrink-0 shadow-xs transition-all bg-card/70 dark:bg-card/50 text-foreground",
                         hasActiveFilters
-                          ? "text-primary border-primary/30 bg-primary/5"
+                          ? "text-primary border-primary/40 bg-primary/5"
                           : "",
                       )}
                     >
-                      <Filter className="w-3.5 h-3.5" />
+                      <Filter className="w-3.5 h-3.5 text-primary shrink-0" />
                       <span>{filterButtonLabel || "סינון"}</span>
                       {hasActiveFilters && (
-                        <span className="w-2 h-2 rounded-full bg-primary relative -right-1 shadow-sm" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary relative -right-0.5 shadow-xs" />
                       )}
                     </Button>
                     {hasActiveFilters && (
@@ -809,7 +809,7 @@ export default function RosterPage() {
                           e.stopPropagation();
                           handleResetFilters();
                         }}
-                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center border-2 border-background transition-all hover:scale-110 active:scale-90 z-20 shadow-sm"
+                        className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 rounded-full bg-primary text-primary-foreground flex items-center justify-center border-2 border-background transition-all hover:scale-110 active:scale-90 z-20 shadow-xs"
                         title="נקה הכל"
                       >
                         <RotateCcw className="w-2.5 h-2.5" />
@@ -823,7 +823,7 @@ export default function RosterPage() {
                       placeholder="חיפוש..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="h-9 w-full sm:w-32 lg:w-40 pr-9 pl-4 bg-background border-border/40 hover:bg-muted/20 focus:bg-background focus:border-primary/30 focus:sm:w-48 focus:lg:w-56 rounded-full font-bold text-xs transition-all duration-300 shadow-sm"
+                      className="h-9 w-full sm:w-32 lg:w-40 pr-9 pl-4 bg-card/70 dark:bg-card/50 border-border/60 hover:bg-accent/40 focus:bg-background focus:border-primary/40 focus:sm:w-48 focus:lg:w-56 rounded-xl font-bold text-xs transition-all duration-300 shadow-xs"
                     />
                   </div>
                 </div>

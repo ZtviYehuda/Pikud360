@@ -296,38 +296,36 @@ export default function ActivityLogPage() {
             <div className="flex items-center gap-2 self-end sm:self-auto w-full sm:w-auto justify-between sm:justify-end">
               <Button 
                 variant="outline" 
-                size="sm"
-                className="rounded-xl h-9 border-border/40 bg-card hover:bg-muted/50 font-semibold text-xs gap-1.5 flex-1 sm:flex-initial"
+                className="h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs flex-1 sm:flex-initial"
                 onClick={fetchData}
                 disabled={isLoading}
               >
-                <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
+                <RefreshCw className={cn("w-3.5 h-3.5 text-primary shrink-0", isLoading && "animate-spin")} />
                 <span>רענן</span>
               </Button>
               {user?.is_admin && (
                 <>
                   <Button 
-                    size="sm"
                     variant="outline"
                     onClick={() => setShowTermsModal(true)}
-                    className="rounded-xl h-9 font-black text-xs gap-1.5 border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20"
+                    className="h-9 rounded-xl gap-1.5 font-bold transition-all px-3 border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 text-xs shadow-xs"
                   >
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>אישורי תקנון משתמשים</span>
+                    <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                    <span>אישורי תקנון</span>
                   </Button>
 
                   <Button 
-                    size="sm"
+                    variant="outline"
                     onClick={handleExport}
                     disabled={isExporting}
-                    className="rounded-xl h-9 font-semibold text-xs gap-1.5 flex-1 sm:flex-initial"
+                    className="h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs flex-1 sm:flex-initial"
                   >
                     {isExporting ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
                     ) : (
-                      <Download className="w-3.5 h-3.5" />
+                      <Download className="w-3.5 h-3.5 text-primary shrink-0" />
                     )}
-                    <span>ייצוא דוח ביקורת</span>
+                    <span>ייצוא דוח</span>
                   </Button>
                 </>
               )}

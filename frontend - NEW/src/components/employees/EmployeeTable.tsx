@@ -338,17 +338,16 @@ export const EmployeeTable = ({
 
           <Button
             variant="outline"
-            size="sm"
             className={cn(
-              "h-10 w-10 sm:w-auto p-0 sm:px-3.5 text-xs sm:text-sm border-border/60 dark:border-slate-800 hover:bg-muted rounded-xl flex items-center justify-center shrink-0 relative",
+              "h-9 px-3.5 rounded-xl border-border/60 bg-card/70 dark:bg-card/50 hover:bg-accent/60 text-foreground font-bold text-xs gap-1.5 shrink-0 shadow-xs transition-all relative",
               Object.keys(activeFilters).length > 0
-                ? "text-primary border-primary"
-                : "text-muted-foreground",
+                ? "text-primary border-primary/40 bg-primary/5"
+                : "",
             )}
             onClick={() => setFilterModalOpen(true)}
             title="סינון מתקדם"
           >
-            <Filter className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:ml-1.5" />
+            <Filter className="w-3.5 h-3.5 text-primary shrink-0" />
             <span className="hidden sm:inline">סינון</span>
             {Object.keys(activeFilters).filter(k => {
               const val = activeFilters[k as keyof EmployeeFilters];
@@ -371,31 +370,31 @@ export const EmployeeTable = ({
         </div>
 
         {/* Left side: Import & Add */}
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {!user?.is_temp_commander && (
             <>
               {user?.is_admin && (
                 <Button
                   id="import-employees-button"
                   variant="outline"
-                  className="h-10 text-xs sm:text-sm bg-background border-border/60 hover:bg-muted text-foreground rounded-xl px-2.5 sm:px-4 flex items-center justify-center shrink-0 font-medium whitespace-nowrap"
+                  className="h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs shrink-0 whitespace-nowrap"
                   onClick={() => setImportModalOpen(true)}
                   title="ייבוא עובדים מקובץ"
                 >
-                  <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1 sm:ml-1.5 text-primary" />
+                  <Upload className="w-3.5 h-3.5 text-primary shrink-0" />
                   <span>ייבוא מקובץ</span>
                 </Button>
               )}
               <Button
                 id="add-employee-button"
                 className={cn(
-                  "h-10 text-xs sm:text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-2.5 sm:px-4 flex items-center justify-center shrink-0 shadow-xs font-medium whitespace-nowrap",
+                  "h-9 rounded-xl gap-1.5 font-bold transition-all px-3.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs text-xs shrink-0 whitespace-nowrap",
                   searchParams.get("tutorial") === "add-employee" && "tutorial-highlight"
                 )}
                 onClick={() => navigate("/employees/new")}
                 title="הוספת עובד חדש"
               >
-                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1 sm:ml-1.5" />
+                <Plus className="w-3.5 h-3.5 shrink-0" />
                 <span>הוספה</span>
               </Button>
             </>
