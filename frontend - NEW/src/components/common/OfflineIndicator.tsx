@@ -19,23 +19,23 @@ export const OfflineIndicator: React.FC = () => {
     <div
       dir="rtl"
       className={cn(
-        "fixed top-3 left-1/2 -translate-x-1/2 z-50 w-[92vw] max-w-md p-3 rounded-2xl shadow-lg transition-all duration-300 backdrop-blur-md flex items-center justify-between text-xs border",
+        "fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92vw] max-w-md px-3.5 py-2.5 rounded-xl shadow-md transition-all duration-200 flex items-center justify-between text-xs border animate-in fade-in slide-in-from-top-2",
         isOffline
-          ? "bg-amber-500/90 text-amber-950 border-amber-600/30 dark:bg-amber-950/90 dark:text-amber-200 dark:border-amber-700/50"
-          : "bg-emerald-500/90 text-emerald-950 border-emerald-600/30 dark:bg-emerald-950/90 dark:text-emerald-200 dark:border-emerald-700/50"
+          ? "bg-card text-card-foreground border-border/80"
+          : "bg-card text-card-foreground border-border/80"
       )}
     >
       {isOffline ? (
         <>
-          <div className="flex items-center gap-2 font-bold min-w-0 pr-1">
-            <WifiOff className="w-4 h-4 shrink-0 text-amber-950 dark:text-amber-300 animate-pulse" />
-            <span className="truncate">אין חיבור לרשת - מצב לא מקוון</span>
+          <div className="flex items-center gap-2.5 font-bold min-w-0 pr-1">
+            <div className="w-2 h-2 rounded-full bg-destructive shrink-0" />
+            <span className="truncate text-xs font-semibold text-foreground">אין חיבור לרשת - מצב לא מקוון</span>
           </div>
           <Button
             size="sm"
             variant="outline"
             onClick={handleRefresh}
-            className="h-7 text-[11px] font-bold px-2.5 rounded-xl border-amber-700/40 bg-amber-600/20 hover:bg-amber-600/40 text-amber-950 dark:text-amber-100 shrink-0 gap-1 cursor-pointer"
+            className="h-7 text-xs font-bold px-3 rounded-lg border-border text-foreground hover:bg-muted shrink-0 gap-1.5 cursor-pointer"
           >
             <RefreshCw className="w-3 h-3" />
             <span>נסה שוב</span>
@@ -43,16 +43,16 @@ export const OfflineIndicator: React.FC = () => {
         </>
       ) : (
         <>
-          <div className="flex items-center gap-2 font-bold min-w-0 pr-1">
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-950 dark:text-emerald-300" />
-            <span className="truncate">החיבור לרשת חודש בהצלחה</span>
+          <div className="flex items-center gap-2.5 font-bold min-w-0 pr-1">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+            <span className="truncate text-xs font-semibold text-foreground">החיבור לרשת חודש בהצלחה</span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <Button
               size="sm"
               variant="outline"
               onClick={handleRefresh}
-              className="h-7 text-[11px] font-bold px-2.5 rounded-xl border-emerald-700/40 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-950 dark:text-emerald-100 gap-1 cursor-pointer"
+              className="h-7 text-xs font-bold px-3 rounded-lg border-border text-foreground hover:bg-muted gap-1.5 cursor-pointer"
             >
               <RefreshCw className="w-3 h-3" />
               <span>רענן</span>
@@ -60,7 +60,7 @@ export const OfflineIndicator: React.FC = () => {
             <button
               type="button"
               onClick={dismissReconnected}
-              className="text-[10px] underline opacity-80 hover:opacity-100 px-1 cursor-pointer"
+              className="text-[11px] font-medium text-muted-foreground hover:text-foreground px-1.5 cursor-pointer"
             >
               סגור
             </button>

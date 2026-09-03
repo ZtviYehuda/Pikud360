@@ -17,7 +17,7 @@ import {
   Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, cleanUnitName } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,7 +25,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { DialogTitle, DialogDragHandle } from "@/components/ui/dialog";
+import { DialogDragHandle } from "@/components/ui/dialog";
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo, useState } from "react";
@@ -288,66 +288,71 @@ export const DashboardFilters = ({
         !!selectedAgeRange?.max;
 
   const FilterContent = (
-    <div className="flex flex-col h-full bg-card overflow-hidden">
+    <div className="flex flex-col h-full bg-card overflow-hidden font-sans">
       <DialogDragHandle />
 
       {/* Header */}
-      <div className="px-6 pt-4 pb-3 border-b border-border/40 flex items-center justify-between shrink-0 relative" dir="rtl">
-        <div className="text-lg font-bold text-foreground">סינון</div>
+      <div className="px-6 py-4 border-b border-border/50 flex items-center justify-between shrink-0" dir="rtl">
+        <div>
+          <h2 className="text-base font-bold text-foreground tracking-tight">סינון</h2>
+        </div>
 
-        {/* Reset Action (positioned at the far left edge of the modal header) */}
+        {/* Reset Action */}
         {hasActiveFilters && (
           <button
             onClick={handleLocalReset}
-            title="אפס את כל המסננים"
-            aria-label="אפס את כל המסננים"
-            className="absolute left-4 top-4 h-9 w-9 rounded-full bg-white/80 dark:bg-black/40 backdrop-blur-md border border-black/5 dark:border-white/10 hover:bg-destructive/15 hover:border-destructive/30 text-muted-foreground hover:text-destructive flex items-center justify-center transition-all z-[50] active:scale-95 group/reset shadow-2xs"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
           >
-            <RotateCcw className="w-4 h-4 transition-transform group-hover/reset:-rotate-90" />
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>איפוס הכל</span>
           </button>
         )}
       </div>
 
       {/* Tabs Strip */}
-      <div className="px-4 border-b border-border/30 shrink-0">
+      <div className="px-6 border-b border-border/40 shrink-0 bg-muted/20" dir="rtl">
         <div
           id="filter-tabs"
-          className="flex gap-6 overflow-x-auto no-scrollbar py-3"
+          className="flex gap-6 overflow-x-auto no-scrollbar pt-3"
         >
           {[
-            { id: "org", label: "יחידות ארגוניות" },
-            { id: "status", label: "סטטוסים" },
-            { id: "service", label: "מעמד" },
-            { id: "age", label: "גילאים" },
+            { id: "org", label: "יחידות ארגוניות", count: stagedFilters.deptIds.length + stagedFilters.sectionIds.length + stagedFilters.teamIds.length },
+            { id: "status", label: "סטטוסים", count: stagedFilters.statusIds.length },
+            { id: "service", label: "מעמד", count: stagedFilters.serviceTypes.length },
+            { id: "age", label: "גילאים", count: (stagedFilters.ageRange?.min && (stagedFilters.ageRange.min > 18 || stagedFilters.ageRange.max! < 67)) ? 1 : 0 },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "text-sm font-black whitespace-nowrap pb-2 border-b-2 transition-all relative",
+                "text-xs sm:text-sm font-semibold whitespace-nowrap pb-2.5 border-b-2 transition-all relative flex items-center gap-1.5 cursor-pointer",
                 activeTab === tab.id
-                  ? "text-foreground border-primary"
-                  : "text-muted-foreground border-transparent",
+                  ? "text-primary border-primary"
+                  : "text-muted-foreground border-transparent hover:text-foreground",
               )}
             >
-              {tab.label}
+              <span>{tab.label}</span>
+              {tab.count > 0 && (
+                <span className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[10px] font-bold inline-flex items-center justify-center">
+                  {tab.count}
+                </span>
+              )}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Content Area */}
-      <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar max-h-[60vh]">
+      {/* Content Area - Fixed uniform height across all tabs */}
+      <div className="flex-1 overflow-y-auto px-6 py-5 custom-scrollbar h-[360px] min-h-[360px] max-h-[360px]">
         {activeTab === "org" && (
-          <div className="space-y-6" dir="rtl">
+          <div className="space-y-5" dir="rtl">
             {/* Departments Section */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">🏢</span>
-                  <Label className="text-xs font-black text-foreground uppercase tracking-wider">מחלקות</Label>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">מחלקות</Label>
                   {stagedFilters.deptIds.length > 0 && (
-                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-black rounded-full">
+                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-bold rounded-md">
                       {stagedFilters.deptIds.length} נבחרו
                     </Badge>
                   )}
@@ -356,24 +361,22 @@ export const DashboardFilters = ({
                   type="button"
                   onClick={() => setStagedFilters((prev) => ({ ...prev, deptIds: [], sectionIds: [], teamIds: [] }))}
                   className={cn(
-                    "text-[11px] font-bold transition-colors",
-                    stagedFilters.deptIds.length === 0 ? "text-primary font-black" : "text-muted-foreground hover:text-foreground"
+                    "text-xs transition-colors cursor-pointer",
+                    stagedFilters.deptIds.length === 0 ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  {stagedFilters.deptIds.length === 0 ? "✓ כל המחלקות" : "אפס מחלקות"}
+                  {stagedFilters.deptIds.length === 0 ? "✓ כל המחלקות" : "איפוס מחלקות"}
                 </button>
               </div>
 
-              <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto custom-scrollbar p-1">
+              <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto custom-scrollbar p-0.5">
                 {(structure || []).map((dept) => {
                   const deptIdStr = String(dept?.id ?? "");
                   const isSelected = stagedFilters.deptIds.includes(deptIdStr);
                   return (
-                    <Button
+                    <button
                       key={dept?.id}
                       type="button"
-                      variant="ghost"
-                      size="sm"
                       onClick={() => {
                         const newDepts = isSelected
                           ? stagedFilters.deptIds.filter((id) => id !== deptIdStr)
@@ -386,31 +389,30 @@ export const DashboardFilters = ({
                         }));
                       }}
                       className={cn(
-                        "h-8 px-3 rounded-xl text-xs font-bold transition-all border shadow-2xs flex items-center gap-1.5",
+                        "h-8 px-3 rounded-lg text-xs font-medium transition-all border flex items-center gap-1.5 cursor-pointer",
                         isSelected
-                          ? "bg-primary text-primary-foreground border-primary shadow-sm scale-[1.02]"
-                          : "bg-muted/30 text-foreground/80 border-border/40 hover:bg-muted/70"
+                          ? "bg-primary text-primary-foreground border-primary font-semibold shadow-xs"
+                          : "bg-muted/40 text-foreground/85 border-border/60 hover:bg-muted hover:text-foreground"
                       )}
                     >
                       {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
-                      <span>{dept?.name}</span>
-                    </Button>
+                      <span>{cleanUnitName(dept?.name)}</span>
+                    </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Connector line */}
-            <div className="h-px bg-border/40 my-2" />
+            {/* Divider */}
+            <div className="h-px bg-border/40" />
 
             {/* Sections Section */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">🏬</span>
-                  <Label className="text-xs font-black text-foreground uppercase tracking-wider">מדורים</Label>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">מדורים</Label>
                   {stagedFilters.sectionIds.length > 0 && (
-                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-black rounded-full">
+                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-bold rounded-md">
                       {stagedFilters.sectionIds.length} נבחרו
                     </Badge>
                   )}
@@ -420,38 +422,36 @@ export const DashboardFilters = ({
                     type="button"
                     onClick={() => setStagedFilters((prev) => ({ ...prev, sectionIds: [], teamIds: [] }))}
                     className={cn(
-                      "text-[11px] font-bold transition-colors",
-                      stagedFilters.sectionIds.length === 0 ? "text-primary font-black" : "text-muted-foreground hover:text-foreground"
+                      "text-xs transition-colors cursor-pointer",
+                      stagedFilters.sectionIds.length === 0 ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    {stagedFilters.sectionIds.length === 0 ? "✓ כל המדורים במחלקה" : "אפס מדורים"}
+                    {stagedFilters.sectionIds.length === 0 ? "✓ כל המדורים במחלקה" : "איפוס מדורים"}
                   </button>
                 )}
               </div>
 
               {stagedFilters.deptIds.length === 0 ? (
-                <div className="p-3.5 rounded-2xl bg-muted/20 border border-dashed border-border/50 text-center flex flex-col items-center justify-center gap-1 text-muted-foreground">
-                  <span className="text-[12px] font-bold text-muted-foreground/80">
+                <div className="p-3 rounded-xl bg-muted/20 border border-dashed border-border/50 text-center flex flex-col items-center justify-center gap-1 text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     יש לבחור מחלקה תחילה על מנת להציג מדורים
                   </span>
                 </div>
               ) : sections.length === 0 ? (
-                <div className="p-3.5 rounded-2xl bg-muted/20 border border-dashed border-border/50 text-center flex flex-col items-center justify-center gap-1 text-muted-foreground">
-                  <span className="text-[12px] font-bold text-muted-foreground/80">
+                <div className="p-3 rounded-xl bg-muted/20 border border-dashed border-border/50 text-center flex flex-col items-center justify-center gap-1 text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     לא נמצאו מדורים במחלקה שנבחרה
                   </span>
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto custom-scrollbar p-1">
+                <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto custom-scrollbar p-0.5">
                   {sections.map((sec) => {
                     const secIdStr = String(sec?.id ?? "");
                     const isSelected = stagedFilters.sectionIds.includes(secIdStr);
                     return (
-                      <Button
+                      <button
                         key={sec?.id}
                         type="button"
-                        variant="ghost"
-                        size="sm"
                         onClick={() => {
                           const newSecs = isSelected
                             ? stagedFilters.sectionIds.filter((id) => id !== secIdStr)
@@ -463,32 +463,31 @@ export const DashboardFilters = ({
                           }));
                         }}
                         className={cn(
-                          "h-8 px-3 rounded-xl text-xs font-bold transition-all border shadow-2xs flex items-center gap-1.5",
+                          "h-8 px-3 rounded-lg text-xs font-medium transition-all border flex items-center gap-1.5 cursor-pointer",
                           isSelected
-                            ? "bg-primary text-primary-foreground border-primary shadow-sm scale-[1.02]"
-                            : "bg-muted/30 text-foreground/80 border-border/40 hover:bg-muted/70"
+                            ? "bg-primary text-primary-foreground border-primary font-semibold shadow-xs"
+                            : "bg-muted/40 text-foreground/85 border-border/60 hover:bg-muted hover:text-foreground"
                         )}
                       >
                         {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
-                        <span>{sec?.name}</span>
-                      </Button>
+                        <span>{cleanUnitName(sec?.name)}</span>
+                      </button>
                     );
                   })}
                 </div>
               )}
             </div>
 
-            {/* Connector line */}
-            <div className="h-px bg-border/40 my-2" />
+            {/* Divider */}
+            <div className="h-px bg-border/40" />
 
             {/* Teams Section */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">👥</span>
-                  <Label className="text-xs font-black text-foreground uppercase tracking-wider">חוליות</Label>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">חוליות</Label>
                   {stagedFilters.teamIds.length > 0 && (
-                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-black rounded-full">
+                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-bold rounded-md">
                       {stagedFilters.teamIds.length} נבחרו
                     </Badge>
                   )}
@@ -498,38 +497,36 @@ export const DashboardFilters = ({
                     type="button"
                     onClick={() => setStagedFilters((prev) => ({ ...prev, teamIds: [] }))}
                     className={cn(
-                      "text-[11px] font-bold transition-colors",
-                      stagedFilters.teamIds.length === 0 ? "text-primary font-black" : "text-muted-foreground hover:text-foreground"
+                      "text-xs transition-colors cursor-pointer",
+                      stagedFilters.teamIds.length === 0 ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    {stagedFilters.teamIds.length === 0 ? "✓ כל החוליות במדור" : "אפס חוליות"}
+                    {stagedFilters.teamIds.length === 0 ? "✓ כל החוליות במדור" : "איפוס חוליות"}
                   </button>
                 )}
               </div>
 
               {stagedFilters.sectionIds.length === 0 ? (
-                <div className="p-3.5 rounded-2xl bg-muted/20 border border-dashed border-border/50 text-center flex flex-col items-center justify-center gap-1 text-muted-foreground">
-                  <span className="text-[12px] font-bold text-muted-foreground/80">
+                <div className="p-3 rounded-xl bg-muted/20 border border-dashed border-border/50 text-center flex flex-col items-center justify-center gap-1 text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     יש לבחור מדור תחילה על מנת להציג חוליות
                   </span>
                 </div>
               ) : teams.length === 0 ? (
-                <div className="p-3.5 rounded-2xl bg-muted/20 border border-dashed border-border/50 text-center flex flex-col items-center justify-center gap-1 text-muted-foreground">
-                  <span className="text-[12px] font-bold text-muted-foreground/80">
+                <div className="p-3 rounded-xl bg-muted/20 border border-dashed border-border/50 text-center flex flex-col items-center justify-center gap-1 text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     לא נמצאו חוליות במדור שנבחר
                   </span>
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto custom-scrollbar p-1">
+                <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto custom-scrollbar p-0.5">
                   {teams.map((team) => {
                     const teamIdStr = String(team?.id ?? "");
                     const isSelected = stagedFilters.teamIds.includes(teamIdStr);
                     return (
-                      <Button
+                      <button
                         key={team?.id}
                         type="button"
-                        variant="ghost"
-                        size="sm"
                         onClick={() => {
                           const newTeams = isSelected
                             ? stagedFilters.teamIds.filter((id) => id !== teamIdStr)
@@ -540,15 +537,15 @@ export const DashboardFilters = ({
                           }));
                         }}
                         className={cn(
-                          "h-8 px-3 rounded-xl text-xs font-bold transition-all border shadow-2xs flex items-center gap-1.5",
+                          "h-8 px-3 rounded-lg text-xs font-medium transition-all border flex items-center gap-1.5 cursor-pointer",
                           isSelected
-                            ? "bg-primary text-primary-foreground border-primary shadow-sm scale-[1.02]"
-                            : "bg-muted/30 text-foreground/80 border-border/40 hover:bg-muted/70"
+                            ? "bg-primary text-primary-foreground border-primary font-semibold shadow-xs"
+                            : "bg-muted/40 text-foreground/85 border-border/60 hover:bg-muted hover:text-foreground"
                         )}
                       >
                         {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
-                        <span>{team?.name}</span>
-                      </Button>
+                        <span>{cleanUnitName(team?.name)}</span>
+                      </button>
                     );
                   })}
                 </div>
@@ -558,31 +555,30 @@ export const DashboardFilters = ({
         )}
 
         {activeTab === "status" && (
-          <div className="space-y-4">
+          <div className="space-y-4" dir="rtl">
             <div className="flex items-center justify-between">
-              <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest text-right block">
-                סטטוסים
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right block">
+                סטטוסי נוכחות
               </Label>
               <button
                 type="button"
                 onClick={() => setStagedFilters((prev) => ({ ...prev, statusIds: [] }))}
                 className={cn(
-                  "text-[11px] font-bold transition-colors",
-                  stagedFilters.statusIds.length === 0 ? "text-primary font-black" : "text-muted-foreground hover:text-foreground"
+                  "text-xs transition-colors cursor-pointer",
+                  stagedFilters.statusIds.length === 0 ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {stagedFilters.statusIds.length === 0 ? "✓ כל הסטטוסים" : "אפס סטטוסים"}
+                {stagedFilters.statusIds.length === 0 ? "✓ כל הסטטוסים" : "איפוס סטטוסים"}
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-2.5">
+            <div className="flex flex-wrap gap-2">
               {(allStatusTypes || []).map((type: any) => {
                 const statusIdStr = String(type?.status_id ?? type?.id ?? "");
                 const isSelected = stagedFilters.statusIds.includes(statusIdStr);
                 return (
-                  <Button
+                  <button
                     key={statusIdStr || type?.name}
-                    variant="ghost"
                     type="button"
                     onClick={() => {
                       const newStatusIds = isSelected
@@ -594,19 +590,19 @@ export const DashboardFilters = ({
                       }));
                     }}
                     className={cn(
-                      "h-10 px-4 rounded-xl text-xs font-black transition-all border flex items-center gap-2",
+                      "h-8 px-3 rounded-lg text-xs font-medium transition-all border flex items-center gap-2 cursor-pointer",
                       isSelected
-                        ? "bg-primary text-primary-foreground border-primary shadow-sm scale-[1.02]"
-                        : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
+                        ? "bg-primary text-primary-foreground border-primary font-semibold shadow-xs"
+                        : "bg-muted/40 text-foreground/85 border-border/60 hover:bg-muted hover:text-foreground"
                     )}
                   >
                     {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
                     <div
-                      className="w-2.5 h-2.5 rounded-full ml-1"
+                      className="w-2 h-2 rounded-full"
                       style={{ backgroundColor: type?.color || "#3b82f6" }}
                     />
                     <span>{type?.name || type?.status_name}</span>
-                  </Button>
+                  </button>
                 );
               })}
             </div>
@@ -614,17 +610,29 @@ export const DashboardFilters = ({
         )}
 
         {activeTab === "service" && (
-          <div className="space-y-4">
-            <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest text-right block">
-              מעמד
-            </Label>
-            <div className="flex flex-wrap gap-2.5">
+          <div className="space-y-4" dir="rtl">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right block">
+                מעמד ושירות
+              </Label>
+              <button
+                type="button"
+                onClick={() => setStagedFilters((prev) => ({ ...prev, serviceTypes: [] }))}
+                className={cn(
+                  "text-xs transition-colors cursor-pointer",
+                  stagedFilters.serviceTypes.length === 0 ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {stagedFilters.serviceTypes.length === 0 ? "✓ כל המעמדות" : "איפוס מעמדות"}
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
               {serviceTypes.map((type) => {
                 const isActive = stagedFilters.serviceTypes.includes(type.name);
                 return (
-                  <Button
+                  <button
                     key={type.id}
-                    variant="ghost"
+                    type="button"
                     onClick={() => {
                       const newTypes = isActive
                         ? stagedFilters.serviceTypes.filter(
@@ -637,14 +645,15 @@ export const DashboardFilters = ({
                       });
                     }}
                     className={cn(
-                      "h-10 px-4 rounded-xl text-xs font-black transition-all border",
+                      "h-8 px-3 rounded-lg text-xs font-medium transition-all border flex items-center gap-1.5 cursor-pointer",
                       isActive
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted",
+                        ? "bg-primary text-primary-foreground border-primary font-semibold shadow-xs"
+                        : "bg-muted/40 text-foreground/85 border-border/60 hover:bg-muted hover:text-foreground",
                     )}
                   >
-                    {type.name}
-                  </Button>
+                    {isActive && <Check className="w-3.5 h-3.5 shrink-0" />}
+                    <span>{type.name}</span>
+                  </button>
                 );
               })}
             </div>
@@ -652,15 +661,14 @@ export const DashboardFilters = ({
         )}
 
         {activeTab === "age" && (
-          <div id="age-range-section" className="space-y-8">
+          <div id="age-range-section" className="space-y-8" dir="rtl">
             <div className="flex items-center justify-between">
-              <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest text-right block">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right block">
                 טווח גילאים
               </Label>
-              <span className="text-lg font-black text-primary">
-                {stagedFilters.ageRange?.min || 18} -{" "}
-                {stagedFilters.ageRange?.max || 67}
-              </span>
+              <Badge variant="secondary" className="text-xs font-bold text-primary bg-primary/10">
+                {stagedFilters.ageRange?.min || 18} - {stagedFilters.ageRange?.max || 67}
+              </Badge>
             </div>
 
             <div className="relative h-10 flex items-center px-2">
@@ -692,7 +700,7 @@ export const DashboardFilters = ({
                     ageRange: { ...stagedFilters.ageRange, min: val },
                   });
                 }}
-                className="absolute inset-0 w-full h-1.5 bg-transparent appearance-none pointer-events-none z-20 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-lg"
+                className="absolute inset-0 w-full h-1.5 bg-transparent appearance-none pointer-events-none z-20 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-md"
               />
               <input
                 type="range"
@@ -709,12 +717,49 @@ export const DashboardFilters = ({
                     ageRange: { ...stagedFilters.ageRange, max: val },
                   });
                 }}
-                className="absolute inset-0 w-full h-1.5 bg-transparent appearance-none pointer-events-none z-20 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-lg"
+                className="absolute inset-0 w-full h-1.5 bg-transparent appearance-none pointer-events-none z-20 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-md"
               />
 
-              <div className="absolute -bottom-6 left-0 right-0 flex justify-between px-2 text-[10px] font-bold text-muted-foreground">
+              <div className="absolute -bottom-6 left-0 right-0 flex justify-between px-2 text-[10px] font-medium text-muted-foreground">
                 <span>18</span>
                 <span>67</span>
+              </div>
+            </div>
+
+            {/* Quick Age Presets */}
+            <div className="space-y-2 pt-6">
+              <span className="text-[11px] font-semibold text-muted-foreground">טווחים נפוצים</span>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: "הכל (18-67)", min: 18, max: 67 },
+                  { label: "סדיר (18-21)", min: 18, max: 21 },
+                  { label: "מילואים צעיר (22-40)", min: 22, max: 40 },
+                  { label: "מילואים ותיק (41-67)", min: 41, max: 67 },
+                ].map((preset) => {
+                  const isPresetActive =
+                    (stagedFilters.ageRange?.min ?? 18) === preset.min &&
+                    (stagedFilters.ageRange?.max ?? 67) === preset.max;
+                  return (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() =>
+                        setStagedFilters({
+                          ...stagedFilters,
+                          ageRange: { min: preset.min, max: preset.max },
+                        })
+                      }
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer",
+                        isPresetActive
+                          ? "bg-primary text-primary-foreground border-primary font-semibold shadow-xs"
+                          : "bg-muted/40 text-foreground/80 border-border/60 hover:bg-muted hover:text-foreground"
+                      )}
+                    >
+                      {preset.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -722,11 +767,11 @@ export const DashboardFilters = ({
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-4 pb-6 sm:pb-4 border-t border-border/40 shrink-0 bg-card">
+      <div className="px-6 py-4 border-t border-border/40 shrink-0 bg-card" dir="rtl">
         <Button
           id="apply-filters-btn"
           onClick={handleApply}
-          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl h-12 transition-all active:scale-[0.98] text-sm shadow-sm"
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl h-10 transition-all active:scale-[0.99] text-xs sm:text-sm shadow-xs cursor-pointer"
         >
           החל סינון
         </Button>
@@ -930,7 +975,7 @@ export const DashboardFilters = ({
             <PopoverContent
               align="end"
               sideOffset={12}
-              className="w-[95vw] sm:w-[560px] md:w-[620px] max-h-[92vh] sm:max-h-[85vh] p-0 rounded-[2.5rem] sm:rounded-3xl border border-border/80 dark:border-white/15 bg-card/98 backdrop-blur-2xl shadow-xl ring-1 ring-black/5 dark:ring-white/10 z-50 flex flex-col overflow-hidden"
+              className="w-[95vw] sm:w-[580px] sm:min-w-[580px] sm:max-w-[580px] p-0 rounded-2xl border border-border/80 dark:border-white/15 bg-card/98 backdrop-blur-2xl shadow-xl ring-1 ring-black/5 dark:ring-white/10 z-50 flex flex-col overflow-hidden"
             >
               {FilterContent}
             </PopoverContent>

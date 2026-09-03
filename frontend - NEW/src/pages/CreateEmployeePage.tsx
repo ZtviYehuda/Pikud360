@@ -619,7 +619,7 @@ const ProfessionalFormTab = ({
             placeholder={
               formData.is_division_commander || formData.is_admin
                 ? "כלל המחלקות (ללא שיוך)"
-                : "בחר מחלקה"
+                : "בחר..."
             }
             icon={Building2}
             disabled={
@@ -663,7 +663,7 @@ const ProfessionalFormTab = ({
             placeholder={
               formData.is_division_commander || formData.is_admin
                 ? "כלל המדורים (ללא שיוך)"
-                : "בחר מדור"
+                : "בחר..."
             }
             icon={Briefcase}
             disabled={
@@ -699,7 +699,7 @@ const ProfessionalFormTab = ({
             placeholder={
               formData.is_division_commander || formData.is_admin
                 ? "כלל החוליות (ללא שיוך)"
-                : "בחר חוליה"
+                : "בחר..."
             }
             icon={User}
             disabled={

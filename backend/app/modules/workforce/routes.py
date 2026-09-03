@@ -5,9 +5,8 @@ from datetime import datetime, timedelta, date
 import logging
 import json
 
-from app.database.connection import get_db_connection
 from app.modules.workforce.repositories import EmployeeRepository, EmployeeHistoryRepository
-from app.modules.security.repositories import AuditLogRepository
+from app.modules.security.repositories import AuditLogRepository, UserPreferenceRepository
 from app.modules.workforce.services import WorkforceService
 from app.modules.workforce.encryption import decrypt_value, encrypt_value, generate_blind_index
 from app.core.authorization import require_permission, ScopeType, AccessDeniedError
@@ -21,6 +20,7 @@ workforce_bp = Blueprint("workforce", __name__)
 employee_repo = EmployeeRepository()
 history_repo = EmployeeHistoryRepository()
 audit_repo = AuditLogRepository()
+user_preference_repo = UserPreferenceRepository()
 
 workforce_service = WorkforceService(
     employee_repo=employee_repo,
@@ -736,6 +736,29 @@ def get_notifications_alerts_history():
 @jwt_required(optional=True)
 def mark_notification_alert_read(alert_id):
     return jsonify({"success": True}), 200
+
+
+@workforce_bp.route("/employees/preferences", methods=["GET", "PUT"])
+@workforce_bp.route("/preferences", methods=["GET", "PUT"])
+@jwt_required(optional=True)
+def handle_employees_preferences():
+    """Handles GET and PUT for user preferences from workforce endpoint."""
+    user_id = get_jwt_identity() or "default"
+    if request.method == "GET":
+        prefs = user_preference_repo.get_by_user_id(str(user_id))
+        return jsonify({
+            "success": True,
+            "preferences": prefs,
+            "data": prefs
+        }), 200
+    else:
+        req_data = request.get_json() or {}
+        updated_prefs = user_preference_repo.upsert(str(user_id), req_data)
+        return jsonify({
+            "success": True,
+            "preferences": updated_prefs,
+            "data": updated_prefs
+        }), 200
 
 
 @workforce_bp.route("/attendance/status-types", methods=["GET"])

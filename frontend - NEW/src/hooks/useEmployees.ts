@@ -385,10 +385,14 @@ export const useEmployees = () => {
         return null;
       }
       try {
-        const { data } = await apiClient.get<Employee>(
+        const res = await apiClient.get<any>(
           endpoints.getEmployeeByIdEndpoint(id as any),
         );
-        return data;
+        const emp =
+          res.data && typeof res.data === "object" && "data" in res.data && res.data.data
+            ? res.data.data
+            : res.data;
+        return emp as Employee;
       } catch (err: any) {
         console.error("Failed to fetch employee", err);
         return null;

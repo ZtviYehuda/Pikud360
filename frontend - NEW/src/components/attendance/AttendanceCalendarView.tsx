@@ -13,7 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { cn, cleanUnitName } from "@/lib/utils";
 import { useEmployeeContext } from "@/context/EmployeeContext";
 import {
   format, addWeeks, subWeeks, addMonths, subMonths,
@@ -328,12 +328,12 @@ function MonthDayCell({ stats, isCurrentMonth, selectedDate, onClick }: {
       
       {/* 📅 Date & Report Summary */}
       <div className="flex justify-between items-start w-full px-0.5">
-        <span className={cn("text-[11px] md:text-sm font-black leading-none transition-colors",
+        <span className={cn("text-xs sm:text-sm font-bold leading-none transition-colors",
           today ? "text-primary" : isCurrentMonth ? "text-foreground" : "text-muted-foreground")}>
           {format(stats.date, "d")}
         </span>
         {isCurrentMonth && !isWeekend && total > 0 && (
-          <span className="hidden md:inline text-[10px] font-black text-muted-foreground/60 transition-opacity opacity-70 group-hover:opacity-100">
+          <span className="hidden md:inline text-[10px] font-semibold text-muted-foreground/70 transition-opacity opacity-70 group-hover:opacity-100">
             {reported}/{total}
           </span>
         )}
@@ -344,13 +344,13 @@ function MonthDayCell({ stats, isCurrentMonth, selectedDate, onClick }: {
         <div className="flex flex-col items-center justify-center flex-1 w-full -mt-1">
           <div className="relative">
             <span className={cn(
-              "text-sm md:text-2xl font-black tabular-nums transition-all tracking-tight",
+              "text-sm md:text-2xl font-bold tabular-nums transition-all tracking-tight",
               presentPct >= 0.9 ? "text-emerald-500" : presentPct >= 0.75 ? "text-amber-500" : "text-rose-500"
             )}>
               {Math.round(presentPct * 100)}%
             </span>
           </div>
-          <span className="hidden md:block text-[9px] font-black text-muted-foreground/40 uppercase tracking-tighter leading-none">
+          <span className="hidden md:block text-[9px] font-semibold text-muted-foreground/50 uppercase tracking-wider leading-none">
             נוכחות
           </span>
         </div>
@@ -401,52 +401,52 @@ function WeekDayRow({ stats, selectedDate, onClick }: {
   const isWeekend = isFriday || isSaturday;
 
   return (
-    <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+    <motion.div whileHover={{ scale: 1.005 }} whileTap={{ scale: 0.99 }}
       onClick={!isWeekend ? onClick : undefined}
       className={cn(
-        "relative flex items-center gap-3 p-3 md:p-4 rounded-2xl border transition-all cursor-pointer",
-        isWeekend && "opacity-40 pointer-events-none bg-muted/20",
-        isSelected ? "border-primary bg-primary/10 ring-2 ring-primary/20"
-          : today ? "border-primary/40 bg-primary/5"
-          : "border-border/40 bg-card/50 hover:border-primary/30 hover:bg-card",
+        "relative flex items-center gap-3 p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer",
+        isWeekend && "opacity-40 pointer-events-none bg-muted/20 border-border/40",
+        isSelected ? "border-primary bg-primary/5 ring-1 ring-primary/30 shadow-xs"
+          : today ? "border-primary/40 bg-primary/[0.03]"
+          : "border-border/60 bg-card hover:border-primary/30 hover:bg-card/80",
       )}>
-      <div className="flex flex-col items-center shrink-0 w-10 md:w-14">
-        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+      <div className="flex flex-col items-center shrink-0 w-10 sm:w-12">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
           {format(stats.date, "EEE", { locale: he })}
         </span>
-        <span className={cn("text-xl md:text-2xl font-black leading-none", today ? "text-primary" : "text-foreground")}>
+        <span className={cn("text-xl sm:text-2xl font-bold leading-tight", today ? "text-primary" : "text-foreground")}>
           {format(stats.date, "d")}
         </span>
-        <span className="text-[9px] font-bold text-muted-foreground">{format(stats.date, "MMM", { locale: he })}</span>
+        <span className="text-[10px] font-medium text-muted-foreground">{format(stats.date, "MMM", { locale: he })}</span>
       </div>
-      {!isWeekend && stats.total > 0 && <MiniDonut stats={stats} size={48} />}
+      {!isWeekend && stats.total > 0 && <MiniDonut stats={stats} size={44} />}
       {!isWeekend ? (
         <div className="flex-1 flex flex-col gap-1.5 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-black text-foreground">{stats.reported}/{stats.total} דיווחו</span>
+            <span className="text-xs font-bold text-foreground">{stats.reported}/{stats.total} דיווחו</span>
             {stats.reported === stats.total && stats.total > 0 && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
             {stats.reported < stats.total && stats.total > 0 && (
-              <span className="text-[10px] font-bold text-rose-500">{stats.total - stats.reported} חסרים</span>
+              <span className="text-[11px] font-semibold text-rose-500">{stats.total - stats.reported} חסרים</span>
             )}
           </div>
           <div className="flex flex-wrap gap-1">
             {stats.statuses.slice(0, 4).map((s, i) => (
-              <div key={i} className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold"
-                style={{ backgroundColor: `${s.color}20`, color: s.color }}>
+              <div key={i} className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium"
+                style={{ backgroundColor: `${s.color}15`, color: s.color }}>
                 <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.color }} />
-                {s.name} · {s.count}
+                <span>{s.name} · {s.count}</span>
               </div>
             ))}
           </div>
           <div className="h-1 bg-border/30 rounded-full overflow-hidden flex w-full">
-            <div className="h-full transition-all bg-[#10b981]"
+            <div className="h-full transition-all bg-emerald-500"
               style={{ width: `${(stats.present / stats.total) * 100}%` }} />
-            <div className="h-full transition-all bg-amber-500/80"
+            <div className="h-full transition-all bg-amber-500"
               style={{ width: `${((stats.reported - stats.present) / stats.total) * 100}%` }} />
           </div>
         </div>
       ) : (
-        <span className="text-xs font-bold text-muted-foreground flex-1">
+        <span className="text-xs font-medium text-muted-foreground flex-1">
           {isFriday ? "שישי - לא יום עבודה" : "שבת - לא יום עבודה"}
         </span>
       )}
@@ -853,160 +853,254 @@ export function AttendanceCalendarView({ statusTypes, scopeEmployees, onClose, d
       className="flex flex-col gap-3"
       dir="rtl"
     >
-      {/* ══ RESPONSIVE TOOLBAR — 1 row on desktop, 2 rows on mobile ══ */}
-      <div className="flex flex-col md:flex-row md:items-center gap-1.5 bg-card/40 px-3 py-2.5 rounded-2xl border border-border/40 sticky top-0 md:static z-30 backdrop-blur-md md:backdrop-blur-none">
+      {/* ══ RESPONSIVE TOOLBAR ══ */}
+      <div className="flex flex-col gap-2.5 pb-3 border-b border-border/40">
 
-        {/* DATE NAVIGATION — always visible */}
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <button onClick={() => navigate(-1)}
-            className="w-8 h-8 rounded-xl border border-border/40 flex items-center justify-center hover:bg-muted active:scale-95 transition-all shrink-0">
-            <ChevronRight className="w-4 h-4" />
-          </button>
+        {/* ── Top Bar: Date Navigator (Right) + Compact Actions (Left) ── */}
+        <div className="flex items-center justify-between gap-2 w-full">
+          {/* Date Navigator */}
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center bg-muted/40 rounded-xl border border-border/50 p-0.5 shadow-2xs">
+              <button
+                onClick={() => navigate(-1)}
+                title="תקופה קודמת"
+                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-card hover:text-foreground text-muted-foreground active:scale-95 transition-all cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
 
-          <div className="flex-1 md:flex-none flex items-center justify-center gap-2 min-w-0 md:min-w-[200px]">
-            <span className="text-sm font-black text-foreground tracking-tight truncate">{periodLabel}</span>
+              <span className="text-xs sm:text-sm font-bold text-foreground px-2 tracking-tight whitespace-nowrap text-center">
+                {periodLabel}
+              </span>
+
+              <button
+                onClick={() => navigate(1)}
+                title="תקופה הבאה"
+                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-card hover:text-foreground text-muted-foreground active:scale-95 transition-all cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Today button — only shown when not on current period */}
+            {!isOnCurrentPeriod && (
+              <button
+                onClick={goToday}
+                title="חזור לתאריך היום"
+                className="flex items-center gap-1 h-7 px-2 rounded-lg border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all text-[11px] font-semibold cursor-pointer shrink-0"
+              >
+                <span>היום</span>
+              </button>
+            )}
           </div>
 
-          <button onClick={() => navigate(1)}
-            className="w-8 h-8 rounded-xl border border-border/40 flex items-center justify-center hover:bg-muted active:scale-95 transition-all shrink-0">
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-
-          {/* Today button — only shown when not on current period */}
-          {!isOnCurrentPeriod && (
-            <button onClick={goToday}
-              title="חזור לתאריך היום"
-              className="flex items-center gap-1 h-7 px-2.5 rounded-xl border border-primary/30 bg-primary/8 text-primary hover:bg-primary/15 transition-all text-[10px] font-black shrink-0">
-              <CalendarDays className="w-3 h-3" />
-              <span>חזור להיום</span>
+          {/* Desktop-only View Switcher */}
+          <div className="hidden sm:flex items-center bg-muted/50 p-0.5 rounded-xl border border-border/40">
+            <button
+              onClick={() => setViewMode("week")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                viewMode === "week"
+                  ? "bg-card text-foreground shadow-xs border border-border/50 font-bold"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <CalendarDays className="w-3.5 h-3.5" />
+              <span>שבועי</span>
             </button>
-          )}
+            <button
+              onClick={() => setViewMode("month")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                viewMode === "month"
+                  ? "bg-card text-foreground shadow-xs border border-border/50 font-bold"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <CalendarRange className="w-3.5 h-3.5" />
+              <span>חודשי</span>
+            </button>
+          </div>
+
+          {/* Compact Actions Cluster */}
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Filter Popover */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  title="סינון נתוני לוח שנה"
+                  className={cn(
+                    "h-8 w-8 p-0 rounded-xl transition-all cursor-pointer relative",
+                    (deptFilters.length > 0 || srvFilters.length > 0 || ageFilters.length > 0)
+                      ? "bg-primary/10 text-primary hover:bg-primary/20"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  <Filter className="w-4 h-4" />
+                  {(deptFilters.length > 0 || srvFilters.length > 0 || ageFilters.length > 0) && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
+                      {deptFilters.length + srvFilters.length + ageFilters.length}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" side="bottom" className="w-[300px] sm:w-[420px] p-4 rounded-2xl border-border/70 bg-card z-50 shadow-lg" dir="rtl">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-border/40 pb-2.5">
+                    <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <Filter className="w-3.5 h-3.5 text-primary" />
+                      <span>אפשרויות סינון לוח שנה</span>
+                    </h4>
+                    {(deptFilters.length > 0 || srvFilters.length > 0 || ageFilters.length > 0) && (
+                      <button
+                        type="button"
+                        onClick={() => { setDeptFilters([]); setSrvFilters([]); setAgeFilters([]); }}
+                        className="text-[11px] font-medium text-muted-foreground hover:text-destructive flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        <span>נקה הכל</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Departments */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      מחלקות
+                    </span>
+                    <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto custom-scrollbar">
+                      {departments.map((d) => (
+                        <label key={d.id} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted/50 cursor-pointer border border-transparent hover:border-border/40 transition-all">
+                          <input
+                            type="checkbox"
+                            checked={deptFilters.includes(d.id)}
+                            onChange={() => setDeptFilters((prev) => deptFilters.includes(d.id) ? prev.filter((id) => id !== d.id) : [...prev, d.id])}
+                            className="w-3.5 h-3.5 rounded border-border/50 text-primary focus:ring-primary"
+                          />
+                          <span className="text-xs font-medium truncate">{cleanUnitName(d.name)}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Service Types */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      מעמד ושירות
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {serviceTypes.map((s) => {
+                        const active = srvFilters.includes(s.name);
+                        return (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => setSrvFilters((prev) => active ? prev.filter((v) => v !== s.name) : [...prev, s.name])}
+                            className={cn(
+                              "px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer",
+                              active
+                                ? "bg-primary text-primary-foreground border-primary font-semibold shadow-2xs"
+                                : "bg-muted/40 text-foreground/80 border-border/50 hover:bg-muted"
+                            )}
+                          >
+                            {s.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Age Ranges */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      קבוצות גיל
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {AGE_RANGES.map((range) => {
+                        const active = ageFilters.includes(range.label);
+                        return (
+                          <button
+                            key={range.label}
+                            type="button"
+                            onClick={() => setAgeFilters((prev) => active ? prev.filter((v) => v !== range.label) : [...prev, range.label])}
+                            className={cn(
+                              "px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer",
+                              active
+                                ? "bg-primary text-primary-foreground border-primary font-semibold shadow-2xs"
+                                : "bg-muted/40 text-foreground/80 border-border/50 hover:bg-muted"
+                            )}
+                          >
+                            {range.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            {/* Export PNG */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleExport}
+              disabled={isExporting}
+              title="ייצוא תמונת לוח שנה"
+              className="h-8 w-8 p-0 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-50 shrink-0 cursor-pointer"
+            >
+              {isExporting ? (
+                <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+            </Button>
+
+            {/* Close Button (if onClose provided) */}
+            {onClose && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                title="סגור לוח שנה"
+                className="h-8 w-8 p-0 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
         </div>
 
-        {/* SPACER on desktop */}
-        <div className="hidden md:block flex-1" />
-
-        {/* CONTROLS ROW */}
-        <div className="flex items-center gap-2">
-          {/* View toggle */}
-          <div className="flex items-center gap-0.5 bg-muted/50 rounded-xl p-0.5 border border-border/40 shrink-0">
-            <button onClick={() => setViewMode("week")}
-              className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black transition-all",
-                viewMode === "week" ? "bg-card text-primary border border-border/40 shadow-sm" : "text-muted-foreground hover:text-foreground")}>
-              <CalendarDays className="w-3.5 h-3.5" /><span>שבועי</span>
-            </button>
-            <button onClick={() => setViewMode("month")}
-              className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black transition-all",
-                viewMode === "month" ? "bg-card text-primary border border-border/40 shadow-sm" : "text-muted-foreground hover:text-foreground")}>
-              <CalendarRange className="w-3.5 h-3.5" /><span>חודשי</span>
-            </button>
-          </div>
-
-          <div className="h-5 w-px bg-border/30" />
-
-          {/* Filter */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className={cn("h-8 rounded-xl gap-1.5 font-black text-xs transition-all border-border/40 px-2.5",
-                (deptFilters.length > 0 || srvFilters.length > 0 || ageFilters.length > 0) ? "bg-primary/5 text-primary border-primary/20" : "bg-card/40 text-muted-foreground hover:bg-primary/5")}>
-                <Filter className="w-3.5 h-3.5" />
-                {(deptFilters.length > 0 || srvFilters.length > 0 || ageFilters.length > 0) && (
-                  <Badge variant="secondary" className="h-4 px-1 min-w-[16px] rounded-full bg-primary text-white text-[9px] border-none">
-                    {deptFilters.length + srvFilters.length + ageFilters.length}
-                  </Badge>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="start" side="bottom" className="w-[300px] sm:w-[450px] p-5 rounded-3xl backdrop-blur-3xl border-primary/10 bg-card/95 z-50">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between border-b border-border/40 pb-3">
-                  <h4 className="text-sm font-black flex items-center gap-2">
-                     <Filter className="w-4 h-4 text-primary" /> אפשרויות סינון
-                  </h4>
-                  {(deptFilters.length > 0 || srvFilters.length > 0 || ageFilters.length > 0) && (
-                    <Button variant="ghost" size="sm" onClick={() => { setDeptFilters([]); setSrvFilters([]); setAgeFilters([]); }}
-                      className="h-7 text-[10px] font-black text-muted-foreground hover:text-destructive">
-                      <RotateCcw className="w-3 h-3 ml-1.5" /> נקה הכל
-                    </Button>
-                  )}
-                </div>
-
-                {/* Departments */}
-                <div className="space-y-3">
-                  <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest flex items-center gap-2">
-                     <Briefcase className="w-3 h-3" /> מחלקות
-                  </span>
-                  <div className="grid grid-cols-2 gap-2">
-                    {departments.map(d => (
-                      <label key={d.id} className="flex items-center gap-2 p-2 rounded-xl hover:bg-primary/5 cursor-pointer border border-transparent hover:border-primary/10 transition-all">
-                        <input type="checkbox" checked={deptFilters.includes(d.id)} onChange={() => setDeptFilters(prev => deptFilters.includes(d.id) ? prev.filter(id => id !== d.id) : [...prev, d.id])}
-                          className="w-4 h-4 rounded border-border/40 text-primary focus:ring-primary" />
-                        <span className="text-xs font-bold truncate">{d.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Service Types */}
-                <div className="space-y-3">
-                  <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest flex items-center gap-2">
-                     <Users className="w-3 h-3" /> מעמד
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {serviceTypes.map(s => {
-                      const active = srvFilters.includes(s.name);
-                      return (
-                        <button key={s.id} onClick={() => setSrvFilters(prev => active ? prev.filter(v => v !== s.name) : [...prev, s.name])}
-                          className={cn("px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all",
-                            active ? "bg-emerald-500 text-white border-emerald-600" : "bg-muted/40 text-muted-foreground border-border/40 hover:border-emerald-300")}>
-                          {s.name}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* Age Ranges */}
-                <div className="space-y-3">
-                  <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest flex items-center gap-2">
-                     <Cake className="w-3 h-3" /> קבוצות גיל
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {AGE_RANGES.map(range => {
-                      const active = ageFilters.includes(range.label);
-                      return (
-                        <button key={range.label} onClick={() => setAgeFilters(prev => active ? prev.filter(v => v !== range.label) : [...prev, range.label])}
-                          className={cn("px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all",
-                            active ? "bg-amber-500 text-white border-amber-600" : "bg-muted/40 text-muted-foreground border-border/40 hover:border-amber-300")}>
-                          {range.label}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          {/* Export */}
-          <Button variant="ghost" size="sm" onClick={handleExport} disabled={isExporting}
-            className="h-8 w-8 p-0 rounded-xl border border-border/40 hover:bg-primary/5 hover:text-primary disabled:opacity-60 shrink-0">
-            {isExporting ? (
-              <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-              </svg>
-            ) : (
-              <Download className="w-3.5 h-3.5" />
+        {/* ── Mobile-only Segmented View Switcher (Full Width & Clean) ── */}
+        <div className="grid grid-cols-2 sm:hidden bg-muted/60 p-1 rounded-xl border border-border/40 text-xs font-semibold">
+          <button
+            onClick={() => setViewMode("week")}
+            className={cn(
+              "py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer",
+              viewMode === "week"
+                ? "bg-card text-foreground shadow-xs font-bold"
+                : "text-muted-foreground hover:text-foreground"
             )}
-          </Button>
-
-          <div className="h-5 w-px bg-border/30" />
-
-          {/* Close */}
-          <button onClick={onClose}
-            className="w-8 h-8 rounded-xl border border-border/40 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors text-muted-foreground shrink-0">
-            <X className="w-4 h-4" />
+          >
+            <CalendarDays className="w-3.5 h-3.5" />
+            <span>שבועי</span>
+          </button>
+          <button
+            onClick={() => setViewMode("month")}
+            className={cn(
+              "py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer",
+              viewMode === "month"
+                ? "bg-card text-foreground shadow-xs font-bold"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <CalendarRange className="w-3.5 h-3.5" />
+            <span>חודשי</span>
           </button>
         </div>
       </div>

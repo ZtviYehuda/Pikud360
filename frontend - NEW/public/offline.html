@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>אין חיבור לרשת — The Office</title>
+  <title>אין חיבור לרשת — פיקוד 360</title>
   <link rel="icon" type="image/png" href="/logo_unit.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <script>
     (function() {
@@ -25,33 +25,36 @@
   <style>
     :root {
       --bg: #f8fafc;
-      --card-bg: rgba(255, 255, 255, 0.85);
-      --card-border: rgba(226, 232, 240, 0.9);
-      --card-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(226, 232, 240, 0.6);
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
       --text-main: #0f172a;
       --text-muted: #64748b;
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --danger: #ef4444;
-      --danger-bg: rgba(239, 68, 68, 0.1);
-      --glow: rgba(37, 99, 235, 0.12);
-      --radar-line: rgba(37, 99, 235, 0.15);
-      --font-mono: 'JetBrains Mono', monospace;
+      --primary: #0f172a;
+      --primary-hover: #1e293b;
+      --primary-text: #ffffff;
+      --badge-bg: #f1f5f9;
+      --badge-border: #e2e8f0;
+      --badge-text: #475569;
+      --icon-bg: #fef2f2;
+      --icon-color: #ef4444;
+      --icon-border: #fee2e2;
     }
 
     html.dark {
-      --bg: #020617;
-      --card-bg: rgba(15, 23, 42, 0.75);
-      --card-border: rgba(30, 41, 59, 0.8);
-      --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(51, 65, 85, 0.4);
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --primary: #3b82f6;
-      --primary-hover: #60a5fa;
-      --danger: #f87171;
-      --danger-bg: rgba(239, 68, 68, 0.15);
-      --glow: rgba(59, 130, 246, 0.2);
-      --radar-line: rgba(56, 189, 248, 0.18);
+      --bg: #09090b;
+      --card-bg: #18181b;
+      --card-border: #27272a;
+      --text-main: #fafafa;
+      --text-muted: #a1a1aa;
+      --primary: #fafafa;
+      --primary-hover: #e4e4e7;
+      --primary-text: #09090b;
+      --badge-bg: #27272a;
+      --badge-border: #3f3f46;
+      --badge-text: #d4d4d8;
+      --icon-bg: #450a0a;
+      --icon-color: #f87171;
+      --icon-border: #7f1d1d;
     }
 
     * {
@@ -70,302 +73,182 @@
       color: var(--text-main);
       font-family: 'Assistant', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       padding: 1.5rem;
-      position: relative;
-      overflow: hidden;
-      transition: background-color 0.3s ease, color 0.3s ease;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
 
-    /* Ambient Background Gradients */
-    .bg-grid {
-      position: absolute;
-      inset: 0;
-      background-image: 
-        radial-gradient(circle at 50% 20%, var(--glow) 0%, transparent 60%),
-        linear-gradient(to right, var(--radar-line) 1px, transparent 1px),
-        linear-gradient(to bottom, var(--radar-line) 1px, transparent 1px);
-      background-size: 100% 100%, 48px 48px, 48px 48px;
-      opacity: 0.65;
-      pointer-events: none;
-    }
-
-    .main-card {
-      position: relative;
-      z-index: 10;
+    .card {
       width: 100%;
-      max-width: 480px;
+      max-width: 440px;
       background: var(--card-bg);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
       border: 1px solid var(--card-border);
-      border-radius: 2.25rem;
-      padding: 3rem 2.25rem 2.5rem;
-      box-shadow: var(--card-shadow);
+      border-radius: 1rem;
+      padding: 2.25rem 2rem;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
-      animation: cardAppear 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    @keyframes cardAppear {
-      from {
-        opacity: 0;
-        transform: scale(0.96) translateY(16px);
-      }
-      to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-      }
-    }
-
-    /* Tactical Radar / Signal Icon */
-    .signal-icon-wrapper {
-      position: relative;
-      width: 108px;
-      height: 108px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 2rem;
-    }
-
-    .radar-pulse-ring {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      border: 2px dashed var(--danger);
-      opacity: 0.35;
-      animation: pulseRadar 3s linear infinite;
-    }
-
-    .radar-pulse-ring:nth-child(2) {
-      inset: -14px;
-      border: 1px solid var(--danger);
-      opacity: 0.2;
-      animation: pulseRadar 3s linear infinite 1.5s;
-    }
-
-    @keyframes pulseRadar {
-      0% {
-        transform: scale(0.85);
-        opacity: 0.6;
-      }
-      50% {
-        transform: scale(1.1);
-        opacity: 0.2;
-      }
-      100% {
-        transform: scale(0.85);
-        opacity: 0.6;
-      }
-    }
-
-    .icon-core {
-      width: 80px;
-      height: 80px;
-      border-radius: 1.75rem;
-      background: var(--danger-bg);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      z-index: 2;
-      box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.25);
-    }
-
-    .icon-core svg {
-      width: 40px;
-      height: 40px;
-      color: var(--danger);
-      stroke-width: 2.2;
-    }
-
-    /* System Brand Badge */
-    .brand-badge {
+    .status-badge {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.35rem 0.9rem;
-      background: rgba(37, 99, 235, 0.08);
-      border: 1px solid rgba(37, 99, 235, 0.2);
+      padding: 0.25rem 0.75rem;
       border-radius: 9999px;
+      background: var(--badge-bg);
+      border: 1px solid var(--badge-border);
       font-size: 0.75rem;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      color: var(--primary);
-      text-transform: uppercase;
-      margin-bottom: 1.25rem;
-      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--badge-text);
+      margin-bottom: 1.5rem;
     }
 
     .status-dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: var(--danger);
-      box-shadow: 0 0 8px var(--danger);
-      animation: blink 1.5s ease-in-out infinite;
+      background-color: #ef4444;
     }
 
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-
-    h1 {
-      font-size: 1.85rem;
-      font-weight: 900;
-      line-height: 1.2;
-      margin-bottom: 0.75rem;
-      letter-spacing: -0.02em;
-      color: var(--text-main);
-    }
-
-    p {
-      color: var(--text-muted);
-      font-size: 1rem;
-      line-height: 1.6;
-      margin-bottom: 2rem;
-      font-weight: 500;
-      max-width: 360px;
-    }
-
-    /* Action Buttons */
-    .actions-group {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .btn-primary {
-      width: 100%;
-      height: 52px;
-      background: var(--primary);
-      color: #ffffff;
-      border: none;
-      border-radius: 1.25rem;
-      font-size: 1rem;
-      font-weight: 800;
-      font-family: inherit;
-      cursor: pointer;
+    .icon-container {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.75rem;
+      background-color: var(--icon-bg);
+      border: 1px solid var(--icon-border);
+      color: var(--icon-color);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.6rem;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 10px 24px -6px var(--glow);
+      margin-bottom: 1.25rem;
     }
 
-    .btn-primary:hover {
-      background: var(--primary-hover);
-      transform: translateY(-2px);
-      box-shadow: 0 16px 32px -8px var(--glow);
+    .icon-container svg {
+      width: 24px;
+      height: 24px;
+      stroke-width: 2;
     }
 
-    .btn-primary:active {
-      transform: translateY(1px);
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.01em;
     }
 
-    .btn-primary svg {
-      width: 20px;
-      height: 20px;
-      stroke-width: 2.5;
-      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 1.75rem;
+      max-width: 360px;
     }
 
-    .btn-primary:hover svg {
-      transform: rotate(180deg);
+    .btn-retry {
+      width: 100%;
+      height: 2.5rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background-color: var(--primary);
+      color: var(--primary-text);
+      border: none;
+      border-radius: 0.625rem;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s ease, transform 0.05s ease;
+      text-decoration: none;
     }
 
-    /* Auto-Check Live Indicator */
-    .live-status {
-      margin-top: 1.5rem;
+    .btn-retry:hover {
+      opacity: 0.9;
+    }
+
+    .btn-retry:active {
+      transform: scale(0.99);
+    }
+
+    .btn-retry svg {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2;
+    }
+
+    .status-check {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      font-size: 0.8rem;
+      margin-top: 1.25rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
-      font-family: var(--font-mono);
     }
 
     .spinner {
       width: 12px;
       height: 12px;
-      border: 2px solid var(--text-muted);
-      border-top-color: transparent;
+      border: 2px solid var(--card-border);
+      border-top-color: var(--text-muted);
       border-radius: 50%;
-      animation: spin 1s linear infinite;
+      animation: spin 0.8s linear infinite;
     }
 
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
 
-    .footer-brand {
-      margin-top: 2rem;
+    .footer-text {
+      margin-top: 1.75rem;
       font-size: 0.75rem;
       color: var(--text-muted);
-      font-family: var(--font-mono);
       opacity: 0.6;
-      letter-spacing: 0.15em;
     }
   </style>
 </head>
 <body>
-  <div class="bg-grid"></div>
 
-  <div class="main-card">
-    <!-- Brand Badge -->
-    <div class="brand-badge">
+  <div class="card">
+    <div class="status-badge">
       <span class="status-dot"></span>
-      THE OFFICE · מערכת מנותקת
+      <span>מערכת מנותקת</span>
     </div>
 
-    <!-- Signal Disconnected Radar Icon -->
-    <div class="signal-icon-wrapper">
-      <div class="radar-pulse-ring"></div>
-      <div class="radar-pulse-ring"></div>
-      <div class="icon-core">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <line x1="1" y1="1" x2="23" y2="23"></line>
-          <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
-          <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
-          <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
-          <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
-          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
-          <line x1="12" y1="20" x2="12.01" y2="20"></line>
-        </svg>
-      </div>
+    <div class="icon-container">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <line x1="1" y1="1" x2="23" y2="23"></line>
+        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+        <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+        <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+        <line x1="12" y1="20" x2="12.01" y2="20"></line>
+      </svg>
     </div>
 
-    <!-- Headline & Instructions -->
     <h1>אין חיבור לרשת</h1>
     <p>
-      לא ניתן ליצור קשר עם שרתי המערכת. אנא ודא שהאינטרנט פעיל (Wi-Fi / סלולר) או המתן לחזרת החיבור.
+      לא ניתן ליצור קשר עם שרתי המערכת. אנא ודא שחיבור האינטרנט פעיל או המתן לחידוש החיבור.
     </p>
 
-    <!-- Action Group -->
-    <div class="actions-group">
-      <button class="btn-primary" id="retry-btn" onclick="handleRetry()">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-        </svg>
-        נסה להתחבר מחדש
-      </button>
-    </div>
+    <button class="btn-retry" id="retry-btn" onclick="handleRetry()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+      </svg>
+      נסה להתחבר מחדש
+    </button>
 
-    <!-- Live Auto Reconnect Indicator -->
-    <div class="live-status" id="live-indicator">
+    <div class="status-check">
       <div class="spinner"></div>
-      <span id="status-text">ממתין לחיבור רשת... בדיקה אוטומטית פעילה</span>
+      <span id="status-text">בדיקת חיבור אוטומטית פעילה...</span>
     </div>
 
-    <!-- Footer Copyright -->
-    <div class="footer-brand">
-      © 2026 • THE OFFICE • v1.0.4
+    <div class="footer-text">
+      פיקוד 360 · מערכת ניהול כוח אדם
     </div>
   </div>
 
@@ -377,26 +260,24 @@
       if (text) text.innerText = 'בודק חיבור לשרת...';
       
       fetch('/api/security/health', { method: 'GET', cache: 'no-cache' })
-        .then(() => {
+        .then(function() {
           window.location.reload();
         })
-        .catch(() => {
-          setTimeout(() => {
+        .catch(function() {
+          setTimeout(function() {
             window.location.reload();
           }, 400);
         });
     }
 
-    // Auto reconnect as soon as network returns online
     window.addEventListener('online', function() {
       const text = document.getElementById('status-text');
       if (text) text.innerText = 'החיבור חזר! מרענן דף...';
       setTimeout(function() {
         window.location.reload();
-      }, 500);
+      }, 400);
     });
 
-    // Periodic heartbeat check
     setInterval(function() {
       if (navigator.onLine) {
         fetch('/', { method: 'HEAD', cache: 'no-cache' })

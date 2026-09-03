@@ -25,7 +25,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { FilterModal } from "@/components/employees/modals/FilterModal";
 import {
   CalendarDays,
@@ -665,97 +670,6 @@ export default function AttendancePage() {
             icon={CalendarDays}
             title="מעקב נוכחות"
             className="mb-0"
-            badge={
-              !isViewingDayDetails && (
-                <div className="hidden lg:flex items-center gap-2">
-                  <Button
-                    id="attendance-calendar-btn"
-                    variant="outline"
-                    className={cn(
-                      "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs",
-                      calendarOpen && "border-primary bg-primary/10 text-primary"
-                    )}
-                    onClick={openCalendar}
-                  >
-                    <CalendarRange className="w-3.5 h-3.5 text-primary" />
-                    <span>לוח שנה</span>
-                  </Button>
-
-                  {!user?.is_temp_commander && (
-                    <Button
-                      id="attendance-export-btn"
-                      variant="outline"
-                      className="h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs"
-                      onClick={() => setExportDialogOpen(true)}
-                    >
-                      <Download className="w-3.5 h-3.5 text-primary" />
-                      <span>ייצוא</span>
-                    </Button>
-                  )}
-
-                  <Button
-                    id="self-report-button"
-                    variant="outline"
-                    className={cn(
-                      "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs",
-                      isReportedToday && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
-                      searchParams.get("tutorial") === "self-report" && "tutorial-highlight"
-                    )}
-                    onClick={handleSelfReport}
-                  >
-                    {isReportedToday ? (
-                      <>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                        <span>דווח</span>
-                      </>
-                    ) : (
-                      <>
-                        <ClipboardCheck className="w-3.5 h-3.5 text-primary" />
-                        <span>דיווח עצמי</span>
-                      </>
-                    )}
-                  </Button>
-
-                  {unverifiedEmployees.length > 0 && (
-                    <Button
-                      variant="outline"
-                      className="h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30 text-xs shadow-xs"
-                      onClick={async () => {
-                        const success = await verifyRoster(
-                          format(selectedDate, "yyyy-MM-dd"),
-                          unverifiedEmployees.map((e) => e.id),
-                        );
-                        if (success) {
-                          toast.success(
-                            `אושר סידור עבור ${unverifiedEmployees.length} שוטרים`,
-                          );
-                          refreshData();
-                        }
-                      }}
-                    >
-                      <CheckCheck className="w-3.5 h-3.5 text-blue-500" />
-                      <span>אישור ({unverifiedEmployees.length})</span>
-                    </Button>
-                  )}
-
-                  <Button
-                    id="bulk-update-btn"
-                    variant="outline"
-                    className={cn(
-                      "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs",
-                      selectedEmployeeIds.length > 0 && "border-primary bg-primary/10 text-primary"
-                    )}
-                    onClick={() => {
-                      setAlertContext(null);
-                      setBulkModalOpen(true);
-                    }}
-                  >
-                    <ClipboardCheck className="w-3.5 h-3.5 text-primary" />
-                    <span>עדכון מרוכז</span>
-                  </Button>
-                </div>
-              )
-            }
           />
         </div>
 
@@ -899,93 +813,179 @@ export default function AttendancePage() {
         )}
       </div>
 
-      {/* Main content: calendar view OR normal stats+table */}
-      <AnimatePresence>
-        {calendarOpen ? (
-          <motion.div
-            key="calendar"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.2 }}
-            className="flex-1 px-0 sm:px-2 pb-4"
-          >
-            <div
-              className={cn(
-                isViewingDayDetails
-                  ? "bg-transparent border-none p-0"
-                  : "bg-card border border-border/50 rounded-2xl p-3 sm:p-4 md:p-5 h-full",
-                "transition-all",
-              )}
-            >
-              <AttendanceCalendarView
-                statusTypes={statusTypes}
-                scopeEmployees={scopeEmployees}
-                onClose={closeCalendar}
-                departments={departments}
-                sections={sections}
-                teams={teams}
-                serviceTypes={serviceTypes}
-                onDaySelectedChange={setIsViewingDayDetails}
+      {/* Attendance Calendar Drawer / Modal */}
+      <Dialog
+        open={calendarOpen}
+        onOpenChange={(open) => {
+          setCalendarOpen(open);
+          if (!open) setIsViewingDayDetails(false);
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-4xl lg:max-w-5xl max-h-[92dvh] sm:max-h-[88vh] p-3 sm:p-6 overflow-hidden flex flex-col rounded-t-[2rem] sm:rounded-2xl"
+          dir="rtl"
+        >
+          <DialogTitle className="sr-only">לוח שנה - מעקב נוכחות</DialogTitle>
+          <DialogDescription className="sr-only">
+            תצוגת לוח שנה שבועי וחודשי למעקב נוכחות
+          </DialogDescription>
+          <div className="flex-1 overflow-y-auto custom-scrollbar pt-1">
+            <AttendanceCalendarView
+              statusTypes={statusTypes}
+              scopeEmployees={scopeEmployees}
+              onClose={closeCalendar}
+              departments={departments}
+              sections={sections}
+              teams={teams}
+              serviceTypes={serviceTypes}
+              onDaySelectedChange={setIsViewingDayDetails}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Main content: normal stats+table */}
+      <div className="px-4 sm:px-6 pb-6 space-y-4">
+        {/* Unified Search, Filter & Action Toolbar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full">
+          {/* Right side: Search & Filter */}
+          <div className="flex items-center gap-2 flex-1 min-w-0 max-w-full sm:max-w-md md:max-w-lg">
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none" />
+              <Input
+                placeholder="חפש לפי שם..."
+                className="pr-9 h-9 text-right bg-card/60 dark:bg-card/40 border-border/60 focus:bg-background focus:border-primary rounded-xl text-xs sm:text-sm w-full transition-all"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="table"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.2 }}
-            className="pb-4 space-y-4"
-          >
-            {/* Filters Bar */}
-            <div
-              id="status-filters"
-              className="overflow-visible bg-transparent w-full"
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFilterOpen(true)}
+              className={cn(
+                "h-9 px-3 rounded-xl border-border/60 bg-card/70 dark:bg-card/50 hover:bg-accent/60 text-foreground font-bold text-xs gap-1.5 shrink-0 shadow-xs transition-all relative cursor-pointer",
+                isFilterActive ? "text-primary border-primary/40 bg-primary/5" : ""
+              )}
             >
-              {/* Responsive Search + Advanced Filters Row */}
-              <div className="flex items-center gap-2.5 sm:gap-3 w-full">
-                <div className="relative flex-1">
-                  <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-                  <Input
-                    placeholder="חפש לפי שם..."
-                    className="h-10 pr-10 bg-background border border-border/40 focus:ring-ring/20 focus:border-ring rounded-xl text-sm font-bold w-full transition-all hover:border-border/80"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
+              <Filter className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span>סינון</span>
+              {isFilterActive && (
+                <span className="w-2 h-2 rounded-full bg-primary" />
+              )}
+            </Button>
 
-                {/* Advanced Filters Button (opens unified FilterModal dialog) */}
-                <Button
-                  variant="outline"
-                  onClick={() => setFilterOpen(true)}
-                  className={cn(
-                    "h-10 rounded-xl px-3.5 sm:px-4 font-bold text-xs sm:text-sm transition-all gap-1.5 sm:gap-2 border-border/60 shrink-0",
-                    isFilterActive
-                      ? "border-primary/30 text-primary bg-primary/5 hover:bg-primary/10"
-                      : "text-muted-foreground hover:bg-muted",
-                  )}
-                >
-                  <Filter className="w-4 h-4" />
-                  <span className="hidden sm:inline">סינון</span>
-                  {isFilterActive && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                  )}
-                </Button>
+            {isFilterActive && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearFilters}
+                className="h-9 px-2 text-xs text-muted-foreground hover:text-destructive shrink-0 cursor-pointer"
+                title="נקה סינון"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </Button>
+            )}
+          </div>
 
-                {isFilterActive && (
-                  <Button
-                    variant="ghost"
-                    onClick={handleClearFilters}
-                    className="h-10 px-2 sm:px-3 rounded-xl text-xs font-bold text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all gap-1.5 shrink-0"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">נקה סינון</span>
-                  </Button>
-                )}
-              </div>
-            </div>
+          {/* Left side: Desktop Action Buttons (Unified in same row) */}
+          <div className="hidden lg:flex items-center gap-2 shrink-0">
+            {/* עדכון מרוכז */}
+            <Button
+              id="bulk-update-btn"
+              variant="outline"
+              className={cn(
+                "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs cursor-pointer",
+                selectedEmployeeIds.length > 0 && "border-primary bg-primary/10 text-primary"
+              )}
+              onClick={() => {
+                setAlertContext(null);
+                setBulkModalOpen(true);
+              }}
+            >
+              <ClipboardCheck className="w-3.5 h-3.5 text-primary" />
+              <span>עדכון מרוכז</span>
+              {selectedEmployeeIds.length > 0 && (
+                <Badge variant="secondary" className="h-4 px-1.5 rounded-full text-[10px] bg-primary text-primary-foreground font-bold">
+                  {selectedEmployeeIds.length}
+                </Badge>
+              )}
+            </Button>
+
+            {/* דיווח עצמי */}
+            <Button
+              id="self-report-button"
+              variant="outline"
+              className={cn(
+                "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs cursor-pointer",
+                isReportedToday && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+                searchParams.get("tutorial") === "self-report" && "tutorial-highlight"
+              )}
+              onClick={handleSelfReport}
+            >
+              {isReportedToday ? (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>דווח</span>
+                </>
+              ) : (
+                <>
+                  <ClipboardCheck className="w-3.5 h-3.5 text-primary" />
+                  <span>דיווח עצמי</span>
+                </>
+              )}
+            </Button>
+
+            {/* אישור (if unverified employees exist) */}
+            {unverifiedEmployees.length > 0 && (
+              <Button
+                variant="outline"
+                className="h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30 text-xs shadow-xs cursor-pointer"
+                onClick={async () => {
+                  const success = await verifyRoster(
+                    format(selectedDate, "yyyy-MM-dd"),
+                    unverifiedEmployees.map((e) => e.id),
+                  );
+                  if (success) {
+                    toast.success(`אושר סידור עבור ${unverifiedEmployees.length} שוטרים`);
+                    refreshData();
+                  }
+                }}
+              >
+                <CheckCheck className="w-3.5 h-3.5 text-blue-500" />
+                <span>אישור ({unverifiedEmployees.length})</span>
+              </Button>
+            )}
+
+            {/* ייצוא */}
+            {!user?.is_temp_commander && (
+              <Button
+                id="attendance-export-btn"
+                variant="outline"
+                className="h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs cursor-pointer"
+                onClick={() => setExportDialogOpen(true)}
+              >
+                <Download className="w-3.5 h-3.5 text-primary" />
+                <span>ייצוא</span>
+              </Button>
+            )}
+
+            {/* לוח שנה */}
+            <Button
+              id="attendance-calendar-btn"
+              variant="outline"
+              className={cn(
+                "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs cursor-pointer",
+                calendarOpen && "border-primary bg-primary/10 text-primary"
+              )}
+              onClick={openCalendar}
+            >
+              <CalendarRange className="w-3.5 h-3.5 text-primary" />
+              <span>לוח שנה</span>
+            </Button>
+          </div>
+        </div>
 
             {/* Unified Filter Modal */}
             <FilterModal
@@ -1040,16 +1040,16 @@ export default function AttendancePage() {
             {/* Attendance Table - Desktop Only */}
             <div
               id="attendance-table"
-              className="hidden lg:block bg-card rounded-2xl border border-border  overflow-hidden"
+              className="hidden lg:block rounded-xl border border-border/50 bg-card/40 dark:bg-card/20 backdrop-blur-xs overflow-hidden shadow-2xs"
             >
               <div className="overflow-x-auto">
                 <Table className="min-w-[800px]">
-                  <TableHeader className="bg-background/20 backdrop-blur-sm">
-                    <TableRow className="border-b border-border/60 hover:bg-transparent">
-                      <TableHead className="text-right px-6 font-bold text-muted-foreground uppercase text-[10px] tracking-widest h-16">
-                        <div className="flex items-center gap-3">
+                  <TableHeader className="bg-muted/30 border-b border-border/40">
+                    <TableRow className="hover:bg-transparent border-none">
+                      <TableHead className="text-right px-4 font-semibold text-muted-foreground text-xs h-11">
+                        <div className="flex items-center gap-2.5">
                           <Checkbox
-                            className="w-5 h-5 border-2 border-muted-foreground/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary rounded-lg transition-all"
+                            className="w-4 h-4 border-2 border-muted-foreground/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary rounded-md transition-all"
                             checked={
                               filteredEmployees.length > 0 &&
                               selectedEmployeeIds.length ===
@@ -1062,19 +1062,19 @@ export default function AttendancePage() {
                           <span>שוטר</span>
                         </div>
                       </TableHead>
-                      <TableHead className="text-right font-bold text-muted-foreground uppercase text-[10px] tracking-widest h-16">
-                        תפקיד/סמכות
+                      <TableHead className="text-right px-4 font-semibold text-muted-foreground text-xs h-11">
+                        תפקיד / סמכות
                       </TableHead>
-                      <TableHead className="text-right font-bold text-muted-foreground uppercase text-[10px] tracking-widest h-16">
+                      <TableHead className="text-right px-4 font-semibold text-muted-foreground text-xs h-11">
                         שיוך ארגוני
                       </TableHead>
-                      <TableHead className="text-right font-bold text-muted-foreground uppercase text-[10px] tracking-widest h-16">
+                      <TableHead className="text-right px-4 font-semibold text-muted-foreground text-xs h-11">
                         סטטוס נוכחות
                       </TableHead>
-                      <TableHead className="text-right font-bold text-muted-foreground uppercase text-[10px] tracking-widest h-16">
+                      <TableHead className="text-right px-4 font-semibold text-muted-foreground text-xs h-11">
                         עדכון אחרון
                       </TableHead>
-                      <TableHead className="text-center font-bold text-muted-foreground uppercase text-[10px] tracking-widest h-16">
+                      <TableHead className="text-center px-4 font-semibold text-muted-foreground text-xs h-11">
                         פעולות
                       </TableHead>
                     </TableRow>
@@ -1111,18 +1111,18 @@ export default function AttendancePage() {
                             key={emp.id}
                             data-state={isSelected ? "selected" : "unchecked"}
                             className={cn(
-                              "group/row transition-all border-b border-border/40",
+                              "group/row transition-all border-b border-border/30 last:border-none",
                               isSelected
-                                ? "bg-primary/[0.03] border-r-4 border-r-primary"
-                                : "hover:bg-slate-50 dark:hover:bg-slate-900/40 border-r-4 border-r-transparent hover:border-r-primary/40",
+                                ? "bg-primary/[0.04] border-r-2 border-r-primary"
+                                : "hover:bg-muted/30 border-r-2 border-r-transparent hover:border-r-primary/40",
                               user &&
                                 emp.id === user.id &&
                                 !isSelected &&
-                                "bg-emerald-500/[0.02] border-r-4 border-r-emerald-500",
+                                "bg-emerald-500/[0.03] border-r-2 border-r-emerald-500",
                             )}
                           >
-                            <TableCell className="py-5 px-6 text-right align-middle">
-                              <div className="flex items-center gap-4">
+                            <TableCell className="py-2.5 px-4 text-right align-middle">
+                              <div className="flex items-center gap-3">
                                 <div className="relative">
                                   <div
                                     onClick={(e) => {
@@ -1130,14 +1130,14 @@ export default function AttendancePage() {
                                       handleSelectOne(emp.id, !isSelected);
                                     }}
                                     className={cn(
-                                      "w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-sm hover:scale-110 active:scale-95 transition-all shrink-0 cursor-pointer shadow-sm",
+                                      "w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-all shrink-0 cursor-pointer shadow-xs",
                                       isSelected
-                                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                                        : "bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 text-slate-600 dark:text-slate-400 border border-border/50 hover:border-primary/40",
+                                        ? "bg-primary text-primary-foreground shadow-xs"
+                                        : "bg-muted/70 text-foreground/80 border border-border/50 hover:border-primary/40 hover:bg-muted",
                                     )}
                                   >
                                     {isSelected ? (
-                                      <CheckCircle2 className="w-5 h-5" />
+                                      <CheckCircle2 className="w-4 h-4" />
                                     ) : (
                                       <span>
                                         {emp.first_name[0]}
@@ -1153,7 +1153,7 @@ export default function AttendancePage() {
                                       navigate(`/employees/${emp.id}`);
                                     }}
                                     className={cn(
-                                      "text-base font-bold truncate tracking-tight transition-colors hover:underline text-right hover:text-primary w-fit",
+                                      "text-xs sm:text-sm font-semibold truncate tracking-tight transition-colors hover:underline text-right hover:text-primary w-fit cursor-pointer",
                                       isSelected
                                         ? "text-primary"
                                         : "text-foreground group-hover/row:text-primary",
@@ -1166,53 +1166,48 @@ export default function AttendancePage() {
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="py-2.5 px-4 text-right">
                               <div className="flex flex-col">
-                                <Badge
-                                  variant="outline"
-                                  className="font-medium text-[10px] border-none px-2.5 py-1 bg-background/50 text-muted-foreground w-fit mb-1 border border-border/20"
-                                >
+                                <span className="text-xs font-medium text-foreground">
                                   {getProfessionalTitle(emp)}
-                                </Badge>
+                                </span>
                                 {emp.service_type_name && (
-                                  <span className="text-[10px] font-bold text-muted-foreground/60">
+                                  <span className="text-[10px] text-muted-foreground/70">
                                     {emp.service_type_name}
                                   </span>
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell className="text-right py-5">
-                              <div className="flex flex-col text-right min-w-[140px]">
+                            <TableCell className="py-2.5 px-4 text-right">
+                              <div className="flex flex-col text-right min-w-[130px]">
                                 {emp.department_name &&
                                 emp.department_name !== "מטה" ? (
                                   <>
-                                    <span className="text-[11px] font-bold text-foreground">
+                                    <span className="text-xs font-semibold text-foreground">
                                       {cleanUnitName(emp.department_name)}
                                     </span>
                                     {((emp.section_name &&
                                       emp.section_name !== "מטה") ||
                                       (emp.team_name &&
                                         emp.team_name !== "מטה")) && (
-                                      <div className="flex items-center gap-1.5 mt-1">
-                                        <span className="text-[10px] font-bold text-primary/60 truncate bg-primary/5 px-2 py-0.5 rounded-lg border border-primary/10">
-                                          {emp.team_name &&
-                                          emp.team_name !== "מטה"
-                                            ? cleanUnitName(emp.team_name)
-                                            : cleanUnitName(
-                                                emp.section_name || "",
-                                              )}
-                                        </span>
-                                      </div>
+                                      <span className="text-[10px] text-muted-foreground truncate">
+                                        {emp.team_name &&
+                                        emp.team_name !== "מטה"
+                                          ? cleanUnitName(emp.team_name)
+                                          : cleanUnitName(
+                                              emp.section_name || "",
+                                            )}
+                                      </span>
                                     )}
                                   </>
                                 ) : (
-                                  <span className="text-[10px] font-bold text-muted-foreground/30">
+                                  <span className="text-[11px] text-muted-foreground/40">
                                     מטה / ללא שיוך
                                   </span>
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="py-2.5 px-4 text-right">
                               <div className="flex items-center gap-2">
                                 <div
                                   className="w-2 h-2 rounded-full"
@@ -1249,7 +1244,7 @@ export default function AttendancePage() {
                                 />
                                 <Badge
                                   variant="outline"
-                                  className="text-[10px] font-bold border-none bg-muted py-0.5 px-2 text-muted-foreground"
+                                  className="text-[11px] font-semibold border-none bg-muted/60 py-0.5 px-2 text-foreground/80"
                                 >
                                   {(() => {
                                     const isToday =
@@ -1281,12 +1276,12 @@ export default function AttendancePage() {
                                 </Badge>
                               </div>
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="py-2.5 px-4 text-right">
                               {isUpdatedToday ? (
                                 emp.is_verified !== false ? (
-                                  <div className="flex items-center gap-1.5 text-emerald-600">
+                                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
                                     <CheckCircle2 className="w-3.5 h-3.5" />
-                                    <span className="text-xs font-bold">
+                                    <span className="text-xs font-semibold">
                                       {selectedDate.toDateString() ===
                                       new Date().toDateString()
                                         ? "היום"
@@ -1310,9 +1305,9 @@ export default function AttendancePage() {
                                     </span>
                                   </div>
                                 ) : (
-                                  <div className="flex items-center gap-1.5 text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/50">
+                                  <div className="flex items-center gap-1.5 text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
                                     <Clock className="w-3.5 h-3.5" />
-                                    <span className="text-[10px] font-bold">
+                                    <span className="text-[10px] font-semibold">
                                       מתוכנן
                                     </span>
                                   </div>
@@ -1320,31 +1315,31 @@ export default function AttendancePage() {
                               ) : (
                                 <div className="flex items-center gap-1.5 text-rose-500/80">
                                   <AlertCircle className="w-3.5 h-3.5" />
-                                  <span className="text-xs font-bold">
+                                  <span className="text-xs font-semibold">
                                     לא עודכן
                                   </span>
                                 </div>
                               )}
                             </TableCell>
-                            <TableCell className="text-center">
-                              <div className="flex items-center justify-center gap-2">
+                            <TableCell className="py-2.5 px-4 text-center">
+                              <div className="flex items-center justify-center gap-1">
                                 {!user?.is_temp_commander && (
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg"
+                                    className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg cursor-pointer"
                                     onClick={() => handleOpenHistoryModal(emp)}
                                   >
-                                    <History className="w-4 h-4" />
+                                    <History className="w-3.5 h-3.5" />
                                   </Button>
                                 )}
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 text-primary/70 hover:text-primary hover:bg-primary/10 rounded-lg"
+                                  className="h-8 w-8 text-primary/70 hover:text-primary hover:bg-primary/10 rounded-lg cursor-pointer"
                                   onClick={() => handleOpenStatusModal(emp)}
                                 >
-                                  <ClipboardCheck className="w-4 h-4" />
+                                  <ClipboardCheck className="w-3.5 h-3.5" />
                                 </Button>
                               </div>
                             </TableCell>
@@ -1596,9 +1591,7 @@ export default function AttendancePage() {
               open={exportDialogOpen}
               onOpenChange={setExportDialogOpen}
             />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+          </div>
+        </div>
   );
 }

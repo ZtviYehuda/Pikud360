@@ -31,6 +31,7 @@ import {
   Search,
   Clock,
   ArrowLeft,
+  ArrowRight,
   History,
   ShieldAlert,
   Plus,
@@ -47,6 +48,12 @@ import {
   Filter,
   X,
   RotateCcw,
+  Send,
+  Sparkles,
+  Building2,
+  Layers,
+  Users,
+  Check,
 } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
@@ -219,10 +226,41 @@ export default function TransfersPage() {
       .filter(
         (emp) =>
           `${emp.first_name} ${emp.last_name}`.toLowerCase().includes(lower) ||
+          emp.username?.toLowerCase().includes(lower) ||
+          emp.department_name?.toLowerCase().includes(lower) ||
           false,
       )
-      .slice(0, 5);
+      .slice(0, 6);
   }, [employees, searchTerm]);
+
+  const PRESET_REASONS = [
+    "צורך מבצעי דחוף ביחידה",
+    "קידום ושינוי תפקיד",
+    "מעבר מדור / חוליה",
+    "בקשת פרט ורווחה",
+    "ארגון מחדש ואיחוד תקנים",
+  ];
+
+  const selectedTargetDept = useMemo(
+    () => structure.find((d) => d.id.toString() === targetDeptId),
+    [structure, targetDeptId]
+  );
+  const selectedTargetSection = useMemo(
+    () => selectedTargetDept?.sections?.find((s: any) => s.id.toString() === targetSectionId),
+    [selectedTargetDept, targetSectionId]
+  );
+  const selectedTargetTeam = useMemo(
+    () => selectedTargetSection?.teams?.find((t: any) => t.id.toString() === targetTeamId),
+    [selectedTargetSection, targetTeamId]
+  );
+
+  const targetUnitDisplay = useMemo(() => {
+    return [
+      selectedTargetDept?.name,
+      selectedTargetSection?.name,
+      selectedTargetTeam?.name
+    ].filter(Boolean).map(cleanUnitName).join(" / ");
+  }, [selectedTargetDept, selectedTargetSection, selectedTargetTeam]);
 
   // Cloud Stats
   const stats = useMemo(() => {
@@ -389,8 +427,9 @@ export default function TransfersPage() {
   const canManage = user?.is_admin || user?.is_commander;
 
   return (
-    <div className="flex flex-col" dir="rtl">
-      <div className="hidden sm:block pt-6 pb-4 px-4 sm:px-6 shrink-0 transition-all">
+    <div className="flex flex-col space-y-4 sm:space-y-6 pb-8" dir="rtl">
+      {/* Page Header */}
+      <div className="pt-2 sm:pt-4 pb-1 px-1 sm:px-2 shrink-0">
         <PageHeader
           icon={ArrowLeftRight}
           title="בקשות העברה ושיבוץ"
@@ -398,225 +437,251 @@ export default function TransfersPage() {
         />
       </div>
 
-      <div className="space-y-4 sm:space-y-6 pb-6">
-        {/* Stats Overview - Ultra Compact Bar */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-3 sm:mb-4">
+      {/* Main Navigation Tabs & Action Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card border border-border/70 rounded-2xl p-2 shadow-2xs">
+        {/* Segmented Control Tabs */}
+        <div className="flex items-center gap-1.5 p-1 bg-muted/60 dark:bg-muted/40 rounded-xl overflow-x-auto no-scrollbar">
           <button
             type="button"
             onClick={() => {
-              if (historyFilter === "pending") {
-                setHistoryFilter(null);
-              } else {
-                setActiveTab("history");
-                setHistoryFilter("pending");
-              }
+              setActiveTab("history");
+              setHistoryFilter(null);
             }}
             className={cn(
-              "bg-card rounded-xl sm:rounded-2xl p-2.5 sm:py-3 sm:px-4 border flex items-center justify-between transition-all text-right w-full cursor-pointer active:scale-[0.98]",
-              historyFilter === "pending"
-                ? "border-amber-500/80 bg-amber-500/10 shadow-md shadow-amber-500/10 ring-2 ring-amber-500/20"
-                : "border-border hover:border-amber-500/40 hover:bg-amber-500/5 hover:scale-[1.01]",
+              "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer",
+              activeTab === "history"
+                ? "bg-background text-foreground shadow-2xs"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/50",
             )}
           >
-            <div className="flex flex-col text-right">
-              <span className="text-[9px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                ממתינות
-              </span>
-              <span className="text-sm sm:text-xl font-black text-amber-500 leading-tight">
+            <History className="w-4 h-4" />
+            <span>כלל הבקשות</span>
+            <span className="px-1.5 py-0.2 rounded-md bg-muted text-[10px] font-black text-muted-foreground">
+              {stats.approved + stats.rejected + stats.pending}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("pending");
+              setHistoryFilter(null);
+            }}
+            className={cn(
+              "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer",
+              activeTab === "pending"
+                ? "bg-background text-foreground shadow-2xs"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/50",
+            )}
+          >
+            <Clock className="w-4 h-4 text-amber-500" />
+            <span>ממתינות לאישור</span>
+            {stats.pending > 0 && (
+              <span className="px-1.5 py-0.2 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] font-black">
                 {stats.pending}
               </span>
-            </div>
-            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-amber-500/10 dark:bg-amber-400/10 flex items-center justify-center shrink-0">
-              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 dark:text-amber-400" />
-            </div>
+            )}
           </button>
 
           <button
             type="button"
-            onClick={() => {
-              if (historyFilter === "approved") {
-                setHistoryFilter(null);
-              } else {
-                setActiveTab("history");
-                setHistoryFilter("approved");
-              }
-            }}
+            onClick={() => setActiveTab("new")}
             className={cn(
-              "bg-card rounded-xl sm:rounded-2xl p-2.5 sm:py-3 sm:px-4 border flex items-center justify-between transition-all text-right w-full cursor-pointer active:scale-[0.98]",
-              historyFilter === "approved"
-                ? "border-emerald-500/80 bg-emerald-500/10 shadow-md shadow-emerald-500/10 ring-2 ring-emerald-500/20"
-                : "border-border hover:border-emerald-500/40 hover:bg-emerald-500/5 hover:scale-[1.01]",
+              "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer",
+              activeTab === "new"
+                ? "bg-primary text-primary-foreground shadow-2xs"
+                : "text-primary hover:bg-primary/10",
             )}
           >
-            <div className="flex flex-col text-right">
-              <span className="text-[9px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                אושרו
-              </span>
-              <span className="text-sm sm:text-xl font-black text-emerald-500 leading-tight">
-                {stats.approved}
-              </span>
-            </div>
-            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/10 dark:bg-emerald-400/10 flex items-center justify-center shrink-0">
-              <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 dark:text-emerald-400" />
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (historyFilter === "rejected") {
-                setHistoryFilter(null);
-              } else {
-                setActiveTab("history");
-                setHistoryFilter("rejected");
-              }
-            }}
-            className={cn(
-              "bg-card rounded-xl sm:rounded-2xl p-2.5 sm:py-3 sm:px-4 border flex items-center justify-between transition-all text-right w-full cursor-pointer active:scale-[0.98]",
-              historyFilter === "rejected"
-                ? "border-rose-500/80 bg-rose-500/10 shadow-md shadow-rose-500/10 ring-2 ring-rose-500/20"
-                : "border-border hover:border-rose-500/40 hover:bg-rose-500/5 hover:scale-[1.01]",
-            )}
-          >
-            <div className="flex flex-col text-right">
-              <span className="text-[9px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                נדחו
-              </span>
-              <span className="text-sm sm:text-xl font-black text-rose-500 leading-tight">
-                {stats.rejected}
-              </span>
-            </div>
-            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-rose-500/10 dark:bg-rose-400/10 flex items-center justify-center shrink-0">
-              <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-500 dark:text-rose-400" />
-            </div>
+            <Plus className="w-4 h-4" strokeWidth={2.5} />
+            <span>הגשת בקשת ניוד</span>
           </button>
         </div>
 
-        {/* Active Filter Glass Pill Banner */}
-        {activeTab !== "new" && historyFilter !== null && (
-          <div className="flex items-center justify-between p-2.5 sm:p-3 px-3.5 sm:px-4 rounded-2xl bg-card/80 backdrop-blur-xl border border-border/60 shadow-xs mb-3 transition-all animate-in fade-in slide-in-from-top-1 duration-200">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div
-                className={cn(
-                  "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border",
-                  historyFilter === "pending"
-                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                    : historyFilter === "approved"
-                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                      : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
-                )}
+        {/* Search Input when in list mode */}
+        {activeTab !== "new" && (
+          <div className="relative w-full sm:w-64 md:w-80">
+            <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
+            <Input
+              placeholder="חיפוש לפי שם שוטר או יחידה..."
+              value={searchTerm}
+              className="pr-10 h-10 bg-background border-border/60 hover:border-border font-medium text-xs rounded-xl focus:ring-2 focus:ring-primary/20 transition-all text-right w-full"
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className="absolute left-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
               >
-                {historyFilter === "pending" ? (
-                  <Clock className="w-4 h-4" />
-                ) : historyFilter === "approved" ? (
-                  <CheckCircle className="w-4 h-4" />
-                ) : (
-                  <XCircle className="w-4 h-4" />
-                )}
-              </div>
-              <div className="flex items-center gap-1.5 truncate text-xs sm:text-sm">
-                <span className="text-muted-foreground font-medium">סינון פעיל:</span>
-                <span className="font-black text-foreground truncate">
-                  {historyFilter === "pending"
-                    ? "בהמתנה"
-                    : historyFilter === "approved"
-                      ? "אושרו"
-                      : "נדחו"}
-                </span>
-                <span className="px-2 py-0.5 rounded-lg bg-muted/60 text-[11px] font-black text-foreground/80 shrink-0">
-                  {historyFilter === "pending"
-                    ? stats.pending
-                    : historyFilter === "approved"
-                      ? stats.approved
-                      : stats.rejected}
-                </span>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setHistoryFilter(null)}
-              className="h-8 px-3 text-xs font-bold text-primary hover:text-primary-foreground hover:bg-primary border-primary/30 rounded-xl flex items-center gap-1.5 transition-all shadow-2xs shrink-0 cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>חזרה לכלל הבקשות</span>
-            </Button>
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         )}
+      </div>
 
-        {/* Main Toolbar */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-4 bg-card/40 backdrop-blur-2xl p-2 sm:px-4 rounded-3xl border border-primary/5 overflow-hidden min-h-[64px]">
-          {/* Top Line on Mobile: Primary Action + Search + History Toggle side-by-side */}
-          <div className="flex flex-row items-center justify-between gap-2 w-full md:w-auto">
-            <Button
-              onClick={() => setActiveTab("new")}
+      {/* Stats Overview Metric Cards */}
+      <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+        <button
+          type="button"
+          onClick={() => {
+            if (historyFilter === "pending") {
+              setHistoryFilter(null);
+            } else {
+              setActiveTab("history");
+              setHistoryFilter("pending");
+            }
+          }}
+          className={cn(
+            "bg-card rounded-2xl p-3 sm:p-4 border transition-all text-right w-full cursor-pointer flex flex-col justify-between gap-2 active:scale-[0.99] relative overflow-hidden group shadow-2xs",
+            historyFilter === "pending"
+              ? "border-amber-500/80 bg-amber-500/5 ring-2 ring-amber-500/20"
+              : "border-border/70 hover:border-amber-500/40 hover:bg-amber-500/[0.02]",
+          )}
+        >
+          <div className="flex items-center justify-between w-full">
+            <span className="text-[11px] sm:text-xs font-bold text-muted-foreground">
+              בהמתנה לטיפול
+            </span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400">
+              {stats.pending}
+            </span>
+            <span className="text-[10px] text-muted-foreground font-medium hidden sm:inline">
+              בקשות
+            </span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (historyFilter === "approved") {
+              setHistoryFilter(null);
+            } else {
+              setActiveTab("history");
+              setHistoryFilter("approved");
+            }
+          }}
+          className={cn(
+            "bg-card rounded-2xl p-3 sm:p-4 border transition-all text-right w-full cursor-pointer flex flex-col justify-between gap-2 active:scale-[0.99] relative overflow-hidden group shadow-2xs",
+            historyFilter === "approved"
+              ? "border-emerald-500/80 bg-emerald-500/5 ring-2 ring-emerald-500/20"
+              : "border-border/70 hover:border-emerald-500/40 hover:bg-emerald-500/[0.02]",
+          )}
+        >
+          <div className="flex items-center justify-between w-full">
+            <span className="text-[11px] sm:text-xs font-bold text-muted-foreground">
+              בקשות שאושרו
+            </span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">
+              {stats.approved}
+            </span>
+            <span className="text-[10px] text-muted-foreground font-medium hidden sm:inline">
+              בוצעו
+            </span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (historyFilter === "rejected") {
+              setHistoryFilter(null);
+            } else {
+              setActiveTab("history");
+              setHistoryFilter("rejected");
+            }
+          }}
+          className={cn(
+            "bg-card rounded-2xl p-3 sm:p-4 border transition-all text-right w-full cursor-pointer flex flex-col justify-between gap-2 active:scale-[0.99] relative overflow-hidden group shadow-2xs",
+            historyFilter === "rejected"
+              ? "border-rose-500/80 bg-rose-500/5 ring-2 ring-rose-500/20"
+              : "border-border/70 hover:border-rose-500/40 hover:bg-rose-500/[0.02]",
+          )}
+        >
+          <div className="flex items-center justify-between w-full">
+            <span className="text-[11px] sm:text-xs font-bold text-muted-foreground">
+              בקשות שנדחו
+            </span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+              <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400">
+              {stats.rejected}
+            </span>
+            <span className="text-[10px] text-muted-foreground font-medium hidden sm:inline">
+              נדחו
+            </span>
+          </div>
+        </button>
+      </div>
+
+      {/* Active Filter Pill Banner */}
+      {activeTab !== "new" && historyFilter !== null && (
+        <div className="flex items-center justify-between p-2.5 sm:p-3 px-3.5 sm:px-4 rounded-xl bg-card border border-border/80 shadow-2xs transition-all animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div
               className={cn(
-                "h-11 px-4 sm:px-6 rounded-xl font-bold flex items-center gap-1.5 sm:gap-2 transition-all active:scale-[0.98] shadow-sm shrink-0 text-xs sm:text-sm",
-                activeTab === "new"
-                  ? "bg-primary text-primary-foreground shadow-primary/20"
-                  : "bg-primary/10 text-primary hover:bg-primary/20",
+                "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border",
+                historyFilter === "pending"
+                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                  : historyFilter === "approved"
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                    : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
               )}
             >
-              <Plus className="w-4 h-4 sm:w-4.5 sm:h-4.5" strokeWidth={2.5} />
-              <span>בקשה חדשה</span>
-            </Button>
-
-            {/* Mobile-only Search (embedded inside the top line next to button) */}
-            {activeTab !== "new" && (
-              <div className="relative flex-1 md:hidden max-w-[220px]">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/40" />
-                <Input
-                  placeholder="חיפוש מהיר..."
-                  className="pr-9 h-11 bg-muted/40 border-none hover:bg-muted/60 font-medium text-[11px] rounded-xl focus:bg-background focus:ring-2 focus:ring-primary/10 transition-all text-right w-full"
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            )}
-
-            {/* Mobile-only History Toggle Button (Icon only) */}
-            {activeTab !== "new" && (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  if (activeTab === "history") {
-                    setActiveTab("pending");
-                    setHistoryFilter(null);
-                  } else {
-                    setActiveTab("history");
-                  }
-                }}
-                className={cn(
-                  "md:hidden w-11 h-11 rounded-xl flex items-center justify-center p-0 shrink-0",
-                  activeTab === "history"
-                    ? "bg-primary/15 text-primary border border-primary/25"
-                    : "bg-muted/40 text-muted-foreground/75 hover:bg-muted/60",
-                )}
-              >
-                <History className="w-4 h-4" />
-              </Button>
-            )}
-
-            {/* Vertical Divider */}
-            <div className="hidden md:block w-px h-6 bg-border/60 mx-1" />
+              {historyFilter === "pending" ? (
+                <Clock className="w-3.5 h-3.5" />
+              ) : historyFilter === "approved" ? (
+                <CheckCircle className="w-3.5 h-3.5" />
+              ) : (
+                <XCircle className="w-3.5 h-3.5" />
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 truncate text-xs sm:text-sm">
+              <span className="text-muted-foreground font-medium">סינון מוצג:</span>
+              <span className="font-bold text-foreground truncate">
+                {historyFilter === "pending"
+                  ? "בהמתנה לאישור"
+                  : historyFilter === "approved"
+                    ? "בקשות שאושרו"
+                    : "בקשות שנדחו"}
+              </span>
+              <span className="px-2 py-0.5 rounded-md bg-muted text-[11px] font-black text-foreground shrink-0">
+                {historyFilter === "pending"
+                  ? stats.pending
+                  : historyFilter === "approved"
+                    ? stats.approved
+                    : stats.rejected}
+              </span>
+            </div>
           </div>
 
-          {/* Left Side: Navigation & Desktop Filter (RTL: Left - Hidden on Mobile) */}
-          <div className="hidden md:flex flex-col sm:flex-row md:flex-row items-stretch sm:items-center gap-2 md:gap-4 w-full md:w-auto">
-            {/* Desktop Search Input */}
-            {activeTab !== "new" && (
-              <div className="relative w-full md:w-64 lg:w-72">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
-                <Input
-                  placeholder="חיפוש מהיר..."
-                  className="pr-10 h-11 bg-muted/40 border-none hover:bg-muted/60 font-medium text-xs rounded-xl focus:bg-background focus:ring-2 focus:ring-primary/10 transition-all text-right"
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            )}
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setHistoryFilter(null)}
+            className="h-7 px-2.5 text-xs font-bold text-foreground hover:bg-muted border-border rounded-lg flex items-center gap-1.5 transition-all shrink-0 cursor-pointer"
+          >
+            <RotateCcw className="w-3 h-3 text-muted-foreground" />
+            <span>הצג הכל</span>
+          </Button>
         </div>
+      )}
 
         {activeTab === "pending" && (
           <>
@@ -1083,116 +1148,171 @@ export default function TransfersPage() {
           </>
         )}
 
-        {/* New Request Form */}
+        {/* New Request Form - Modern Linear/Vercel Enterprise Form */}
         {activeTab === "new" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-card rounded-[20px] border border-border  overflow-hidden">
-                <div className="px-4 sm:px-8 py-5 sm:py-6 border-b border-border/50">
-                  <h2 className="text-lg sm:text-xl font-bold text-foreground">
-                    הגשת בקשת ניוד
-                  </h2>
-                  <p className="text-muted-foreground text-[11px] sm:text-sm mt-1">
-                    מילוי פרטים לצורך שינוי שיבוץ ארגוני ביחידה
-                  </p>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Main Form Column */}
+            <div className="lg:col-span-8 space-y-4 sm:space-y-6">
+              <div className="bg-card rounded-2xl border border-border/80 shadow-2xs overflow-hidden">
+                {/* Form Header */}
+                <div className="px-5 sm:px-7 py-4 sm:py-5 border-b border-border/60 bg-muted/20 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
+                      <ArrowLeftRight className="w-4.5 h-4.5" />
+                    </div>
+                    <div>
+                      <h2 className="text-base sm:text-lg font-bold text-foreground leading-tight">
+                        הגשת בקשת ניוד ושיבוץ
+                      </h2>
+                      <p className="text-muted-foreground text-xs mt-0.5">
+                        מילוי פרטי השוטר, הגדרת יעד השיבוץ ונימוק הצורך המבצעי
+                      </p>
+                    </div>
+                  </div>
+
+                  {(selectedEmployee || targetDeptId || reason) && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedEmployee(null);
+                        setTargetDeptId("");
+                        setTargetSectionId("");
+                        setTargetTeamId("");
+                        setReason("");
+                        setSearchTerm("");
+                      }}
+                      className="text-xs font-bold text-muted-foreground hover:text-foreground h-8 px-2.5 rounded-lg"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 ml-1" />
+                      <span>איפוס טופס</span>
+                    </Button>
+                  )}
                 </div>
 
-                <div className="p-4 sm:p-8 space-y-6 sm:space-y-8">
-                  {/* Step 1 */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] sm:text-xs font-bold">
+                <div className="p-5 sm:p-7 space-y-6 sm:space-y-7">
+                  {/* Step 1: Employee Selection */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-xs font-black shrink-0">
                         1
                       </div>
-                      <label className="text-xs sm:text-sm font-bold text-foreground">
-                        בחירת שוטר
-                      </label>
+                      <div>
+                        <label className="text-xs sm:text-sm font-bold text-foreground block leading-tight">
+                          בחירת שוטר לניוד
+                        </label>
+                        <span className="text-[11px] text-muted-foreground">
+                          חפש לפי שם מלא, שם משתמש או יחידה נוכחית
+                        </span>
+                      </div>
                     </div>
 
                     {!selectedEmployee ? (
                       <div className="relative">
-                        <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+                        <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
                         <Input
-                          placeholder="חפש לפי שם או שם משתמש..."
-                          className="pr-10 sm:pr-12 h-12 sm:h-14 text-right rounded-xl sm:rounded-2xl bg-background border-border/40 focus:ring-4 focus:ring-primary/10 transition-all text-sm sm:text-base hover:border-border/80"
+                          placeholder="הקלד שם שוטר לחיפוש..."
+                          className="pr-10 h-11 text-right rounded-xl bg-background border-border/70 focus:ring-2 focus:ring-primary/20 transition-all text-xs sm:text-sm"
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                         />
                         {filteredEmployeesList.length > 0 && searchTerm && (
-                          <div className="absolute top-full mt-2 w-full z-50 bg-popover border border-border rounded-xl sm:rounded-2xl  overflow-hidden ring-4 ring-muted/10">
-                            {filteredEmployeesList.map((emp) => (
-                              <button
-                                key={emp.id}
-                                className="w-full p-3 sm:p-4 flex items-center gap-3 sm:gap-4 hover:bg-background text-right transition-colors border-b border-border/50 last:border-0 group"
-                                onClick={() => {
-                                  setSelectedEmployee(emp);
-                                  setSearchTerm("");
-                                }}
-                              >
-                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs sm:text-sm group-hover:scale-110 transition-transform">
-                                  {emp.first_name?.[0] || ""}
-                                  {emp.last_name?.[0] || ""}
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="text-xs sm:text-sm font-bold text-foreground">
-                                    {emp.first_name} {emp.last_name}
-                                  </span>
-                                  <span className="text-[10px] sm:text-xs text-muted-foreground">
-                                    {(emp.is_commander || emp.is_admin) &&
-                                      `שם משתמש: ${emp.username} • `}
-                                    {emp.department_name}
-                                  </span>
-                                </div>
-                              </button>
-                            ))}
+                          <div className="absolute top-full mt-2 w-full z-50 bg-popover border border-border/80 rounded-xl shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                            <div className="p-1.5 space-y-1 max-h-60 overflow-y-auto">
+                              {filteredEmployeesList.map((emp) => (
+                                <button
+                                  key={emp.id}
+                                  type="button"
+                                  className="w-full p-2.5 flex items-center justify-between gap-3 hover:bg-muted/70 text-right rounded-lg transition-colors group cursor-pointer"
+                                  onClick={() => {
+                                    setSelectedEmployee(emp);
+                                    setSearchTerm("");
+                                  }}
+                                >
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 border border-primary/20">
+                                      {emp.first_name?.[0] || ""}
+                                      {emp.last_name?.[0] || ""}
+                                    </div>
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="text-xs font-bold text-foreground truncate">
+                                        {emp.first_name} {emp.last_name}
+                                      </span>
+                                      <span className="text-[10px] text-muted-foreground truncate">
+                                        {emp.rank && `${emp.rank} • `}
+                                        {emp.department_name || "ללא מחלקה"}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <Badge variant="outline" className="text-[10px] shrink-0 font-medium">
+                                    בחר
+                                  </Badge>
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
                     ) : (
-                      <div className="p-3 sm:p-4 border border-primary/20 bg-primary/5 rounded-xl sm:rounded-2xl flex items-center justify-between">
-                        <div className="flex items-center gap-3 sm:gap-4">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-base sm:text-lg ">
+                      <div className="p-3.5 sm:p-4 border border-primary/25 bg-primary/[0.03] dark:bg-primary/[0.06] rounded-xl flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold text-sm shrink-0 border border-primary/25">
                             {selectedEmployee.first_name?.[0] || ""}
                             {selectedEmployee.last_name?.[0] || ""}
                           </div>
-                          <div className="flex flex-col text-right">
-                            <span className="font-bold text-xs sm:text-base text-foreground">
-                              {selectedEmployee.first_name}{" "}
-                              {selectedEmployee.last_name}
-                            </span>
-                            <span className="text-[10px] sm:text-xs text-muted-foreground">
-                              {selectedEmployee.department_name}
+                          <div className="flex flex-col text-right min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-xs sm:text-sm text-foreground">
+                                {selectedEmployee.first_name} {selectedEmployee.last_name}
+                              </span>
+                              {selectedEmployee.rank && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-bold bg-background">
+                                  {selectedEmployee.rank}
+                                </Badge>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-muted-foreground truncate mt-0.5">
+                              שיבוץ נוכחי: {cleanUnitName(selectedEmployee.department_name || "מטה")}
                             </span>
                           </div>
                         </div>
+
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
-                          className="text-primary hover:text-primary hover:bg-primary/10 font-medium text-[10px] sm:text-xs"
+                          className="text-xs font-bold h-8 px-3 rounded-lg border-border hover:bg-muted shrink-0"
                           onClick={() => setSelectedEmployee(null)}
                         >
-                          החלף
+                          החלף שוטר
                         </Button>
                       </div>
                     )}
                   </div>
 
-                  {/* Step 2 */}
-                  <div className="space-y-4 pt-6 border-t border-border/50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] sm:text-xs font-bold">
+                  {/* Step 2: Destination Target Selection */}
+                  <div className="space-y-3 pt-5 border-t border-border/60">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-xs font-black shrink-0">
                         2
                       </div>
-                      <label className="text-xs sm:text-sm font-bold text-foreground">
-                        יעד המעבר
-                      </label>
+                      <div>
+                        <label className="text-xs sm:text-sm font-bold text-foreground block leading-tight">
+                          יעד השיבוץ החדש
+                        </label>
+                        <span className="text-[11px] text-muted-foreground">
+                          בחר מחלקה (חובה), מדור וחוליה (בהתאם למבנה הארגוני)
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <span className="text-[10px] sm:text-xs font-medium text-muted-foreground block text-right">
-                          מחלקה
-                        </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {/* Department Select */}
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-muted-foreground block text-right">
+                          מחלקה <span className="text-destructive">*</span>
+                        </label>
                         <Select
                           value={targetDeptId}
                           onValueChange={(v) => {
@@ -1201,30 +1321,42 @@ export default function TransfersPage() {
                             setTargetTeamId("");
                           }}
                         >
-                          <SelectTrigger className="h-11 sm:h-12 rounded-xl bg-background border border-border/40 hover:border-border/80 focus:ring-2 focus:ring-primary/10 font-medium text-xs sm:text-sm transition-all text-right">
-                            <SelectValue placeholder="בחר מחלקה..." />
+                          <SelectTrigger className="h-10 rounded-xl bg-background border-border/70 hover:border-border font-medium text-xs transition-all text-right w-full">
+                            <SelectValue placeholder="בחר..." />
                           </SelectTrigger>
-                          <SelectContent
-                            className="rounded-xl border-border  bg-popover"
-                            dir="rtl"
-                          >
+                          <SelectContent className="rounded-xl border-border bg-popover max-h-56" dir="rtl">
                             {structure.map((d) => (
                               <SelectItem
                                 key={d.id}
                                 value={d.id.toString()}
-                                className="font-medium focus:bg-accent text-foreground text-xs sm:text-sm"
+                                className="font-medium text-xs cursor-pointer"
                               >
-                                {d.name}
+                                {cleanUnitName(d.name)}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
 
-                      <div className="space-y-2">
-                        <span className="text-[10px] sm:text-xs font-medium text-muted-foreground block text-right">
-                          מדור
-                        </span>
+                      {/* Section Select */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[11px] font-bold text-muted-foreground block text-right">
+                            מדור
+                          </label>
+                          {targetSectionId && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTargetSectionId("");
+                                setTargetTeamId("");
+                              }}
+                              className="text-[10px] text-muted-foreground hover:text-primary"
+                            >
+                              איפוס
+                            </button>
+                          )}
+                        </div>
                         <Select
                           value={targetSectionId}
                           onValueChange={(v) => {
@@ -1233,141 +1365,207 @@ export default function TransfersPage() {
                           }}
                           disabled={!targetDeptId}
                         >
-                          <SelectTrigger className="h-11 sm:h-12 rounded-xl bg-muted/30 border-input focus:ring-2 focus:ring-primary/20 font-medium text-xs sm:text-sm transition-all focus:bg-background disabled:opacity-50 text-right">
-                            <SelectValue placeholder="בחר מדור..." />
+                          <SelectTrigger className="h-10 rounded-xl bg-background border-border/70 hover:border-border font-medium text-xs transition-all text-right w-full disabled:opacity-50">
+                            <SelectValue placeholder={targetDeptId ? "בחר..." : "בחר מחלקה תחילה"} />
                           </SelectTrigger>
-                          <SelectContent
-                            className="rounded-xl border-border  bg-popover"
-                            dir="rtl"
-                          >
-                            {structure
-                              .find((d) => d.id.toString() === targetDeptId)
-                              ?.sections.map((s: any) => (
-                                <SelectItem
-                                  key={s.id}
-                                  value={s.id.toString()}
-                                  className="font-medium focus:bg-accent text-foreground text-xs sm:text-sm"
-                                >
-                                  {s.name}
-                                </SelectItem>
-                              ))}
+                          <SelectContent className="rounded-xl border-border bg-popover max-h-56" dir="rtl">
+                            {selectedTargetDept?.sections?.map((s: any) => (
+                              <SelectItem
+                                key={s.id}
+                                value={s.id.toString()}
+                                className="font-medium text-xs cursor-pointer"
+                              >
+                                {cleanUnitName(s.name)}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
 
-                      <div className="space-y-2">
-                        <span className="text-[10px] sm:text-xs font-medium text-muted-foreground block text-right">
-                          חוליה
-                        </span>
+                      {/* Team Select */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[11px] font-bold text-muted-foreground block text-right">
+                            חוליה
+                          </label>
+                          {targetTeamId && (
+                            <button
+                              type="button"
+                              onClick={() => setTargetTeamId("")}
+                              className="text-[10px] text-muted-foreground hover:text-primary"
+                            >
+                              איפוס
+                            </button>
+                          )}
+                        </div>
                         <Select
                           value={targetTeamId}
                           onValueChange={setTargetTeamId}
                           disabled={!targetSectionId}
                         >
-                          <SelectTrigger className="h-11 sm:h-12 rounded-xl bg-muted/30 border-input focus:ring-2 focus:ring-primary/20 font-medium text-xs sm:text-sm transition-all focus:bg-background disabled:opacity-50 text-right">
-                            <SelectValue placeholder="בחר חוליה..." />
+                          <SelectTrigger className="h-10 rounded-xl bg-background border-border/70 hover:border-border font-medium text-xs transition-all text-right w-full disabled:opacity-50">
+                            <SelectValue placeholder={targetSectionId ? "בחר..." : "בחר מדור תחילה"} />
                           </SelectTrigger>
-                          <SelectContent
-                            className="rounded-xl border-border  bg-popover"
-                            dir="rtl"
-                          >
-                            {structure
-                              .find((d) => d.id.toString() === targetDeptId)
-                              ?.sections.find(
-                                (s: any) => s.id.toString() === targetSectionId,
-                              )
-                              ?.teams.map((t: any) => (
-                                <SelectItem
-                                  key={t.id}
-                                  value={t.id.toString()}
-                                  className="font-medium focus:bg-accent text-foreground text-xs sm:text-sm"
-                                >
-                                  {t.name}
-                                </SelectItem>
-                              ))}
+                          <SelectContent className="rounded-xl border-border bg-popover max-h-56" dir="rtl">
+                            {selectedTargetSection?.teams?.map((t: any) => (
+                              <SelectItem
+                                key={t.id}
+                                value={t.id.toString()}
+                                className="font-medium text-xs cursor-pointer"
+                              >
+                                {cleanUnitName(t.name)}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
+
+                    {/* Live Transition Preview Card */}
+                    {(selectedEmployee || targetDeptId) && (
+                      <div className="p-3.5 rounded-xl bg-muted/40 border border-border/60 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs mt-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-muted-foreground font-bold shrink-0">מיקום נוכחי:</span>
+                          <span className="font-bold text-foreground truncate">
+                            {selectedEmployee ? cleanUnitName(selectedEmployee.department_name || "מטה") : "---"}
+                          </span>
+                        </div>
+
+                        <div className="hidden sm:flex items-center justify-center w-6 h-6 rounded-full bg-background border border-border text-muted-foreground shrink-0">
+                          <ArrowLeft className="w-3.5 h-3.5" />
+                        </div>
+
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-primary font-bold shrink-0">יעד חדש:</span>
+                          <span className="font-bold text-primary truncate">
+                            {targetUnitDisplay || "טרם נבחר יעד"}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Step 3 */}
-                  <div className="space-y-4 pt-6 border-t border-border/50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] sm:text-xs font-bold">
+                  {/* Step 3: Reason & Justification */}
+                  <div className="space-y-3 pt-5 border-t border-border/60">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-xs font-black shrink-0">
                         3
                       </div>
-                      <label className="text-xs sm:text-sm font-bold text-foreground">
-                        נימוקים נוספים
-                      </label>
+                      <div>
+                        <label className="text-xs sm:text-sm font-bold text-foreground block leading-tight">
+                          נימוק ופירוט הצורך המבצעי
+                        </label>
+                        <span className="text-[11px] text-muted-foreground">
+                          בחר סיבה מהירה או פרט בהרחבה לצורך בחינה ואישור הבקשה
+                        </span>
+                      </div>
                     </div>
 
-                    <textarea
-                      placeholder="פרט את הסיבה לבקשה..."
-                      className="w-full min-h-[120px] sm:min-h-[140px] p-4 bg-background rounded-xl sm:rounded-2xl text-xs sm:text-sm border border-border/40 focus:ring-4 focus:ring-primary/10 transition-all resize-none font-sans hover:border-border/80"
+                    {/* Quick Preset Reason Tags */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {PRESET_REASONS.map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => {
+                            if (!reason) {
+                              setReason(preset);
+                            } else if (!reason.includes(preset)) {
+                              setReason(`${reason} • ${preset}`);
+                            }
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-muted/60 hover:bg-muted border border-border/60 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                        >
+                          + {preset}
+                        </button>
+                      ))}
+                    </div>
+
+                    <Textarea
+                      placeholder="פרט את הסיבה לבקשת הניוד, צורך מבצעי או נסיבות רלוונטיות..."
+                      className="w-full min-h-[100px] p-3.5 bg-background rounded-xl text-xs sm:text-sm border-border/70 focus:ring-2 focus:ring-primary/20 transition-all resize-none"
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
                       dir="rtl"
                     />
                   </div>
 
-                  <div className="pt-4">
+                  {/* Actions Button */}
+                  <div className="pt-2 flex items-center gap-3">
                     <Button
+                      type="button"
                       onClick={handleCreateRequest}
-                      disabled={
-                        isSubmitting || !selectedEmployee || !targetDeptId
-                      }
-                      className="w-full h-12 sm:h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl sm:rounded-2xl   transition-all hover: active:scale-[0.98] text-sm sm:text-base"
+                      disabled={isSubmitting || !selectedEmployee || !targetDeptId}
+                      className="flex-1 h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl shadow-sm transition-all text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
-                      {isSubmitting
-                        ? "בתהליך שליחה..."
-                        : "שלח בקשת ניוד לאישור"}
+                      <Send className="w-4 h-4" />
+                      <span>{isSubmitting ? "בתהליך שליחה..." : "שלח בקשת ניוד לאישור"}</span>
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setActiveTab("history")}
+                      className="h-11 px-4 rounded-xl text-xs font-bold border-border text-foreground hover:bg-muted shrink-0"
+                    >
+                      ביטול
                     </Button>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Sidebar Guidelines */}
-            <div className="space-y-4 sm:space-y-6">
-              <div className="bg-gradient-to-br from-primary/5 to-background rounded-[20px] p-5 sm:p-6 border border-border/50 ">
-                <div className="flex items-center gap-3 text-primary mb-4 sm:mb-6">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5" />
+            {/* Sidebar Guidelines Column */}
+            <div className="lg:col-span-4 space-y-4">
+              {/* SLA Card */}
+              <div className="bg-card border border-border/80 rounded-2xl p-4 sm:p-5 shadow-2xs">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+                    <Clock className="w-4 h-4" />
                   </div>
-                  <span className="text-base sm:text-lg font-bold">
-                    דגשים להגשה
-                  </span>
+                  <div>
+                    <span className="text-[11px] font-bold text-muted-foreground block leading-none">
+                      זמן טיפול משוער
+                    </span>
+                    <span className="text-base sm:text-lg font-black text-foreground">
+                      24-48 שעות
+                    </span>
+                  </div>
                 </div>
-                <ul className="space-y-3 sm:space-y-4">
-                  {[
-                    "כל ניוד כפוף לאישור מפקד היחידה.",
-                    "יש לנמק את הצורך המבצעי במעבר.",
-                    "השיבוץ יתעדכן לאחר סיום תהליך האישורים.",
-                  ].map((t, i) => (
-                    <li
-                      key={i}
-                      className="flex gap-3 text-xs sm:text-sm font-medium text-muted-foreground leading-relaxed text-right items-start"
-                    >
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary/50 mt-2 shrink-0" />
-                      {t}
-                    </li>
-                  ))}
-                </ul>
+                <p className="text-[11px] text-muted-foreground leading-relaxed mt-2 pt-2 border-t border-border/50">
+                  בקשות ניוד מועברות ישירות לבחינת מפקד המחלקה וראש החטיבה לצורך קבלת החלטה.
+                </p>
               </div>
 
-              <div className="bg-card border border-border rounded-[20px] p-5 sm:p-6 flex items-center gap-4 sm:gap-5 ">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-500/10 flex items-center justify-center shrink-0">
-                  <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />
+              {/* Guidelines Card */}
+              <div className="bg-card border border-border/80 rounded-2xl p-4 sm:p-5 shadow-2xs">
+                <div className="flex items-center gap-2.5 text-foreground mb-3 pb-2.5 border-b border-border/50">
+                  <div className="p-1.5 bg-primary/10 text-primary rounded-lg">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs sm:text-sm font-bold">
+                    דגשים ונהלי הגשה
+                  </span>
                 </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5 sm:mb-1">
-                    זמן טיפול משוער
-                  </p>
-                  <p className="text-base sm:text-lg font-black text-foreground">
-                    24-48 שעות
-                  </p>
-                </div>
+
+                <ul className="space-y-2.5 text-[11px] text-muted-foreground font-medium leading-relaxed">
+                  <li className="flex items-start gap-2 text-right">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                    <span>כל ניוד כפוף לאישור מפקד היחידה המוסמך.</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-right">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                    <span>יש לנמק באופן ברור את הצורך המבצעי או האישי במעבר.</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-right">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                    <span>השיבוץ הארגוני במערכת יתעדכן אוטומטית עם אישור הבקשה.</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-right">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                    <span>ניתן לעקוב אחר סטטוס הטיפול בטאב "כלל הבקשות".</span>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
@@ -1860,6 +2058,5 @@ export default function TransfersPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </div>
-  );
-}
+    );
+  }

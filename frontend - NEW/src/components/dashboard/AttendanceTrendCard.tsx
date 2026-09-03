@@ -170,8 +170,8 @@ export const AttendanceTrendCard = forwardRef(
               <p className="text-xs font-semibold">אין נתוני מגמה לתקופה זו</p>
             </div>
           ) : (
-            <div className="w-full h-[200px] sm:h-[240px]">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="w-full h-[200px] sm:h-[240px] min-w-0">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200} initialDimension={{ width: 300, height: 200 }}>
                 <AreaChart
                   data={chartData}
                   margin={{ top: 12, right: 8, left: -20, bottom: 0 }}

@@ -325,7 +325,7 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
                           "text-xs font-bold truncate leading-tight",
                           selectedDeptId ? "text-primary" : "text-foreground"
                         )}>
-                          {selectedDept ? cleanUnitName(selectedDept.name) : "בחר מחלקה"}
+                          {selectedDept ? cleanUnitName(selectedDept.name) : "בחר..."}
                         </p>
                       </div>
                     </SelectPrimitive.Trigger>
@@ -333,7 +333,7 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
                     <SelectContent position="popper" className="rounded-xl border-border/40 max-h-56 custom-scrollbar z-[100]">
                       {departments.map((d: any) => (
                         <SelectItem key={d.id} value={d.id.toString()} className="font-bold cursor-pointer text-xs">
-                          {d.name}
+                          {cleanUnitName(d.name)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -382,7 +382,7 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
                           "text-xs font-bold truncate leading-tight",
                           selectedSectionId ? "text-primary" : "text-foreground"
                         )}>
-                          {selectedSection ? cleanUnitName(selectedSection.name) : "בחר מדור"}
+                          {selectedSection ? cleanUnitName(selectedSection.name) : "בחר..."}
                         </p>
                       </div>
                     </SelectPrimitive.Trigger>
@@ -390,9 +390,9 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
                     <SelectContent position="popper" className="rounded-xl border-border/40 max-h-56 custom-scrollbar z-[100]">
                       {availableSections.map((s: any) => (
                         <SelectItem key={s.id} value={s.id.toString()} className="font-bold cursor-pointer text-xs">
-                          <span>{s.name}</span>
+                          <span>{cleanUnitName(s.name)}</span>
                           {!selectedDeptId && (
-                            <span className="text-[10px] text-muted-foreground mr-1">({s.dept_name})</span>
+                            <span className="text-[10px] text-muted-foreground mr-1">({cleanUnitName(s.dept_name)})</span>
                           )}
                         </SelectItem>
                       ))}
@@ -442,7 +442,7 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
                           "text-xs font-bold truncate leading-tight",
                           selectedTeamId ? "text-primary" : "text-foreground"
                         )}>
-                          {selectedTeam ? cleanUnitName(selectedTeam.name) : "בחר חוליה"}
+                          {selectedTeam ? cleanUnitName(selectedTeam.name) : "בחר..."}
                         </p>
                       </div>
                     </SelectPrimitive.Trigger>
@@ -450,9 +450,9 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
                     <SelectContent position="popper" className="rounded-xl border-border/40 max-h-56 custom-scrollbar z-[100]">
                       {availableTeams.map((t: any) => (
                         <SelectItem key={t.id} value={t.id.toString()} className="font-bold cursor-pointer text-xs">
-                          <span>{t.name}</span>
+                          <span>{cleanUnitName(t.name)}</span>
                           {!selectedSectionId && (
-                            <span className="text-[10px] text-muted-foreground mr-1">({t.section_name})</span>
+                            <span className="text-[10px] text-muted-foreground mr-1">({cleanUnitName(t.section_name)})</span>
                           )}
                         </SelectItem>
                       ))}

@@ -7,6 +7,7 @@ import {
   DialogDragHandle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { Employee } from "@/types/employee.types";
 import { cn, cleanUnitName } from "@/lib/utils";
 import {

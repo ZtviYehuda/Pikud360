@@ -835,7 +835,7 @@ export default function RosterPage() {
         {/* Unified Filter Dialog (Native Bottom Sheet on mobile, Centered Modal on desktop) */}
         <Dialog open={filterModalOpen} onOpenChange={setFilterModalOpen}>
           <DialogContent
-            className="w-full sm:w-auto sm:max-w-[560px] md:max-w-[620px] max-h-[94dvh] sm:max-h-[85vh] p-0 border border-border/80 dark:border-white/15 bg-card flex flex-col overflow-hidden !gap-0 pointer-events-auto rounded-t-[2.2rem] rounded-b-none sm:rounded-2xl shadow-xl"
+            className="w-full sm:w-[580px] sm:min-w-[580px] sm:max-w-[580px] p-0 border border-border/80 dark:border-white/15 bg-card flex flex-col overflow-hidden !gap-0 pointer-events-auto rounded-t-[2.2rem] rounded-b-none sm:rounded-2xl shadow-xl"
             dir="rtl"
           >
             <DialogTitle className="sr-only">סינון סידור עבודה</DialogTitle>

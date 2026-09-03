@@ -85,19 +85,32 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
   }, [refreshReferenceData]);
 
   const openProfile = useCallback(
-    async (employee: Employee | number) => {
-      if (typeof employee === "number") {
-        const fullEmployee = await getEmployeeById(employee);
+    async (employee: Employee | number | any) => {
+      const id = typeof employee === "number" || typeof employee === "string" ? employee : employee?.id;
+
+      let initialEmp: Employee | null = null;
+      if (id && employees?.length) {
+        const found = employees.find((e) => String(e.id) === String(id));
+        if (found) initialEmp = found;
+      }
+      if (!initialEmp && typeof employee === "object" && employee !== null) {
+        initialEmp = employee as Employee;
+      }
+
+      if (initialEmp) {
+        setSelectedProfileEmployee(initialEmp);
+        setProfileOpen(true);
+      }
+
+      if (id) {
+        const fullEmployee = await getEmployeeById(id);
         if (fullEmployee) {
           setSelectedProfileEmployee(fullEmployee);
           setProfileOpen(true);
         }
-      } else {
-        setSelectedProfileEmployee(employee);
-        setProfileOpen(true);
       }
     },
-    [getEmployeeById],
+    [employees, getEmployeeById],
   );
 
   return (
