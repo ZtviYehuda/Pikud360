@@ -1407,8 +1407,6 @@ export default function CreateEmployeePage() {
                 sections={sections}
                 teams={teams}
                 user={user}
-                selectedDeptId={selectedDeptId}
-                selectedSectionId={selectedSectionId}
                 onSave={handleSubmit}
                 saving={saving}
                 setFormData={setFormData}
