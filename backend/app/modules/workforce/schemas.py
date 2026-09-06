@@ -100,6 +100,9 @@ class EmployeeUpdateRequest(BaseModel):
     is_commander: Optional[bool] = None
     security_clearance: Optional[bool] = None
     police_license: Optional[bool] = None
+    department_id: Optional[Any] = None
+    section_id: Optional[Any] = None
+    team_id: Optional[Any] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -123,6 +126,20 @@ class EmployeeUpdateRequest(BaseModel):
                 data["birthdate"] = str(data["birth_date"]).split("T")[0]
             elif not data.get("birthdate") and data.get("birth_date"):
                 data["birthdate"] = str(data["birth_date"]).split("T")[0]
+            
+            if "service_type_name" in data and not data.get("service_type"):
+                data["service_type"] = data["service_type_name"]
+            elif "service_type" in data and not data.get("service_type_name"):
+                data["service_type_name"] = data["service_type"]
+
+            # Resolve target unit hierarchy to standard UUID
+            target_unit = data.get("team_id") or data.get("section_id") or data.get("department_id")
+            if target_unit is not None and str(target_unit).strip() not in ("", "None", "null"):
+                try:
+                    unit_int = int(target_unit)
+                    data["org_unit_id"] = f"00000000-0000-0000-0000-{unit_int:012d}"
+                except (ValueError, TypeError):
+                    data["org_unit_id"] = str(target_unit)
         return data
 
     @field_validator("phone")
@@ -188,6 +205,7 @@ class EmployeeResponse(BaseModel):
     rank: str
     position: str
     service_type: str
+    service_type_name: Optional[str] = None
     user_id: Optional[str] = None
     commander_id: Optional[str] = None
     phone: Optional[str] = None
@@ -205,6 +223,12 @@ class EmployeeResponse(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     organization_info: Optional[EmployeeOrganizationInfo] = None
+    department_id: Optional[int] = None
+    department_name: Optional[str] = None
+    section_id: Optional[int] = None
+    section_name: Optional[str] = None
+    team_id: Optional[int] = None
+    team_name: Optional[str] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -216,6 +240,7 @@ class EmployeeResponse(BaseModel):
             data["phone_number"] = data.get("phone_number") or data.get("phone")
             data["email"] = data.get("email") or data.get("personal_email")
             data["birth_date"] = data.get("birth_date") or data.get("birthdate")
+            data["service_type_name"] = data.get("service_type_name") or data.get("service_type")
         elif hasattr(data, "status"):
             st = getattr(data, "status", "")
             if st:
@@ -223,9 +248,17 @@ class EmployeeResponse(BaseModel):
             p = getattr(data, "phone", None)
             e = getattr(data, "personal_email", None)
             b = getattr(data, "birthdate", None)
+            s_type = getattr(data, "service_type", None)
             setattr(data, "phone_number", getattr(data, "phone_number", None) or p)
             setattr(data, "email", getattr(data, "email", None) or e)
             setattr(data, "birth_date", getattr(data, "birth_date", None) or b)
+            setattr(data, "service_type_name", getattr(data, "service_type_name", None) or s_type)
+            setattr(data, "department_id", getattr(data, "department_id", None))
+            setattr(data, "department_name", getattr(data, "department_name", None))
+            setattr(data, "section_id", getattr(data, "section_id", None))
+            setattr(data, "section_name", getattr(data, "section_name", None))
+            setattr(data, "team_id", getattr(data, "team_id", None))
+            setattr(data, "team_name", getattr(data, "team_name", None))
         return data
 
     class Config:

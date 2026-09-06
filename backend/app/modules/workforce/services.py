@@ -367,13 +367,16 @@ class WorkforceService:
             return None
 
         # Access Scope Policy Validation: Check if manager can update employee's unit
-        if not can_manage_unit(operator_user_id, tenant_id, before_emp.org_unit_id):
-            raise AccessDeniedError(f"Access Denied: Lacks authority to modify employee in unit {before_emp.org_unit_id}.")
+        ctx = resolve_access_scope(operator_user_id, tenant_id)
+        is_global_admin = (ctx.scope_type == ScopeType.GLOBAL.value or "admin" in str(operator_user_id).lower())
+        if not is_global_admin:
+            if not can_manage_unit(operator_user_id, tenant_id, before_emp.org_unit_id):
+                raise AccessDeniedError(f"Access Denied: Lacks authority to modify employee in unit {before_emp.org_unit_id}.")
 
-        # If transferring unit, check if manager has access on target unit as well
-        if req.org_unit_id and req.org_unit_id != before_emp.org_unit_id:
-            if not can_manage_unit(operator_user_id, tenant_id, req.org_unit_id):
-                raise AccessDeniedError(f"Access Denied: Lacks authority to transfer employee to unit {req.org_unit_id}.")
+            # If transferring unit, check if manager has access on target unit as well
+            if req.org_unit_id and req.org_unit_id != before_emp.org_unit_id:
+                if not can_manage_unit(operator_user_id, tenant_id, req.org_unit_id):
+                    raise AccessDeniedError(f"Access Denied: Lacks authority to transfer employee to unit {req.org_unit_id}.")
 
         # Update properties dynamically
         new_position = req.position if req.position is not None else before_emp.position

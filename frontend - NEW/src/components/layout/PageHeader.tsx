@@ -22,8 +22,15 @@ export function PageHeader({
   id,
 }: PageHeaderProps) {
   return (
-    <div id={id} className={cn("flex flex-col gap-0 w-full", className)}>
-      <div className="flex items-center justify-between gap-4 w-full min-h-[44px]">
+    <div
+      id={id}
+      className={cn(
+        "flex flex-col gap-0 w-full",
+        !badge && (hideMobile ? "hidden lg:flex" : "hidden sm:flex"),
+        className
+      )}
+    >
+      <div className="flex items-center justify-between gap-4 w-full sm:min-h-[44px]">
         {/* Title & Icon: Hidden on mobile (< sm or < lg) since TopBar already shows the active title */}
         <div
           className={cn(

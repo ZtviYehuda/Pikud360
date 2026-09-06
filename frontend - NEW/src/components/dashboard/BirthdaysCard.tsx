@@ -2,7 +2,7 @@ import {
   forwardRef,
   useImperativeHandle,
   useState,
-  useRef,
+  useMemo,
 } from "react";
 import {
   Card,
@@ -52,13 +52,35 @@ export const BirthdaysCard = forwardRef(
   ) {
     const { openProfile } = useEmployeeContext();
     const [isGreetingsModalOpen, setIsGreetingsModalOpen] = useState(false);
-    const scrollRef = useRef<HTMLDivElement>(null);
 
     useImperativeHandle(ref, () => ({
       share: handleSendWhatsApp,
     }));
 
     const referenceDate = selectedDate || new Date();
+
+    // Sort birthdays chronologically from referenceDate
+    const sortedBirthdays = useMemo(() => {
+      if (!birthdays || !birthdays.length) return [];
+      const today = new Date(
+        referenceDate.getFullYear(),
+        referenceDate.getMonth(),
+        referenceDate.getDate()
+      );
+
+      return [...birthdays].sort((a, b) => {
+        const aDate = new Date(today.getFullYear(), a.month - 1, a.day);
+        const bDate = new Date(today.getFullYear(), b.month - 1, b.day);
+        // If date passed already this month and looking ahead
+        if (aDate < today && a.month === 1 && today.getMonth() === 11) {
+          aDate.setFullYear(today.getFullYear() + 1);
+        }
+        if (bDate < today && b.month === 1 && today.getMonth() === 11) {
+          bDate.setFullYear(today.getFullYear() + 1);
+        }
+        return aDate.getTime() - bDate.getTime();
+      });
+    }, [birthdays, referenceDate]);
 
     const handleSendWhatsApp = () => {
       if (!birthdays.length) return;
@@ -86,7 +108,7 @@ export const BirthdaysCard = forwardRef(
             className
           )}
         >
-          <CardHeader className="px-4 sm:px-6 py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3">
+          <CardHeader className="px-4 sm:px-6 py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3 shrink-0">
             <div className="space-y-1 min-w-0 flex-1">
               <div className="flex items-center gap-2 min-w-0">
                 <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -110,7 +132,9 @@ export const BirthdaysCard = forwardRef(
                 )}
               </div>
               <CardDescription className="text-xs text-muted-foreground truncate">
-                חוגגים השבוע
+                {birthdays.length > 0
+                  ? `חוגגים השבוע (${birthdays.length})`
+                  : "חוגגים השבוע"}
               </CardDescription>
             </div>
 
@@ -121,7 +145,7 @@ export const BirthdaysCard = forwardRef(
                     onClick={() => setIsGreetingsModalOpen(true)}
                     variant="outline"
                     size="sm"
-                    className="hidden sm:flex h-8 px-2.5 rounded-lg gap-1.5 font-bold text-xs border-primary/20 hover:bg-primary/5 text-primary"
+                    className="hidden sm:flex h-8 px-2.5 rounded-lg gap-1.5 font-bold text-xs border-primary/20 hover:bg-primary/5 text-primary cursor-pointer"
                   >
                     <Gift className="w-3.5 h-3.5" />
                     <span>שליחת ברכה</span>
@@ -129,106 +153,156 @@ export const BirthdaysCard = forwardRef(
                   <WhatsAppButton
                     onClick={handleSendWhatsApp}
                     variant="outline"
-                    className="h-8 w-8 p-0 rounded-lg border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all"
+                    className="h-8 w-8 p-0 rounded-lg border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all cursor-pointer"
                     skipDirectLink={true}
+                    title="שתף רשימת ימי הולדת בוואטסאפ"
                   />
                 </>
               )}
             </div>
           </CardHeader>
 
-          <CardContent className="flex-1 p-0 flex flex-col min-h-0 relative">
-            <div
-              ref={scrollRef}
-              className="flex-1 overflow-x-auto overflow-y-hidden no-scrollbar relative scroll-smooth"
-            >
-              {birthdays.length === 0 ? (
-                <div className="flex flex-col items-center justify-center w-full py-12 opacity-40">
-                  <Calendar className="w-10 h-10 mb-3 text-muted-foreground" />
-                  <p className="text-sm font-bold">אין ימי הולדת השבוע</p>
+          <CardContent className="flex-1 p-3.5 sm:p-4 flex flex-col min-h-0 relative">
+            {sortedBirthdays.length === 0 ? (
+              <div className="flex flex-col items-center justify-center w-full h-full min-h-[220px] text-center p-6 opacity-60">
+                <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
+                  <Calendar className="w-6 h-6" />
                 </div>
-              ) : (
-                <div className="p-4 sm:p-6 h-full flex flex-col overflow-hidden">
-                  <div className="w-full flex-1 flex flex-nowrap items-center gap-4 overflow-x-auto no-scrollbar pb-4 pr-1">
-                    {birthdays.map((employee) => {
-                      const today = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
-                      const isToday =
-                        employee.day === today.getDate() &&
-                        employee.month === today.getMonth() + 1;
-                      
-                      const isTomorrow = !isToday && (() => {
-                        const tomorrow = new Date(today);
-                        tomorrow.setDate(today.getDate() + 1);
-                        return employee.day === tomorrow.getDate() && employee.month === tomorrow.getMonth() + 1;
-                      })();
+                <p className="text-sm font-bold text-foreground">אין ימי הולדת השבוע</p>
+                <p className="text-xs text-muted-foreground mt-1">כל החוגגים הבאים יוצגו כאן אוטומטית</p>
+              </div>
+            ) : (
+              <div className="w-full flex-1 flex flex-col min-h-0 overflow-y-auto no-scrollbar space-y-2.5 pr-0.5">
+                {sortedBirthdays.map((employee) => {
+                  const today = new Date(
+                    referenceDate.getFullYear(),
+                    referenceDate.getMonth(),
+                    referenceDate.getDate()
+                  );
+                  const isToday =
+                    employee.day === today.getDate() &&
+                    employee.month === today.getMonth() + 1;
 
-                      const dateLabel = isToday ? "היום" : isTomorrow ? "מחר" : `${employee.day} ב${MONTH_LABELS[employee.month - 1]}`;
-                      const initials = `${employee.first_name[0]}${employee.last_name[0]}`;
-
+                  const isTomorrow =
+                    !isToday &&
+                    (() => {
+                      const tomorrow = new Date(today);
+                      tomorrow.setDate(today.getDate() + 1);
                       return (
-                        <div
-                          key={employee.id}
-                          onClick={() => openProfile(employee.id)}
-                          className={cn(
-                            "flex flex-col items-center justify-center rounded-[2.5rem] border transition-all cursor-pointer group/mini relative overflow-hidden shrink-0",
-                            // Cool Vertical Stretch Layout
-                            "w-[110px] h-[160px] sm:w-[150px] sm:h-[220px] p-4 sm:p-6", 
-                            isToday
-                              ? "bg-primary/[0.04] border-primary/20 ring-8 ring-primary/5 shadow-xl shadow-primary/5"
-                              : "bg-background/40 border-border/40 hover:border-primary/30 hover:bg-background/60 hover:shadow-lg hover:shadow-primary/5"
+                        employee.day === tomorrow.getDate() &&
+                        employee.month === tomorrow.getMonth() + 1
+                      );
+                    })();
+
+                  const bdayDate = new Date(
+                    referenceDate.getFullYear(),
+                    employee.month - 1,
+                    employee.day
+                  );
+                  const dayOfWeek = bdayDate.toLocaleDateString("he-IL", {
+                    weekday: "long",
+                  });
+
+                  const initials = `${employee.first_name?.[0] || ""}${employee.last_name?.[0] || ""}`;
+
+                  const cleanPhone = employee.phone_number
+                    ? employee.phone_number.replace(/\D/g, "")
+                    : "";
+                  const waNumber = cleanPhone.startsWith("0")
+                    ? "972" + cleanPhone.slice(1)
+                    : cleanPhone;
+                  const personalMsg = encodeURIComponent(
+                    `מזל טוב ${employee.first_name}! 🎂 מאחל/ת לך יום הולדת שמח, בריאות, אושר והצלחה! 🎉`
+                  );
+                  const personalWaUrl = waNumber
+                    ? `https://wa.me/${waNumber}?text=${personalMsg}`
+                    : null;
+
+                  return (
+                    <div
+                      key={employee.id}
+                      onClick={() => openProfile(employee.id)}
+                      className={cn(
+                        "w-full flex items-center justify-between gap-3 p-3 sm:p-3.5 rounded-2xl border transition-all cursor-pointer group relative overflow-hidden",
+                        isToday
+                          ? "bg-primary/[0.06] dark:bg-primary/[0.08] border-primary/30 ring-1 ring-primary/20 shadow-xs hover:border-primary/50"
+                          : "bg-background/50 dark:bg-card/40 border-border/50 hover:border-border hover:bg-muted/40 hover:shadow-2xs"
+                      )}
+                    >
+                      {/* Right side (RTL): Avatar & Employee Details */}
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="relative shrink-0">
+                          <div
+                            className={cn(
+                              "w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-xs sm:text-sm font-black transition-all group-hover:scale-105 shadow-2xs",
+                              isToday
+                                ? "bg-primary text-primary-foreground shadow-primary/25"
+                                : "bg-primary/10 text-primary border border-primary/20"
+                            )}
+                          >
+                            {initials}
+                          </div>
+                          {isToday && (
+                            <span className="absolute -top-1 -right-1 text-xs select-none">
+                              🎂
+                            </span>
                           )}
-                        >
-                          {/* Decorative Background */}
-                          <div className={cn(
-                            "absolute -right-4 -bottom-4 opacity-[0.03] transition-transform duration-700 group-hover/mini:scale-110 group-hover/mini:-rotate-12",
-                            isToday ? "text-primary" : "text-muted-foreground"
-                          )}>
-                            <Gift className="w-24 h-24 sm:w-32 sm:h-32" />
-                          </div>
+                        </div>
 
-                          {/* Avatar */}
-                          <div className="relative mb-3 sm:mb-6">
-                            <div
-                              className={cn(
-                                "w-12 h-12 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-sm sm:text-2xl font-black transition-all duration-500 group-hover/mini:scale-110 group-hover/mini:rotate-3",
-                                isToday
-                                  ? "bg-primary text-white shadow-2xl shadow-primary/40 ring-4 ring-primary/20"
-                                  : "bg-primary/10 text-primary group-hover/mini:bg-primary/20"
-                              )}
-                            >
-                              {initials}
-                            </div>
-                          </div>
-
-                          {/* Info */}
-                          <div className="flex flex-col gap-1 sm:gap-2 w-full relative z-10">
-                            <p className={cn(
-                              "text-[12px] sm:text-[18px] font-black leading-tight px-1 text-center line-clamp-2 w-full",
-                              isToday ? "text-primary" : "text-foreground group-hover/mini:text-primary transition-colors"
-                            )}>
-                              {employee.first_name?.split(" ")[0]} {employee.last_name}
-                            </p>
-                            <div className="flex items-center justify-center gap-1.5 opacity-60">
-                              <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                              <p className="text-[10px] sm:text-[13px] font-bold uppercase tracking-widest">
-                                {dateLabel}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          {/* View Profile Indicator (Desktop only) */}
-                          <div className="mt-4 opacity-0 group-hover/mini:opacity-100 transition-all translate-y-2 group-hover/mini:translate-y-0 hidden sm:block">
-                            <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-tighter">
-                               פרופיל
-                            </div>
+                        <div className="min-w-0 flex-1 text-right">
+                          <p className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                            {employee.first_name} {employee.last_name}
+                          </p>
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                            <Calendar className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />
+                            <span className="truncate font-medium">
+                              {employee.day} ב{MONTH_LABELS[employee.month - 1]}
+                              {!isToday && !isTomorrow && ` • ${dayOfWeek}`}
+                            </span>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
+                      </div>
+
+                      {/* Left side (RTL): Status Badge & Direct Wish Button */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {isToday ? (
+                          <Badge className="bg-primary hover:bg-primary text-primary-foreground font-black text-[11px] px-2.5 py-0.5 shadow-2xs">
+                            היום 🎉
+                          </Badge>
+                        ) : isTomorrow ? (
+                          <Badge
+                            variant="outline"
+                            className="text-[11px] px-2 py-0.5 font-bold border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10"
+                          >
+                            מחר
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="secondary"
+                            className="text-[10.5px] px-2 py-0.5 font-bold text-muted-foreground border-0 bg-muted/70"
+                          >
+                            {dayOfWeek}
+                          </Badge>
+                        )}
+
+                        {personalWaUrl && (
+                          <a
+                            href={personalWaUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            title={`שלח ברכת יום הולדת בוואטסאפ ל${employee.first_name}`}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center border border-emerald-500/20 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white transition-colors cursor-pointer"
+                          >
+                            <Gift className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 

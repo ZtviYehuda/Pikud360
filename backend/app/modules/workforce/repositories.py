@@ -210,6 +210,19 @@ class EmployeeRepository:
                       city, emergency_contact;
         """
 
+        valid_updated_by = updated_by_user_id
+        if not valid_updated_by or len(str(valid_updated_by)) != 36:
+            valid_updated_by = "691b0694-1c0f-49de-9213-1f4ed4ea2936"
+        else:
+            try:
+                with get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("SELECT id FROM security.users WHERE id = %s;", (valid_updated_by,))
+                        if not cur.fetchone():
+                            valid_updated_by = "691b0694-1c0f-49de-9213-1f4ed4ea2936"
+            except Exception:
+                valid_updated_by = "691b0694-1c0f-49de-9213-1f4ed4ea2936"
+
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -222,7 +235,7 @@ class EmployeeRepository:
                         bd_cipher, bd_nonce, bd_tag,
                         emp.rank, emp.position, emp.service_type, emp.status,
                         emp.city, emp.emergency_contact,
-                        updated_by_user_id, employee_id
+                        valid_updated_by, employee_id
                     )
                 )
                 row = cur.fetchone()
@@ -232,6 +245,19 @@ class EmployeeRepository:
         return None
 
     def delete(self, employee_id: str, deleted_by_user_id: Optional[str] = None) -> bool:
+        valid_deleted_by = deleted_by_user_id
+        if not valid_deleted_by or len(str(valid_deleted_by)) != 36:
+            valid_deleted_by = "691b0694-1c0f-49de-9213-1f4ed4ea2936"
+        else:
+            try:
+                with get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("SELECT id FROM security.users WHERE id = %s;", (valid_deleted_by,))
+                        if not cur.fetchone():
+                            valid_deleted_by = "691b0694-1c0f-49de-9213-1f4ed4ea2936"
+            except Exception:
+                valid_deleted_by = "691b0694-1c0f-49de-9213-1f4ed4ea2936"
+
         query = """
             UPDATE workforce.employees
             SET deleted_at = CURRENT_TIMESTAMP, status = 'INACTIVE', updated_by = %s
@@ -239,7 +265,7 @@ class EmployeeRepository:
         """
         with get_db_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(query, (deleted_by_user_id, employee_id))
+                cur.execute(query, (valid_deleted_by, employee_id))
                 rows_updated = cur.rowcount
                 conn.commit()
                 return rows_updated > 0

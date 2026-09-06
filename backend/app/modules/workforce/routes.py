@@ -4,7 +4,9 @@ from pydantic import ValidationError
 from datetime import datetime, timedelta, date
 import logging
 import json
+import re
 
+from app.database.connection import get_db_connection
 from app.modules.workforce.repositories import EmployeeRepository, EmployeeHistoryRepository
 from app.modules.security.repositories import AuditLogRepository, UserPreferenceRepository
 from app.modules.workforce.services import WorkforceService
@@ -70,6 +72,23 @@ def _enrich_employee_serialized(serialized: dict) -> dict:
                     serialized["city"] = prefs.get("city")
     except Exception as e:
         logger.warning(f"Error enriching employee {serialized.get('id')}: {e}")
+
+    # Enrich hierarchy from org_unit_id
+    org_unit = serialized.get("org_unit_id")
+    if org_unit:
+        try:
+            org_map = _get_org_hierarchy_map()
+            h = org_map.get(str(org_unit))
+            if h:
+                serialized["department_id"] = h.get("department_id")
+                serialized["department_name"] = h.get("department_name")
+                serialized["section_id"] = h.get("section_id")
+                serialized["section_name"] = h.get("section_name")
+                serialized["team_id"] = h.get("team_id")
+                serialized["team_name"] = h.get("team_name")
+        except Exception as err:
+            logger.warning(f"Error resolving unit hierarchy for employee {serialized.get('id')}: {err}")
+
     return serialized
 
 
@@ -147,6 +166,25 @@ def _enrich_employees_batch(serialized_list: list) -> list:
                         s["city"] = prefs.get("city")
     except Exception as e:
         logger.warning(f"Error in batch enriching employees: {e}")
+
+    # Enrich hierarchy from org_unit_id for all employees in batch
+    try:
+        org_map = _get_org_hierarchy_map()
+        for s in serialized_list:
+            if not isinstance(s, dict):
+                continue
+            org_unit = s.get("org_unit_id")
+            if org_unit:
+                h = org_map.get(str(org_unit))
+                if h:
+                    s["department_id"] = h.get("department_id")
+                    s["department_name"] = h.get("department_name")
+                    s["section_id"] = h.get("section_id")
+                    s["section_name"] = h.get("section_name")
+                    s["team_id"] = h.get("team_id")
+                    s["team_name"] = h.get("team_name")
+    except Exception as err:
+        logger.warning(f"Error in batch resolving unit hierarchy: {err}")
         
     return serialized_list
 
@@ -771,16 +809,77 @@ def _get_org_hierarchy_map():
     mapping = {}
     for d in FULL_ORGANIZATION_STRUCTURE:
         d_id = str(d["id"])
-        mapping[d_id] = {"dept_id": d_id, "sect_id": None, "team_id": None}
-        mapping[f"00000000-0000-0000-0000-{int(d_id):012d}"] = {"dept_id": d_id, "sect_id": None, "team_id": None}
+        d_name = d["name"]
+        d_code = d.get("code")
+        d_info = {
+            "dept_id": d_id,
+            "department_id": int(d_id),
+            "department_name": d_name,
+            "sect_id": None,
+            "section_id": None,
+            "section_name": None,
+            "team_id": None,
+            "team_name": None,
+        }
+        mapping[d_id] = d_info
+        mapping[f"00000000-0000-0000-0000-{int(d_id):012d}"] = d_info
+        if d_code:
+            mapping[d_code] = d_info
+
         for s in d.get("sections", []):
             s_id = str(s["id"])
-            mapping[s_id] = {"dept_id": d_id, "sect_id": s_id, "team_id": None}
-            mapping[f"00000000-0000-0000-0000-{int(s_id):012d}"] = {"dept_id": d_id, "sect_id": s_id, "team_id": None}
+            s_name = s["name"]
+            s_code = s.get("code")
+            s_info = {
+                "dept_id": d_id,
+                "department_id": int(d_id),
+                "department_name": d_name,
+                "sect_id": s_id,
+                "section_id": int(s_id),
+                "section_name": s_name,
+                "team_id": None,
+                "team_name": None,
+            }
+            mapping[s_id] = s_info
+            mapping[f"00000000-0000-0000-0000-{int(s_id):012d}"] = s_info
+            if s_code:
+                mapping[s_code] = s_info
+
             for t in s.get("teams", []):
                 t_id = str(t["id"])
-                mapping[t_id] = {"dept_id": d_id, "sect_id": s_id, "team_id": t_id}
-                mapping[f"00000000-0000-0000-0000-{int(t_id):012d}"] = {"dept_id": d_id, "sect_id": s_id, "team_id": t_id}
+                t_name = t["name"]
+                t_code = t.get("code")
+                t_info = {
+                    "dept_id": d_id,
+                    "department_id": int(d_id),
+                    "department_name": d_name,
+                    "sect_id": s_id,
+                    "section_id": int(s_id),
+                    "section_name": s_name,
+                    "team_id": int(t_id),
+                    "team_name": t_name,
+                }
+                mapping[t_id] = t_info
+                mapping[f"00000000-0000-0000-0000-{int(t_id):012d}"] = t_info
+                if t_code:
+                    mapping[t_code] = t_info
+
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT id, name, code FROM core.organization_units WHERE deleted_at IS NULL;")
+                for r in cur.fetchall():
+                    u_id, u_name, u_code = str(r[0]), r[1], r[2] or ""
+                    if u_id not in mapping:
+                        if u_code in mapping:
+                            mapping[u_id] = mapping[u_code]
+                        else:
+                            m = re.search(r"(\d+)$", u_code)
+                            if m and m.group(1) in mapping:
+                                mapping[u_id] = mapping[m.group(1)]
+    except Exception as e:
+        logger.warning(f"Failed to map core.organization_units: {e}")
+
     return mapping
 
 

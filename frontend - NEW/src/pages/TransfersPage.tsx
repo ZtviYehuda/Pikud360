@@ -427,9 +427,9 @@ export default function TransfersPage() {
   const canManage = user?.is_admin || user?.is_commander;
 
   return (
-    <div className="flex flex-col space-y-4 sm:space-y-6 pb-8" dir="rtl">
+    <div className="flex flex-col space-y-3 sm:space-y-6 pt-2 sm:pt-0 pb-8" dir="rtl">
       {/* Page Header */}
-      <div className="pt-2 sm:pt-4 pb-1 px-1 sm:px-2 shrink-0">
+      <div className="hidden sm:block pt-2 sm:pt-4 pb-1 px-1 sm:px-2 shrink-0">
         <PageHeader
           icon={ArrowLeftRight}
           title="בקשות העברה ושיבוץ"
@@ -437,197 +437,175 @@ export default function TransfersPage() {
         />
       </div>
 
-      {/* Main Navigation Tabs & Action Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card border border-border/70 rounded-2xl p-2 shadow-2xs">
-        {/* Segmented Control Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-muted/60 dark:bg-muted/40 rounded-xl overflow-x-auto no-scrollbar">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("history");
-              setHistoryFilter(null);
-            }}
-            className={cn(
-              "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer",
-              activeTab === "history"
-                ? "bg-background text-foreground shadow-2xs"
-                : "text-muted-foreground hover:text-foreground hover:bg-background/50",
-            )}
-          >
-            <History className="w-4 h-4" />
-            <span>כלל הבקשות</span>
-            <span className="px-1.5 py-0.2 rounded-md bg-muted text-[10px] font-black text-muted-foreground">
-              {stats.approved + stats.rejected + stats.pending}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("pending");
-              setHistoryFilter(null);
-            }}
-            className={cn(
-              "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer",
-              activeTab === "pending"
-                ? "bg-background text-foreground shadow-2xs"
-                : "text-muted-foreground hover:text-foreground hover:bg-background/50",
-            )}
-          >
-            <Clock className="w-4 h-4 text-amber-500" />
-            <span>ממתינות לאישור</span>
-            {stats.pending > 0 && (
-              <span className="px-1.5 py-0.2 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] font-black">
-                {stats.pending}
-              </span>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("new")}
-            className={cn(
-              "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer",
-              activeTab === "new"
-                ? "bg-primary text-primary-foreground shadow-2xs"
-                : "text-primary hover:bg-primary/10",
-            )}
-          >
-            <Plus className="w-4 h-4" strokeWidth={2.5} />
-            <span>הגשת בקשת ניוד</span>
-          </button>
-        </div>
-
+      {/* Main Search & Action Bar */}
+      <div className="flex items-center justify-between gap-2.5 sm:gap-3 bg-card border border-border/70 rounded-2xl p-2 sm:p-2.5 shadow-2xs">
         {/* Search Input when in list mode */}
-        {activeTab !== "new" && (
-          <div className="relative w-full sm:w-64 md:w-80">
-            <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
+        {activeTab !== "new" ? (
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none" />
             <Input
               placeholder="חיפוש לפי שם שוטר או יחידה..."
               value={searchTerm}
-              className="pr-10 h-10 bg-background border-border/60 hover:border-border font-medium text-xs rounded-xl focus:ring-2 focus:ring-primary/20 transition-all text-right w-full"
+              className="pr-10 pl-9 h-10 bg-background border-border/60 hover:border-border font-medium text-xs sm:text-sm rounded-xl focus:ring-2 focus:ring-primary/20 transition-all text-right w-full"
               onChange={(e) => setSearchTerm(e.target.value)}
             />
             {searchTerm && (
               <button
                 type="button"
                 onClick={() => setSearchTerm("")}
-                className="absolute left-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+                className="absolute left-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
+        ) : (
+          <div className="flex items-center gap-2 text-foreground font-bold text-xs sm:text-sm pr-2">
+            <ArrowLeftRight className="w-4 h-4 text-primary shrink-0" />
+            <span>טופס בקשת ניוד ושיבוץ</span>
+          </div>
         )}
+
+        {/* Primary Action Button */}
+        <Button
+          type="button"
+          onClick={() => {
+            if (activeTab === "new") {
+              setActiveTab("history");
+            } else {
+              setActiveTab("new");
+            }
+          }}
+          className={cn(
+            "h-10 px-3.5 sm:px-4 rounded-xl font-bold text-xs sm:text-sm gap-1.5 sm:gap-2 shrink-0 transition-all cursor-pointer shadow-xs whitespace-nowrap",
+            activeTab === "new"
+              ? "bg-muted hover:bg-muted/80 text-foreground border border-border/70"
+              : "bg-primary hover:bg-primary/90 text-primary-foreground",
+          )}
+        >
+          {activeTab === "new" ? (
+            <>
+              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-0.5" />
+              <span>חזרה לרשימה</span>
+            </>
+          ) : (
+            <>
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={2.5} />
+              <span>בקשה חדשה</span>
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Stats Overview Metric Cards */}
-      <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
-        <button
-          type="button"
-          onClick={() => {
-            if (historyFilter === "pending") {
-              setHistoryFilter(null);
-            } else {
-              setActiveTab("history");
-              setHistoryFilter("pending");
-            }
-          }}
-          className={cn(
-            "bg-card rounded-2xl p-3 sm:p-4 border transition-all text-right w-full cursor-pointer flex flex-col justify-between gap-2 active:scale-[0.99] relative overflow-hidden group shadow-2xs",
-            historyFilter === "pending"
-              ? "border-amber-500/80 bg-amber-500/5 ring-2 ring-amber-500/20"
-              : "border-border/70 hover:border-amber-500/40 hover:bg-amber-500/[0.02]",
-          )}
-        >
-          <div className="flex items-center justify-between w-full">
-            <span className="text-[11px] sm:text-xs font-bold text-muted-foreground">
-              בהמתנה לטיפול
-            </span>
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+      {activeTab !== "new" && (
+        <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+          <button
+            type="button"
+            onClick={() => {
+              if (historyFilter === "pending") {
+                setHistoryFilter(null);
+              } else {
+                setActiveTab("history");
+                setHistoryFilter("pending");
+              }
+            }}
+            className={cn(
+              "bg-card rounded-2xl p-2.5 sm:p-4 border transition-all text-right w-full cursor-pointer flex flex-col justify-between gap-1.5 sm:gap-2 active:scale-[0.99] relative overflow-hidden group shadow-2xs",
+              historyFilter === "pending"
+                ? "border-amber-500/80 bg-amber-500/5 ring-2 ring-amber-500/20"
+                : "border-border/70 hover:border-amber-500/40 hover:bg-amber-500/[0.02]",
+            )}
+          >
+            <div className="flex items-center justify-between w-full gap-1 min-w-0">
+              <span className="text-[11px] sm:text-xs font-bold text-muted-foreground truncate">
+                בהמתנה לטיפול
+              </span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </div>
             </div>
-          </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400">
-              {stats.pending}
-            </span>
-            <span className="text-[10px] text-muted-foreground font-medium hidden sm:inline">
-              בקשות
-            </span>
-          </div>
-        </button>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400">
+                {stats.pending}
+              </span>
+              <span className="text-[10px] text-muted-foreground font-medium hidden sm:inline">
+                בקשות
+              </span>
+            </div>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            if (historyFilter === "approved") {
-              setHistoryFilter(null);
-            } else {
-              setActiveTab("history");
-              setHistoryFilter("approved");
-            }
-          }}
-          className={cn(
-            "bg-card rounded-2xl p-3 sm:p-4 border transition-all text-right w-full cursor-pointer flex flex-col justify-between gap-2 active:scale-[0.99] relative overflow-hidden group shadow-2xs",
-            historyFilter === "approved"
-              ? "border-emerald-500/80 bg-emerald-500/5 ring-2 ring-emerald-500/20"
-              : "border-border/70 hover:border-emerald-500/40 hover:bg-emerald-500/[0.02]",
-          )}
-        >
-          <div className="flex items-center justify-between w-full">
-            <span className="text-[11px] sm:text-xs font-bold text-muted-foreground">
-              בקשות שאושרו
-            </span>
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-              <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <button
+            type="button"
+            onClick={() => {
+              if (historyFilter === "approved") {
+                setHistoryFilter(null);
+              } else {
+                setActiveTab("history");
+                setHistoryFilter("approved");
+              }
+            }}
+            className={cn(
+              "bg-card rounded-2xl p-2.5 sm:p-4 border transition-all text-right w-full cursor-pointer flex flex-col justify-between gap-1.5 sm:gap-2 active:scale-[0.99] relative overflow-hidden group shadow-2xs",
+              historyFilter === "approved"
+                ? "border-emerald-500/80 bg-emerald-500/5 ring-2 ring-emerald-500/20"
+                : "border-border/70 hover:border-emerald-500/40 hover:bg-emerald-500/[0.02]",
+            )}
+          >
+            <div className="flex items-center justify-between w-full gap-1 min-w-0">
+              <span className="text-[11px] sm:text-xs font-bold text-muted-foreground truncate">
+                בקשות שאושרו
+              </span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </div>
             </div>
-          </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">
-              {stats.approved}
-            </span>
-            <span className="text-[10px] text-muted-foreground font-medium hidden sm:inline">
-              בוצעו
-            </span>
-          </div>
-        </button>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                {stats.approved}
+              </span>
+              <span className="text-[10px] text-muted-foreground font-medium hidden sm:inline">
+                בוצעו
+              </span>
+            </div>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            if (historyFilter === "rejected") {
-              setHistoryFilter(null);
-            } else {
-              setActiveTab("history");
-              setHistoryFilter("rejected");
-            }
-          }}
-          className={cn(
-            "bg-card rounded-2xl p-3 sm:p-4 border transition-all text-right w-full cursor-pointer flex flex-col justify-between gap-2 active:scale-[0.99] relative overflow-hidden group shadow-2xs",
-            historyFilter === "rejected"
-              ? "border-rose-500/80 bg-rose-500/5 ring-2 ring-rose-500/20"
-              : "border-border/70 hover:border-rose-500/40 hover:bg-rose-500/[0.02]",
-          )}
-        >
-          <div className="flex items-center justify-between w-full">
-            <span className="text-[11px] sm:text-xs font-bold text-muted-foreground">
-              בקשות שנדחו
-            </span>
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
-              <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <button
+            type="button"
+            onClick={() => {
+              if (historyFilter === "rejected") {
+                setHistoryFilter(null);
+              } else {
+                setActiveTab("history");
+                setHistoryFilter("rejected");
+              }
+            }}
+            className={cn(
+              "bg-card rounded-2xl p-2.5 sm:p-4 border transition-all text-right w-full cursor-pointer flex flex-col justify-between gap-1.5 sm:gap-2 active:scale-[0.99] relative overflow-hidden group shadow-2xs",
+              historyFilter === "rejected"
+                ? "border-rose-500/80 bg-rose-500/5 ring-2 ring-rose-500/20"
+                : "border-border/70 hover:border-rose-500/40 hover:bg-rose-500/[0.02]",
+            )}
+          >
+            <div className="flex items-center justify-between w-full gap-1 min-w-0">
+              <span className="text-[11px] sm:text-xs font-bold text-muted-foreground truncate">
+                בקשות שנדחו
+              </span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </div>
             </div>
-          </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400">
-              {stats.rejected}
-            </span>
-            <span className="text-[10px] text-muted-foreground font-medium hidden sm:inline">
-              נדחו
-            </span>
-          </div>
-        </button>
-      </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400">
+                {stats.rejected}
+              </span>
+              <span className="text-[10px] text-muted-foreground font-medium hidden sm:inline">
+                נדחו
+              </span>
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* Active Filter Pill Banner */}
       {activeTab !== "new" && historyFilter !== null && (

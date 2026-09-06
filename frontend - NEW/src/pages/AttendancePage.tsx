@@ -663,7 +663,7 @@ export default function AttendancePage() {
       dir="rtl"
     >
       {/* Top Header & Actions Section */}
-      <div className="pt-6 pb-4 px-4 sm:px-6 shrink-0 transition-all">
+      <div className="pt-2 sm:pt-6 pb-2 sm:pb-4 px-3 sm:px-6 shrink-0 transition-all">
         {/* Desktop Page Header Section */}
         <div className="hidden sm:block">
           <PageHeader

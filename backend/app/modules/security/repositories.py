@@ -483,6 +483,16 @@ class AuditLogRepository:
             log_id = to_valid_uuid(log.get("id")) or str(py_uuid.uuid4())
             tenant_id = to_valid_uuid(log.get("tenant_id")) or "00000000-0000-0000-0000-000000000001"
             user_id = to_valid_uuid(log.get("user_id"))
+            if user_id:
+                try:
+                    with get_db_connection() as conn_check:
+                        with conn_check.cursor() as cur_check:
+                            cur_check.execute("SELECT 1 FROM security.users WHERE id = %s", (user_id,))
+                            if not cur_check.fetchone():
+                                user_id = None
+                except Exception:
+                    user_id = None
+
             request_id = to_valid_uuid(log.get("request_id")) or str(py_uuid.uuid4())
             record_id = to_valid_uuid(log.get("record_id")) or user_id or log_id
 

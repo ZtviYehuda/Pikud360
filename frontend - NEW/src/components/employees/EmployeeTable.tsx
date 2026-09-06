@@ -69,6 +69,19 @@ export const EmployeeTable = ({
   }, [searchParams, setSearchParams]);
 
   const { user } = useAuthContext();
+  const isSupportAdmin = Boolean(
+    user?.is_admin &&
+    !user?.is_impersonated &&
+    !localStorage.getItem("admin_token") &&
+    (
+      user?.username === "admin" ||
+      user?.email === "admin@matzevet.gov.il" ||
+      user?.role_name === "מנהל מערכת ראשי" ||
+      (user?.first_name === "צוות" && user?.last_name === "תמיכה") ||
+      user?.team_name === "צוות תמיכה" ||
+      (!user?.commands_department_id && !user?.commands_section_id)
+    )
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
@@ -266,6 +279,7 @@ export const EmployeeTable = ({
   };
 
   const handleImpersonate = async (targetId: number, name: string) => {
+    if (!isSupportAdmin) return;
     if (!window.confirm(`האם אתה בטוח שברצונך להתחבר כ-${name}?`)) return;
 
     try {
@@ -605,11 +619,7 @@ export const EmployeeTable = ({
 
                     <TableCell className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
-                        {((user?.is_admin && emp.id !== user.id) ||
-                          (user?.is_commander &&
-                            !user?.is_admin &&
-                            !user?.is_temp_commander &&
-                            user?.active_delegate_id === emp.id)) && (
+                        {isSupportAdmin && emp.id !== user?.id && (
                           <Button
                             variant="ghost"
                             size="sm"

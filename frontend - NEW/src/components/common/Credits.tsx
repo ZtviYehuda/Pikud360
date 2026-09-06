@@ -1,22 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 export const Credits: React.FC = () => {
   const [isShifted, setIsShifted] = useState(false);
-
-  // Auto-detect if there's an open modal, dialog, bottom sheet, or active toast to dynamically adjust position
-  useEffect(() => {
-    const checkObstructions = () => {
-      const hasModal = !!document.querySelector('[data-slot="dialog-content"], [role="dialog"], [data-state="open"]');
-      setIsShifted(hasModal);
-    };
-
-    checkObstructions();
-    const observer = new MutationObserver(checkObstructions);
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true });
-
-    return () => observer.disconnect();
-  }, []);
 
   return (
     <div

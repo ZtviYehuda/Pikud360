@@ -656,7 +656,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Content Area */}
-        <div className="min-w-0 mt-8 pb-24 lg:pb-8">
+        <div className="min-w-0 mt-3 sm:mt-8 pb-24 lg:pb-8">
           {activeTab === "profile" && !user?.is_temp_commander && (
             <ProfileSettings
               user={user}

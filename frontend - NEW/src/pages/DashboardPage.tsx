@@ -785,7 +785,7 @@ export default function DashboardPage() {
       className="w-full relative min-h-screen pb-10"
       dir="rtl"
     >
-      <div className="relative z-10 space-y-4 pt-6 pb-4 px-4 sm:px-6 max-w-full mx-auto transition-all">
+      <div className="relative z-10 space-y-3 sm:space-y-4 pt-2 sm:pt-6 pb-2 sm:pb-4 px-2 sm:px-6 max-w-full mx-auto transition-all">
 
         <div className="hidden sm:block">
           <PageHeader
