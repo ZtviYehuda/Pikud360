@@ -267,7 +267,7 @@ def get_all_feedback():
                     FROM support.feedback_reports f
                     LEFT JOIN security.users u ON u.id = f.user_id
                     LEFT JOIN workforce.employees e ON e.user_id = u.id OR e.employee_number::text = u.username
-                    LEFT JOIN core.organization_units ou ON ou.id = e.department_id
+                    LEFT JOIN core.organization_units ou ON ou.id = e.org_unit_id
                     WHERE f.deleted_at IS NULL
                     ORDER BY f.created_at DESC;
                 """)

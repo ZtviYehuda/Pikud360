@@ -24,6 +24,7 @@ import {
   Filter,
   Check,
   CheckCircle2,
+  ChevronDown,
 } from "lucide-react";
 import { useEmployees } from "@/hooks/useEmployees";
 import type { Employee } from "@/types/employee.types";
@@ -95,6 +96,7 @@ export const BulkStatusUpdateModal: React.FC<BulkStatusUpdateModalProps> = ({
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [batchStatusId, setBatchStatusId] = useState<string>("");
   const [batchNote, setBatchNote] = useState<string>("");
+  const [expandedEmployeeId, setExpandedEmployeeId] = useState<number | null>(null);
 
   // Local state for temporary changes before submission
   const [bulkUpdates, setBulkUpdates] = useState<Record<number, UpdateState>>(
@@ -657,19 +659,7 @@ export const BulkStatusUpdateModal: React.FC<BulkStatusUpdateModalProps> = ({
                     </div>
                   </PopoverContent>
                 </Popover>
-
-                <button
-                  onClick={() => setShowSelectedOnly(!showSelectedOnly)}
-                  className={cn(
-                    "px-3 h-10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shrink-0",
-                    showSelectedOnly
-                      ? "bg-primary text-primary-foreground  "
-                      : "bg-muted/30 text-muted-foreground border border-border/40 hover:bg-muted/50",
-                  )}
-                >
-                  <Filter className="w-3.5 h-3.5" />
-                  {showSelectedOnly ? "נבחרים" : "הכל"}
-                </button>
+                    
               </div>
             </div>
           </div>
@@ -1003,12 +993,11 @@ export const BulkStatusUpdateModal: React.FC<BulkStatusUpdateModalProps> = ({
                   </Table>
                 </div>
 
-                {/* Mobile Card List View - Compact & Clean - FIXED LAYOUT */}
-                {/* Mobile Card List View - High-End Redesign */}
-                <div className="lg:hidden flex flex-col p-4 gap-4 pb-32">
+                {/* Mobile Card List View */}
+                <div className="lg:hidden flex flex-col p-3 sm:p-4 gap-2.5 pb-32">
                   <div className="flex items-center justify-between px-1">
                     <div
-                      className="flex items-center gap-3 py-2 px-4 rounded-2xl bg-primary/[0.04] border border-primary/20 active:scale-95 transition-all cursor-pointer "
+                      className="flex items-center gap-2.5 py-1.5 px-3 rounded-xl bg-primary/[0.06] border border-primary/20 active:scale-95 transition-all cursor-pointer select-none"
                       onClick={() =>
                         handleSelectAll(
                           selectedIds.length !== filteredList.length,
@@ -1021,15 +1010,15 @@ export const BulkStatusUpdateModal: React.FC<BulkStatusUpdateModalProps> = ({
                           selectedIds.length === filteredList.length
                         }
                         onCheckedChange={(c) => handleSelectAll(!!c)}
-                        className="w-5 h-5 rounded-lg"
+                        className="w-4 h-4 rounded-md"
                       />
-                      <span className="text-xs font-black text-primary uppercase tracking-widest">
+                      <span className="text-xs font-bold text-primary">
                         בחר הכל ({filteredList.length})
                       </span>
                     </div>
 
-                    <span className="text-[10px] font-black text-muted-foreground/30 uppercase tracking-[0.2em] pr-2">
-                      רשימת שוטרים
+                    <span className="text-xs text-muted-foreground font-medium">
+                      {selectedIds.length > 0 ? `${selectedIds.length} נבחרו` : `רשימת שוטרים`}
                     </span>
                   </div>
 
@@ -1040,209 +1029,217 @@ export const BulkStatusUpdateModal: React.FC<BulkStatusUpdateModalProps> = ({
 
                     const statusColor = current.color || "#e2e8f0";
                     const hasStatus = current.status_id !== 0;
+                    const isExpanded = expandedEmployeeId === emp.id;
 
                     return (
                       <div
                         key={emp.id}
                         className={cn(
-                          "group rounded-[2rem] border transition-all relative bg-background overflow-hidden",
+                          "rounded-2xl border transition-all bg-card overflow-hidden shadow-xs",
                           isSelected
-                            ? "border-primary/40   ring-1 ring-primary/20 -translate-y-1"
-                            : "border-border/40 ",
+                            ? "border-primary/50 bg-primary/[0.03]"
+                            : "border-border/60 hover:border-border",
                         )}
                       >
-                        {/* Compact Header */}
-                        <div className="p-4 flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {/* Compact Header Row */}
+                        <div
+                          onClick={() => handleSelectOne(emp.id, !isSelected)}
+                          className="p-3 flex items-center justify-between gap-2.5 cursor-pointer select-none"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={(checked) => handleSelectOne(emp.id, !!checked)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-5 h-5 rounded-md shrink-0"
+                            />
                             <div
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleSelectOne(emp.id, !isSelected);
-                              }}
                               className={cn(
-                                "w-11 h-11 rounded-2xl flex items-center justify-center font-black text-xs transition-all cursor-pointer hover:scale-110 active:scale-95 shadow-sm",
+                                "w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 transition-colors",
                                 isSelected
-                                  ? "bg-primary text-primary-foreground rotate-3 shadow-md shadow-primary/20"
-                                  : "bg-muted text-muted-foreground hover:bg-muted/80",
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted text-muted-foreground",
                               )}
                             >
-                              {isSelected ? (
-                                <CheckCircle2 className="w-4 h-4" />
-                              ) : (
-                                emp.is_admin ? "💬" : `${emp.first_name[0]}${emp.last_name[0]}`
-                              )}
+                              {emp.is_admin ? "💬" : `${emp.first_name[0]}${emp.last_name[0]}`}
                             </div>
                             <div className="flex flex-col min-w-0">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/employees/${emp.id}`);
-                                }}
-                                className={cn(
-                                  "font-black text-[15px] leading-tight truncate px-0.5 hover:underline text-right hover:text-primary",
-                                  isSelected
-                                    ? "text-primary"
-                                    : "text-foreground",
-                                )}
-                              >
-                                {emp.dominant_name
-                                  ? `${emp.dominant_name} ${emp.last_name}`
-                                  : `${emp.first_name} ${emp.last_name}`}
-                              </button>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                {(emp.is_commander || emp.is_admin) && (
-                                  <span className="text-[10px] font-bold text-muted-foreground/60 tracking-tighter">
-                                    {emp.username}
-                                  </span>
-                                )}
-                                {hasStatus && (
-                                  <div
-                                    className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest"
-                                    style={{
-                                      backgroundColor: `${statusColor}15`,
-                                      color: statusColor,
-                                      border: `1px solid ${statusColor}30`,
-                                    }}
-                                  >
-                                    {current.status_name}
-                                  </div>
+                              <div className="flex items-center gap-1.5">
+                                <span
+                                  className={cn(
+                                    "font-bold text-sm leading-tight truncate",
+                                    isSelected ? "text-primary" : "text-foreground",
+                                  )}
+                                >
+                                  {emp.dominant_name
+                                    ? `${emp.dominant_name} ${emp.last_name}`
+                                    : `${emp.first_name} ${emp.last_name}`}
+                                </span>
+                                {current.isChanged && (
+                                  <span
+                                    className="w-2 h-2 rounded-full bg-primary shrink-0 animate-pulse"
+                                    title="עודכן"
+                                  />
                                 )}
                               </div>
+                              <span className="text-[11px] text-muted-foreground truncate leading-tight mt-0.5">
+                                {[emp.team_name || emp.section_name || emp.department_name, emp.service_type_name]
+                                  .filter(Boolean)
+                                  .join(" • ")}
+                              </span>
                             </div>
                           </div>
 
-
-                        </div>
-
-                        {/* Editor Content */}
-                        <div
-                          className={cn(
-                            "px-4 pb-4 space-y-3 transition-all",
-                            isSelected
-                              ? "bg-primary/5 border-t border-primary/10 pt-4"
-                              : "bg-muted/[0.03] pt-0 border-none",
-                          )}
-                        >
-                          <div className="relative">
-                            <Select
-                              value={
-                                current.status_id !== 0
-                                  ? current.status_id.toString()
-                                  : undefined
-                              }
-                              onValueChange={(val) =>
-                                handleUpdateIndividual(emp.id, val)
-                              }
-                            >
-                              <SelectTrigger className="h-12 w-full bg-background border-border/60 rounded-2xl text-xs font-black  text-right">
-                                <SelectValue placeholder="עדכן סטטוס..." />
-                              </SelectTrigger>
-                              <SelectContent dir="rtl" className="rounded-2xl ">
-                                {statusTypes
-                                  .filter((t) => {
-                                    if (isWeekend)
-                                      return (
-                                        t.name.includes("תגבור") ||
-                                        t.name.includes("אחר")
-                                      );
-                                    return true;
-                                  })
-                                  .map((t) => (
-                                    <SelectItem
-                                      key={t.id}
-                                      value={t.id.toString()}
-                                      className="text-xs font-bold py-3"
-                                    >
-                                      <div className="flex items-center gap-3">
-                                        <div
-                                          className="w-2.5 h-2.5 rounded-full"
-                                          style={{ backgroundColor: t.color }}
-                                        />
-                                        {t.name}
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                              <label className="text-[9px] font-black text-muted-foreground/60 uppercase mr-1">
-                                התחלה
-                              </label>
-                              <input
-                                type="date"
-                                value={current.start_date || ""}
-                                onChange={(e) =>
-                                  handleDateChange(
-                                    emp.id,
-                                    "start_date",
-                                    e.target.value,
-                                  )
-                                }
-                                className="w-full h-10 bg-background border border-border/40 rounded-xl px-3 text-[11px] font-black outline-none focus:border-primary/50 dark:bg-white/5 dark:border-white/10 dark:text-white"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-[9px] font-black text-muted-foreground/60 uppercase mr-1">
-                                סיום
-                              </label>
-                              <input
-                                type="date"
-                                value={current.end_date || ""}
-                                onChange={(e) =>
-                                  handleDateChange(
-                                    emp.id,
-                                    "end_date",
-                                    e.target.value,
-                                  )
-                                }
-                                className="w-full h-10 bg-background border border-border/40 rounded-xl px-3 text-[11px] font-black outline-none focus:border-primary/50 placeholder:text-muted-foreground/30 dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder:text-white/30"
-                              />
-                            </div>
-                          </div>
-
-                          {current.status_name === "אחר" && (
-                            <div className="space-y-1 mt-3">
-                              <label className="text-[9px] font-black text-muted-foreground/60 uppercase mr-1">
-                                הערה
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="הזן הערה (חובה)"
-                                value={current.note || ""}
-                                onChange={(e) =>
-                                  handleNoteChange(emp.id, e.target.value)
-                                }
-                                className="w-full h-10 bg-background border border-border/40 rounded-xl px-3 text-[11px] font-black outline-none focus:border-primary/50 dark:bg-white/5 dark:border-white/10 dark:text-white"
-                              />
-                            </div>
-                          )}
-
-                          {current.isChanged && (
-                            <button
-                              onClick={() => handleRevert(emp.id)}
-                              className="w-full h-10 flex items-center justify-center gap-2 rounded-xl bg-destructive/[0.05] text-destructive text-[10px] font-black uppercase tracking-widest border border-destructive/10 active:scale-95 transition-all mt-2"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="3"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
+                          <div className="flex items-center gap-2 shrink-0">
+                            {hasStatus && (
+                              <span
+                                className="px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0 tracking-tight"
+                                style={{
+                                  backgroundColor: `${statusColor}18`,
+                                  color: statusColor,
+                                  border: `1px solid ${statusColor}35`,
+                                }}
                               >
-                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74-2.74L3 12" />
-                                <path d="M3 3v9h9" />
-                              </svg>
-                              אפס שינויים
+                                {current.status_name}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setExpandedEmployeeId(isExpanded ? null : emp.id);
+                              }}
+                              className={cn(
+                                "w-8 h-8 rounded-lg flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground",
+                                isExpanded ? "bg-muted text-foreground" : "hover:bg-muted/60",
+                              )}
+                              title={isExpanded ? "סגור עריכה פרטנית" : "ערוך פרטנית"}
+                            >
+                              <ChevronDown
+                                className={cn(
+                                  "w-4 h-4 transition-transform duration-200",
+                                  isExpanded && "rotate-180",
+                                )}
+                              />
                             </button>
-                          )}
+                          </div>
                         </div>
+
+                        {/* Editor Content - ONLY WHEN EXPANDED */}
+                        {isExpanded && (
+                          <div className="px-3.5 pb-3.5 pt-2 border-t border-border/40 bg-muted/20 space-y-3">
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold text-muted-foreground mr-1">
+                                סטטוס פרטני
+                              </label>
+                              <Select
+                                value={
+                                  current.status_id !== 0
+                                    ? current.status_id.toString()
+                                    : undefined
+                                }
+                                onValueChange={(val) =>
+                                  handleUpdateIndividual(emp.id, val)
+                                }
+                              >
+                                <SelectTrigger className="h-10 w-full bg-background border-border/60 rounded-xl text-xs font-bold text-right">
+                                  <SelectValue placeholder="עדכן סטטוס..." />
+                                </SelectTrigger>
+                                <SelectContent dir="rtl" className="rounded-xl">
+                                  {statusTypes
+                                    .filter((t) => {
+                                      if (isWeekend)
+                                        return (
+                                          t.name.includes("תגבור") ||
+                                          t.name.includes("אחר")
+                                        );
+                                      return true;
+                                    })
+                                    .map((t) => (
+                                      <SelectItem
+                                        key={t.id}
+                                        value={t.id.toString()}
+                                        className="text-xs font-bold py-2"
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          <div
+                                            className="w-2.5 h-2.5 rounded-full shrink-0"
+                                            style={{ backgroundColor: t.color }}
+                                          />
+                                          {t.name}
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2.5">
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-muted-foreground mr-1">
+                                  התחלה
+                                </label>
+                                <input
+                                  type="date"
+                                  value={current.start_date || ""}
+                                  onChange={(e) =>
+                                    handleDateChange(
+                                      emp.id,
+                                      "start_date",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="w-full h-9 bg-background border border-border/60 rounded-xl px-2.5 text-xs font-bold outline-none focus:border-primary"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-muted-foreground mr-1">
+                                  סיום
+                                </label>
+                                <input
+                                  type="date"
+                                  value={current.end_date || ""}
+                                  onChange={(e) =>
+                                    handleDateChange(
+                                      emp.id,
+                                      "end_date",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="w-full h-9 bg-background border border-border/60 rounded-xl px-2.5 text-xs font-bold outline-none focus:border-primary"
+                                />
+                              </div>
+                            </div>
+
+                            {current.status_name === "אחר" && (
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-muted-foreground mr-1">
+                                  הערה (חובה)
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="הזן הערה"
+                                  value={current.note || ""}
+                                  onChange={(e) =>
+                                    handleNoteChange(emp.id, e.target.value)
+                                  }
+                                  className="w-full h-9 bg-background border border-border/60 rounded-xl px-2.5 text-xs font-bold outline-none focus:border-primary"
+                                />
+                              </div>
+                            )}
+
+                            {current.isChanged && (
+                              <button
+                                type="button"
+                                onClick={() => handleRevert(emp.id)}
+                                className="w-full h-8 flex items-center justify-center gap-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-bold hover:bg-destructive/15 transition-colors"
+                              >
+                                <ArrowLeft className="w-3.5 h-3.5 rotate-45" />
+                                <span>אפס שינויים לשוטר זה</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })}

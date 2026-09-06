@@ -170,34 +170,34 @@ export function ExportReportDialog({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className="sm:max-w-[650px] bg-[#F8FAFC] dark:bg-slate-950"
+          className="sm:max-w-[580px] p-0 border border-border/70 bg-card rounded-2xl sm:rounded-3xl shadow-xl flex flex-col overflow-hidden !gap-0"
           dir="rtl"
         >
           <DialogDragHandle />
           {/* Header - Standard Enterprise */}
-          <div className="px-6 py-5 border-b border-border/40 bg-muted/20 shrink-0">
+          <div className="px-5 sm:px-6 py-4 sm:py-5 border-b border-border/50 bg-muted/10 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
                 <FileSpreadsheet className="w-5 h-5 text-primary" />
               </div>
               <div className="space-y-0.5 text-right">
                 <DialogTitle className="text-base sm:text-lg font-bold text-foreground tracking-tight">
                   מרכז ייצוא נתונים
                 </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground font-normal">
+                <DialogDescription className="text-xs text-muted-foreground font-medium">
                   ייצוא דוחות נוכחות וסידור עבודה לאקסל ולתפוצה
                 </DialogDescription>
               </div>
             </div>
           </div>
 
-          <div className="px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 overflow-y-auto custom-scrollbar flex-1">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 overflow-y-auto custom-scrollbar flex-1 bg-card">
             {/* Section 1: Settings */}
             <div className="space-y-2">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+              <span className="text-[11px] font-bold text-muted-foreground block px-0.5">
                 01. הגדרות וסינון
-              </h3>
-              <div className="flex flex-col sm:flex-row gap-3">
+              </span>
+              <div className="flex flex-col sm:flex-row gap-2.5">
                 <Tabs
                   value={mode}
                   onValueChange={(v: any) => {
@@ -205,16 +205,16 @@ export function ExportReportDialog({
                   }}
                   className="flex-1 pointer-events-auto"
                 >
-                  <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 h-10 rounded-xl w-full grid grid-cols-2">
+                  <TabsList className="bg-muted/40 border border-border/50 p-1 h-9 rounded-xl w-full grid grid-cols-2">
                     <TabsTrigger
                       value="daily"
-                      className="font-bold rounded-lg text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 transition-all cursor-pointer pointer-events-auto"
+                      className="font-semibold rounded-lg text-xs data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-2xs data-[state=active]:border data-[state=active]:border-border/60 transition-all cursor-pointer pointer-events-auto"
                     >
                       יומי
                     </TabsTrigger>
                     <TabsTrigger
                       value="range"
-                      className="font-bold rounded-lg text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 transition-all cursor-pointer pointer-events-auto"
+                      className="font-semibold rounded-lg text-xs data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-2xs data-[state=active]:border data-[state=active]:border-border/60 transition-all cursor-pointer pointer-events-auto"
                     >
                       טווח
                     </TabsTrigger>
@@ -230,10 +230,10 @@ export function ExportReportDialog({
                     setFilterModalOpen(true);
                   }}
                   className={cn(
-                    "h-10 px-4 rounded-xl font-bold border-2 transition-all gap-2 text-xs shrink-0 w-full sm:w-auto cursor-pointer pointer-events-auto",
+                    "h-9 px-3.5 rounded-xl font-semibold border transition-all gap-1.5 text-xs shrink-0 w-full sm:w-auto cursor-pointer pointer-events-auto shadow-2xs",
                     Object.keys(activeFilters).length > 0
-                      ? "bg-primary/5 border-primary text-primary"
-                      : "border-slate-200 dark:border-slate-800 hover:border-primary/20",
+                      ? "bg-primary/10 border-primary/30 text-primary font-bold"
+                      : "border-border/60 bg-card hover:bg-muted text-foreground",
                   )}
                 >
                   <Filter className="w-3.5 h-3.5" />
@@ -247,19 +247,19 @@ export function ExportReportDialog({
             </div>
 
             {/* Section 2: Calendar */}
-            <div className="space-y-3 pointer-events-auto">
-              <div className="flex items-center justify-between px-1">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <div className="space-y-2.5 pointer-events-auto">
+              <div className="flex items-center justify-between px-0.5">
+                <span className="text-[11px] font-bold text-muted-foreground">
                   02. בחירת מועד
-                </h3>
+                </span>
                 {mode === "range" && dateRange?.from && (
-                  <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                  <span className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md">
                     {format(dateRange.from, "dd/MM")} -{" "}
                     {dateRange.to ? format(dateRange.to, "dd/MM") : "..."}
                   </span>
                 )}
               </div>
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex justify-center w-full mx-auto pointer-events-auto cursor-pointer relative">
+              <div className="bg-card border border-border/60 rounded-2xl p-3 sm:p-5 flex justify-center w-full mx-auto pointer-events-auto cursor-pointer relative shadow-2xs">
                 <Calendar
                   mode={mode === "daily" ? "single" : "range"}
                   selected={(mode === "daily" ? dailyDate : dateRange) as any}
@@ -272,41 +272,41 @@ export function ExportReportDialog({
                   classNames={{
                     months:
                       "flex flex-col text-center w-full items-center",
-                    month: "space-y-4 w-full max-w-[280px] flex flex-col items-center",
+                    month: "space-y-3 w-full max-w-[280px] flex flex-col items-center",
                     caption:
-                      "flex justify-center pt-2 pb-6 relative items-center w-full",
+                      "flex justify-center pt-1 pb-4 relative items-center w-full",
                     caption_label:
-                      "text-base sm:text-lg font-black text-slate-900 dark:text-white",
-                    nav: "absolute top-0 left-0 right-0 flex items-center justify-between px-3 h-10",
+                      "text-sm sm:text-base font-bold text-foreground",
+                    nav: "absolute top-0 left-0 right-0 flex items-center justify-between px-2 h-9",
                     nav_button:
-                      "h-9 w-9 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-all flex items-center justify-center border border-slate-200 dark:border-slate-700 hover: cursor-pointer pointer-events-auto",
+                      "h-8 w-8 bg-muted/40 hover:bg-muted text-foreground rounded-lg transition-all flex items-center justify-center border border-border/50 cursor-pointer pointer-events-auto",
                     nav_button_previous: "order-1",
                     nav_button_next: "order-2",
                     table: "w-full border-collapse",
-                    head_row: "grid grid-cols-7 gap-1 mb-4 w-full",
+                    head_row: "grid grid-cols-7 gap-1 mb-2.5 w-full",
                     head_cell:
-                      "text-slate-500 dark:text-slate-400 font-black text-xs uppercase text-center py-2 flex items-center justify-center",
-                    row: "grid grid-cols-7 gap-1 mb-2 w-full",
+                      "text-muted-foreground font-semibold text-xs text-center py-1 flex items-center justify-center",
+                    row: "grid grid-cols-7 gap-1 mb-1.5 w-full",
                     cell: "flex items-center justify-center cursor-pointer pointer-events-auto",
-                    day: "h-10 w-10 font-bold rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-sm text-slate-900 dark:text-slate-100 transition-all hover:scale-105 border border-transparent cursor-pointer pointer-events-auto",
+                    day: "h-9 w-9 font-medium rounded-xl hover:bg-muted flex items-center justify-center text-xs text-foreground transition-all border border-transparent cursor-pointer pointer-events-auto",
                     day_selected:
-                      "bg-primary text-white hover:bg-primary hover:text-white scale-105 border-primary/20",
+                      "bg-primary text-primary-foreground font-bold hover:bg-primary hover:text-primary-foreground scale-105 border-primary/20 shadow-xs",
                     day_today:
-                      "bg-slate-100 dark:bg-slate-800 text-primary font-black border-2 border-primary/40",
-                    day_outside: "text-slate-300 dark:text-slate-600 opacity-40",
-                    day_disabled: "text-slate-300 dark:text-slate-600 opacity-30",
+                      "bg-muted text-primary font-bold border border-primary/40",
+                    day_outside: "text-muted-foreground/30 opacity-40",
+                    day_disabled: "text-muted-foreground/30 opacity-30",
                     day_range_middle:
                       "aria-selected:bg-primary/10 aria-selected:text-primary rounded-none border-y border-primary/20",
-                    day_range_start: "rounded-l-xl rounded-r-none bg-primary text-white",
-                    day_range_end: "rounded-r-xl rounded-l-none bg-primary text-white",
+                    day_range_start: "rounded-l-xl rounded-r-none bg-primary text-primary-foreground font-bold",
+                    day_range_end: "rounded-r-xl rounded-l-none bg-primary text-primary-foreground font-bold",
                   }}
                 />
               </div>
             </div>
 
             {/* Section 3: Actions */}
-            <div className="space-y-4 pt-2 pointer-events-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-3 pt-1 pointer-events-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <Button
                   type="button"
                   onClick={(e) => {
@@ -314,7 +314,7 @@ export function ExportReportDialog({
                     e.stopPropagation();
                     handleDownload(false);
                   }}
-                  className="col-span-1 sm:col-span-2 h-12 rounded-xl bg-primary text-white hover:bg-primary/90 font-black text-sm gap-2 cursor-pointer pointer-events-auto transition-all"
+                  className="col-span-1 sm:col-span-2 h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-xs sm:text-sm gap-2 cursor-pointer pointer-events-auto shadow-xs transition-all"
                 >
                   <Download className="w-4 h-4" />
                   הורדת קובץ אקסל
@@ -328,11 +328,10 @@ export function ExportReportDialog({
                     e.stopPropagation();
                     handleDownload(true);
                   }}
-                  className="h-10 rounded-xl border-emerald-600/20 bg-emerald-50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white font-bold text-xs gap-2 cursor-pointer pointer-events-auto transition-all"
+                  className="h-9 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 font-semibold text-xs gap-1.5 cursor-pointer pointer-events-auto transition-all shadow-2xs"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">אקסל לוואטסאפ</span>
-                  <span className="sm:hidden">אקסל לוואטסאפ</span>
+                  <span>אקסל לוואטסאפ</span>
                 </Button>
 
                 {mode === "daily" ? (
@@ -344,11 +343,10 @@ export function ExportReportDialog({
                       e.stopPropagation();
                       handleWhatsAppText();
                     }}
-                    className="h-10 rounded-xl border-emerald-600/20 bg-emerald-50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white font-bold text-xs gap-2 cursor-pointer pointer-events-auto transition-all"
+                    className="h-9 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 font-semibold text-xs gap-1.5 cursor-pointer pointer-events-auto transition-all shadow-2xs"
                   >
                     <WhatsAppIcon className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">סיכום טקסט</span>
-                    <span className="sm:hidden">סיכום טקסט</span>
+                    <span>סיכום טקסט</span>
                   </Button>
                 ) : (
                   <div className="hidden" />
@@ -356,9 +354,9 @@ export function ExportReportDialog({
               </div>
 
               {/* Alert */}
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-3 flex items-start gap-3">
-                <Info className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-                <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium leading-relaxed">
+              <div className="rounded-xl bg-muted/30 border border-border/50 p-2.5 sm:p-3 flex items-start gap-2.5">
+                <Info className="w-4 h-4 text-muted-foreground/70 mt-0.5 shrink-0" />
+                <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
                   הנתונים משקפים את המצב הנוכחי במערכת. וודא שכל הדיווחים הושלמו
                   לפני הייצוא.
                 </p>

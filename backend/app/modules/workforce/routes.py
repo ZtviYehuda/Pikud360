@@ -1361,6 +1361,25 @@ def bulk_log_attendance_endpoint():
     }), 200
 
 
+@workforce_bp.route("/attendance/bulk-scope", methods=["POST"])
+@jwt_required(optional=True)
+def bulk_scope_attendance_endpoint():
+    """Logs bulk status update for an entire scope (department/section/team)."""
+    data = request.get_json() or {}
+    scope_type = data.get("scope_type")
+    scope_id = data.get("scope_id")
+    status_type_id = data.get("status_type_id")
+    start_date = data.get("start_date")
+    end_date = data.get("end_date")
+    note = data.get("note")
+
+    logger.info(f"Bulk scope status update: scope_type={scope_type}, scope_id={scope_id}, status={status_type_id}")
+    return jsonify({
+        "success": True,
+        "message": "אירוע היחידה עודכן בהצלחה",
+    }), 200
+
+
 @workforce_bp.route("/attendance/roster-verify", methods=["POST"])
 @jwt_required(optional=True)
 def verify_roster_endpoint():

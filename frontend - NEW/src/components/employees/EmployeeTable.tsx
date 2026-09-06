@@ -12,7 +12,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   Search,
   ChevronRight,
@@ -417,31 +416,33 @@ export const EmployeeTable = ({
       </div>
 
       {/* Main Table - Desktop View */}
-      <Card className="hidden lg:block overflow-hidden">
+      <div
+        id="employees-table"
+        className="hidden lg:block rounded-xl border border-border/50 bg-card/40 dark:bg-card/20 backdrop-blur-xs overflow-hidden shadow-2xs"
+      >
         <div className="overflow-x-auto">
-          <Table className="min-w-full">
-            <TableHeader className="bg-muted/30 backdrop-blur-sm">
-              <TableRow className="hover:bg-transparent border-b border-border/40">
-                <TableHead className="text-right font-black text-muted-foreground uppercase text-[10px] h-16 px-6 tracking-widest">
+          <Table className="min-w-[800px]">
+            <TableHeader className="bg-muted/30 border-b border-border/40">
+              <TableRow className="hover:bg-transparent border-none">
+                <TableHead className="text-right px-4 font-semibold text-muted-foreground text-xs h-11">
                   שוטר
                 </TableHead>
-
-                <TableHead className="text-right font-black text-muted-foreground uppercase text-[10px] h-16 px-6 tracking-widest">
+                <TableHead className="text-right px-4 font-semibold text-muted-foreground text-xs h-11">
                   טלפון
                 </TableHead>
-                <TableHead className="text-right font-black text-muted-foreground uppercase text-[10px] h-16 px-6 tracking-widest">
+                <TableHead className="text-right px-4 font-semibold text-muted-foreground text-xs h-11">
                   תאריך לידה
                 </TableHead>
-                <TableHead className="text-right font-black text-muted-foreground uppercase text-[10px] h-16 px-6 tracking-widest">
-                  תפקיד/סמכות
+                <TableHead className="text-right px-4 font-semibold text-muted-foreground text-xs h-11">
+                  תפקיד / סמכות
                 </TableHead>
-                <TableHead className="text-right font-black text-muted-foreground uppercase text-[10px] h-16 px-6 tracking-widest">
+                <TableHead className="text-right px-4 font-semibold text-muted-foreground text-xs h-11">
                   שיוך ארגוני
                 </TableHead>
-                <TableHead className="text-right font-black text-muted-foreground uppercase text-[10px] h-16 px-6 tracking-widest">
+                <TableHead className="text-right px-4 font-semibold text-muted-foreground text-xs h-11">
                   מעמד
                 </TableHead>
-                <TableHead className="text-center font-black text-muted-foreground uppercase text-[10px] h-16 px-6 tracking-widest">
+                <TableHead className="text-center px-4 font-semibold text-muted-foreground text-xs h-11">
                   פעולות
                 </TableHead>
               </TableRow>
@@ -460,7 +461,7 @@ export const EmployeeTable = ({
                 <TableRow>
                   <TableCell
                     colSpan={7}
-                    className="h-32 text-center text-muted-foreground"
+                    className="h-32 text-center text-muted-foreground font-medium"
                   >
                     לא נמצאו שוטרים התואמים את החיפוש והסינון
                   </TableCell>
@@ -470,41 +471,42 @@ export const EmployeeTable = ({
                   <TableRow
                     key={emp.id}
                     className={cn(
-                      "group/row transition-all hover:bg-slate-50 dark:hover:bg-slate-900/40 border-b border-border/40",
-                      !emp.is_active &&
-                        "bg-destructive/[0.02] opacity-80 grayscale-[0.2] border-r-4 border-r-destructive",
-                      emp.is_active &&
-                        "border-r-4 border-r-primary/30 hover:border-r-primary transition-all",
+                      "group/row transition-all border-b border-border/30 last:border-none",
+                      "hover:bg-muted/30 border-r-2 border-r-transparent hover:border-r-primary/40",
+                      !emp.is_active && "opacity-75 grayscale-[0.2]",
                     )}
                   >
-                    <TableCell className="px-6 py-5 text-right">
-                      <div className="flex items-center gap-4">
+                    <TableCell className="py-2.5 px-4 text-right align-middle">
+                      <div className="flex items-center gap-3">
                         <div className="relative">
                           <div
                             className={cn(
-                              "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm group-hover/row:scale-110 transition-all",
+                              "w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-xs border transition-all",
                               emp.is_active
-                                ? "bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 text-slate-600 dark:text-slate-400 border border-border/50"
-                                : "bg-muted text-muted-foreground ",
+                                ? "bg-muted/70 text-foreground/80 border-border/50 group-hover/row:border-primary/40"
+                                : "bg-muted text-muted-foreground border-border/40",
                             )}
                           >
-                            {emp.is_admin ? "💬" : `${emp.first_name[0]}${emp.last_name[0]}`}
+                            <span>
+                              {emp.first_name?.[0]}
+                              {emp.last_name?.[0]}
+                            </span>
                           </div>
                         </div>
                         <div className="flex flex-col text-right min-w-0">
                           <EmployeeLink
                             employee={emp}
                             className={cn(
-                              "text-base font-black truncate tracking-tight group-hover/row:text-primary transition-colors",
+                              "text-xs sm:text-sm font-semibold truncate tracking-tight transition-colors hover:underline text-right hover:text-primary w-fit cursor-pointer",
                               emp.is_active
-                                ? "text-foreground"
+                                ? "text-foreground group-hover/row:text-primary"
                                 : "text-muted-foreground",
                             )}
                           />
                           {!emp.is_active && (
                             <Badge
                               variant="destructive"
-                              className="w-fit h-4 text-[8px] px-1.5 font-black uppercase leading-none bg-destructive/10 text-destructive border-destructive/20 mt-1"
+                              className="w-fit h-4 text-[8px] px-1.5 font-bold uppercase leading-none bg-destructive/10 text-destructive border-destructive/20 mt-0.5"
                             >
                               לא פעיל
                             </Badge>
@@ -513,39 +515,40 @@ export const EmployeeTable = ({
                       </div>
                     </TableCell>
 
-                    <TableCell className="px-6 py-4 text-right">
+                    <TableCell className="py-2.5 px-4 text-right align-middle">
                       {emp.phone_number ? (
                         <a
                           href={`tel:${emp.phone_number}`}
-                          className="font-mono text-xs text-primary hover:text-primary transition-colors hover:brightness-75 inline-flex items-center gap-2"
+                          className="font-mono text-xs text-foreground/80 hover:text-primary transition-colors inline-flex items-center gap-1.5"
+                          dir="ltr"
                         >
-                          <Phone className="w-3 h-3" />
-                          {emp.phone_number}
+                          <span>{emp.phone_number}</span>
+                          <Phone className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />
                         </a>
                       ) : (
-                        <span className="text-xs text-muted-foreground/30 font-mono inline-flex">
+                        <span className="text-xs text-muted-foreground/40 font-mono">
                           -
                         </span>
                       )}
                     </TableCell>
-                    <TableCell className="px-6 py-4 text-right text-xs text-muted-foreground">
+
+                    <TableCell className="py-2.5 px-4 text-right align-middle text-xs text-muted-foreground">
                       {emp.birth_date
                         ? new Date(emp.birth_date).toLocaleDateString("he-IL")
                         : "-"}
                     </TableCell>
-                    <TableCell className="px-6 py-4 text-right">
-                      <Badge
-                        variant="outline"
-                        className="font-medium text-[10px] border-none px-2.5 py-1 bg-muted text-muted-foreground"
-                      >
+
+                    <TableCell className="py-2.5 px-4 text-right align-middle">
+                      <span className="text-xs font-medium text-foreground">
                         {getProfessionalTitle(emp)}
-                      </Badge>
+                      </span>
                     </TableCell>
-                    <TableCell className="px-6 py-5 text-right">
+
+                    <TableCell className="py-2.5 px-4 text-right align-middle">
                       {emp.department_name && emp.department_name !== "מטה" ? (
-                        <div className="flex flex-col text-right">
+                        <div className="flex flex-col text-right min-w-[130px]">
                           <span
-                            className="text-[11px] font-black text-foreground cursor-pointer hover:text-primary transition-colors"
+                            className="text-xs font-semibold text-foreground cursor-pointer hover:text-primary transition-colors"
                             onClick={() => {
                               const isSelected =
                                 activeFilters.departments?.includes(
@@ -564,66 +567,65 @@ export const EmployeeTable = ({
                           </span>
                           {((emp.section_name && emp.section_name !== "מטה") ||
                             (emp.team_name && emp.team_name !== "מטה")) && (
-                            <div className="flex items-center gap-1.5 mt-1">
-                              <span
-                                className="text-[10px] font-black text-primary/60 truncate bg-primary/5 px-2 py-0.5 rounded-lg border border-primary/10 cursor-pointer hover:bg-primary/10 transition-all"
-                                onClick={() => {
-                                  if (
-                                    emp.team_name &&
-                                    emp.team_name !== "מטה"
-                                  ) {
-                                    const isSelected =
-                                      activeFilters.teams?.includes(
-                                        emp.team_name,
-                                      ) && activeFilters.teams.length === 1;
-                                    setActiveFilters({
-                                      ...activeFilters,
-                                      teams: isSelected ? [] : [emp.team_name],
-                                    });
-                                  } else if (
-                                    emp.section_name &&
-                                    emp.section_name !== "מטה"
-                                  ) {
-                                    const isSelected =
-                                      activeFilters.sections?.includes(
-                                        emp.section_name,
-                                      ) && activeFilters.sections.length === 1;
-                                    setActiveFilters({
-                                      ...activeFilters,
-                                      sections: isSelected
-                                        ? []
-                                        : [emp.section_name],
-                                    });
-                                  }
-                                  setCurrentPage(1);
-                                }}
-                              >
-                                {emp.team_name && emp.team_name !== "מטה"
-                                  ? cleanUnitName(emp.team_name)
-                                  : cleanUnitName(emp.section_name || "")}
-                              </span>
-                            </div>
+                            <span
+                              className="text-[10px] text-muted-foreground truncate cursor-pointer hover:text-foreground transition-colors"
+                              onClick={() => {
+                                if (
+                                  emp.team_name &&
+                                  emp.team_name !== "מטה"
+                                ) {
+                                  const isSelected =
+                                    activeFilters.teams?.includes(
+                                      emp.team_name,
+                                    ) && activeFilters.teams.length === 1;
+                                  setActiveFilters({
+                                    ...activeFilters,
+                                    teams: isSelected ? [] : [emp.team_name],
+                                  });
+                                } else if (
+                                  emp.section_name &&
+                                  emp.section_name !== "מטה"
+                                ) {
+                                  const isSelected =
+                                    activeFilters.sections?.includes(
+                                      emp.section_name,
+                                    ) && activeFilters.sections.length === 1;
+                                  setActiveFilters({
+                                    ...activeFilters,
+                                    sections: isSelected
+                                      ? []
+                                      : [emp.section_name],
+                                  });
+                                }
+                                setCurrentPage(1);
+                              }}
+                            >
+                              {emp.team_name && emp.team_name !== "מטה"
+                                ? cleanUnitName(emp.team_name)
+                                : cleanUnitName(emp.section_name || "")}
+                            </span>
                           )}
                         </div>
                       ) : (
-                        <span className="text-[10px] font-black text-muted-foreground/30">
+                        <span className="text-[11px] text-muted-foreground/40">
                           מטה / ללא שיוך
                         </span>
                       )}
                     </TableCell>
-                    <TableCell className="px-6 py-4 text-right">
-                      <span className="text-xs font-medium text-muted-foreground">
+
+                    <TableCell className="py-2.5 px-4 text-right align-middle">
+                      <span className="text-xs text-muted-foreground">
                         {emp.service_type_name || "-"}
                       </span>
                     </TableCell>
 
-                    <TableCell className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
+                    <TableCell className="py-2.5 px-4 align-middle">
+                      <div className="flex items-center justify-center gap-1.5">
                         {isSupportAdmin && emp.id !== user?.id && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 px-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg text-[10px] font-bold"
+                            className="h-8 px-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg text-xs font-medium cursor-pointer"
                             onClick={() =>
                               handleImpersonate(
                                 emp.id,
@@ -633,7 +635,7 @@ export const EmployeeTable = ({
                             title="התחבר כמשתמש זה"
                           >
                             <LogIn className="w-3.5 h-3.5 ml-1 text-primary" />
-                            התחבר
+                            <span>התחבר</span>
                           </Button>
                         )}
                         {emp.phone_number && (
@@ -641,24 +643,25 @@ export const EmployeeTable = ({
                             href={getWhatsAppUrl(emp.phone_number)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center h-8 px-2 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg text-[10px] font-bold transition-colors"
+                            className="inline-flex items-center justify-center h-8 px-2 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg text-xs font-medium transition-colors"
                             title="פתח צ'אט ב-WhatsApp"
                           >
                             <WhatsAppIcon className="w-3.5 h-3.5 ml-1 text-emerald-600 dark:text-emerald-400" />
-                            וואטסאפ
+                            <span>וואטסאפ</span>
                           </a>
                         )}
                         {!user?.is_temp_commander && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 px-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg text-[10px]"
+                            className="h-8 px-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg text-xs font-medium cursor-pointer"
                             onClick={() =>
                               navigate(`/employees/edit/${emp.id}`)
                             }
+                            title="עריכת עובד"
                           >
                             <Pencil className="w-3.5 h-3.5 ml-1" />
-                            עריכה
+                            <span>עריכה</span>
                           </Button>
                         )}
                       </div>
@@ -671,8 +674,8 @@ export const EmployeeTable = ({
         </div>
 
         {/* Pagination */}
-        <div className="p-5 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="text-xs font-medium text-muted-foreground uppercase">
+        <div className="px-4 py-3 border-t border-border/40 flex flex-col sm:flex-row justify-between items-center gap-4 bg-muted/20">
+          <div className="text-xs font-medium text-muted-foreground">
             מציג{" "}
             {filteredEmployees.length > 0
               ? (currentPage - 1) * itemsPerPage + 1
@@ -684,19 +687,19 @@ export const EmployeeTable = ({
             <Button
               variant="outline"
               size="icon"
-              className="w-8 h-8 rounded-lg"
+              className="w-8 h-8 rounded-lg cursor-pointer"
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
             >
               <ChevronRight className="w-4 h-4" />
             </Button>
-            <div className="flex items-center gap-1 px-2">
+            <div className="flex items-center gap-1 px-1">
               {[...Array(totalPages)].map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setCurrentPage(i + 1)}
                   className={cn(
-                    "w-8 h-8 rounded-lg text-xs font-semibold transition-all",
+                    "w-8 h-8 rounded-lg text-xs font-semibold transition-all cursor-pointer",
                     currentPage === i + 1
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-muted",
@@ -709,7 +712,7 @@ export const EmployeeTable = ({
             <Button
               variant="outline"
               size="icon"
-              className="w-8 h-8 rounded-lg"
+              className="w-8 h-8 rounded-lg cursor-pointer"
               onClick={() =>
                 setCurrentPage((prev) => Math.min(totalPages, prev + 1))
               }
@@ -719,7 +722,7 @@ export const EmployeeTable = ({
             </Button>
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Mobile Row View (Kodkod Style) */}
       <div className="lg:hidden space-y-1.5 px-2">

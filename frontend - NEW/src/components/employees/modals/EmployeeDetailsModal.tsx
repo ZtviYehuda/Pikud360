@@ -14,17 +14,14 @@ import {
   Phone,
   MapPin,
   Cake,
-  User,
   Mail,
   ExternalLink,
   Gift,
-  Star,
   AlertCircle,
   Network,
-  MessageCircle,
+  Shield,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { WhatsAppButton } from "@/components/common/WhatsAppButton";
 import { WhatsAppIcon } from "@/components/common/WhatsAppIcon";
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeedback } from "@/context/FeedbackContext";
@@ -34,112 +31,6 @@ interface EmployeeDetailsModalProps {
   onOpenChange: (open: boolean) => void;
   employee: Employee | null;
 }
-
-/** A horizontal info row: icon + label on the right, value on the left */
-const InfoRow = ({
-  icon: Icon,
-  label,
-  value,
-  type,
-  action,
-}: {
-  icon: any;
-  label: string;
-  value: React.ReactNode;
-  type?: "phone" | "email";
-  action?: React.ReactNode;
-}) => {
-  if (!value || value === "---") return null;
-  const cleanValue = typeof value === "string" ? value.trim() : value;
-
-  const rawPhone = type === "phone" && typeof cleanValue === "string" ? cleanValue.replace(/\D/g, "") : "";
-  const whatsAppPhone = rawPhone.startsWith("0")
-    ? "972" + rawPhone.substring(1)
-    : rawPhone.startsWith("972")
-      ? rawPhone
-      : rawPhone
-        ? "972" + rawPhone
-        : "";
-
-  return (
-    <div className="flex items-center justify-between gap-3 py-3 group">
-      <div className="flex items-center gap-3 min-w-0 flex-1">
-        {type === "email" && typeof cleanValue === "string" ? (
-          <a
-            href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(cleanValue)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            title="פתח ב-Gmail"
-            className="w-8 h-8 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 flex items-center justify-center shrink-0 transition-all hover:scale-105 active:scale-95"
-          >
-            <Icon className="w-4 h-4" />
-          </a>
-        ) : type === "phone" && typeof cleanValue === "string" ? (
-          <div className="flex items-center gap-1.5 shrink-0">
-            <a
-              href={`tel:${cleanValue.replace(/\s/g, "")}`}
-              onClick={(e) => e.stopPropagation()}
-              title="חייג"
-              className="w-8 h-8 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 flex items-center justify-center shrink-0 transition-all hover:scale-105 active:scale-95"
-            >
-              <Icon className="w-4 h-4" />
-            </a>
-            {whatsAppPhone && (
-              <a
-                href={`https://wa.me/${whatsAppPhone}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                title="פתח שיחה בוואטסאפ"
-                className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 hover:text-emerald-700 flex items-center justify-center shrink-0 transition-all hover:scale-105 active:scale-95 shadow-2xs"
-              >
-                <WhatsAppIcon className="w-4 h-4" />
-              </a>
-            )}
-          </div>
-        ) : (
-          <div className="w-8 h-8 rounded-xl bg-muted/60 flex items-center justify-center shrink-0">
-            <Icon className="w-4 h-4 text-muted-foreground" />
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">
-            {label}
-          </p>
-          {type === "phone" && typeof cleanValue === "string" ? (
-            <a
-              href={`tel:${cleanValue.replace(/\s/g, "")}`}
-              className="text-sm font-black leading-snug truncate text-primary hover:underline block"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {cleanValue}
-            </a>
-          ) : type === "email" && typeof cleanValue === "string" ? (
-            <a
-              href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(cleanValue)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-black leading-snug truncate text-primary hover:underline block"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {cleanValue}
-            </a>
-          ) : (
-            <p className="text-sm font-black leading-snug truncate text-foreground">
-              {cleanValue}
-            </p>
-          )}
-        </div>
-      </div>
-      {action && (
-        <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
-          {action}
-        </div>
-      )}
-    </div>
-  );
-};
 
 export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
   open,
@@ -189,7 +80,10 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
     if (!employee.birth_date) return false;
     const today = new Date();
     const birthDate = new Date(employee.birth_date);
-    return today.getMonth() === birthDate.getMonth() && today.getDate() === birthDate.getDate();
+    return (
+      today.getMonth() === birthDate.getMonth() &&
+      today.getDate() === birthDate.getDate()
+    );
   };
 
   const isBirthday = checkBirthday();
@@ -197,203 +91,378 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
     ? `היי ${employee.first_name}, המון מזל טוב ליום הולדתך! מאחלים לך הרבה אושר, בריאות והצלחה בכל!`
     : `היי ${employee.first_name}, `;
 
-  const hasOrg = employee.department_name || employee.section_name || employee.team_name;
+  const rawPhone = employee.phone_number
+    ? employee.phone_number.replace(/\D/g, "")
+    : "";
+  const whatsAppPhone = rawPhone.startsWith("0")
+    ? "972" + rawPhone.substring(1)
+    : rawPhone.startsWith("972")
+      ? rawPhone
+      : rawPhone
+        ? "972" + rawPhone
+        : "";
+
+  const hasOrg =
+    employee.department_name || employee.section_name || employee.team_name;
   const isCommanderOrAdmin = user?.is_commander || user?.is_admin;
-  const initials = employee.is_admin ? "💬" : `${employee.first_name?.[0] ?? ""}${employee.last_name?.[0] ?? ""}`;
+  const initials = employee.is_admin
+    ? "💬"
+    : `${employee.first_name?.[0] ?? ""}${employee.last_name?.[0] ?? ""}`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-[420px]"
+        className="sm:max-w-[480px] p-0 overflow-hidden rounded-2xl border border-border/50 bg-card shadow-xl"
         dir="rtl"
       >
         <DialogDragHandle />
-        {/* ─── Header ─── */}
-        <DialogHeader className="px-6 pt-8 pb-5 text-center bg-card">
-          <div className="flex flex-col items-center gap-3">
-            {/* Avatar circle */}
-            <div className="relative">
+
+        {/* ─── Header: Clean Profile Identity ─── */}
+        <DialogHeader className="px-5 pt-5 pb-4 border-b border-border/40 text-right bg-muted/20">
+          <div className="flex items-center gap-3.5">
+            {/* Avatar */}
+            <div className="relative shrink-0">
               <div
-                className="w-[68px] h-[68px] rounded-full bg-primary/8 flex items-center justify-center text-[22px] font-black tracking-tight"
-                style={{ color: employee.status_color || "var(--primary)" }}
+                className={cn(
+                  "w-13 h-13 rounded-full flex items-center justify-center font-bold text-base shadow-2xs border transition-all",
+                  employee.is_active
+                    ? "bg-muted/90 text-foreground border-border/60"
+                    : "bg-muted text-muted-foreground border-border/40 opacity-80",
+                )}
               >
-                {initials}
+                <span>{initials}</span>
               </div>
               {isBirthday && (
-                <div className="absolute -top-1 -right-1 bg-pink-500 text-white p-1.5 rounded-full animate-bounce shadow-md">
+                <div
+                  title="יום הולדת היום!"
+                  className="absolute -top-1 -right-1 bg-amber-500 text-white p-1 rounded-full shadow-xs"
+                >
                   <Gift className="w-3 h-3" />
                 </div>
               )}
             </div>
 
-            {/* Name */}
-            <div className="flex flex-col items-center gap-1.5">
-              <DialogTitle className="text-xl font-bold text-foreground tracking-tight leading-tight">
-                {employee.first_name} {employee.last_name}
-              </DialogTitle>
-
-              <div className="flex flex-wrap justify-center gap-1.5">
+            {/* Name, Status & Role */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <DialogTitle className="text-base sm:text-lg font-bold text-foreground tracking-tight leading-tight">
+                  {employee.first_name} {employee.last_name}
+                </DialogTitle>
                 {employee.service_type_name && (
                   <Badge
                     variant="secondary"
-                    className="bg-muted text-muted-foreground border-0 font-bold text-[10px] h-5 rounded-full px-3 uppercase tracking-wide"
+                    className="bg-muted text-muted-foreground border border-border/50 font-medium text-[10px] h-5 rounded-md px-2"
                   >
                     {employee.service_type_name}
                   </Badge>
                 )}
-                {getProfessionalTitle(employee) && (
+                {!employee.is_active && (
                   <Badge
-                    variant="secondary"
-                    className="bg-primary/8 text-primary border-0 font-bold text-[10px] h-5 rounded-full px-3 uppercase tracking-wide flex items-center gap-1"
+                    variant="destructive"
+                    className="text-[10px] font-bold h-5 px-1.5 leading-none bg-destructive/10 text-destructive border-destructive/20"
                   >
-                    <Star className="w-2.5 h-2.5" />
-                    {getProfessionalTitle(employee)}
+                    לא פעיל
                   </Badge>
                 )}
               </div>
+
+              {getProfessionalTitle(employee) ? (
+                <span className="text-xs text-muted-foreground font-medium mt-1 flex items-center gap-1">
+                  <Shield className="w-3 h-3 text-muted-foreground/70 shrink-0" />
+                  <span>{getProfessionalTitle(employee)}</span>
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground font-normal mt-0.5 block">
+                  שוטר
+                </span>
+              )}
             </div>
           </div>
         </DialogHeader>
 
-        {/* ─── Body ─── */}
-        <div className="px-6 pb-2 max-h-[55vh] overflow-y-auto no-scrollbar">
+        {/* ─── Body: Structured Information Cards ─── */}
+        <div className="px-5 py-4 max-h-[60vh] overflow-y-auto space-y-3.5 custom-scrollbar">
+          {/* Card 1: Contact Details */}
+          <div className="bg-muted/20 border border-border/40 rounded-xl p-3 space-y-2.5">
+            {/* Phone */}
+            {employee.phone_number ? (
+              <div className="flex items-center justify-between gap-3 py-1">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-background border border-border/50 flex items-center justify-center shrink-0 shadow-2xs">
+                    <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[10px] font-semibold text-muted-foreground uppercase leading-none mb-1">
+                      טלפון
+                    </span>
+                    <a
+                      href={`tel:${employee.phone_number.replace(/\s/g, "")}`}
+                      className="text-xs sm:text-sm font-mono font-medium text-foreground hover:text-primary transition-colors truncate"
+                      dir="ltr"
+                    >
+                      {employee.phone_number}
+                    </a>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <a
+                    href={`tel:${employee.phone_number.replace(/\s/g, "")}`}
+                    title="חייג"
+                    className="h-7 px-2.5 rounded-lg border border-border/60 bg-background hover:bg-muted text-foreground text-xs font-medium inline-flex items-center gap-1 transition-colors shadow-2xs"
+                  >
+                    <Phone className="w-3 h-3 text-muted-foreground" />
+                    <span className="hidden sm:inline">חייג</span>
+                  </a>
+                  {whatsAppPhone && (
+                    <a
+                      href={`https://wa.me/${whatsAppPhone}?text=${encodeURIComponent(whatsappMessage)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="פתח שיחה בוואטסאפ"
+                      className="h-7 px-2.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 text-xs font-medium inline-flex items-center gap-1 transition-colors shadow-2xs"
+                    >
+                      <WhatsAppIcon className="w-3.5 h-3.5" />
+                      <span>וואטסאפ</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            ) : null}
 
-          {/* Contact info — vertical list */}
-          <div className="divide-y divide-border/30">
-            {employee.phone_number && (
-              <InfoRow
-                icon={Phone}
-                label="טלפון"
-                value={employee.phone_number}
-                type="phone"
-                action={
-                  <WhatsAppButton
-                    phoneNumber={employee.phone_number}
-                    message={whatsappMessage}
-                    title={isBirthday ? "מזל טוב" : ""}
-                    className="h-8 w-8 p-0 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all"
-                  />
-                }
-              />
-            )}
-
+            {/* Email */}
             {employee.email && (
-              <InfoRow icon={Mail} label="אימייל" value={employee.email} type="email" />
+              <div
+                className={cn(
+                  "flex items-center justify-between gap-3 py-1",
+                  employee.phone_number && "border-t border-border/30 pt-2.5",
+                )}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-background border border-border/50 flex items-center justify-center shrink-0 shadow-2xs">
+                    <Mail className="w-3.5 h-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[10px] font-semibold text-muted-foreground uppercase leading-none mb-1">
+                      אימייל
+                    </span>
+                    <a
+                      href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(employee.email)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs sm:text-sm font-medium text-foreground hover:text-primary transition-colors truncate"
+                      dir="ltr"
+                    >
+                      {employee.email}
+                    </a>
+                  </div>
+                </div>
+                <a
+                  href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(employee.email)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="פתח ב-Gmail"
+                  className="h-7 px-2.5 rounded-lg border border-border/60 bg-background hover:bg-muted text-foreground text-xs font-medium inline-flex items-center gap-1 transition-colors shadow-2xs shrink-0"
+                >
+                  <Mail className="w-3 h-3 text-muted-foreground" />
+                  <span className="hidden sm:inline">שלח</span>
+                </a>
+              </div>
             )}
 
-            <InfoRow icon={MapPin} label="עיר" value={employee.city} />
-
-            {employee.birth_date && (
-              <InfoRow
-                icon={Cake}
-                label="תאריך לידה"
-                value={`${new Date(employee.birth_date).toLocaleDateString("he-IL")}  ·  גיל ${calculateAge(employee.birth_date)}`}
-              />
+            {/* City & Birthdate */}
+            {(employee.city || employee.birth_date) && (
+              <div
+                className={cn(
+                  "grid grid-cols-1 sm:grid-cols-2 gap-2.5",
+                  (employee.phone_number || employee.email) &&
+                    "border-t border-border/30 pt-2.5",
+                )}
+              >
+                {employee.city && (
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-background border border-border/50 flex items-center justify-center shrink-0 shadow-2xs">
+                      <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[10px] font-semibold text-muted-foreground uppercase leading-none mb-1">
+                        עיר מגורים
+                      </span>
+                      <span className="text-xs font-medium text-foreground truncate">
+                        {employee.city}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {employee.birth_date && (
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-background border border-border/50 flex items-center justify-center shrink-0 shadow-2xs">
+                      <Cake className="w-3.5 h-3.5 text-muted-foreground" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[10px] font-semibold text-muted-foreground uppercase leading-none mb-1">
+                        תאריך לידה
+                      </span>
+                      <span className="text-xs font-medium text-foreground truncate">
+                        {new Date(employee.birth_date).toLocaleDateString(
+                          "he-IL",
+                        )}{" "}
+                        (גיל {calculateAge(employee.birth_date)})
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
-          {/* Emergency contact */}
-          {ecName && (
-            <div className="mt-4 pt-4 border-t border-border/30">
-              <p className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
-                <AlertCircle className="w-3 h-3 opacity-60" />
-                איש קשר לחירום
-              </p>
-              <div className="divide-y divide-border/30">
-                <InfoRow icon={User} label="שם" value={ecName} />
-                {ecRelation && <InfoRow icon={User} label="קרבה" value={ecRelation} />}
-                {ecPhone && <InfoRow icon={Phone} label="טלפון" value={ecPhone} type="phone" />}
+          {/* Card 2: Org Structure */}
+          {hasOrg && (
+            <div className="bg-muted/20 border border-border/40 rounded-xl p-3">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-2.5">
+                <Network className="w-3.5 h-3.5 text-muted-foreground" />
+                <span>שיוך ארגוני</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {employee.department_name && (
+                  <div
+                    onClick={() => {
+                      if (!isCommanderOrAdmin) return;
+                      const isSelected =
+                        searchParams.get("dept") === employee.department_name;
+                      navigate(
+                        isSelected
+                          ? "/employees"
+                          : `/employees?dept=${encodeURIComponent(employee.department_name || "")}`,
+                      );
+                      onOpenChange(false);
+                    }}
+                    className={cn(
+                      "flex flex-col p-2 rounded-lg bg-background border border-border/50 text-right transition-all shadow-2xs",
+                      isCommanderOrAdmin &&
+                        "cursor-pointer hover:border-primary/40 hover:bg-muted/30",
+                    )}
+                  >
+                    <span className="text-[10px] text-muted-foreground font-medium mb-0.5 leading-none">
+                      מחלקה
+                    </span>
+                    <span className="text-xs font-semibold text-foreground truncate">
+                      {cleanUnitName(employee.department_name)}
+                    </span>
+                  </div>
+                )}
+                {employee.section_name && (
+                  <div
+                    onClick={() => {
+                      if (!isCommanderOrAdmin) return;
+                      const isSelected =
+                        searchParams.get("section") === employee.section_name;
+                      navigate(
+                        isSelected
+                          ? "/employees"
+                          : `/employees?section=${encodeURIComponent(employee.section_name || "")}`,
+                      );
+                      onOpenChange(false);
+                    }}
+                    className={cn(
+                      "flex flex-col p-2 rounded-lg bg-background border border-border/50 text-right transition-all shadow-2xs",
+                      isCommanderOrAdmin &&
+                        "cursor-pointer hover:border-primary/40 hover:bg-muted/30",
+                    )}
+                  >
+                    <span className="text-[10px] text-muted-foreground font-medium mb-0.5 leading-none">
+                      מדור
+                    </span>
+                    <span className="text-xs font-semibold text-foreground truncate">
+                      {cleanUnitName(employee.section_name)}
+                    </span>
+                  </div>
+                )}
+                {employee.team_name && (
+                  <div
+                    onClick={() => {
+                      if (!isCommanderOrAdmin) return;
+                      const isSelected =
+                        searchParams.get("team") === employee.team_name;
+                      navigate(
+                        isSelected
+                          ? "/employees"
+                          : `/employees?team=${encodeURIComponent(employee.team_name || "")}`,
+                      );
+                      onOpenChange(false);
+                    }}
+                    className={cn(
+                      "flex flex-col p-2 rounded-lg bg-background border border-border/50 text-right transition-all shadow-2xs",
+                      isCommanderOrAdmin &&
+                        "cursor-pointer hover:border-primary/40 hover:bg-muted/30",
+                    )}
+                  >
+                    <span className="text-[10px] text-muted-foreground font-medium mb-0.5 leading-none">
+                      צוות / חוליה
+                    </span>
+                    <span className="text-xs font-semibold text-foreground truncate">
+                      {cleanUnitName(employee.team_name)}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {/* Org structure — vertical list */}
-          {hasOrg && (
-            <div className="mt-4 pt-4 border-t border-border/30">
-              <p className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
-                <Network className="w-3.5 h-3.5 opacity-60" strokeWidth={1.5} />
-                מבנה ארגוני
-              </p>
-              <div className="grid grid-cols-3 gap-2 mt-2">
-                {employee.department_name && (
-                  <button
-                    onClick={() => {
-                      if (!isCommanderOrAdmin) return;
-                      const isSelected = searchParams.get("dept") === employee.department_name;
-                      navigate(isSelected ? "/employees" : `/employees?dept=${encodeURIComponent(employee.department_name || "")}`);
-                      onOpenChange(false);
-                    }}
-                    className={cn(
-                      "flex flex-col text-right w-full py-2 px-1 transition-all rounded-xl",
-                      isCommanderOrAdmin && "cursor-pointer hover:bg-primary/5 active:scale-[0.98]",
-                      searchParams.get("dept") === employee.department_name && "bg-primary/5 ring-1 ring-primary/20"
-                    )}
+          {/* Card 3: Emergency Contact (if exists) */}
+          {ecName && (
+            <div className="bg-muted/20 border border-border/40 rounded-xl p-3">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-2">
+                <AlertCircle className="w-3.5 h-3.5 text-muted-foreground" />
+                <span>איש קשר לחירום</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-foreground">{ecName}</span>
+                  {ecRelation && (
+                    <span className="text-muted-foreground">({ecRelation})</span>
+                  )}
+                </div>
+                {ecPhone && (
+                  <a
+                    href={`tel:${ecPhone.replace(/\s/g, "")}`}
+                    className="font-mono text-xs font-medium text-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5"
+                    dir="ltr"
                   >
-                    <span className="text-[11px] text-[#8E8E93] font-normal mb-1 leading-none">מחלקה</span>
-                    <span className="text-[14px] text-[#1C1C1E] dark:text-foreground font-bold leading-tight line-clamp-2">{cleanUnitName(employee.department_name)}</span>
-                  </button>
-                )}
-                {employee.section_name && (
-                  <button
-                    onClick={() => {
-                      if (!isCommanderOrAdmin) return;
-                      const isSelected = searchParams.get("section") === employee.section_name;
-                      navigate(isSelected ? "/employees" : `/employees?section=${encodeURIComponent(employee.section_name || "")}`);
-                      onOpenChange(false);
-                    }}
-                    className={cn(
-                      "flex flex-col text-right w-full py-2 px-1 transition-all rounded-xl",
-                      isCommanderOrAdmin && "cursor-pointer hover:bg-primary/5 active:scale-[0.98]",
-                      searchParams.get("section") === employee.section_name && "bg-primary/5 ring-1 ring-primary/20"
-                    )}
-                  >
-                    <span className="text-[11px] text-[#8E8E93] font-normal mb-1 leading-none">מדור</span>
-                    <span className="text-[14px] text-[#1C1C1E] dark:text-foreground font-bold leading-tight line-clamp-2">{cleanUnitName(employee.section_name)}</span>
-                  </button>
-                )}
-                {employee.team_name && (
-                  <button
-                    onClick={() => {
-                      if (!isCommanderOrAdmin) return;
-                      const isSelected = searchParams.get("team") === employee.team_name;
-                      navigate(isSelected ? "/employees" : `/employees?team=${encodeURIComponent(employee.team_name || "")}`);
-                      onOpenChange(false);
-                    }}
-                    className={cn(
-                      "flex flex-col text-right w-full py-2 px-1 transition-all rounded-xl",
-                      isCommanderOrAdmin && "cursor-pointer hover:bg-primary/5 active:scale-[0.98]",
-                      searchParams.get("team") === employee.team_name && "bg-primary/5 ring-1 ring-primary/20"
-                    )}
-                  >
-                    <span className="text-[11px] text-[#8E8E93] font-normal mb-1 leading-none">צוות</span>
-                    <span className="text-[14px] text-[#1C1C1E] dark:text-foreground font-bold leading-tight line-clamp-2">{cleanUnitName(employee.team_name)}</span>
-                  </button>
+                    <Phone className="w-3 h-3 text-muted-foreground" />
+                    <span>{ecPhone}</span>
+                  </a>
                 )}
               </div>
             </div>
           )}
         </div>
 
-        {/* ─── Footer ─── */}
-        <div className="px-5 py-4 border-t border-border/30 flex flex-col gap-3">
+        {/* ─── Footer: Actions ─── */}
+        <div className="px-5 py-3.5 border-t border-border/40 flex flex-col gap-2 bg-muted/10">
           <Button
             variant="default"
-            className="w-full gap-2 font-black bg-primary hover:bg-primary/90 text-primary-foreground h-12 rounded-2xl transition-all active:scale-[0.98] text-sm shadow-lg shadow-primary/20"
+            className="w-full h-10 rounded-xl font-semibold text-xs gap-2 shadow-xs cursor-pointer"
             onClick={() => {
               navigate(`/employees/${employee.id}`);
               onOpenChange(false);
             }}
           >
-            <ExternalLink className="w-4 h-4" />
-            צפייה בפרופיל מלא
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span>צפייה בפרופיל מלא</span>
           </Button>
 
-          {/* Contextual Feedback Link */}
           <button
-            onClick={() => openFeedback(`פרופיל שוטר: ${employee.first_name} ${employee.last_name}`)}
-            className="w-full text-[11px] font-bold text-muted-foreground hover:text-primary transition-colors text-center py-1"
+            onClick={() =>
+              openFeedback(
+                `פרופיל שוטר: ${employee.first_name} ${employee.last_name}`,
+              )
+            }
+            className="w-full text-[11px] text-muted-foreground hover:text-foreground transition-colors text-center py-0.5 cursor-pointer"
           >
-            מצאת טעות? יש לך הצעה לדף זה? <span className="underline decoration-primary/30 underline-offset-4">לחץ כאן</span>
+            מצאת טעות? יש לך הצעה?{" "}
+            <span className="underline underline-offset-4 decoration-muted-foreground/40">
+              דווח כאן
+            </span>
           </button>
         </div>
       </DialogContent>

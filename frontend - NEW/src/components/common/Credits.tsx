@@ -1,27 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { cn } from '@/lib/utils';
 
 export const Credits: React.FC = () => {
-  const [isShifted, setIsShifted] = useState(false);
-
   return (
     <div
       id="app-credits"
       dir="rtl"
-      onMouseEnter={() => setIsShifted((prev) => !prev)}
       className={cn(
-        "hidden md:flex items-center gap-1.5 fixed z-30 select-none transition-all duration-300 ease-out",
+        "hidden md:flex items-center gap-1.5 fixed bottom-3 left-4 z-30 select-none",
         "px-2.5 py-1 rounded-full bg-background/85 dark:bg-card/85 backdrop-blur-md border border-border/50 shadow-2xs",
-        "text-foreground/85 dark:text-foreground/80 hover:text-primary hover:border-primary/40 hover:bg-background cursor-pointer",
-        isShifted
-          ? "bottom-14 left-4 opacity-90 scale-95"
-          : "bottom-3 left-4 opacity-85 hover:opacity-100",
+        "text-muted-foreground hover:text-foreground text-xs font-medium transition-colors",
       )}
-      title="פותח ע״י צבי בטיטו (העבר עכבר כדי להזיז)"
+      title="פותח ע״י צבי יהודה בטיטו"
     >
-      <span className="w-1.5 h-1.5 rounded-full bg-primary/70 animate-pulse shrink-0" />
-      <span className="text-xs font-bold tracking-tight whitespace-nowrap">
-        פותח ע"י צבי בטיטו
+      <span className="w-1.5 h-1.5 rounded-full bg-primary/70 shrink-0" />
+      <span className="tracking-tight whitespace-nowrap">
+        פותח ע"י צבי יהודה בטיטו
       </span>
     </div>
   );

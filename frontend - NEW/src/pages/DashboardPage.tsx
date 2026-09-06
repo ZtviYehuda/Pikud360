@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useMemo } from "react";
-import { cn } from "@/lib/utils";
+import { cn, formatUnitName } from "@/lib/utils";
 import { EmployeesChart } from "@/components/dashboard/EmployeesChart";
 import { BirthdayBanner } from "@/components/dashboard/BirthdayBanner";
 import { BirthdaysCard } from "@/components/dashboard/BirthdaysCard";
@@ -198,9 +198,18 @@ export default function DashboardPage() {
     if (savedFilters) {
       try {
         const filters = JSON.parse(savedFilters);
-        if (filters.deptId !== undefined) setSelectedDeptId(filters.deptId);
-        if (filters.sectionId !== undefined) setSelectedSectionId(filters.sectionId);
-        if (filters.teamId !== undefined) setSelectedTeamId(filters.teamId);
+        if (filters.deptId !== undefined) {
+          const val = filters.deptId;
+          setSelectedDeptId(Array.isArray(val) ? (val[0] ? String(val[0]) : "") : (val ? String(val) : ""));
+        }
+        if (filters.sectionId !== undefined) {
+          const val = filters.sectionId;
+          setSelectedSectionId(Array.isArray(val) ? (val[0] ? String(val[0]) : "") : (val ? String(val) : ""));
+        }
+        if (filters.teamId !== undefined) {
+          const val = filters.teamId;
+          setSelectedTeamId(Array.isArray(val) ? (val[0] ? String(val[0]) : "") : (val ? String(val) : ""));
+        }
         if (filters.statusId !== undefined) setSelectedStatusId(filters.statusId);
         if (filters.statusData !== undefined) setSelectedStatusData(filters.statusData);
         if (filters.serviceTypes !== undefined) setSelectedServiceTypes(filters.serviceTypes);
@@ -267,10 +276,13 @@ export default function DashboardPage() {
       (() => {
         try {
           const f = JSON.parse(savedFilters);
+          const hasDept = Array.isArray(f.deptId) ? f.deptId.length > 0 : !!f.deptId;
+          const hasSect = Array.isArray(f.sectionId) ? f.sectionId.length > 0 : !!f.sectionId;
+          const hasTeam = Array.isArray(f.teamId) ? f.teamId.length > 0 : !!f.teamId;
           return (
-            f.deptId ||
-            f.sectionId ||
-            f.teamId ||
+            hasDept ||
+            hasSect ||
+            hasTeam ||
             (f.statusData && f.statusData.id > 0) ||
             (f.serviceTypes && f.serviceTypes.length > 0)
           );
@@ -455,7 +467,7 @@ export default function DashboardPage() {
       | "reset",
     value?: any,
   ) => {
-    if (type === "reset") {
+    if (type === "reset" || type === "clearAll") {
       localStorage.removeItem("dashboard_filters");
       if (isTopLevelCommander) {
         setSelectedDeptId("");
@@ -485,6 +497,10 @@ export default function DashboardPage() {
       setSelectedServiceTypes([]);
       setSelectedAgeRange({});
       setFilterOpen(false);
+
+      if (comparisonTreeRef.current?.departments) {
+        setComparisonStats(comparisonTreeRef.current.departments);
+      }
       return;
     }
 
@@ -517,10 +533,14 @@ export default function DashboardPage() {
     if (type === "serviceType") {
       setSelectedServiceTypes(value || []);
     } else if (type === "department") {
-      const deptId = value || "";
+      const deptId = Array.isArray(value)
+        ? (value[0] !== undefined && value[0] !== null ? String(value[0]) : "")
+        : (value !== undefined && value !== null ? String(value) : "");
       setSelectedDeptId(deptId);
-      setSelectedSectionId("");
-      setSelectedTeamId("");
+      if (!Array.isArray(value)) {
+        setSelectedSectionId("");
+        setSelectedTeamId("");
+      }
 
       if (comparisonTreeRef.current) {
         if (deptId && comparisonTreeRef.current.sections?.[deptId]) {
@@ -530,9 +550,13 @@ export default function DashboardPage() {
         }
       }
     } else if (type === "section") {
-      const sectId = value || "";
+      const sectId = Array.isArray(value)
+        ? (value[0] !== undefined && value[0] !== null ? String(value[0]) : "")
+        : (value !== undefined && value !== null ? String(value) : "");
       setSelectedSectionId(sectId);
-      setSelectedTeamId("");
+      if (!Array.isArray(value)) {
+        setSelectedTeamId("");
+      }
 
       if (comparisonTreeRef.current) {
         if (sectId && comparisonTreeRef.current.teams?.[sectId]) {
@@ -542,7 +566,10 @@ export default function DashboardPage() {
         }
       }
     } else if (type === "team") {
-      setSelectedTeamId(value || "");
+      const teamId = Array.isArray(value)
+        ? (value[0] !== undefined && value[0] !== null ? String(value[0]) : "")
+        : (value !== undefined && value !== null ? String(value) : "");
+      setSelectedTeamId(teamId);
     } else if (type === "status") {
       // If clicking the same status, deselect it
       if (selectedStatusId === (value ? parseInt(value) : null)) {
@@ -597,61 +624,131 @@ export default function DashboardPage() {
     }
   };
 
+  // Normalize string IDs
+  const cleanDeptId = typeof selectedDeptId === "string" ? selectedDeptId : (Array.isArray(selectedDeptId) && selectedDeptId[0] !== undefined && selectedDeptId[0] !== null ? String(selectedDeptId[0]) : "");
+  const cleanSectionId = typeof selectedSectionId === "string" ? selectedSectionId : (Array.isArray(selectedSectionId) && selectedSectionId[0] !== undefined && selectedSectionId[0] !== null ? String(selectedSectionId[0]) : "");
+  const cleanTeamId = typeof selectedTeamId === "string" ? selectedTeamId : (Array.isArray(selectedTeamId) && selectedTeamId[0] !== undefined && selectedTeamId[0] !== null ? String(selectedTeamId[0]) : "");
+
   const canGoBack = useMemo(() => {
     if (isTopLevelCommander) {
-      return !!selectedTeamId || !!selectedSectionId || !!selectedDeptId;
+      return !!cleanTeamId || !!cleanSectionId || !!cleanDeptId;
     }
     
     if (user?.commands_department_id) {
-      return !!selectedTeamId || !!selectedSectionId;
+      return !!cleanTeamId || !!cleanSectionId;
     }
     
     if (user?.commands_section_id) {
-      return !!selectedTeamId;
+      return !!cleanTeamId;
     }
 
     return false;
-  }, [selectedTeamId, selectedSectionId, selectedDeptId, isTopLevelCommander, user]);
+  }, [cleanTeamId, cleanSectionId, cleanDeptId, isTopLevelCommander, user]);
 
   const handleGoBack = () => {
-    if (selectedTeamId) {
+    if (cleanTeamId) {
       handleFilterChange("team", "");
-    } else if (selectedSectionId) {
+    } else if (cleanSectionId) {
       handleFilterChange("section", "");
-    } else if (selectedDeptId && isTopLevelCommander) {
+    } else if (cleanDeptId && isTopLevelCommander) {
       handleFilterChange("department", "");
     }
   };
 
   const safeStructure = Array.isArray(structure) ? structure : [];
-  const currentDept = safeStructure.find((d) => d.id.toString() === selectedDeptId);
-  const currentSection = currentDept?.sections?.find(
-    (s) => s.id.toString() === selectedSectionId,
-  );
-  const currentTeam = currentSection?.teams?.find(
-    (t) => t.id.toString() === selectedTeamId,
-  );
+
+  const allDepartments = useMemo(() => safeStructure, [safeStructure]);
+
+  const allSections = useMemo(() => {
+    return safeStructure.flatMap((d) =>
+      (d.sections || []).map((s) => ({
+        ...s,
+        departmentId: d.id,
+        departmentName: d.name,
+      }))
+    );
+  }, [safeStructure]);
+
+  const allTeams = useMemo(() => {
+    return safeStructure.flatMap((d) =>
+      (d.sections || []).flatMap((s) =>
+        (s.teams || []).map((t) => ({
+          ...t,
+          sectionId: s.id,
+          sectionName: s.name,
+          departmentId: d.id,
+          departmentName: d.name,
+        }))
+      )
+    );
+  }, [safeStructure]);
+
+  const currentTeam = useMemo(() => {
+    if (!cleanTeamId) return null;
+    return allTeams.find((t) => String(t.id) === cleanTeamId) || null;
+  }, [allTeams, cleanTeamId]);
+
+  const currentSection = useMemo(() => {
+    if (cleanSectionId) {
+      const found = allSections.find((s) => String(s.id) === cleanSectionId);
+      if (found) return found;
+    }
+    if (currentTeam?.sectionId) {
+      return allSections.find((s) => s.id === currentTeam.sectionId) || null;
+    }
+    return null;
+  }, [allSections, cleanSectionId, currentTeam]);
+
+  const currentDept = useMemo(() => {
+    if (cleanDeptId) {
+      const found = allDepartments.find((d) => String(d.id) === cleanDeptId);
+      if (found) return found;
+    }
+    if (currentSection?.departmentId) {
+      return allDepartments.find((d) => d.id === currentSection.departmentId) || null;
+    }
+    if (currentTeam?.departmentId) {
+      return allDepartments.find((d) => d.id === currentTeam.departmentId) || null;
+    }
+    return null;
+  }, [allDepartments, cleanDeptId, currentSection, currentTeam]);
 
   const unitName = useMemo(() => {
-    if (selectedTeamId) return currentTeam?.name || "חוליה";
-    if (selectedSectionId) return currentSection?.name || "מדור";
-    if (selectedDeptId) return currentDept?.name || "מחלקה";
+    if (cleanTeamId) {
+      return currentTeam ? formatUnitName("team", currentTeam.name) : `חוליה ${cleanTeamId}`;
+    }
+    if (cleanSectionId) {
+      return currentSection ? formatUnitName("section", currentSection.name) : `מדור ${cleanSectionId}`;
+    }
+    if (cleanDeptId) {
+      return currentDept ? formatUnitName("department", currentDept.name) : `מחלקה ${cleanDeptId}`;
+    }
 
-    if (user?.commands_team_id) return "כלל החוליה";
-    if (user?.commands_section_id) return "כלל המדור";
-    if (user?.commands_department_id) return "כלל המחלקה";
+    if (user?.commands_team_id) {
+      const userTeam = allTeams.find((t) => String(t.id) === String(user.commands_team_id));
+      return userTeam ? formatUnitName("team", userTeam.name) : "כלל החוליה";
+    }
+    if (user?.commands_section_id) {
+      const userSection = allSections.find((s) => String(s.id) === String(user.commands_section_id));
+      return userSection ? formatUnitName("section", userSection.name) : "כלל המדור";
+    }
+    if (user?.commands_department_id) {
+      const userDept = allDepartments.find((d) => String(d.id) === String(user.commands_department_id));
+      return userDept ? formatUnitName("department", userDept.name) : "כלל המחלקה";
+    }
     return "כלל היחידה";
   }, [
-    selectedTeamId,
-    selectedSectionId,
-    selectedDeptId,
+    cleanTeamId,
+    cleanSectionId,
+    cleanDeptId,
     currentTeam,
     currentSection,
     currentDept,
+    allTeams,
+    allSections,
+    allDepartments,
     user,
   ]);
-
-
 
   const activeFilterInfo = useMemo(() => {
     const filters = [
@@ -662,18 +759,18 @@ export default function DashboardPage() {
 
     // For admins, any org filter is "active"
     if (user?.is_admin) {
-      filters.push(!!selectedDeptId, !!selectedSectionId, !!selectedTeamId);
+      filters.push(!!cleanDeptId, !!cleanSectionId, !!cleanTeamId);
     } else {
       // For commanders, only count org filters if they go BEYOND their default view
       if (user?.commands_department_id) {
-        filters.push(!!selectedSectionId, !!selectedTeamId);
+        filters.push(!!cleanSectionId, !!cleanTeamId);
       } else if (user?.commands_section_id) {
-        filters.push(!!selectedTeamId);
+        filters.push(!!cleanTeamId);
       } else if (user?.commands_team_id) {
         // Team commanders are already at the lowest level
       } else {
         // Regular users/others
-        filters.push(!!selectedDeptId, !!selectedSectionId, !!selectedTeamId);
+        filters.push(!!cleanDeptId, !!cleanSectionId, !!cleanTeamId);
       }
     }
 
@@ -682,9 +779,9 @@ export default function DashboardPage() {
       count: filters.filter(Boolean).length
     };
   }, [
-    selectedDeptId,
-    selectedSectionId,
-    selectedTeamId,
+    cleanDeptId,
+    cleanSectionId,
+    cleanTeamId,
     selectedStatusData,
     selectedServiceTypes,
     selectedAgeRange,
@@ -706,28 +803,13 @@ export default function DashboardPage() {
       tags.push(ageText);
     }
     
-    // For admin, add org filters if selected
-    if (user?.is_admin) {
-        if (selectedTeamId && currentTeam) tags.push(currentTeam.name);
-        else if (selectedSectionId && currentSection) tags.push(currentSection.name);
-        else if (selectedDeptId && currentDept) tags.push(currentDept.name);
-    } else if (user?.is_commander) {
-        // Only show org tags if they are a filter beyond their default commander scope
-        if (user.commands_department_id) {
-            // Department commander default is dept, so section or team is a filter
-            if (selectedTeamId && currentTeam) tags.push(currentTeam.name);
-            else if (selectedSectionId && currentSection) tags.push(currentSection.name);
-        } else if (user.commands_section_id) {
-            // Section commander default is section, so team is a filter
-            if (selectedTeamId && currentTeam) tags.push(currentTeam.name);
-        } else if (user.commands_team_id) {
-            // Team commander is already scoped to team, so no org tags can be filters
-        } else {
-            // Fallback for commanders with no specific unit command yet
-            if (selectedTeamId && currentTeam) tags.push(currentTeam.name);
-            else if (selectedSectionId && currentSection) tags.push(currentSection.name);
-            else if (selectedDeptId && currentDept) tags.push(currentDept.name);
-        }
+    // Add org filter tag if selected
+    if (cleanTeamId && currentTeam) {
+      tags.push(formatUnitName("team", currentTeam.name));
+    } else if (cleanSectionId && currentSection) {
+      tags.push(formatUnitName("section", currentSection.name));
+    } else if (cleanDeptId && currentDept) {
+      tags.push(formatUnitName("department", currentDept.name));
     }
 
     return tags;
@@ -735,13 +817,12 @@ export default function DashboardPage() {
     selectedStatusData,
     selectedServiceTypes,
     selectedAgeRange,
-    selectedDeptId,
-    selectedSectionId,
-    selectedTeamId,
+    cleanDeptId,
+    cleanSectionId,
+    cleanTeamId,
     currentDept,
     currentSection,
     currentTeam,
-    user,
   ]);
 
   const handleStatusClick = (
@@ -811,6 +892,8 @@ export default function DashboardPage() {
                   canSelectDept={canSelectDept}
                   canSelectSection={canSelectSection}
                   canSelectTeam={canSelectTeam}
+                  hasActiveFiltersExternal={activeFilterInfo.hasActive}
+                  activeFilterCountExternal={activeFilterInfo.count}
                   user={user}
                 />
                 </div>
@@ -1002,15 +1085,15 @@ export default function DashboardPage() {
                 canGoBack={canGoBack}
                 onGoBack={handleGoBack}
                 selectedUnitId={
-                  selectedTeamId ? parseInt(selectedTeamId) :
-                  selectedSectionId ? parseInt(selectedSectionId) :
-                  selectedDeptId ? parseInt(selectedDeptId) : null
+                  cleanTeamId ? parseInt(cleanTeamId) :
+                  cleanSectionId ? parseInt(cleanSectionId) :
+                  cleanDeptId ? parseInt(cleanDeptId) : null
                 }
                 onUnitClick={(unitId, level) => {
                   const isSelected = 
-                    (level === 'department' && selectedDeptId === unitId.toString()) ||
-                    (level === 'section' && selectedSectionId === unitId.toString()) ||
-                    (level === 'team' && selectedTeamId === unitId.toString());
+                    (level === 'department' && cleanDeptId === unitId.toString()) ||
+                    (level === 'section' && cleanSectionId === unitId.toString()) ||
+                    (level === 'team' && cleanTeamId === unitId.toString());
 
                   if (isSelected) {
                     handleFilterChange(level as any, ""); // Clear the filter
@@ -1029,9 +1112,9 @@ export default function DashboardPage() {
                 statusId={selectedStatusData?.id || null}
                 statusName={selectedStatusData?.name || ""}
                 statusColor={selectedStatusData?.color || ""}
-                departmentId={selectedDeptId}
-                sectionId={selectedSectionId}
-                teamId={selectedTeamId}
+                departmentId={cleanDeptId}
+                sectionId={cleanSectionId}
+                teamId={cleanTeamId}
                 date={format(selectedDate, "yyyy-MM-dd")}
                 serviceTypes={selectedServiceTypes}
               />

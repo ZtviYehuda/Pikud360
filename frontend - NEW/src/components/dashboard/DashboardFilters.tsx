@@ -158,10 +158,18 @@ export const DashboardFilters = ({
     serviceTypes: string[];
     ageRange: { min?: number; max?: number };
   }>(() => {
-    const initDepts = selectedDeptId && selectedDeptId !== "all" ? [selectedDeptId] : [];
-    const initSecs = selectedSectionId && selectedSectionId !== "all" ? [selectedSectionId] : [];
-    const initTeams = selectedTeamId && selectedTeamId !== "all" ? [selectedTeamId] : [];
-    const initStatuses = selectedStatusId && selectedStatusId !== "all" ? [selectedStatusId] : [];
+    const initDepts = selectedDeptId && selectedDeptId !== "all"
+      ? (Array.isArray(selectedDeptId) ? selectedDeptId.map(String).filter(Boolean) : [String(selectedDeptId)])
+      : [];
+    const initSecs = selectedSectionId && selectedSectionId !== "all"
+      ? (Array.isArray(selectedSectionId) ? selectedSectionId.map(String).filter(Boolean) : [String(selectedSectionId)])
+      : [];
+    const initTeams = selectedTeamId && selectedTeamId !== "all"
+      ? (Array.isArray(selectedTeamId) ? selectedTeamId.map(String).filter(Boolean) : [String(selectedTeamId)])
+      : [];
+    const initStatuses = selectedStatusId && selectedStatusId !== "all"
+      ? (Array.isArray(selectedStatusId) ? selectedStatusId.map(String).filter(Boolean) : [String(selectedStatusId)])
+      : [];
     return {
       deptIds: initDepts,
       sectionIds: initSecs,
@@ -171,6 +179,38 @@ export const DashboardFilters = ({
       ageRange: selectedAgeRange || {},
     };
   });
+
+  // Keep stagedFilters in sync when props change (e.g. external reset, drill-down)
+  useEffect(() => {
+    const initDepts = selectedDeptId && selectedDeptId !== "all"
+      ? (Array.isArray(selectedDeptId) ? selectedDeptId.map(String).filter(Boolean) : [String(selectedDeptId)])
+      : [];
+    const initSecs = selectedSectionId && selectedSectionId !== "all"
+      ? (Array.isArray(selectedSectionId) ? selectedSectionId.map(String).filter(Boolean) : [String(selectedSectionId)])
+      : [];
+    const initTeams = selectedTeamId && selectedTeamId !== "all"
+      ? (Array.isArray(selectedTeamId) ? selectedTeamId.map(String).filter(Boolean) : [String(selectedTeamId)])
+      : [];
+    const initStatuses = selectedStatusId && selectedStatusId !== "all"
+      ? (Array.isArray(selectedStatusId) ? selectedStatusId.map(String).filter(Boolean) : [String(selectedStatusId)])
+      : [];
+
+    setStagedFilters({
+      deptIds: initDepts,
+      sectionIds: initSecs,
+      teamIds: initTeams,
+      statusIds: initStatuses,
+      serviceTypes: selectedServiceTypes || [],
+      ageRange: selectedAgeRange || {},
+    });
+  }, [
+    selectedDeptId,
+    selectedSectionId,
+    selectedTeamId,
+    selectedStatusId,
+    selectedServiceTypes,
+    selectedAgeRange,
+  ]);
 
   const handleApply = () => {
     if (onFilterChange) {
@@ -731,10 +771,10 @@ export const DashboardFilters = ({
               <span className="text-[11px] font-semibold text-muted-foreground">טווחים נפוצים</span>
               <div className="flex flex-wrap gap-2">
                 {[
-                  { label: "הכל (18-67)", min: 18, max: 67 },
-                  { label: "סדיר (18-21)", min: 18, max: 21 },
-                  { label: "מילואים צעיר (22-40)", min: 22, max: 40 },
-                  { label: "מילואים ותיק (41-67)", min: 41, max: 67 },
+                  { label: "הכל", min: 18, max: 67 },
+                  { label: "(18-21)", min: 18, max: 21 },
+                  { label: "(22-40)", min: 22, max: 40 },
+                  { label: "(41-67)", min: 41, max: 67 },
                 ].map((preset) => {
                   const isPresetActive =
                     (stagedFilters.ageRange?.min ?? 18) === preset.min &&
@@ -961,14 +1001,17 @@ export const DashboardFilters = ({
 
               {hasActiveFilters && (
                 <button
+                  type="button"
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
-                    onFilterChange("reset");
+                    handleLocalReset();
+                    onFilterChange?.("reset");
                   }}
-                  className="absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center transition-all hover:scale-125 active:scale-90 z-20 text-primary/70 hover:text-destructive"
+                  className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-background border border-border/80 shadow-xs flex items-center justify-center transition-all hover:scale-125 active:scale-90 z-30 text-muted-foreground hover:text-destructive hover:border-destructive/40 cursor-pointer"
                   title="נקה הכל"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
+                  <RotateCcw className="w-3 h-3" />
                 </button>
               )}
             </div>

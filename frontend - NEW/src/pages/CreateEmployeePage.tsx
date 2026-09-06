@@ -65,9 +65,9 @@ const InputItem = ({
   required,
   className,
 }: any) => (
-  <div className={cn("space-y-1 sm:space-y-1.5 flex flex-col", className)}>
-    <Label className="text-[12px] font-bold text-slate-400 pr-1 flex items-center gap-2">
-      {Icon && <Icon className="w-3.5 h-3.5 opacity-60" />}
+  <div className={cn("space-y-1 flex flex-col", className)}>
+    <Label className="text-[11px] font-semibold text-muted-foreground pr-0.5 flex items-center gap-1.5">
+      {Icon && <Icon className="w-3 h-3 opacity-60" />}
       {label} {required && <span className="text-destructive">*</span>}
     </Label>
     <div className="relative w-full flex flex-col justify-center">
@@ -193,21 +193,22 @@ const PersonalFormTab = ({
   onNext,
 }: any) => {
   return (
-    <div className="space-y-4 sm:space-y-6 pb-24 sm:pb-0">
+    <div className="space-y-3 pb-4 sm:pb-0">
       <CompactCard
         title={
-          <span className="flex items-center gap-2 text-primary font-black text-lg">
-            <User className="w-5 h-5" /> פרטים אישיים
+          <span className="flex items-center gap-2 text-primary font-bold text-sm sm:text-base">
+            <User className="w-4 h-4" /> פרטים אישיים והתקשרות
           </span>
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        {/* Section 1: Personal & Contact Fields in 4 columns */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <InputItem label="שם פרטי" required icon={User}>
             <Input
               value={formData.first_name || ""}
               onChange={(e) => handleFieldChange("first_name", e.target.value)}
               placeholder="פרטי"
-              className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 rounded-xl font-bold"
+              className="bg-background border-border/60 focus:ring-1 focus:ring-primary/20 transition-all h-9 rounded-lg font-medium text-xs sm:text-sm"
             />
           </InputItem>
 
@@ -216,7 +217,7 @@ const PersonalFormTab = ({
               value={formData.last_name || ""}
               onChange={(e) => handleFieldChange("last_name", e.target.value)}
               placeholder="משפחה"
-              className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 rounded-xl font-bold"
+              className="bg-background border-border/60 focus:ring-1 focus:ring-primary/20 transition-all h-9 rounded-lg font-medium text-xs sm:text-sm"
             />
           </InputItem>
 
@@ -231,26 +232,17 @@ const PersonalFormTab = ({
               <AnimatePresence>
                 {(isNameLong || formData.dominant_name) && (
                   <motion.div
-                    initial={{ opacity: 0, height: 0, y: 10 }}
+                    initial={{ opacity: 0, height: 0, y: 5 }}
                     animate={{ opacity: 1, height: "auto", y: 0 }}
-                    exit={{ opacity: 0, height: 0, y: 10 }}
-                    className="col-span-1 md:col-span-2 lg:col-span-4 rounded-2xl bg-primary/5 dark:bg-primary/10 border border-primary/20 p-4 sm:p-5 mt-2 overflow-hidden flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6"
+                    exit={{ opacity: 0, height: 0, y: 5 }}
+                    className="col-span-1 sm:col-span-2 lg:col-span-4 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/20 p-2.5 sm:p-3 overflow-hidden flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4"
                   >
-                    <div className="flex items-center gap-3 text-primary">
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 text-primary">
-                        <User className="w-5 h-5" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-black">
-                          זיהינו שם ארוך מהרגיל
-                        </span>
-                        <span className="text-xs font-bold opacity-80 mt-0.5">
-                          בחר את השם שיוצג ביומיום או הקלד בעצמך:
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-2 text-primary shrink-0">
+                      <User className="w-4 h-4" />
+                      <span className="text-xs font-bold">שם ביומיום:</span>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 flex-1 w-full sm:w-auto">
+                    <div className="flex flex-wrap items-center gap-1.5 flex-1 w-full sm:w-auto">
                       {words.map((word, idx) => (
                         <button
                           key={idx}
@@ -262,10 +254,10 @@ const PersonalFormTab = ({
                             )
                           }
                           className={cn(
-                            "px-4 py-2 rounded-xl text-sm font-black transition-all border",
+                            "px-2.5 py-1 rounded-lg text-xs font-bold transition-all border",
                             formData.dominant_name === word
-                              ? "bg-primary text-white border-primary scale-[1.02]"
-                              : "bg-white dark:bg-slate-900/50 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-primary/50 hover:text-primary",
+                              ? "bg-primary text-white border-primary"
+                              : "bg-background text-foreground/80 border-border/60 hover:border-primary/50",
                           )}
                         >
                           {word}
@@ -277,8 +269,8 @@ const PersonalFormTab = ({
                         onChange={(e) =>
                           handleFieldChange("dominant_name", e.target.value)
                         }
-                        placeholder="הקלד שם אחר..."
-                        className="bg-white/50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 w-[140px] rounded-xl font-bold text-sm"
+                        placeholder="שם אחר..."
+                        className="bg-background border-border/60 h-8 w-[120px] rounded-lg font-medium text-xs"
                       />
                     </div>
                   </motion.div>
@@ -287,28 +279,6 @@ const PersonalFormTab = ({
             );
           })()}
 
-          <InputItem label="מין" required icon={User}>
-            <Select
-              value={formData.gender || ""}
-              onValueChange={(val) => handleFieldChange("gender", val)}
-            >
-              <SelectTrigger className="w-full bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 text-right rounded-xl font-bold px-4">
-                <SelectValue placeholder="בחר מין" />
-              </SelectTrigger>
-              <SelectContent
-                dir="rtl"
-                className="rounded-xl border-slate-200 dark:border-slate-800"
-              >
-                <SelectItem value="male" className="font-bold py-2.5">
-                  גבר
-                </SelectItem>
-                <SelectItem value="female" className="font-bold py-2.5">
-                  אישה
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </InputItem>
-
           <InputItem label="תאריך לידה" required icon={Calendar}>
             <Input
               type="date"
@@ -316,7 +286,49 @@ const PersonalFormTab = ({
                 formData.birth_date ? formData.birth_date.split("T")[0] : ""
               }
               onChange={(e) => handleFieldChange("birth_date", e.target.value)}
-              className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 w-full rounded-xl font-bold"
+              className="bg-background border-border/60 focus:ring-1 focus:ring-primary/20 transition-all h-9 w-full rounded-lg font-medium text-xs sm:text-sm"
+            />
+          </InputItem>
+
+          <InputItem label="מין" required icon={User}>
+            <Select
+              value={formData.gender || ""}
+              onValueChange={(val) => handleFieldChange("gender", val)}
+            >
+              <SelectTrigger className="w-full bg-background border-border/60 focus:ring-1 focus:ring-primary/20 transition-all h-9 text-right rounded-lg font-medium px-3 text-xs sm:text-sm">
+                <SelectValue placeholder="בחר מין" />
+              </SelectTrigger>
+              <SelectContent dir="rtl" className="rounded-lg border-border/60">
+                <SelectItem value="male" className="font-medium text-xs sm:text-sm py-2">
+                  גבר
+                </SelectItem>
+                <SelectItem value="female" className="font-medium text-xs sm:text-sm py-2">
+                  אישה
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </InputItem>
+
+          <InputItem label="טלפון נייד" icon={Phone}>
+            <Input
+              type="tel"
+              inputMode="tel"
+              value={formData.phone_number || ""}
+              onChange={(e) =>
+                handleFieldChange("phone_number", e.target.value)
+              }
+              placeholder="05X-XXXXXXX"
+              className="bg-background border-border/60 transition-all h-9 rounded-lg font-medium text-xs sm:text-sm text-right placeholder:text-right"
+              dir="rtl"
+            />
+          </InputItem>
+
+          <InputItem label="דואר אלקטרוני" icon={Mail}>
+            <Input
+              value={formData.email || ""}
+              onChange={(e) => handleFieldChange("email", e.target.value)}
+              placeholder="example@mail.com"
+              className="bg-background border-border/60 transition-all h-9 rounded-lg font-medium text-xs sm:text-sm"
             />
           </InputItem>
 
@@ -327,18 +339,15 @@ const PersonalFormTab = ({
                 handleFieldChange("service_type_id", parseInt(val))
               }
             >
-              <SelectTrigger className="w-full bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 text-right rounded-xl font-bold px-4">
+              <SelectTrigger className="w-full bg-background border-border/60 focus:ring-1 focus:ring-primary/20 transition-all h-9 text-right rounded-lg font-medium px-3 text-xs sm:text-sm">
                 <SelectValue placeholder="בחר מעמד" />
               </SelectTrigger>
-              <SelectContent
-                dir="rtl"
-                className="rounded-xl border-slate-200 dark:border-slate-800"
-              >
+              <SelectContent dir="rtl" className="rounded-lg border-border/60">
                 {serviceTypes.map((st: any) => (
                   <SelectItem
                     key={st.id}
                     value={st.id.toString()}
-                    className="font-bold py-2.5"
+                    className="font-medium text-xs sm:text-sm py-2"
                   >
                     {st.name}
                   </SelectItem>
@@ -352,140 +361,83 @@ const PersonalFormTab = ({
               value={formData.city || ""}
               onChange={(e) => handleFieldChange("city", e.target.value)}
               placeholder="ירושלים, ת''א..."
-              className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-all h-10 rounded-xl font-bold"
+              className="bg-background border-border/60 focus:ring-1 focus:ring-primary/20 transition-all h-9 rounded-lg font-medium text-xs sm:text-sm"
             />
           </InputItem>
         </div>
-      </CompactCard>
 
-      <CompactCard
-        title={
-          <span className="flex items-center gap-2 text-primary font-black text-lg">
-            <Phone className="w-5 h-5" /> פרטי קשר וחירום
-          </span>
-        }
-      >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-10">
-          {/* Contact Details Block */}
-          <div className="space-y-4">
-            <h4 className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest flex items-center gap-2 pb-2 border-b border-border/40">
-              פרטי התקשרות
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-              <InputItem
-                label="טלפון נייד"
-                icon={Phone}
-                className="sm:col-span-2"
-              >
-                <Input
-                  type="tel"
-                  inputMode="tel"
-                  value={formData.phone_number || ""}
-                  onChange={(e) =>
-                    handleFieldChange("phone_number", e.target.value)
-                  }
-                  placeholder="05X-XXXXXXX"
-                  className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 transition-all h-10 rounded-xl font-bold text-right placeholder:text-right"
-                  dir="rtl"
-                />
-              </InputItem>
-              <InputItem
-                label="דואר אלקטרוני"
-                icon={Mail}
-                className="sm:col-span-2"
-              >
-                <Input
-                  value={formData.email || ""}
-                  onChange={(e) => handleFieldChange("email", e.target.value)}
-                  placeholder="example@mail.com"
-                  className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 transition-all h-10 rounded-xl font-bold"
-                />
-              </InputItem>
-            </div>
+        {/* Section 2: Compact Emergency Contact */}
+        <div className="border-t border-border/40 pt-3 mt-1">
+          <div className="flex items-center gap-1.5 mb-2.5 text-xs font-semibold text-muted-foreground">
+            <HeartPulse className="w-3.5 h-3.5 text-rose-500" />
+            <span>איש קשר לחירום (רשות)</span>
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <InputItem label="שם מלא (קרבה)">
+              <Input
+                value={emergencyDetails.name}
+                onChange={(e) =>
+                  setEmergencyDetails({
+                    ...emergencyDetails,
+                    name: e.target.value,
+                  })
+                }
+                placeholder="שם איש הקשר"
+                className="h-9 bg-background border-border/60 font-medium rounded-lg text-xs sm:text-sm"
+              />
+            </InputItem>
 
-          {/* Emergency Contact Block (Destructive/Red Theme) */}
-          <div className="bg-rose-500/[0.03] rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-rose-500/10 dark:bg-rose-500/[0.02] dark:border-rose-500/10">
-            <h4 className="text-[10px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-2 pb-2 mb-4 border-b border-rose-500/10">
-              <HeartPulse className="w-3.5 h-3.5" /> איש קשר לחירום
-            </h4>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-5 gap-3.5 sm:gap-4 w-full">
-                <InputItem
-                  label="שם מלא (פרטי ומשפחה)"
-                  className="sm:col-span-3"
-                >
-                  <Input
-                    value={emergencyDetails.name}
-                    onChange={(e) =>
-                      setEmergencyDetails({
-                        ...emergencyDetails,
-                        name: e.target.value,
-                      })
-                    }
-                    placeholder="שם איש הקשר"
-                    className="h-10 bg-background border border-border/40 focus-visible:ring-rose-500/20 font-bold rounded-xl hover:border-border/80 transition-all"
-                  />
-                </InputItem>
-                <InputItem label="קרבה" className="sm:col-span-2">
-                  <Select
-                    value={emergencyDetails.relation}
-                    onValueChange={(val) =>
-                      setEmergencyDetails({
-                        ...emergencyDetails,
-                        relation: val,
-                      })
-                    }
-                  >
-                    <SelectTrigger className="w-full h-10 bg-white dark:bg-slate-900/50 border-rose-500/10 text-right font-bold rounded-xl focus:ring-rose-500/20">
-                      <SelectValue placeholder="בחר" />
-                    </SelectTrigger>
-                    <SelectContent
-                      dir="rtl"
-                      className="rounded-xl border-rose-500/10"
-                    >
-                      {relations.map((r: string) => (
-                        <SelectItem
-                          key={r}
-                          value={r}
-                          className="font-bold py-2.5"
-                        >
-                          {r}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </InputItem>
-              </div>
-              <InputItem label="טלפון חירום" icon={Phone}>
-                <Input
-                  type="tel"
-                  inputMode="tel"
-                  value={emergencyDetails.phone}
-                  onChange={(e) =>
-                    setEmergencyDetails({
-                      ...emergencyDetails,
-                      phone: e.target.value,
-                    })
-                  }
-                  placeholder="מספר טלפון לחירום"
-                  className="h-10 bg-white dark:bg-slate-900/50 border-rose-500/10 focus-visible:ring-rose-500/20 font-bold rounded-xl text-right placeholder:text-right"
-                  dir="rtl"
-                />
-              </InputItem>
-            </div>
+            <InputItem label="קרבה">
+              <Select
+                value={emergencyDetails.relation}
+                onValueChange={(val) =>
+                  setEmergencyDetails({
+                    ...emergencyDetails,
+                    relation: val,
+                  })
+                }
+              >
+                <SelectTrigger className="w-full h-9 bg-background border-border/60 text-right font-medium rounded-lg text-xs sm:text-sm">
+                  <SelectValue placeholder="בחר קרבה" />
+                </SelectTrigger>
+                <SelectContent dir="rtl" className="rounded-lg border-border/60">
+                  {relations.map((r: string) => (
+                    <SelectItem key={r} value={r} className="font-medium text-xs sm:text-sm py-2">
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </InputItem>
+
+            <InputItem label="טלפון חירום" icon={Phone}>
+              <Input
+                type="tel"
+                inputMode="tel"
+                value={emergencyDetails.phone}
+                onChange={(e) =>
+                  setEmergencyDetails({
+                    ...emergencyDetails,
+                    phone: e.target.value,
+                  })
+                }
+                placeholder="מספר טלפון לחירום"
+                className="h-9 bg-background border-border/60 font-medium rounded-lg text-xs sm:text-sm text-right placeholder:text-right"
+                dir="rtl"
+              />
+            </InputItem>
           </div>
         </div>
       </CompactCard>
 
       {/* Mobile Navigation Button */}
-      <div className="sm:hidden mt-8">
+      <div className="sm:hidden mt-4">
         <Button
-          className="w-full h-10 text-lg font-bold  bg-primary text-primary-foreground rounded-2xl"
+          className="w-full h-10 text-base font-bold bg-primary text-primary-foreground rounded-xl"
           onClick={onNext}
         >
           המשך לשלב הבא
-          <ArrowLeft className="w-5 h-5 mr-2" />
+          <ArrowLeft className="w-4 h-4 mr-2" />
         </Button>
       </div>
     </div>
@@ -1367,20 +1319,20 @@ export default function CreateEmployeePage() {
   );
 
   return (
-    <div id="create-page-root" className="flex flex-col pb-10">
+    <div id="create-page-root" className="flex flex-col">
       {/* Page Header - matches system layout */}
-      <div className="pt-2 sm:pt-6 pb-2 sm:pb-4 px-3 sm:px-6 shrink-0 flex items-center justify-between gap-3 sm:gap-4 border-b border-border/40 mb-3 sm:mb-6">
+      <div className="pt-2 sm:pt-3 pb-2 sm:pb-3 px-3 sm:px-6 shrink-0 flex items-center justify-between gap-3 sm:gap-4 border-b border-border/40 mb-2 sm:mb-3">
         {/* Right side (RTL start) */}
         <div className="flex items-center gap-2 sm:gap-3">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate("/employees")}
-            className="h-9 px-2 sm:px-3 rounded-xl font-bold text-muted-foreground hover:text-foreground hover:bg-muted"
+            className="h-8 px-2 sm:px-3 rounded-lg font-semibold text-muted-foreground hover:text-foreground hover:bg-muted text-xs"
             title="חזרה לרשימה"
           >
-            <ArrowRight className="w-4 h-4 ml-1" />
-            <span className="text-xs sm:text-sm">חזרה</span>
+            <ArrowRight className="w-3.5 h-3.5 ml-1" />
+            <span>חזרה</span>
           </Button>
 
           <div className="hidden sm:block">
@@ -1394,18 +1346,20 @@ export default function CreateEmployeePage() {
         </div>
 
         {/* Center: Inline Header Tabs for Desktop */}
-        <div className="hidden sm:flex items-stretch bg-slate-100/50 dark:bg-slate-900/50 rounded-xl p-1 min-w-[280px] h-10 relative">
+        <div className="hidden sm:flex items-stretch bg-muted/40 rounded-lg p-1 min-w-[260px] h-9 relative border border-border/40">
           <TabButton
             active={activeTab === "personal"}
             onClick={() => setActiveTab("personal")}
             icon={User}
             label="פרטים אישיים"
+            small={true}
           />
           <TabButton
             active={activeTab === "professional"}
             onClick={() => setActiveTab("professional")}
             icon={Shield}
             label="מקצועי והרשאות"
+            small={true}
           />
         </div>
 
@@ -1413,7 +1367,7 @@ export default function CreateEmployeePage() {
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {hasDraft && (
             <div className="hidden md:flex items-center gap-2">
-              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 px-2.5 py-1 rounded-xl flex items-center gap-1.5 shrink-0">
+              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 px-2 py-0.5 rounded-lg flex items-center gap-1 shrink-0">
                 <Save className="w-3 h-3 text-emerald-500 animate-pulse" />
                 טיוטה שמורה
               </span>
@@ -1421,7 +1375,7 @@ export default function CreateEmployeePage() {
                 variant="ghost"
                 size="sm"
                 onClick={clearDraft}
-                className="h-8.5 text-xs font-bold rounded-xl text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                className="h-8 text-xs font-semibold rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-2"
               >
                 נקה טיוטה
               </Button>
@@ -1429,49 +1383,49 @@ export default function CreateEmployeePage() {
           )}
 
           <Button
-            className="h-9 px-3.5 sm:px-6 rounded-xl font-black bg-primary hover:bg-primary/90 text-primary-foreground hover:scale-[1.02] active:scale-[0.98] transition-all gap-1.5 sm:gap-2 shadow-xs"
+            className="h-8.5 px-3.5 sm:px-5 rounded-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground transition-all gap-1.5 shadow-xs text-xs"
             onClick={handleSubmit}
             disabled={saving}
           >
             {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <Save className="w-4 h-4" />
+              <Save className="w-3.5 h-3.5" />
             )}
-            <span className="text-xs sm:text-sm whitespace-nowrap">
-              שמור שוטר
-            </span>
+            <span className="whitespace-nowrap">שמור שוטר</span>
           </Button>
         </div>
       </div>
 
       {/* Mobile Tabs */}
-      <div className="flex sm:hidden justify-center w-full mb-3 px-4 pt-0">
-        <div className="bg-slate-100/60 dark:bg-slate-900/60 rounded-xl p-1 flex w-full h-10 shadow-2xs">
+      <div className="flex sm:hidden justify-center w-full mb-2 px-3 pt-0">
+        <div className="bg-muted/40 rounded-lg p-1 flex w-full h-9 border border-border/40">
           <TabButton
             active={activeTab === "personal"}
             onClick={() => setActiveTab("personal")}
             icon={User}
             label="פרטים אישיים"
+            small={true}
           />
           <TabButton
             active={activeTab === "professional"}
             onClick={() => setActiveTab("professional")}
             icon={Shield}
             label="מקצועי והרשאות"
+            small={true}
           />
         </div>
       </div>
 
-      <div className="space-y-4 pb-20">
+      <div className="space-y-3 px-3 sm:px-6 flex-1">
         <AnimatePresence mode="wait">
           {activeTab === "personal" && (
             <motion.div
               key="personal"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
+              exit={{ opacity: 0, y: -5 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
             >
               <PersonalFormTab
                 formData={formData}
@@ -1487,10 +1441,10 @@ export default function CreateEmployeePage() {
           {activeTab === "professional" && (
             <motion.div
               key="professional"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
+              exit={{ opacity: 0, y: -5 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
             >
               <ProfessionalFormTab
                 formData={formData}
@@ -1512,31 +1466,31 @@ export default function CreateEmployeePage() {
         </AnimatePresence>
       </div>
 
-      {/* Sticky Bottom Navigation Bar (Hidden on mobile where inline step buttons are used) */}
-      <div className="hidden md:block sticky bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md border-t border-border/50 py-3.5 px-4 sm:px-6 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.4)]">
+      {/* Sticky Bottom Navigation Bar */}
+      <div className="hidden md:block sticky bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md border-t border-border/40 py-2.5 px-4 sm:px-6 shadow-2xs mt-2">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 pl-20 sm:pl-28">
           {/* Step Indicator */}
-          <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
             <span className="hidden sm:inline">שלב</span>
-            <span className="w-6 h-6 rounded-full bg-primary/10 text-primary font-black flex items-center justify-center text-xs">
+            <span className="w-5 h-5 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-[11px]">
               {activeTab === "personal" ? "1" : "2"}
             </span>
             <span>מתוך 2:</span>
-            <span className="font-black text-foreground">
+            <span className="font-bold text-foreground">
               {activeTab === "personal" ? "פרטים אישיים" : "מקצועי והרשאות"}
             </span>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             {activeTab === "personal" ? (
               <Button
                 type="button"
                 onClick={() => setActiveTab("professional")}
-                className="h-10 px-5 sm:px-6 rounded-xl font-black bg-primary hover:bg-primary/90 text-primary-foreground transition-all shadow-sm gap-2"
+                className="h-9 px-4 sm:px-5 rounded-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground transition-all shadow-xs gap-1.5 text-xs"
               >
                 <span>המשך לשלב הבא</span>
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="w-3.5 h-3.5" />
               </Button>
             ) : (
               <>
@@ -1544,9 +1498,9 @@ export default function CreateEmployeePage() {
                   type="button"
                   variant="outline"
                   onClick={() => setActiveTab("personal")}
-                  className="h-10 px-4 rounded-xl font-bold border-border/60 hover:bg-muted text-muted-foreground hover:text-foreground gap-2"
+                  className="h-9 px-3 rounded-lg font-semibold border-border/60 hover:bg-muted text-muted-foreground hover:text-foreground gap-1.5 text-xs"
                 >
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">חזור לפרטים אישיים</span>
                   <span className="sm:hidden">חזור</span>
                 </Button>
@@ -1554,12 +1508,12 @@ export default function CreateEmployeePage() {
                   type="button"
                   onClick={handleSubmit}
                   disabled={saving}
-                  className="h-10 px-5 sm:px-6 rounded-xl font-black bg-primary hover:bg-primary/90 text-primary-foreground transition-all shadow-sm gap-2"
+                  className="h-9 px-4 sm:px-5 rounded-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground transition-all shadow-xs gap-1.5 text-xs"
                 >
                   {saving ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <Save className="w-4 h-4" />
+                    <Save className="w-3.5 h-3.5" />
                   )}
                   <span>{saving ? "שומר..." : "שמור שוטר"}</span>
                 </Button>

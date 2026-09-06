@@ -1723,23 +1723,14 @@ export default function EmployeeViewPage() {
                   : displayName}
               </h1>
 
-              <Badge
-                variant="outline"
-                className={cn(
-                  "text-xs font-semibold px-2.5 py-0.5 rounded-full border",
-                  employee.is_active
-                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                    : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
-                )}
-              >
-                <span
-                  className={cn(
-                    "w-1.5 h-1.5 rounded-full mr-1.5 inline-block",
-                    employee.is_active ? "bg-emerald-500" : "bg-rose-500",
-                  )}
-                />
-                {employee.is_active ? "פעיל" : "לא פעיל"}
-              </Badge>
+              {!employee.is_active && (
+                <Badge
+                  variant="destructive"
+                  className="text-xs font-bold px-2 py-0.5 rounded-md bg-destructive/10 text-destructive border-destructive/20"
+                >
+                  לא פעיל
+                </Badge>
+              )}
 
               {commanderTitle && (
                 <Badge
@@ -1748,12 +1739,6 @@ export default function EmployeeViewPage() {
                 >
                   <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
                   {commanderTitle}
-                </Badge>
-              )}
-
-              {activeServiceTypeName && (
-                <Badge variant="secondary" className="font-medium text-xs py-0.5">
-                  {activeServiceTypeName}
                 </Badge>
               )}
             </div>

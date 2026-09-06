@@ -108,6 +108,22 @@ export default function AttendancePage() {
   const selectedStatusId = selectedStatusIds[0] || "all";
   const selectedServiceTypeId = selectedServiceTypeIds[0] || "all";
 
+  const setSelectedDeptId = (id: string) => {
+    setSelectedDeptIds(!id || id === "all" ? [] : [id]);
+  };
+  const setSelectedSectionId = (id: string) => {
+    setSelectedSectionIds(!id || id === "all" ? [] : [id]);
+  };
+  const setSelectedTeamId = (id: string) => {
+    setSelectedTeamIds(!id || id === "all" ? [] : [id]);
+  };
+  const setSelectedStatusId = (id: string) => {
+    setSelectedStatusIds(!id || id === "all" ? [] : [id]);
+  };
+  const setSelectedServiceTypeId = (id: string) => {
+    setSelectedServiceTypeIds(!id || id === "all" ? [] : [id]);
+  };
+
   const [statusTypes, setStatusTypes] = useState<any[]>([]);
   const [serviceTypes, setServiceTypes] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
@@ -1464,68 +1480,50 @@ export default function AttendancePage() {
                               )}
                             </div>
 
-                            {/* Employee Name */}
-                            <div className="flex flex-col text-right">
+                            {/* Employee Name & Single-line clean Subtitle */}
+                            <div className="flex flex-col text-right min-w-0">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   navigate(`/employees/${emp.id}`);
                                 }}
-                                className="text-sm font-bold text-foreground hover:underline p-0 h-auto text-right hover:text-primary"
+                                className="text-sm font-bold text-foreground hover:underline p-0 h-auto text-right hover:text-primary truncate"
                               >
                                 {emp.dominant_name
                                   ? `${emp.dominant_name} ${emp.last_name}`
                                   : `${emp.first_name} ${emp.last_name}`}
                               </button>
+                              <span className="text-[11px] text-muted-foreground font-medium truncate mt-0.5">
+                                {[
+                                  emp.team_name || emp.section_name || emp.department_name,
+                                  emp.service_type_name,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" • ")}
+                              </span>
                             </div>
                           </div>
 
-                          {/* Status Tag (נוכח/נעדר) */}
+                          {/* Status Tag */}
                           <span
+                            onClick={() => handleOpenStatusModal(emp)}
                             className={cn(
-                              "rounded-full px-2.5 py-0.5 text-[10px] font-black border transition-colors",
+                              "rounded-full px-2.5 py-0.5 text-[10px] font-black border transition-colors shrink-0 cursor-pointer whitespace-nowrap",
                               !isAbsent
                                 ? "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                                 : "bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/20",
                             )}
                           >
-                            {isAbsent ? "נעדר" : "נוכח"} (
-                            {statusName || "לא דווח"})
+                            {statusName || (isAbsent ? "נעדר" : "נוכח")}
                           </span>
                         </div>
 
-                        {/* Middle Section: Details (Role, Unit) with theme responsive colors */}
-                        <div className="space-y-1 text-right mb-4 text-[11px] text-muted-foreground">
-                          <div className="flex flex-wrap items-center gap-1 font-medium">
-                            <span className="opacity-70">תפקיד:</span>
-                            <span className="text-foreground/90 font-bold">
-                              {getProfessionalTitle(emp)}
-                            </span>
-                            {emp.service_type_name && (
-                              <>
-                                <span className="opacity-40">•</span>
-                                <span className="text-foreground/90 font-bold">
-                                  {emp.service_type_name}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap items-center gap-1 font-medium">
-                            <span className="opacity-70">שיוך ארגוני:</span>
-                            <span className="text-foreground/90 font-bold">
-                              {emp.department_name}
-                              {emp.section_name && ` / ${emp.section_name}`}
-                              {emp.team_name && ` / ${emp.team_name}`}
-                            </span>
-                          </div>
-                        </div>
-
                         {/* Actions Row at bottom of card */}
-                        <div className="flex gap-2 pt-3 border-t border-border/30 dark:border-border/10 no-export">
+                        <div className="flex items-center justify-between gap-2 pt-2.5 mt-2.5 border-t border-border/40 no-export">
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            className="h-8 flex-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold gap-1 px-2"
+                            className="h-7.5 flex-1 rounded-xl text-xs font-bold text-primary border-primary/20 bg-primary/5 hover:bg-primary/10 gap-1.5"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleOpenStatusModal(emp);
@@ -1538,7 +1536,7 @@ export default function AttendancePage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 flex-1 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 text-xs font-bold gap-1 px-2"
+                              className="h-7.5 px-3 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground gap-1.5"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleOpenHistoryModal(emp);

@@ -461,17 +461,14 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
                 </div>
 
                 {/* ── Active Target Breadcrumb / Feedback ── */}
-                {activeTarget ? (
+                {activeTarget && (
                   <div className="p-2.5 rounded-xl bg-primary/5 border border-primary/20 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-muted-foreground shrink-0">האירוע יחול על:</span>
-                      <span className="font-bold text-primary truncate">{activeTarget.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-primary" />
+                      <span className="font-bold text-primary">{activeTarget.label}</span>
                     </div>
+                    <span className="text-muted-foreground text-[11px]">{activeTarget.parent}</span>
                   </div>
-                ) : (
-                  <p className="text-[11px] text-muted-foreground text-right pr-1">
-                    בחר מחלקה, מדור או חוליה לקביעת האירוע
-                  </p>
                 )}
               </div>
             </>
