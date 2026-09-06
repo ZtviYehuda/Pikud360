@@ -37,7 +37,7 @@ import type {
   DepartmentNode,
   ServiceType,
 } from "@/types/employee.types";
-import { CompactCard } from "@/components/forms/EmployeeFormComponents";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -57,17 +57,15 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { differenceInYears } from "date-fns";
 import { cn, cleanUnitName, isValidIsraeliPhone } from "@/lib/utils";
-import { PageHeader } from "@/components/layout/PageHeader";
+
 const InputItem = ({
   label,
-  icon: Icon,
   children,
   required,
   className,
 }: any) => (
-  <div className={cn("space-y-1 flex flex-col", className)}>
-    <Label className="text-[11px] font-semibold text-muted-foreground pr-0.5 flex items-center gap-1.5">
-      {Icon && <Icon className="w-3 h-3 opacity-60" />}
+  <div className={cn("space-y-1.5 flex flex-col", className)}>
+    <Label className="text-xs font-semibold text-foreground pr-0.5">
       {label} {required && <span className="text-destructive">*</span>}
     </Label>
     <div className="relative w-full flex flex-col justify-center">
@@ -87,17 +85,18 @@ const UnitPicker = ({
 }: any) => {
   return (
     <div className="flex-1 min-w-[200px] space-y-1.5">
-      <div className="flex items-center justify-between px-1">
-        <span className="text-[11px] sm:text-[10px] font-black sm:font-bold text-slate-500 sm:text-slate-400 uppercase tracking-widest flex-1">
+      <div className="flex items-center justify-between px-0.5">
+        <Label className="text-xs font-semibold text-foreground">
           {label}
-        </span>
+        </Label>
         {value && !disabled && (
           <button
+            type="button"
             onClick={(e) => {
               e.preventDefault();
               onClear();
             }}
-            className="text-[9px] font-bold text-primary hover:opacity-70 transition-opacity"
+            className="text-[11px] font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer"
           >
             איפוס
           </button>
@@ -107,9 +106,9 @@ const UnitPicker = ({
       <Select value={value || ""} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger
           className={cn(
-            "h-10 w-full bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl transition-all px-4 hover:border-primary/30 focus:ring-0 text-right font-bold",
-            !value && "bg-background border-dashed",
-            disabled && "opacity-30 grayscale pointer-events-none",
+            "h-9 w-full bg-background border-border/60 rounded-lg transition-all px-3 text-right font-medium text-xs sm:text-sm",
+            !value && "border-dashed text-muted-foreground",
+            disabled && "opacity-40 grayscale pointer-events-none",
           )}
         >
           <SelectValue placeholder={placeholder} />
@@ -117,13 +116,13 @@ const UnitPicker = ({
 
         <SelectContent
           dir="rtl"
-          className="rounded-xl border-slate-100 dark:border-slate-800 p-1 bg-white dark:bg-slate-950"
+          className="rounded-lg border-border/60 p-1"
         >
           {options.map((opt: any) => (
             <SelectItem
               key={opt.id}
               value={opt.id.toString()}
-              className="rounded-lg py-2.5 px-4 font-bold text-slate-700 dark:text-slate-200 focus:bg-slate-50 dark:focus:bg-slate-900 focus:text-primary transition-all cursor-pointer"
+              className="rounded-md py-2 px-3 text-xs sm:text-sm font-medium cursor-pointer"
             >
               {cleanUnitName(opt.name)}
             </SelectItem>
@@ -147,27 +146,27 @@ const SwitchItem = ({
     <div
       onClick={() => handler?.(!checked)}
       className={cn(
-        "flex items-center justify-between p-4 rounded-2xl border cursor-pointer select-none transition-all hover:bg-slate-50 dark:hover:bg-slate-900/60",
+        "flex items-center justify-between p-3.5 rounded-xl border cursor-pointer select-none transition-all",
         checked
-          ? "bg-primary/[0.04] border-primary/20 shadow-xs"
-          : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800",
+          ? "bg-primary/5 border-primary/30"
+          : "bg-card border-border/60 hover:bg-muted/30",
       )}
     >
-      <div className="flex items-center gap-3.5">
+      <div className="flex items-center gap-3">
         {Icon && (
           <Icon
             className={cn(
-              "w-5 h-5 shrink-0 transition-colors",
-              checked ? "text-primary" : "text-slate-400 dark:text-slate-500",
+              "w-4 h-4 shrink-0 transition-colors",
+              checked ? "text-primary" : "text-muted-foreground",
             )}
           />
         )}
         <div>
-          <p className="text-[14px] font-bold text-slate-900 dark:text-white leading-tight">
+          <p className="text-xs sm:text-sm font-semibold text-foreground leading-tight">
             {label}
           </p>
           {description && (
-            <p className="text-[11px] text-slate-400 font-medium mt-1 truncate max-w-[280px]">
+            <p className="text-[11px] text-muted-foreground font-normal mt-0.5 truncate max-w-[280px]">
               {description}
             </p>
           )}
@@ -181,6 +180,7 @@ const SwitchItem = ({
     </div>
   );
 };
+
 // --- Tab Components ---
 
 const PersonalFormTab = ({
@@ -193,31 +193,42 @@ const PersonalFormTab = ({
   onNext,
 }: any) => {
   return (
-    <div className="space-y-3 pb-4 sm:pb-0">
-      <CompactCard
-        title={
-          <span className="flex items-center gap-2 text-primary font-bold text-sm sm:text-base">
-            <User className="w-4 h-4" /> פרטים אישיים והתקשרות
+    <div className="rounded-xl border border-border/50 bg-card/60 dark:bg-card/20 backdrop-blur-xs overflow-hidden shadow-2xs">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/40 bg-muted/20">
+        <div className="flex items-center gap-2">
+          <User className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm font-bold text-foreground">
+            פרטים אישיים והתקשרות
           </span>
-        }
-      >
+        </div>
+        <Badge
+          variant="outline"
+          className="text-xs font-normal text-muted-foreground border-border/60 bg-background/50"
+        >
+          שלב 1 מתוך 2
+        </Badge>
+      </div>
+
+      {/* Content */}
+      <div className="p-5 sm:p-6 space-y-6">
         {/* Section 1: Personal & Contact Fields in 4 columns */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <InputItem label="שם פרטי" required icon={User}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <InputItem label="שם פרטי" required>
             <Input
               value={formData.first_name || ""}
               onChange={(e) => handleFieldChange("first_name", e.target.value)}
-              placeholder="פרטי"
-              className="bg-background border-border/60 focus:ring-1 focus:ring-primary/20 transition-all h-9 rounded-lg font-medium text-xs sm:text-sm"
+              placeholder="שם פרטי"
+              className="bg-background border-border/60 focus-visible:ring-1 focus-visible:ring-primary/30 h-9 rounded-lg font-medium text-xs sm:text-sm"
             />
           </InputItem>
 
-          <InputItem label="שם משפחה" required icon={User}>
+          <InputItem label="שם משפחה" required>
             <Input
               value={formData.last_name || ""}
               onChange={(e) => handleFieldChange("last_name", e.target.value)}
-              placeholder="משפחה"
-              className="bg-background border-border/60 focus:ring-1 focus:ring-primary/20 transition-all h-9 rounded-lg font-medium text-xs sm:text-sm"
+              placeholder="שם משפחה"
+              className="bg-background border-border/60 focus-visible:ring-1 focus-visible:ring-primary/30 h-9 rounded-lg font-medium text-xs sm:text-sm"
             />
           </InputItem>
 
@@ -235,11 +246,11 @@ const PersonalFormTab = ({
                     initial={{ opacity: 0, height: 0, y: 5 }}
                     animate={{ opacity: 1, height: "auto", y: 0 }}
                     exit={{ opacity: 0, height: 0, y: 5 }}
-                    className="col-span-1 sm:col-span-2 lg:col-span-4 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/20 p-2.5 sm:p-3 overflow-hidden flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4"
+                    className="col-span-1 sm:col-span-2 lg:col-span-4 rounded-xl bg-muted/30 border border-border/50 p-3 overflow-hidden flex flex-col sm:flex-row items-start sm:items-center gap-3"
                   >
-                    <div className="flex items-center gap-2 text-primary shrink-0">
-                      <User className="w-4 h-4" />
-                      <span className="text-xs font-bold">שם ביומיום:</span>
+                    <div className="flex items-center gap-2 text-foreground shrink-0">
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-xs font-semibold">שם ביומיום:</span>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-1.5 flex-1 w-full sm:w-auto">
@@ -254,9 +265,9 @@ const PersonalFormTab = ({
                             )
                           }
                           className={cn(
-                            "px-2.5 py-1 rounded-lg text-xs font-bold transition-all border",
+                            "px-2.5 py-1 rounded-lg text-xs font-medium transition-all border",
                             formData.dominant_name === word
-                              ? "bg-primary text-white border-primary"
+                              ? "bg-primary text-primary-foreground border-primary"
                               : "bg-background text-foreground/80 border-border/60 hover:border-primary/50",
                           )}
                         >
@@ -279,23 +290,23 @@ const PersonalFormTab = ({
             );
           })()}
 
-          <InputItem label="תאריך לידה" required icon={Calendar}>
+          <InputItem label="תאריך לידה" required>
             <Input
               type="date"
               value={
                 formData.birth_date ? formData.birth_date.split("T")[0] : ""
               }
               onChange={(e) => handleFieldChange("birth_date", e.target.value)}
-              className="bg-background border-border/60 focus:ring-1 focus:ring-primary/20 transition-all h-9 w-full rounded-lg font-medium text-xs sm:text-sm"
+              className="bg-background border-border/60 focus-visible:ring-1 focus-visible:ring-primary/30 h-9 w-full rounded-lg font-medium text-xs sm:text-sm"
             />
           </InputItem>
 
-          <InputItem label="מין" required icon={User}>
+          <InputItem label="מין" required>
             <Select
               value={formData.gender || ""}
               onValueChange={(val) => handleFieldChange("gender", val)}
             >
-              <SelectTrigger className="w-full bg-background border-border/60 focus:ring-1 focus:ring-primary/20 transition-all h-9 text-right rounded-lg font-medium px-3 text-xs sm:text-sm">
+              <SelectTrigger className="w-full bg-background border-border/60 focus:ring-1 focus:ring-primary/30 h-9 text-right rounded-lg font-medium px-3 text-xs sm:text-sm">
                 <SelectValue placeholder="בחר מין" />
               </SelectTrigger>
               <SelectContent dir="rtl" className="rounded-lg border-border/60">
@@ -309,7 +320,7 @@ const PersonalFormTab = ({
             </Select>
           </InputItem>
 
-          <InputItem label="טלפון נייד" icon={Phone}>
+          <InputItem label="טלפון נייד">
             <Input
               type="tel"
               inputMode="tel"
@@ -318,28 +329,28 @@ const PersonalFormTab = ({
                 handleFieldChange("phone_number", e.target.value)
               }
               placeholder="05X-XXXXXXX"
-              className="bg-background border-border/60 transition-all h-9 rounded-lg font-medium text-xs sm:text-sm text-right placeholder:text-right"
+              className="bg-background border-border/60 focus-visible:ring-1 focus-visible:ring-primary/30 h-9 rounded-lg font-medium text-xs sm:text-sm text-right placeholder:text-right"
               dir="rtl"
             />
           </InputItem>
 
-          <InputItem label="דואר אלקטרוני" icon={Mail}>
+          <InputItem label="דואר אלקטרוני">
             <Input
               value={formData.email || ""}
               onChange={(e) => handleFieldChange("email", e.target.value)}
               placeholder="example@mail.com"
-              className="bg-background border-border/60 transition-all h-9 rounded-lg font-medium text-xs sm:text-sm"
+              className="bg-background border-border/60 focus-visible:ring-1 focus-visible:ring-primary/30 h-9 rounded-lg font-medium text-xs sm:text-sm"
             />
           </InputItem>
 
-          <InputItem label="מעמד" icon={FileCheck}>
+          <InputItem label="מעמד">
             <Select
               value={formData.service_type_id?.toString() || ""}
               onValueChange={(val) =>
                 handleFieldChange("service_type_id", parseInt(val))
               }
             >
-              <SelectTrigger className="w-full bg-background border-border/60 focus:ring-1 focus:ring-primary/20 transition-all h-9 text-right rounded-lg font-medium px-3 text-xs sm:text-sm">
+              <SelectTrigger className="w-full bg-background border-border/60 focus:ring-1 focus:ring-primary/30 h-9 text-right rounded-lg font-medium px-3 text-xs sm:text-sm">
                 <SelectValue placeholder="בחר מעמד" />
               </SelectTrigger>
               <SelectContent dir="rtl" className="rounded-lg border-border/60">
@@ -356,24 +367,24 @@ const PersonalFormTab = ({
             </Select>
           </InputItem>
 
-          <InputItem label="עיר מגורים" icon={MapPin}>
+          <InputItem label="עיר מגורים">
             <Input
               value={formData.city || ""}
               onChange={(e) => handleFieldChange("city", e.target.value)}
               placeholder="ירושלים, ת''א..."
-              className="bg-background border-border/60 focus:ring-1 focus:ring-primary/20 transition-all h-9 rounded-lg font-medium text-xs sm:text-sm"
+              className="bg-background border-border/60 focus-visible:ring-1 focus-visible:ring-primary/30 h-9 rounded-lg font-medium text-xs sm:text-sm"
             />
           </InputItem>
         </div>
 
         {/* Section 2: Compact Emergency Contact */}
-        <div className="border-t border-border/40 pt-3 mt-1">
-          <div className="flex items-center gap-1.5 mb-2.5 text-xs font-semibold text-muted-foreground">
-            <HeartPulse className="w-3.5 h-3.5 text-rose-500" />
+        <div className="border-t border-border/40 pt-4 space-y-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+            <HeartPulse className="w-3.5 h-3.5 text-muted-foreground" />
             <span>איש קשר לחירום (רשות)</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <InputItem label="שם מלא (קרבה)">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <InputItem label="שם מלא (איש קשר)">
               <Input
                 value={emergencyDetails.name}
                 onChange={(e) =>
@@ -410,7 +421,7 @@ const PersonalFormTab = ({
               </Select>
             </InputItem>
 
-            <InputItem label="טלפון חירום" icon={Phone}>
+            <InputItem label="טלפון חירום">
               <Input
                 type="tel"
                 inputMode="tel"
@@ -421,28 +432,33 @@ const PersonalFormTab = ({
                     phone: e.target.value,
                   })
                 }
-                placeholder="מספר טלפון לחירום"
+                placeholder="05X-XXXXXXX"
                 className="h-9 bg-background border-border/60 font-medium rounded-lg text-xs sm:text-sm text-right placeholder:text-right"
                 dir="rtl"
               />
             </InputItem>
           </div>
         </div>
-      </CompactCard>
+      </div>
 
-      {/* Mobile Navigation Button */}
-      <div className="sm:hidden mt-4">
+      {/* Card Footer with Step Progression */}
+      <div className="px-5 py-3 border-t border-border/40 bg-muted/15 flex items-center justify-between">
+        <span className="text-xs text-muted-foreground font-medium">
+          שדות המסומנים ב- <span className="text-destructive font-bold">*</span> הינם שדות חובה
+        </span>
         <Button
-          className="w-full h-10 text-base font-bold bg-primary text-primary-foreground rounded-xl"
+          type="button"
           onClick={onNext}
+          className="h-9 px-4 rounded-lg font-semibold text-xs gap-1.5 shadow-xs"
         >
-          המשך לשלב הבא
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <span>המשך לשלב הבא</span>
+          <ArrowLeft className="w-3.5 h-3.5" />
         </Button>
       </div>
     </div>
   );
 };
+
 const ProfessionalFormTab = ({
   formData,
   handleFieldChange,
@@ -457,11 +473,8 @@ const ProfessionalFormTab = ({
   onSave,
   saving,
   setFormData,
+  onBack,
 }: any) => {
-  // Admin → full freedom
-  // Dept commander → dept is locked (pre-filled), section/team free
-  // Section commander → dept+section locked, team free
-  // Team commander → all pre-filled and locked
   const isDeptDisabled =
     !user.is_admin &&
     !!(
@@ -511,356 +524,327 @@ const ProfessionalFormTab = ({
   ]);
 
   return (
-    <div className="space-y-6 pb-24 sm:pb-0">
-      {/* 1. Organizational Affiliation - Compact & Professional */}
-      {/* 1. Organizational Affiliation - Compact & Professional */}
-      <CompactCard
-        title={
-          <span className="flex items-center gap-2 text-primary font-black text-lg">
-            <Building2 className="w-5 h-5" /> שיוך יחידתי{" "}
-            {!formData.is_division_commander && !formData.is_admin && (
-              <span className="text-red-500 font-bold text-xl leading-none">
-                *
-              </span>
-            )}
-          </span>
-        }
-      >
-        {formData.is_division_commander && (
-          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-3">
-            <Shield className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
-            <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
-              משתמש זה מוגדר כ-<strong>ראש החטיבה (מפקד כלל המחלקות)</strong> –
-              אחראי ומפקד על כלל המחלקות והיחידות בארגון. ללא צורך בשיוך ארגוני.
+    <div className="space-y-4">
+      {/* 1. Organizational Affiliation Card */}
+      <div className="rounded-xl border border-border/50 bg-card/60 dark:bg-card/20 backdrop-blur-xs overflow-hidden shadow-2xs">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/40 bg-muted/20">
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-bold text-foreground">
+              שיוך יחידתי
             </span>
           </div>
-        )}
-
-        {formData.is_admin && (
-          <div className="mb-6 p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center gap-3">
-            <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
-            <span className="text-xs font-bold text-blue-900 dark:text-blue-200">
-              משתמש זה מוגדר כ-<strong>מנהל מערכת ראשי (Admin)</strong> – בעל
-              הרשאה וגישה גלובלית לכל המערכת. ללא צורך בשיוך ארגוני.
-            </span>
-          </div>
-        )}
-
-        <div className="flex flex-col md:flex-row gap-6 lg:gap-8">
-          <UnitPicker
-            label={
-              <span className="flex items-center gap-1">
-                מחלקה{" "}
-                {!formData.is_division_commander && !formData.is_admin && (
-                  <span className="text-red-500 font-bold">*</span>
-                )}
-              </span>
-            }
-            value={selectedDeptId}
-            options={structure}
-            onChange={(val: any) => {
-              setSelectedDeptId(val);
-              setFormData((prev: any) => ({
-                ...prev,
-                department_id: parseInt(val),
-                section_id: undefined,
-                team_id: undefined,
-              }));
-              setSelectedSectionId("");
-            }}
-            placeholder={
-              formData.is_division_commander || formData.is_admin
-                ? "כלל המחלקות (ללא שיוך)"
-                : "בחר..."
-            }
-            icon={Building2}
-            disabled={
-              formData.is_division_commander ||
-              formData.is_admin ||
-              isDeptDisabled
-            }
-            onClear={() => {
-              setSelectedDeptId("");
-              setFormData((prev: any) => ({
-                ...prev,
-                department_id: undefined,
-                section_id: undefined,
-                team_id: undefined,
-              }));
-              setSelectedSectionId("");
-            }}
-          />
-
-          <UnitPicker
-            label={
-              <span className="flex items-center gap-1">
-                מדור{" "}
-                {!formData.is_commander &&
-                  !formData.is_division_commander &&
-                  !formData.is_admin && (
-                    <span className="text-red-500 font-bold">*</span>
-                  )}
-              </span>
-            }
-            value={selectedSectionId}
-            options={sections}
-            onChange={(val: any) => {
-              setSelectedSectionId(val);
-              setFormData((prev: any) => ({
-                ...prev,
-                section_id: parseInt(val),
-                team_id: undefined,
-              }));
-            }}
-            placeholder={
-              formData.is_division_commander || formData.is_admin
-                ? "כלל המדורים (ללא שיוך)"
-                : "בחר..."
-            }
-            icon={Briefcase}
-            disabled={
-              formData.is_division_commander ||
-              formData.is_admin ||
-              !selectedDeptId ||
-              isSectionDisabled
-            }
-            onClear={() => {
-              setSelectedSectionId("");
-              setFormData((prev: any) => ({
-                ...prev,
-                section_id: undefined,
-                team_id: undefined,
-              }));
-            }}
-          />
-
-          <UnitPicker
-            label={
-              <span className="flex items-center gap-1">
-                חוליה{" "}
-                {!formData.is_commander &&
-                  !formData.is_division_commander &&
-                  !formData.is_admin && (
-                    <span className="text-red-500 font-bold">*</span>
-                  )}
-              </span>
-            }
-            value={formData.team_id?.toString() || ""}
-            options={teams}
-            onChange={(val: any) => handleFieldChange("team_id", parseInt(val))}
-            placeholder={
-              formData.is_division_commander || formData.is_admin
-                ? "כלל החוליות (ללא שיוך)"
-                : "בחר..."
-            }
-            icon={User}
-            disabled={
-              formData.is_division_commander ||
-              formData.is_admin ||
-              !selectedSectionId ||
-              isTeamDisabled
-            }
-            onClear={() => handleFieldChange("team_id", undefined)}
-          />
+          <Badge
+            variant="outline"
+            className="text-xs font-normal text-muted-foreground border-border/60 bg-background/50"
+          >
+            שלב 2 מתוך 2
+          </Badge>
         </div>
 
-        {(user?.is_admin || user?.is_commander) && (
-          <div className="mt-8 border-t border-border/40 pt-6 space-y-4 w-full">
-            {/* Roles Selection - Visible to Logged-in Admins */}
-            {user?.is_admin ? (
-              <div className="w-full space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-black text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-primary" /> תפקיד פיקודי /
-                    הרשאת מנהל
-                  </h4>
-                  <span className="text-[11px] font-bold text-muted-foreground">
-                    ברירת מחדל: שוטר רגיל
-                  </span>
-                </div>
+        <div className="p-5 sm:p-6 space-y-5">
+          {formData.is_division_commander && (
+            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-2.5">
+              <Shield className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span className="text-xs font-medium text-amber-900 dark:text-amber-200">
+                משתמש זה מוגדר כ-<strong>ראש החטיבה (מפקד כלל המחלקות)</strong> –
+                אחראי ומפקד על כלל המחלקות והיחידות בארגון. ללא צורך בשיוך ארגוני.
+              </span>
+            </div>
+          )}
 
-                {/* 4 Cards Grid - Responsive & Spanning Full Width */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
-                  {/* Card 1: Regular Officer (DEFAULT) */}
-                  <div
-                    onClick={() => {
-                      setFormData((prev: any) => ({
-                        ...prev,
-                        is_commander: false,
-                        is_admin: false,
-                        is_division_commander: false,
-                      }));
-                    }}
-                    className={cn(
-                      "p-3.5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between select-none min-h-[96px]",
-                      !formData.is_commander &&
-                        !formData.is_admin &&
-                        !formData.is_division_commander
-                        ? "border-primary bg-primary/5 dark:bg-primary/10 shadow-sm ring-1 ring-primary/20"
-                        : "border-border/60 hover:border-border hover:bg-accent/40 bg-card",
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-primary shrink-0" />
-                        <span className="text-xs font-black text-foreground">
-                          שוטר רגיל
+          {formData.is_admin && (
+            <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center gap-2.5">
+              <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+              <span className="text-xs font-medium text-blue-900 dark:text-blue-200">
+                משתמש זה מוגדר כ-<strong>מנהל מערכת ראשי (Admin)</strong> – בעל
+                הרשאה וגישה גלובלית לכל המערכת. ללא צורך בשיוך ארגוני.
+              </span>
+            </div>
+          )}
+
+          <div className="flex flex-col md:flex-row gap-4">
+            <UnitPicker
+              label="מחלקה"
+              value={selectedDeptId}
+              options={structure}
+              onChange={(val: any) => {
+                setSelectedDeptId(val);
+                setFormData((prev: any) => ({
+                  ...prev,
+                  department_id: parseInt(val),
+                  section_id: undefined,
+                  team_id: undefined,
+                }));
+                setSelectedSectionId("");
+              }}
+              placeholder={
+                formData.is_division_commander || formData.is_admin
+                  ? "כלל המחלקות (ללא שיוך)"
+                  : "בחר מחלקה..."
+              }
+              disabled={
+                formData.is_division_commander ||
+                formData.is_admin ||
+                isDeptDisabled
+              }
+              onClear={() => {
+                setSelectedDeptId("");
+                setFormData((prev: any) => ({
+                  ...prev,
+                  department_id: undefined,
+                  section_id: undefined,
+                  team_id: undefined,
+                }));
+                setSelectedSectionId("");
+              }}
+            />
+
+            <UnitPicker
+              label="מדור"
+              value={selectedSectionId}
+              options={sections}
+              onChange={(val: any) => {
+                setSelectedSectionId(val);
+                setFormData((prev: any) => ({
+                  ...prev,
+                  section_id: parseInt(val),
+                  team_id: undefined,
+                }));
+              }}
+              placeholder={
+                formData.is_division_commander || formData.is_admin
+                  ? "כלל המדורים (ללא שיוך)"
+                  : "בחר מדור..."
+              }
+              disabled={
+                formData.is_division_commander ||
+                formData.is_admin ||
+                !selectedDeptId ||
+                isSectionDisabled
+              }
+              onClear={() => {
+                setSelectedSectionId("");
+                setFormData((prev: any) => ({
+                  ...prev,
+                  section_id: undefined,
+                  team_id: undefined,
+                }));
+              }}
+            />
+
+            <UnitPicker
+              label="חוליה"
+              value={formData.team_id?.toString() || ""}
+              options={teams}
+              onChange={(val: any) => handleFieldChange("team_id", parseInt(val))}
+              placeholder={
+                formData.is_division_commander || formData.is_admin
+                  ? "כלל החוליות (ללא שיוך)"
+                  : "בחר חוליה..."
+              }
+              disabled={
+                formData.is_division_commander ||
+                formData.is_admin ||
+                !selectedSectionId ||
+                isTeamDisabled
+              }
+              onClear={() => handleFieldChange("team_id", undefined)}
+            />
+          </div>
+
+          {(user?.is_admin || user?.is_commander) && (
+            <div className="border-t border-border/40 pt-5 space-y-3 w-full">
+              {user?.is_admin ? (
+                <div className="w-full space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                      <Shield className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span>תפקיד פיקודי / הרשאת מנהל</span>
+                    </Label>
+                    <span className="text-[11px] text-muted-foreground font-normal">
+                      ברירת מחדל: שוטר רגיל
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
+                    {/* Card 1: Regular Officer */}
+                    <div
+                      onClick={() => {
+                        setFormData((prev: any) => ({
+                          ...prev,
+                          is_commander: false,
+                          is_admin: false,
+                          is_division_commander: false,
+                        }));
+                      }}
+                      className={cn(
+                        "p-3 rounded-xl border cursor-pointer transition-all flex flex-col justify-between select-none min-h-[90px]",
+                        !formData.is_commander &&
+                          !formData.is_admin &&
+                          !formData.is_division_commander
+                          ? "border-primary bg-primary/5 shadow-xs ring-1 ring-primary/20"
+                          : "border-border/60 hover:bg-muted/30 bg-card",
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          <span className="text-xs font-semibold text-foreground">
+                            שוטר רגיל
+                          </span>
+                        </div>
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                          ברירת מחדל
+                        </Badge>
+                      </div>
+                      <span className="text-[11px] text-muted-foreground mt-2 leading-tight">
+                        ללא תפקיד פיקודי או אדמין
+                      </span>
+                    </div>
+
+                    {/* Card 2: Unit Commander */}
+                    <div
+                      onClick={() => {
+                        setFormData((prev: any) => ({
+                          ...prev,
+                          is_commander: true,
+                          is_admin: false,
+                          is_division_commander: false,
+                        }));
+                      }}
+                      className={cn(
+                        "p-3 rounded-xl border cursor-pointer transition-all flex flex-col justify-between select-none min-h-[90px]",
+                        !formData.is_division_commander &&
+                          !formData.is_admin &&
+                          !!formData.is_commander
+                          ? "border-primary bg-primary/5 shadow-xs ring-1 ring-primary/20"
+                          : "border-border/60 hover:bg-muted/30 bg-card",
+                      )}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Shield className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        <span className="text-xs font-semibold text-foreground">
+                          מפקד יחידה
                         </span>
                       </div>
-                      <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full shrink-0">
-                        ברירת מחדל
+                      <span className="text-[11px] text-muted-foreground mt-2 leading-tight">
+                        מפקד על היחידה שנבחרה בשיוך
                       </span>
                     </div>
-                    <span className="text-[11px] text-muted-foreground font-bold mt-2 leading-snug">
-                      ללא תפקיד פיקודי או אדמין (חובת שיוך יחידתי מלא *)
-                    </span>
-                  </div>
 
-                  {/* Card 2: Standard Unit Commander */}
-                  <div
-                    onClick={() => {
-                      setFormData((prev: any) => ({
-                        ...prev,
-                        is_commander: true,
-                        is_admin: false,
-                        is_division_commander: false,
-                      }));
-                    }}
-                    className={cn(
-                      "p-3.5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between select-none min-h-[96px]",
-                      !formData.is_division_commander &&
-                        !formData.is_admin &&
-                        !!formData.is_commander
-                        ? "border-primary bg-primary/5 dark:bg-primary/10 shadow-sm ring-1 ring-primary/20"
-                        : "border-border/60 hover:border-border hover:bg-accent/40 bg-card",
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Shield className="w-4 h-4 text-primary shrink-0" />
-                      <span className="text-xs font-black text-foreground">
-                        מפקד יחידה
+                    {/* Card 3: Head of Division */}
+                    <div
+                      onClick={() => {
+                        setFormData((prev: any) => ({
+                          ...prev,
+                          is_commander: true,
+                          is_admin: false,
+                          is_division_commander: true,
+                          department_id: undefined,
+                          section_id: undefined,
+                          team_id: undefined,
+                        }));
+                        setSelectedDeptId("");
+                        setSelectedSectionId("");
+                      }}
+                      className={cn(
+                        "p-3 rounded-xl border cursor-pointer transition-all flex flex-col justify-between select-none min-h-[90px]",
+                        !!formData.is_division_commander
+                          ? "border-amber-500 bg-amber-500/10 shadow-xs ring-1 ring-amber-500/30"
+                          : "border-border/60 hover:bg-muted/30 bg-card",
+                      )}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Shield className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <span className="text-xs font-semibold text-foreground">
+                          ראש החטיבה
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-muted-foreground mt-2 leading-tight">
+                        מפקד כלל המחלקות והיחידות
                       </span>
                     </div>
-                    <span className="text-[11px] text-muted-foreground font-bold mt-2 leading-snug">
-                      מפקד על היחידה שנבחרה בשיוך (חובת שיוך *)
-                    </span>
-                  </div>
 
-                  {/* Card 3: Head of Division / Brigade Commander */}
-                  <div
-                    onClick={() => {
-                      setFormData((prev: any) => ({
-                        ...prev,
-                        is_commander: true,
-                        is_admin: false,
-                        is_division_commander: true,
-                        department_id: undefined,
-                        section_id: undefined,
-                        team_id: undefined,
-                      }));
-                      setSelectedDeptId("");
-                      setSelectedSectionId("");
-                    }}
-                    className={cn(
-                      "p-3.5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between select-none min-h-[96px]",
-                      !!formData.is_division_commander
-                        ? "border-amber-500 bg-amber-500/10 dark:bg-amber-500/20 shadow-sm ring-1 ring-amber-500/30"
-                        : "border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10",
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Shield className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                      <span className="text-xs font-black text-amber-900 dark:text-amber-200">
-                        ראש החטיבה
+                    {/* Card 4: System Admin */}
+                    <div
+                      onClick={() => {
+                        setFormData((prev: any) => ({
+                          ...prev,
+                          is_admin: true,
+                          is_commander: true,
+                          is_division_commander: false,
+                          department_id: undefined,
+                          section_id: undefined,
+                          team_id: undefined,
+                        }));
+                        setSelectedDeptId("");
+                        setSelectedSectionId("");
+                      }}
+                      className={cn(
+                        "p-3 rounded-xl border cursor-pointer transition-all flex flex-col justify-between select-none min-h-[90px]",
+                        !!formData.is_admin
+                          ? "border-blue-500 bg-blue-500/10 shadow-xs ring-1 ring-blue-500/30"
+                          : "border-border/60 hover:bg-muted/30 bg-card",
+                      )}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                        <span className="text-xs font-semibold text-foreground">
+                          אדמין מערכת
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-muted-foreground mt-2 leading-tight">
+                        הרשאה ניהולית גלובלית
                       </span>
                     </div>
-                    <span className="text-[11px] text-amber-800/80 dark:text-amber-300 font-bold mt-2 leading-snug">
-                      מפקד כלל המחלקות והיחידות (ללא שיוך מוגבל)
-                    </span>
-                  </div>
-
-                  {/* Card 4: System Admin */}
-                  <div
-                    onClick={() => {
-                      setFormData((prev: any) => ({
-                        ...prev,
-                        is_admin: true,
-                        is_commander: true,
-                        is_division_commander: false,
-                        department_id: undefined,
-                        section_id: undefined,
-                        team_id: undefined,
-                      }));
-                      setSelectedDeptId("");
-                      setSelectedSectionId("");
-                    }}
-                    className={cn(
-                      "p-3.5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between select-none min-h-[96px]",
-                      !!formData.is_admin
-                        ? "border-blue-500 bg-blue-500/10 dark:bg-blue-500/20 shadow-sm ring-1 ring-blue-500/30"
-                        : "border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10",
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                      <span className="text-xs font-black text-blue-900 dark:text-blue-200">
-                        אדמין מערכת
-                      </span>
-                    </div>
-                    <span className="text-[11px] text-blue-800/80 dark:text-blue-300 font-bold mt-2 leading-snug">
-                      הרשאה ניהולית גלובלית לכל המערכת
-                    </span>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <SwitchItem
-                label="מינוי מפקד"
-                checked={!!formData.is_commander}
-                onCheckedChange={(c: boolean) =>
-                  handleFieldChange("is_commander", c)
-                }
-                icon={Shield}
-                description="הגדר שוטר זה כמפקד היחידה הארגונית שנבחרה"
-              />
-            )}
-
-            {currentCommander &&
-              !formData.is_division_commander &&
-              !formData.is_admin && (
-                <div className="flex items-start gap-4 p-5 rounded-[24px] bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-800/20 w-full">
-                  <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 shrink-0">
-                    <AlertTriangle className="w-5 h-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[13px] font-black text-amber-900 dark:text-amber-200 leading-tight">
-                      שים לב: קיים מפקד פעיל ליחידה זו
-                    </p>
-                    <p className="text-[11px] font-bold text-amber-600/80 leading-tight">
-                      הגדרת שוטר זה כמפקד תבטל את מינויו של{" "}
-                      <span className="text-amber-700 dark:text-amber-300 underline decoration-2 underline-offset-2">
-                        {currentCommander.name}
-                      </span>
-                    </p>
-                  </div>
-                </div>
+              ) : (
+                <SwitchItem
+                  label="מינוי מפקד"
+                  checked={!!formData.is_commander}
+                  onCheckedChange={(c: boolean) =>
+                    handleFieldChange("is_commander", c)
+                  }
+                  icon={Shield}
+                  description="הגדר שוטר זה כמפקד היחידה הארגונית שנבחרה"
+                />
               )}
-          </div>
-        )}
-      </CompactCard>
 
-      {/* 2. Professional Details & Permissions Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {currentCommander &&
+                !formData.is_division_commander &&
+                !formData.is_admin && (
+                  <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 w-full">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
+                        שים לב: קיים מפקד פעיל ליחידה זו
+                      </p>
+                      <p className="text-[11px] text-amber-700/90 dark:text-amber-300">
+                        הגדרת שוטר זה כמפקד תבטל את מינויו של {currentCommander.name}
+                      </p>
+                    </div>
+                  </div>
+                )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 2. Timeline & Permissions Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Service Timeline */}
-        <CompactCard
-          title={
-            <span className="flex items-center gap-2 text-primary font-black text-lg">
-              <Calendar className="w-5 h-5" /> ציר זמן שירות
+        <div className="rounded-xl border border-border/50 bg-card/60 dark:bg-card/20 backdrop-blur-xs overflow-hidden shadow-2xs">
+          <div className="flex items-center gap-2 px-5 py-3 border-b border-border/40 bg-muted/20">
+            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-bold text-foreground">
+              ציר זמן שירות
             </span>
-          }
-        >
-          <div className="space-y-4">
-            <InputItem label="תאריך גיוס" icon={Calendar}>
+          </div>
+          <div className="p-5 space-y-4">
+            <InputItem label="תאריך גיוס">
               <Input
                 type="date"
                 value={
@@ -871,9 +855,10 @@ const ProfessionalFormTab = ({
                 onChange={(e) =>
                   handleFieldChange("enlistment_date", e.target.value)
                 }
+                className="h-9 bg-background border-border/60 rounded-lg text-xs sm:text-sm font-medium"
               />
             </InputItem>
-            <InputItem label="כניסה לתפקיד" icon={Calendar}>
+            <InputItem label="כניסה לתפקיד">
               <Input
                 type="date"
                 value={
@@ -884,9 +869,10 @@ const ProfessionalFormTab = ({
                 onChange={(e) =>
                   handleFieldChange("assignment_date", e.target.value)
                 }
+                className="h-9 bg-background border-border/60 rounded-lg text-xs sm:text-sm font-medium"
               />
             </InputItem>
-            <InputItem label="תאריך שחרור (תש''ש)" icon={Calendar}>
+            <InputItem label="תאריך שחרור (תש''ש)">
               <Input
                 type="date"
                 value={
@@ -897,20 +883,21 @@ const ProfessionalFormTab = ({
                 onChange={(e) =>
                   handleFieldChange("discharge_date", e.target.value)
                 }
+                className="h-9 bg-background border-border/60 rounded-lg text-xs sm:text-sm font-medium"
               />
             </InputItem>
           </div>
-        </CompactCard>
+        </div>
 
-        {/* Permissions & Badges */}
-        <CompactCard
-          title={
-            <span className="flex items-center gap-2 text-primary font-black text-lg">
-              <Shield className="w-5 h-5" /> הרשאות ואישורים
+        {/* Permissions & Approvals */}
+        <div className="rounded-xl border border-border/50 bg-card/60 dark:bg-card/20 backdrop-blur-xs overflow-hidden shadow-2xs">
+          <div className="flex items-center gap-2 px-5 py-3 border-b border-border/40 bg-muted/20">
+            <Shield className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-bold text-foreground">
+              הרשאות ואישורים
             </span>
-          }
-        >
-          <div className="space-y-3">
+          </div>
+          <div className="p-5 space-y-3">
             <SwitchItem
               label="סיווג ביטחוני"
               icon={Shield}
@@ -930,22 +917,33 @@ const ProfessionalFormTab = ({
               description="אישור רישיון נהיגה מבצעי בתוקף"
             />
           </div>
-        </CompactCard>
+        </div>
       </div>
 
-      {/* Mobile Save Button */}
-      <div className="sm:hidden mt-8">
+      {/* Footer Navigation Bar for Professional Step */}
+      <div className="rounded-xl border border-border/50 bg-card/60 dark:bg-card/20 p-4 flex items-center justify-between shadow-2xs">
         <Button
-          className="w-full h-10 text-xl font-black  bg-primary text-primary-foreground"
+          type="button"
+          variant="outline"
+          onClick={onBack}
+          className="h-9 px-3.5 rounded-lg font-semibold border-border/60 text-xs gap-1.5"
+        >
+          <ArrowRight className="w-3.5 h-3.5" />
+          <span>חזור לפרטים אישיים</span>
+        </Button>
+
+        <Button
+          type="button"
           onClick={onSave}
           disabled={saving}
+          className="h-9 px-5 rounded-lg font-semibold text-xs gap-1.5 shadow-xs"
         >
           {saving ? (
-            <Loader2 className="w-6 h-6 animate-spin" />
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
-            <Save className="w-6 h-6 mr-2" />
+            <Save className="w-3.5 h-3.5" />
           )}
-          {saving ? "שומר..." : "שמור שוטר"}
+          <span>{saving ? "שומר..." : "שמור שוטר"}</span>
         </Button>
       </div>
     </div>
@@ -1274,108 +1272,80 @@ export default function CreateEmployeePage() {
       </div>
     );
 
-  const TabButton = ({ active, onClick, icon: Icon, label, small }: any) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "flex-1 flex items-center justify-center transition-all relative group h-full rounded-xl",
-        active
-          ? "text-primary font-black"
-          : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 font-bold",
-      )}
-    >
-      {active && (
-        <motion.div
-          layoutId="activeTab"
-          className="absolute inset-1 bg-white dark:bg-slate-800 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
-          initial={false}
-          transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
-        />
-      )}
-      <div className="relative z-10 flex items-center gap-2">
-        {Icon && (
-          <Icon
-            className={cn(
-              "transition-all duration-200 shrink-0",
-              small ? "w-3.5 h-3.5" : "w-4 h-4",
-              active
-                ? "text-primary scale-110"
-                : "text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300",
-            )}
-          />
-        )}
-        <span
-          className={cn(
-            "font-black tracking-tight leading-none whitespace-nowrap transition-all",
-            small ? "text-[10px] sm:text-[11px]" : "text-sm",
-            active ? "opacity-100" : "opacity-75 group-hover:opacity-100",
-          )}
-        >
-          {label}
-        </span>
-      </div>
-    </button>
-  );
-
   return (
-    <div id="create-page-root" className="flex flex-col">
-      {/* Page Header - matches system layout */}
-      <div className="pt-2 sm:pt-3 pb-2 sm:pb-3 px-3 sm:px-6 shrink-0 flex items-center justify-between gap-3 sm:gap-4 border-b border-border/40 mb-2 sm:mb-3">
-        {/* Right side (RTL start) */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/employees")}
-            className="h-8 px-2 sm:px-3 rounded-lg font-semibold text-muted-foreground hover:text-foreground hover:bg-muted text-xs"
-            title="חזרה לרשימה"
-          >
-            <ArrowRight className="w-3.5 h-3.5 ml-1" />
-            <span>חזרה</span>
-          </Button>
+    <div id="create-page-root" className="w-full px-4 sm:px-6 lg:px-8 pt-3 sm:pt-6 pb-20 max-w-5xl mx-auto space-y-5">
+      {/* Top Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <button
+              type="button"
+              onClick={() => navigate("/employees")}
+              className="flex items-center gap-1.5 hover:text-foreground transition-colors cursor-pointer"
+            >
+              <ArrowRight className="w-3.5 h-3.5" />
+              <span>רשימת שוטרים</span>
+            </button>
+            <span>/</span>
+            <span className="text-foreground font-semibold">הוספת שוטר חדש</span>
+          </div>
 
-          <div className="hidden sm:block">
-            <PageHeader
-              icon={UserPlus}
-              title="הוספת שוטר חדש"
-              className="mb-0"
-              hideMobile={true}
-            />
+          <div className="flex items-center gap-2.5 pt-0.5">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <UserPlus className="w-4 h-4" />
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+              הוספת שוטר חדש
+            </h1>
           </div>
         </div>
 
-        {/* Center: Inline Header Tabs for Desktop */}
-        <div className="hidden sm:flex items-stretch bg-muted/40 rounded-lg p-1 min-w-[260px] h-9 relative border border-border/40">
-          <TabButton
-            active={activeTab === "personal"}
+        {/* Center: Segmented Control Tabs */}
+        <div className="flex items-center bg-muted/50 p-1 rounded-xl border border-border/50">
+          <button
+            type="button"
             onClick={() => setActiveTab("personal")}
-            icon={User}
-            label="פרטים אישיים"
-            small={true}
-          />
-          <TabButton
-            active={activeTab === "professional"}
+            className={cn(
+              "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all cursor-pointer",
+              activeTab === "personal"
+                ? "bg-background text-foreground shadow-xs font-semibold"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <User className="w-3.5 h-3.5" />
+            <span>פרטים אישיים</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab("professional")}
-            icon={Shield}
-            label="מקצועי והרשאות"
-            small={true}
-          />
+            className={cn(
+              "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all cursor-pointer",
+              activeTab === "professional"
+                ? "bg-background text-foreground shadow-xs font-semibold"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <Shield className="w-3.5 h-3.5" />
+            <span>מקצועי והרשאות</span>
+          </button>
         </div>
 
-        {/* Left side (RTL end): Draft & Save */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Right side (RTL end): Draft & Save Actions */}
+        <div className="flex items-center gap-2 shrink-0">
           {hasDraft && (
-            <div className="hidden md:flex items-center gap-2">
-              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 px-2 py-0.5 rounded-lg flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-2">
+              <Badge
+                variant="outline"
+                className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/50 py-0.5 px-2 gap-1"
+              >
                 <Save className="w-3 h-3 text-emerald-500 animate-pulse" />
                 טיוטה שמורה
-              </span>
+              </Badge>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={clearDraft}
-                className="h-8 text-xs font-semibold rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-2"
+                className="h-8 text-xs font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-2"
               >
                 נקה טיוטה
               </Button>
@@ -1383,7 +1353,7 @@ export default function CreateEmployeePage() {
           )}
 
           <Button
-            className="h-8.5 px-3.5 sm:px-5 rounded-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground transition-all gap-1.5 shadow-xs text-xs"
+            className="h-8.5 px-4 rounded-lg font-semibold text-xs gap-1.5 shadow-xs"
             onClick={handleSubmit}
             disabled={saving}
           >
@@ -1397,27 +1367,7 @@ export default function CreateEmployeePage() {
         </div>
       </div>
 
-      {/* Mobile Tabs */}
-      <div className="flex sm:hidden justify-center w-full mb-2 px-3 pt-0">
-        <div className="bg-muted/40 rounded-lg p-1 flex w-full h-9 border border-border/40">
-          <TabButton
-            active={activeTab === "personal"}
-            onClick={() => setActiveTab("personal")}
-            icon={User}
-            label="פרטים אישיים"
-            small={true}
-          />
-          <TabButton
-            active={activeTab === "professional"}
-            onClick={() => setActiveTab("professional")}
-            icon={Shield}
-            label="מקצועי והרשאות"
-            small={true}
-          />
-        </div>
-      </div>
-
-      <div className="space-y-3 px-3 sm:px-6 flex-1">
+      <div className="space-y-4">
         <AnimatePresence mode="wait">
           {activeTab === "personal" && (
             <motion.div
@@ -1425,7 +1375,7 @@ export default function CreateEmployeePage() {
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               <PersonalFormTab
                 formData={formData}
@@ -1444,7 +1394,7 @@ export default function CreateEmployeePage() {
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               <ProfessionalFormTab
                 formData={formData}
@@ -1457,70 +1407,16 @@ export default function CreateEmployeePage() {
                 sections={sections}
                 teams={teams}
                 user={user}
+                selectedDeptId={selectedDeptId}
+                selectedSectionId={selectedSectionId}
                 onSave={handleSubmit}
                 saving={saving}
                 setFormData={setFormData}
+                onBack={() => setActiveTab("personal")}
               />
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-
-      {/* Sticky Bottom Navigation Bar */}
-      <div className="hidden md:block sticky bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md border-t border-border/40 py-2.5 px-4 sm:px-6 shadow-2xs mt-2">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 pl-20 sm:pl-28">
-          {/* Step Indicator */}
-          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-            <span className="hidden sm:inline">שלב</span>
-            <span className="w-5 h-5 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-[11px]">
-              {activeTab === "personal" ? "1" : "2"}
-            </span>
-            <span>מתוך 2:</span>
-            <span className="font-bold text-foreground">
-              {activeTab === "personal" ? "פרטים אישיים" : "מקצועי והרשאות"}
-            </span>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2.5">
-            {activeTab === "personal" ? (
-              <Button
-                type="button"
-                onClick={() => setActiveTab("professional")}
-                className="h-9 px-4 sm:px-5 rounded-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground transition-all shadow-xs gap-1.5 text-xs"
-              >
-                <span>המשך לשלב הבא</span>
-                <ArrowLeft className="w-3.5 h-3.5" />
-              </Button>
-            ) : (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setActiveTab("personal")}
-                  className="h-9 px-3 rounded-lg font-semibold border-border/60 hover:bg-muted text-muted-foreground hover:text-foreground gap-1.5 text-xs"
-                >
-                  <ArrowRight className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">חזור לפרטים אישיים</span>
-                  <span className="sm:hidden">חזור</span>
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={saving}
-                  className="h-9 px-4 sm:px-5 rounded-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground transition-all shadow-xs gap-1.5 text-xs"
-                >
-                  {saving ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Save className="w-3.5 h-3.5" />
-                  )}
-                  <span>{saving ? "שומר..." : "שמור שוטר"}</span>
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
       </div>
 
       <Dialog
