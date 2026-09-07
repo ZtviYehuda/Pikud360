@@ -112,7 +112,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-[480px] p-0 overflow-hidden rounded-2xl border border-border/50 bg-card shadow-xl"
+        className="w-[95vw] sm:max-w-xl md:max-w-2xl p-0 overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl"
         dir="rtl"
       >
         <DialogDragHandle />
@@ -317,12 +317,12 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 
           {/* Card 2: Org Structure */}
           {hasOrg && (
-            <div className="bg-muted/20 border border-border/40 rounded-xl p-3">
+            <div className="bg-muted/20 border border-border/40 rounded-xl p-3 sm:p-4">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-2.5">
                 <Network className="w-3.5 h-3.5 text-muted-foreground" />
                 <span>שיוך ארגוני</span>
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5">
                 {employee.department_name && (
                   <div
                     onClick={() => {
@@ -336,16 +336,17 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                       );
                       onOpenChange(false);
                     }}
+                    title={cleanUnitName(employee.department_name)}
                     className={cn(
-                      "flex flex-col p-2 rounded-lg bg-background border border-border/50 text-right transition-all shadow-2xs",
+                      "flex flex-col p-2.5 sm:p-3 rounded-xl bg-background border border-border/50 text-right transition-all shadow-2xs min-w-0",
                       isCommanderOrAdmin &&
                         "cursor-pointer hover:border-primary/40 hover:bg-muted/30",
                     )}
                   >
-                    <span className="text-[10px] text-muted-foreground font-medium mb-0.5 leading-none">
+                    <span className="text-[10px] text-muted-foreground font-medium mb-1 leading-none">
                       מחלקה
                     </span>
-                    <span className="text-xs font-semibold text-foreground truncate">
+                    <span className="text-xs sm:text-sm font-semibold text-foreground break-words leading-snug">
                       {cleanUnitName(employee.department_name)}
                     </span>
                   </div>
@@ -363,16 +364,17 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                       );
                       onOpenChange(false);
                     }}
+                    title={cleanUnitName(employee.section_name)}
                     className={cn(
-                      "flex flex-col p-2 rounded-lg bg-background border border-border/50 text-right transition-all shadow-2xs",
+                      "flex flex-col p-2.5 sm:p-3 rounded-xl bg-background border border-border/50 text-right transition-all shadow-2xs min-w-0",
                       isCommanderOrAdmin &&
                         "cursor-pointer hover:border-primary/40 hover:bg-muted/30",
                     )}
                   >
-                    <span className="text-[10px] text-muted-foreground font-medium mb-0.5 leading-none">
+                    <span className="text-[10px] text-muted-foreground font-medium mb-1 leading-none">
                       מדור
                     </span>
-                    <span className="text-xs font-semibold text-foreground truncate">
+                    <span className="text-xs sm:text-sm font-semibold text-foreground break-words leading-snug">
                       {cleanUnitName(employee.section_name)}
                     </span>
                   </div>
@@ -390,16 +392,17 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                       );
                       onOpenChange(false);
                     }}
+                    title={cleanUnitName(employee.team_name)}
                     className={cn(
-                      "flex flex-col p-2 rounded-lg bg-background border border-border/50 text-right transition-all shadow-2xs",
+                      "flex flex-col p-2.5 sm:p-3 rounded-xl bg-background border border-border/50 text-right transition-all shadow-2xs min-w-0",
                       isCommanderOrAdmin &&
                         "cursor-pointer hover:border-primary/40 hover:bg-muted/30",
                     )}
                   >
-                    <span className="text-[10px] text-muted-foreground font-medium mb-0.5 leading-none">
+                    <span className="text-[10px] text-muted-foreground font-medium mb-1 leading-none">
                       צוות / חוליה
                     </span>
-                    <span className="text-xs font-semibold text-foreground truncate">
+                    <span className="text-xs sm:text-sm font-semibold text-foreground break-words leading-snug">
                       {cleanUnitName(employee.team_name)}
                     </span>
                   </div>
