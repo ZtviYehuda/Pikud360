@@ -375,7 +375,7 @@ const EmployeesChartComponent = (
             </div>
           ) : (
             <div
-              className="flex flex-col flex-1 w-full min-h-[220px] sm:min-h-[240px] md:min-h-[320px] relative mt-0 overflow-visible cursor-pointer select-none"
+              className="flex flex-col flex-1 w-full min-h-[200px] sm:min-h-[210px] md:min-h-[220px] relative mt-0 overflow-visible cursor-pointer select-none"
               style={{ direction: "ltr" }}
               onDoubleClick={() => {
                 if (isMobile) {
