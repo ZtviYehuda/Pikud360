@@ -2,7 +2,7 @@
   "version": 2,
   "framework": "vite",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://january-detail-dryer-reliable.trycloudflare.com/api/$1" },
+    { "source": "/api/(.*)", "destination": "https://yarn-silent-council-serving.trycloudflare.com/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
