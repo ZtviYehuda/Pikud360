@@ -848,17 +848,17 @@ export default function RosterPage() {
                 selectedStatusId={statusFilter}
                 onApplyModal={(filters) => {
                   if (filters.deptIds?.length) {
-                    setSelectedDept(filters.deptIds[0]);
+                    setSelectedDept(filters.deptIds.join(","));
                   } else {
                     setSelectedDept("all");
                   }
                   if (filters.sectionIds?.length) {
-                    setSelectedSection(filters.sectionIds[0]);
+                    setSelectedSection(filters.sectionIds.join(","));
                   } else {
                     setSelectedSection("all");
                   }
                   if (filters.teamIds?.length) {
-                    setSelectedTeam(filters.teamIds[0]);
+                    setSelectedTeam(filters.teamIds.join(","));
                   } else {
                     setSelectedTeam("all");
                   }
@@ -870,17 +870,23 @@ export default function RosterPage() {
                   setFilterModalOpen(false);
                 }}
                 onFilterChange={(type, val) => {
+                  const formatVal = (v: any) => {
+                    if (!v || v === "all" || (Array.isArray(v) && v.length === 0)) return "all";
+                    if (Array.isArray(v)) return v.join(",");
+                    return String(v);
+                  };
                   if (type === "department") {
-                    setSelectedDept(val || "all");
+                    setSelectedDept(formatVal(val));
                     setSelectedSection("all");
                     setSelectedTeam("all");
                   } else if (type === "section") {
-                    setSelectedSection(val || "all");
+                    setSelectedSection(formatVal(val));
                     setSelectedTeam("all");
                   } else if (type === "team") {
-                    setSelectedTeam(val || "all");
+                    setSelectedTeam(formatVal(val));
                   } else if (type === "status") {
-                    setStatusFilter(val || "all");
+                    const statusStr = Array.isArray(val) ? (val[0] || "all") : (val || "all");
+                    setStatusFilter(statusStr);
                   } else if (type === "reset") {
                     handleResetFilters();
                   }

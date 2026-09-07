@@ -6,7 +6,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Info, Download, ArrowRight, Layers } from "lucide-react";
+import { Info, Download, ArrowRight, Layers, Check } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -42,6 +42,7 @@ interface StatsComparisonCardProps {
   subtitle?: string;
   selectedDate?: Date;
   selectedUnitId?: number | null;
+  selectedUnitIds?: number[];
   onUnitClick?: (unitId: number, level: string) => void;
   filterTags?: string[];
   hideHeader?: boolean;
@@ -61,6 +62,7 @@ export const StatsComparisonCard = forwardRef(function StatsComparisonCard(
     subtitle,
     selectedDate = new Date(),
     selectedUnitId,
+    selectedUnitIds = [],
     onUnitClick,
     filterTags = [],
     hideHeader = false,
@@ -236,7 +238,9 @@ export const StatsComparisonCard = forwardRef(function StatsComparisonCard(
                   : 0;
 
               const isClickable = !!onUnitClick && item.level !== "employee";
-              const isSelected = selectedUnitId === item.unit_id;
+              const isSelected =
+                (selectedUnitIds && selectedUnitIds.includes(item.unit_id)) ||
+                selectedUnitId === item.unit_id;
 
               const getStatusColor = (pct: number) => {
                 if (pct >= 70) {
@@ -275,16 +279,25 @@ export const StatsComparisonCard = forwardRef(function StatsComparisonCard(
                   }}
                   className={cn(
                     "group rounded-xl border transition-all duration-200",
-                    "bg-card/50 hover:bg-accent/40 border-border/40 hover:border-border/80",
+                    "bg-card/50 hover:bg-accent/40 hover:border-border/80",
                     safeData.length <= 4 ? "p-3.5 sm:p-4" : "p-3",
                     isClickable && "cursor-pointer active:scale-[0.99]",
-                    isSelected &&
-                      "bg-primary/[0.04] border-primary/40 ring-1 ring-primary/20",
+                    isSelected
+                      ? "bg-primary/[0.08] dark:bg-primary/[0.14] border-primary/60 ring-2 ring-primary/25 shadow-xs"
+                      : "border-border/40",
                   )}
                 >
                   <div className="flex items-center justify-between text-xs sm:text-sm font-semibold mb-2.5">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="truncate group-hover:text-primary transition-colors">
+                      {isSelected && (
+                        <Check className="w-3.5 h-3.5 text-primary shrink-0 animate-in fade-in zoom-in duration-150" />
+                      )}
+                      <span
+                        className={cn(
+                          "truncate transition-colors",
+                          isSelected ? "text-primary font-bold" : "group-hover:text-primary",
+                        )}
+                      >
                         {item.unit_name}
                       </span>
                       {item.level && item.level !== "department" && (

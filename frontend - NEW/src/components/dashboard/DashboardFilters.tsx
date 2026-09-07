@@ -26,9 +26,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { DialogDragHandle } from "@/components/ui/dialog";
-import { useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 
 import { useEmployees } from "@/hooks/useEmployees";
 import { useAuthContext } from "@/context/AuthContext";
@@ -54,10 +52,10 @@ interface DashboardFiltersProps {
   structure?: Department[];
   statuses?: { status_id: number; status_name: string; color: string }[];
   allStatusTypes?: any[];
-  selectedDeptId?: string;
-  selectedSectionId?: string;
-  selectedTeamId?: string;
-  selectedStatusId?: string;
+  selectedDeptId?: string | string[];
+  selectedSectionId?: string | string[];
+  selectedTeamId?: string | string[];
+  selectedStatusId?: string | string[];
   serviceTypes?: { id: number; name: string }[];
   selectedServiceTypes?: string[];
   selectedAgeRange?: { min?: number; max?: number };
@@ -85,6 +83,16 @@ interface DashboardFiltersProps {
   className?: string;
 }
 
+const DEFAULT_SERVICE_TYPES: string[] = [];
+const DEFAULT_AGE_RANGE: { min?: number; max?: number } = {};
+
+const parseIdList = (val: any): string[] => {
+  if (!val || val === "all") return [];
+  if (Array.isArray(val)) return val.map(String).map((s) => s.trim()).filter(Boolean);
+  if (typeof val === "string") return val.split(",").map((s) => s.trim()).filter(Boolean);
+  return [String(val)];
+};
+
 export const DashboardFilters = ({
   structure: propStructure,
   statuses: propStatuses,
@@ -94,8 +102,8 @@ export const DashboardFilters = ({
   selectedTeamId,
   selectedStatusId,
   serviceTypes: propServiceTypes,
-  selectedServiceTypes = [],
-  selectedAgeRange,
+  selectedServiceTypes = DEFAULT_SERVICE_TYPES,
+  selectedAgeRange = DEFAULT_AGE_RANGE,
   onFilterChange,
   onApplyModal,
   canSelectDept: propCanSelectDept,
@@ -157,53 +165,40 @@ export const DashboardFilters = ({
     statusIds: string[];
     serviceTypes: string[];
     ageRange: { min?: number; max?: number };
-  }>(() => {
-    const initDepts = selectedDeptId && selectedDeptId !== "all"
-      ? (Array.isArray(selectedDeptId) ? selectedDeptId.map(String).filter(Boolean) : [String(selectedDeptId)])
-      : [];
-    const initSecs = selectedSectionId && selectedSectionId !== "all"
-      ? (Array.isArray(selectedSectionId) ? selectedSectionId.map(String).filter(Boolean) : [String(selectedSectionId)])
-      : [];
-    const initTeams = selectedTeamId && selectedTeamId !== "all"
-      ? (Array.isArray(selectedTeamId) ? selectedTeamId.map(String).filter(Boolean) : [String(selectedTeamId)])
-      : [];
-    const initStatuses = selectedStatusId && selectedStatusId !== "all"
-      ? (Array.isArray(selectedStatusId) ? selectedStatusId.map(String).filter(Boolean) : [String(selectedStatusId)])
-      : [];
-    return {
-      deptIds: initDepts,
-      sectionIds: initSecs,
-      teamIds: initTeams,
-      statusIds: initStatuses,
-      serviceTypes: selectedServiceTypes || [],
-      ageRange: selectedAgeRange || {},
-    };
-  });
+  }>(() => ({
+    deptIds: parseIdList(selectedDeptId),
+    sectionIds: parseIdList(selectedSectionId),
+    teamIds: parseIdList(selectedTeamId),
+    statusIds: parseIdList(selectedStatusId),
+    serviceTypes: selectedServiceTypes || [],
+    ageRange: selectedAgeRange || {},
+  }));
 
-  // Keep stagedFilters in sync when props change (e.g. external reset, drill-down)
+  const deptPropKey = parseIdList(selectedDeptId).sort().join(",");
+  const secPropKey = parseIdList(selectedSectionId).sort().join(",");
+  const teamPropKey = parseIdList(selectedTeamId).sort().join(",");
+  const statusPropKey = parseIdList(selectedStatusId).sort().join(",");
+  const servicePropKey = (selectedServiceTypes || []).slice().sort().join(",");
+  const agePropKey = `${selectedAgeRange?.min ?? ""}-${selectedAgeRange?.max ?? ""}`;
+  const currentPropsKey = `${deptPropKey}|${secPropKey}|${teamPropKey}|${statusPropKey}|${servicePropKey}|${agePropKey}`;
+
+  const lastPropsKeyRef = useRef<string>(currentPropsKey);
+
+  // Keep stagedFilters in sync ONLY when external filter props ACTUALLY change (e.g. external reset, drill-down)
   useEffect(() => {
-    const initDepts = selectedDeptId && selectedDeptId !== "all"
-      ? (Array.isArray(selectedDeptId) ? selectedDeptId.map(String).filter(Boolean) : [String(selectedDeptId)])
-      : [];
-    const initSecs = selectedSectionId && selectedSectionId !== "all"
-      ? (Array.isArray(selectedSectionId) ? selectedSectionId.map(String).filter(Boolean) : [String(selectedSectionId)])
-      : [];
-    const initTeams = selectedTeamId && selectedTeamId !== "all"
-      ? (Array.isArray(selectedTeamId) ? selectedTeamId.map(String).filter(Boolean) : [String(selectedTeamId)])
-      : [];
-    const initStatuses = selectedStatusId && selectedStatusId !== "all"
-      ? (Array.isArray(selectedStatusId) ? selectedStatusId.map(String).filter(Boolean) : [String(selectedStatusId)])
-      : [];
-
-    setStagedFilters({
-      deptIds: initDepts,
-      sectionIds: initSecs,
-      teamIds: initTeams,
-      statusIds: initStatuses,
-      serviceTypes: selectedServiceTypes || [],
-      ageRange: selectedAgeRange || {},
-    });
+    if (lastPropsKeyRef.current !== currentPropsKey) {
+      lastPropsKeyRef.current = currentPropsKey;
+      setStagedFilters({
+        deptIds: parseIdList(selectedDeptId),
+        sectionIds: parseIdList(selectedSectionId),
+        teamIds: parseIdList(selectedTeamId),
+        statusIds: parseIdList(selectedStatusId),
+        serviceTypes: selectedServiceTypes || [],
+        ageRange: selectedAgeRange || {},
+      });
+    }
   }, [
+    currentPropsKey,
     selectedDeptId,
     selectedSectionId,
     selectedTeamId,
@@ -233,7 +228,12 @@ export const DashboardFilters = ({
     }
 
     if (onApplyModal) {
-      const modalPayload: any = {};
+      const modalPayload: any = {
+        deptIds: stagedFilters.deptIds,
+        sectionIds: stagedFilters.sectionIds,
+        teamIds: stagedFilters.teamIds,
+        statusIds: stagedFilters.statusIds,
+      };
       if (stagedFilters.deptIds.length > 0) {
         const selectedDepts = (structure || []).filter((d) =>
           stagedFilters.deptIds.includes(String(d?.id ?? ""))
@@ -266,6 +266,12 @@ export const DashboardFilters = ({
       }
       if (stagedFilters.serviceTypes.length > 0) {
         modalPayload.serviceTypes = stagedFilters.serviceTypes;
+      }
+      if (stagedFilters.ageRange?.min !== undefined || stagedFilters.ageRange?.max !== undefined) {
+        modalPayload.ageRange = [
+          stagedFilters.ageRange?.min ?? 18,
+          stagedFilters.ageRange?.max ?? 67,
+        ];
       }
       onApplyModal(modalPayload);
     }
@@ -320,12 +326,6 @@ export const DashboardFilters = ({
         stagedFilters.serviceTypes.length > 0 ||
         !!stagedFilters.ageRange?.min ||
         !!stagedFilters.ageRange?.max;
-        isSectionActive ||
-        isTeamActive ||
-        !!selectedStatusId ||
-        selectedServiceTypes.length > 0 ||
-        !!selectedAgeRange?.min ||
-        !!selectedAgeRange?.max;
 
   const FilterContent = (
     <div className="flex flex-col h-full bg-card overflow-hidden font-sans">

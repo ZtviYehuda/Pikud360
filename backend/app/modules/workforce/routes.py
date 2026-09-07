@@ -892,6 +892,9 @@ def get_attendance_stats():
     dept_id = request.args.get("department_id")
     sect_id = request.args.get("section_id")
     team_id = request.args.get("team_id")
+    dept_ids = [d.strip() for d in dept_id.split(",") if d.strip()] if dept_id else []
+    sect_ids = [s.strip() for s in sect_id.split(",") if s.strip()] if sect_id else []
+    team_ids = [t.strip() for t in team_id.split(",") if t.strip()] if team_id else []
     status_id_param = request.args.get("status_id")
     service_types_param = request.args.get("serviceTypes")
 
@@ -963,11 +966,11 @@ def get_attendance_stats():
                         h_info = org_map.get(assigned_team, {"dept_id": "1", "sect_id": "101", "team_id": "1001"})
 
                     # Filter matching
-                    if dept_id and str(h_info.get("dept_id")) != str(dept_id):
+                    if dept_ids and str(h_info.get("dept_id")) not in dept_ids:
                         continue
-                    if sect_id and str(h_info.get("sect_id")) != str(sect_id):
+                    if sect_ids and str(h_info.get("sect_id")) not in sect_ids:
                         continue
-                    if team_id and str(h_info.get("team_id")) != str(team_id):
+                    if team_ids and str(h_info.get("team_id")) not in team_ids:
                         continue
                     if service_types_param and emp[10]:
                         allowed_types = [st.strip() for st in service_types_param.split(",")]
@@ -1086,6 +1089,9 @@ def get_attendance_stats_trend():
     dept_id = request.args.get("department_id")
     sect_id = request.args.get("section_id")
     team_id = request.args.get("team_id")
+    dept_ids = [d.strip() for d in dept_id.split(",") if d.strip()] if dept_id else []
+    sect_ids = [s.strip() for s in sect_id.split(",") if s.strip()] if sect_id else []
+    team_ids = [t.strip() for t in team_id.split(",") if t.strip()] if team_id else []
 
     org_map = _get_org_hierarchy_map()
     all_team_keys = [str(t["id"]) for d in FULL_ORGANIZATION_STRUCTURE for s in d.get("sections", []) for t in s.get("teams", [])]
@@ -1116,11 +1122,11 @@ def get_attendance_stats_trend():
                         assigned_team = all_team_keys[abs(hash(emp_id)) % len(all_team_keys)]
                         h_info = org_map.get(assigned_team, {"dept_id": "1", "sect_id": "101", "team_id": "1001"})
 
-                    if dept_id and str(h_info.get("dept_id")) != str(dept_id):
+                    if dept_ids and str(h_info.get("dept_id")) not in dept_ids:
                         continue
-                    if sect_id and str(h_info.get("sect_id")) != str(sect_id):
+                    if sect_ids and str(h_info.get("sect_id")) not in sect_ids:
                         continue
-                    if team_id and str(h_info.get("team_id")) != str(team_id):
+                    if team_ids and str(h_info.get("team_id")) not in team_ids:
                         continue
                     matching_emp_ids.add(emp_id)
 
@@ -1303,9 +1309,17 @@ def get_attendance_stats_comparison():
         })
 
     if sect_id_param:
-        comparison = all_teams.get(str(sect_id_param), [])
+        s_ids = [s.strip() for s in str(sect_id_param).split(",") if s.strip()]
+        if len(s_ids) == 1:
+            comparison = all_teams.get(s_ids[0], [])
+        else:
+            comparison = [t for s_id in s_ids for t in all_teams.get(s_id, [])]
     elif dept_id_param:
-        comparison = all_sections.get(str(dept_id_param), [])
+        d_ids = [d.strip() for d in str(dept_id_param).split(",") if d.strip()]
+        if len(d_ids) == 1:
+            comparison = all_sections.get(d_ids[0], [])
+        else:
+            comparison = [s for d_id in d_ids for s in all_sections.get(d_id, [])]
     else:
         comparison = all_departments
 

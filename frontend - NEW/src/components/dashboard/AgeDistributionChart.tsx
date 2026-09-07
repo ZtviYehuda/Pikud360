@@ -21,6 +21,7 @@ interface AgeDistributionChartProps {
   totalEmployees: number;
   onRangeSelect?: (range: string) => void;
   selectedRange?: string;
+  selectedRanges?: string[];
   filterTags?: string[];
 }
 
@@ -30,6 +31,7 @@ export const AgeDistributionChart = ({
   totalEmployees,
   onRangeSelect,
   selectedRange = "all",
+  selectedRanges = [],
   filterTags = [],
 }: AgeDistributionChartProps) => {
   const [isMobile, setIsMobile] = useState(false);
@@ -101,45 +103,43 @@ export const AgeDistributionChart = ({
     return grouped;
   }, [data, isMobile]);
 
-  const isSelectedRange = useMemo(() => {
-    if (selectedRange === "all") return () => true;
+  const isAnyFilterActive = useMemo(() => {
+    if (selectedRanges && selectedRanges.length > 0) return true;
+    return selectedRange !== "all" && !!selectedRange;
+  }, [selectedRange, selectedRanges]);
 
-    let selMin = 0;
-    let selMax = 999;
-    if (selectedRange.includes("+")) {
-      selMin = parseInt(selectedRange) || 0;
-    } else if (selectedRange.includes("-")) {
-      const parts = selectedRange.split("-");
-      selMin = parseInt(parts[0]) || 0;
-      selMax = parseInt(parts[1]) || 999;
-    } else {
-      selMin = parseInt(selectedRange) || 0;
-      selMax = selMin;
-    }
+  const activeRangesList = useMemo(() => {
+    if (selectedRanges && selectedRanges.length > 0) return selectedRanges;
+    if (selectedRange && selectedRange !== "all") return [selectedRange];
+    return [];
+  }, [selectedRange, selectedRanges]);
+
+  const isSelectedRange = useMemo(() => {
+    if (!isAnyFilterActive || activeRangesList.length === 0) return () => false;
+
+    const parseRange = (r: string) => {
+      if (r.includes("+")) return { min: parseInt(r) || 0, max: 999 };
+      if (r.includes("-")) {
+        const parts = r.split("-");
+        return { min: parseInt(parts[0]) || 0, max: parseInt(parts[1]) || 999 };
+      }
+      const val = parseInt(r) || 0;
+      return { min: val, max: val };
+    };
+
+    const parsedActives = activeRangesList.map(parseRange);
 
     return (entryRange: string) => {
-      if (entryRange === selectedRange) return true;
-
-      let entMin = 0;
-      let entMax = 999;
-      if (entryRange.includes("+")) {
-        entMin = parseInt(entryRange) || 0;
-      } else if (entryRange.includes("-")) {
-        const parts = entryRange.split("-");
-        entMin = parseInt(parts[0]) || 0;
-        entMax = parseInt(parts[1]) || 999;
-      } else {
-        entMin = parseInt(entryRange) || 0;
-        entMax = entMin;
-      }
-
+      if (activeRangesList.includes(entryRange)) return true;
       if (isMobile) {
-        // If the selected range is inside the grouped range, highlight it
-        return selMin >= entMin && selMax <= entMax;
+        const ent = parseRange(entryRange);
+        return parsedActives.some(
+          (sel) => sel.min >= ent.min && sel.max <= ent.max
+        );
       }
       return false;
     };
-  }, [selectedRange, isMobile]);
+  }, [isAnyFilterActive, activeRangesList, isMobile]);
 
   const hasData = useMemo(() => {
     return chartData.some((d) => d.count > 0);
@@ -259,12 +259,11 @@ export const AgeDistributionChart = ({
             >
                {chartData.map((entry, index) => {
                 const isSelected = isSelectedRange(entry.range);
-                const isAnyFilterActive = selectedRange !== "all";
 
                 let fill = "var(--primary)";
                 let fillOpacity = 0.38;
-                let stroke = "none";
-                let strokeWidth = 0;
+                let stroke = isSelected ? "var(--primary)" : "none";
+                let strokeWidth = isSelected ? 2 : 0;
 
                 if (isAnyFilterActive) {
                   if (isSelected) {
@@ -272,7 +271,7 @@ export const AgeDistributionChart = ({
                     fillOpacity = 0.95;
                   } else {
                     fill = "var(--primary)";
-                    fillOpacity = 0.12;
+                    fillOpacity = 0.15;
                   }
                 } else {
                   fill = "var(--primary)";

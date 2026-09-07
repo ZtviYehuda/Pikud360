@@ -35,7 +35,6 @@ import {
   MessageCircle,
   Building2,
   HeartHandshake,
-  LayoutDashboard,
 } from "lucide-react";
 import { useAuthContext } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -715,7 +714,7 @@ export default function EmployeeViewPage() {
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
-  const [activeTab, setActiveTab] = useState("all"); // all | personal | pro
+  const [activeTab, setActiveTab] = useState("personal"); // personal | pro
   const [showBirthdayModal, setShowBirthdayModal] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [deactivatingLoading, setDeactivatingLoading] = useState(false);
@@ -1696,9 +1695,9 @@ export default function EmployeeViewPage() {
         </DialogContent>
       </Dialog>
 
-      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-16 lg:pb-12 space-y-4 sm:space-y-6">
+      <div className="w-full px-3 sm:px-6 lg:px-8 pt-2 sm:pt-6 pb-32 lg:pb-12 space-y-4 sm:space-y-6">
         {/* Top Header Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 border-b border-border/50 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-4">
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <button
@@ -1737,8 +1736,8 @@ export default function EmployeeViewPage() {
             )}
           </div>
 
-          {/* Actions Toolbar */}
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* Desktop Actions Toolbar */}
+          <div className="hidden sm:flex items-center gap-2 flex-wrap">
             {!editMode && isBirthdayToday && (
               <Button
                 variant="outline"
@@ -1836,10 +1835,10 @@ export default function EmployeeViewPage() {
           serviceTypeName={activeServiceTypeName}
         />
 
-        <div className="flex flex-col lg:flex-row gap-5 xl:gap-6 items-start">
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
           {/* ── DESKTOP SIDEBAR: PROFILE SUMMARY CARD ── */}
-          <div className="hidden lg:block w-64 xl:w-72 shrink-0 lg:sticky lg:top-24 space-y-4">
-            <div className="rounded-xl border border-border/50 bg-card p-4 xl:p-5 space-y-5 shadow-2xs">
+          <div className="hidden lg:block w-72 xl:w-80 shrink-0 lg:sticky lg:top-24 space-y-4">
+            <div className="rounded-xl border border-border/50 bg-card p-5 space-y-5 shadow-2xs">
               {/* Avatar & Basic Info */}
               <div className="flex flex-col items-center text-center">
                 <div
@@ -1973,25 +1972,12 @@ export default function EmployeeViewPage() {
           {/* ── MAIN CONTENT AREA ── */}
           <div className="flex-1 w-full min-w-0">
             {/* Tabs Navigation Header — Sleek, Standard Underline Tabs */}
-            <div className="flex items-center gap-1 border-b border-border/60 mb-6 overflow-x-auto custom-scrollbar">
-              <button
-                type="button"
-                onClick={() => setActiveTab("all")}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px cursor-pointer shrink-0",
-                  activeTab === "all"
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30",
-                )}
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                <span>סקירה מלאה</span>
-              </button>
+            <div className="flex items-center gap-1 border-b border-border/60 mb-6">
               <button
                 type="button"
                 onClick={() => setActiveTab("personal")}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px cursor-pointer shrink-0",
+                  "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px cursor-pointer",
                   activeTab === "personal"
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30",
@@ -2004,7 +1990,7 @@ export default function EmployeeViewPage() {
                 type="button"
                 onClick={() => setActiveTab("pro")}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px cursor-pointer shrink-0",
+                  "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px cursor-pointer",
                   activeTab === "pro"
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30",
@@ -2062,221 +2048,11 @@ export default function EmployeeViewPage() {
                   transition={{ duration: 0.2 }}
                   className="space-y-6"
                 >
-                  {/* ALL (FULL OVERVIEW) TAB */}
-                  {activeTab === "all" && (
-                    <div className="space-y-6">
-                      <Section title="שיבוץ וסטטוס ארגוני" icon={Building2}>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5">
-                          <Field
-                            label="מחלקה"
-                            value={cleanUnitName(employee.department_name)}
-                            icon={MapPin}
-                          />
-                          <Field
-                            label="מדור"
-                            value={cleanUnitName(employee.section_name)}
-                            icon={MapPin}
-                          />
-                          <Field
-                            label="חוליה"
-                            value={cleanUnitName(employee.team_name)}
-                            icon={MapPin}
-                          />
-                          <Field
-                            label="מעמד ארגוני"
-                            value={activeServiceTypeName || "לא הוגדר"}
-                            icon={Briefcase}
-                          />
-                          <Field
-                            label="תאריך גיוס"
-                            value={
-                              employee.enlistment_date
-                                ? format(
-                                    new Date(employee.enlistment_date),
-                                    "dd/MM/yyyy",
-                                  )
-                                : null
-                            }
-                            icon={Calendar}
-                          />
-                          <Field
-                            label="תאריך שחרור"
-                            value={
-                              employee.discharge_date
-                                ? format(
-                                    new Date(employee.discharge_date),
-                                    "dd/MM/yyyy",
-                                  )
-                                : null
-                            }
-                            icon={Calendar}
-                          />
-                        </div>
-                      </Section>
-
-                      <Section title="הגדרות תפקיד והרשאות" icon={Shield}>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5">
-                          <Field
-                            label="דרגת פיקוד"
-                            value={
-                              employee.is_commander ? (
-                                <Badge
-                                  variant="secondary"
-                                  className="gap-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 font-bold"
-                                >
-                                  <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
-                                  מפקד
-                                </Badge>
-                              ) : (
-                                <span className="text-muted-foreground font-medium text-xs">
-                                  שוטר
-                                </span>
-                              )
-                            }
-                            icon={Shield}
-                          />
-                          <Field
-                            label="רישיון משטרתי"
-                            value={
-                              employee.police_license ? (
-                                <Badge
-                                  variant="outline"
-                                  className="gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 font-bold"
-                                >
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  אושר
-                                </Badge>
-                              ) : (
-                                <span className="text-muted-foreground text-xs font-medium">
-                                  לא אושר
-                                </span>
-                              )
-                            }
-                            icon={BadgeCheck}
-                          />
-                          <Field
-                            label="סיווג ביטחוני"
-                            value={
-                              employee.security_clearance ? (
-                                <Badge
-                                  variant="outline"
-                                  className="gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 font-bold"
-                                >
-                                  <ShieldCheck className="w-3 h-3" />
-                                  אושר
-                                </Badge>
-                              ) : (
-                                <span className="text-muted-foreground text-xs font-medium">
-                                  לא אושר
-                                </span>
-                              )
-                            }
-                            icon={Shield}
-                          />
-                        </div>
-                      </Section>
-
-                      <Section title="פרטים אישיים" icon={UserIcon}>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5">
-                          <Field
-                            label="שם מלא *"
-                            value={`${employee.first_name || ""} ${employee.last_name || ""}`}
-                          />
-                          <Field
-                            label="עיר מגורים"
-                            value={employee.city}
-                            fieldKey="city"
-                            onSave={handleInlineFieldSave}
-                          />
-                          <Field
-                            label="מין"
-                            value={
-                              employee.gender === "male"
-                                ? "גבר"
-                                : employee.gender === "female"
-                                  ? "אישה"
-                                  : employee.gender
-                            }
-                          />
-                          <Field
-                            label="תאריך לידה"
-                            value={
-                              employee.birth_date
-                                ? format(
-                                    new Date(employee.birth_date),
-                                    "dd/MM/yyyy",
-                                  )
-                                : null
-                            }
-                          />
-                        </div>
-                      </Section>
-
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">
-                        <Section title="פרטי קשר" icon={Phone}>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Field
-                              label="טלפון נייד"
-                              value={employee.phone_number || employee.phone}
-                              mono
-                              href={`tel:${employee.phone_number || employee.phone}`}
-                              icon={Phone}
-                              fieldKey="phone_number"
-                              onSave={handleInlineFieldSave}
-                            />
-                            <Field
-                              label="דואר אלקטרוני"
-                              value={employee.email || employee.personal_email}
-                              href={`mailto:${employee.email || employee.personal_email}`}
-                              icon={Mail}
-                              fieldKey="email"
-                              onSave={handleInlineFieldSave}
-                            />
-                          </div>
-                        </Section>
-
-                        <Section
-                          title="איש קשר לחירום"
-                          icon={HeartHandshake}
-                        >
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Field
-                              label="שם וקרבה"
-                              value={
-                                employee.emergency_contact
-                                  ?.split("-")?.[0]
-                                  ?.trim() || null
-                              }
-                              icon={UserIcon}
-                              fieldKey="emergency_contact"
-                              onSave={handleInlineFieldSave}
-                            />
-                            <Field
-                              label="טלפון חירום"
-                              value={
-                                employee.emergency_contact
-                                  ?.split("-")?.[1]
-                                  ?.trim() || employee.emergency_contact
-                              }
-                              icon={Phone}
-                              mono
-                              href={`tel:${
-                                employee.emergency_contact
-                                  ?.split("-")?.[1]
-                                  ?.trim() || employee.emergency_contact
-                              }`}
-                            />
-                          </div>
-                        </Section>
-                      </div>
-                    </div>
-                  )}
-
                   {/* PERSONAL TAB */}
                   {activeTab === "personal" && (
                     <div className="space-y-6">
                       <Section title="פרטים אישיים" icon={UserIcon}>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                           <Field
                             label="שם מלא *"
                             value={`${employee.first_name || ""} ${employee.last_name || ""}`}
@@ -2311,7 +2087,7 @@ export default function EmployeeViewPage() {
                         </div>
                       </Section>
 
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <Section title="פרטי קשר" icon={Phone}>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Field
@@ -2375,7 +2151,7 @@ export default function EmployeeViewPage() {
                   {activeTab === "pro" && (
                     <div className="space-y-6">
                       <Section title="שיבוץ וסטטוס ארגוני" icon={Building2}>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                           <Field
                             label="מחלקה"
                             value={cleanUnitName(employee.department_name)}
@@ -2424,7 +2200,7 @@ export default function EmployeeViewPage() {
                       </Section>
 
                       <Section title="הגדרות תפקיד והרשאות" icon={Shield}>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                           <Field
                             label="דרגת פיקוד"
                             value={
@@ -2495,7 +2271,7 @@ export default function EmployeeViewPage() {
                   exit={{ opacity: 0, scale: 1.01 }}
                   className="space-y-6"
                 >
-                  {(activeTab === "all" || activeTab === "personal") && (
+                  {activeTab === "personal" && (
                     <div className="space-y-6">
                       <Section title="פרטים אישיים" icon={UserIcon}>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -2660,7 +2436,7 @@ export default function EmployeeViewPage() {
                     </div>
                   )}
 
-                  {(activeTab === "all" || activeTab === "pro") && (
+                  {activeTab === "pro" && (
                     <div className="space-y-6">
                       <Section title="שיבוץ ארגוני" icon={Building2}>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

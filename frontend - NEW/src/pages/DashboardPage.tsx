@@ -105,6 +105,7 @@ export default function DashboardPage() {
   const [selectedServiceTypes, setSelectedServiceTypes] = useState<string[]>(
     [],
   );
+  const [selectedAgeRanges, setSelectedAgeRanges] = useState<string[]>([]);
   const [selectedAgeRange, setSelectedAgeRange] = useState<{
     min?: number;
     max?: number;
@@ -495,6 +496,7 @@ export default function DashboardPage() {
       setSelectedStatusData(null);
       setSelectedStatusId(null);
       setSelectedServiceTypes([]);
+      setSelectedAgeRanges([]);
       setSelectedAgeRange({});
       setFilterOpen(false);
 
@@ -505,37 +507,50 @@ export default function DashboardPage() {
     }
 
     if (type === "ageRange") {
-      // Logic to toggle: if clicking the same range, clear the filter
-      const currentString = selectedAgeRange?.min
-        ? selectedAgeRange.max
-          ? `${selectedAgeRange.min}-${selectedAgeRange.max}`
-          : `${selectedAgeRange.min}+`
-        : "all";
-
-      if (value === currentString || value === "all") {
-        setSelectedAgeRange({});
-        return;
-      }
-
-      if (value === "50+") {
-        setSelectedAgeRange({ min: 50 });
-      } else if (value.includes("-")) {
-        const parts = value.split("-");
-        setSelectedAgeRange({
-          min: parseInt(parts[0]),
-          max: parseInt(parts[1]),
-        });
+      let nextRanges: string[] = [];
+      if (Array.isArray(value)) {
+        nextRanges = value;
+      } else if (value === "all" || !value) {
+        nextRanges = [];
       } else {
+        const strVal = String(value);
+        if (selectedAgeRanges.includes(strVal)) {
+          nextRanges = selectedAgeRanges.filter((r) => r !== strVal);
+        } else {
+          nextRanges = [...selectedAgeRanges, strVal];
+        }
+      }
+      setSelectedAgeRanges(nextRanges);
+
+      if (nextRanges.length === 0) {
         setSelectedAgeRange({});
+      } else {
+        let min = 999;
+        let max = 0;
+        for (const r of nextRanges) {
+          if (r === "50+") {
+            min = Math.min(min, 50);
+            max = Math.max(max, 120);
+          } else if (r.includes("-")) {
+            const parts = r.split("-");
+            min = Math.min(min, parseInt(parts[0]));
+            max = Math.max(max, parseInt(parts[1]));
+          }
+        }
+        setSelectedAgeRange({
+          min: min === 999 ? undefined : min,
+          max: max === 0 ? undefined : max,
+        });
       }
     }
 
     if (type === "serviceType") {
       setSelectedServiceTypes(value || []);
     } else if (type === "department") {
-      const deptId = Array.isArray(value)
-        ? (value[0] !== undefined && value[0] !== null ? String(value[0]) : "")
-        : (value !== undefined && value !== null ? String(value) : "");
+      const deptIds = Array.isArray(value)
+        ? value.map(String).filter(Boolean)
+        : (value !== undefined && value !== null && value !== "" && value !== "all" ? [String(value)] : []);
+      const deptId = deptIds.join(",");
       setSelectedDeptId(deptId);
       if (!Array.isArray(value)) {
         setSelectedSectionId("");
@@ -543,32 +558,35 @@ export default function DashboardPage() {
       }
 
       if (comparisonTreeRef.current) {
-        if (deptId && comparisonTreeRef.current.sections?.[deptId]) {
-          setComparisonStats(comparisonTreeRef.current.sections[deptId]);
-        } else if (!deptId && comparisonTreeRef.current.departments) {
+        if (deptIds.length === 1 && comparisonTreeRef.current.sections?.[deptIds[0]]) {
+          setComparisonStats(comparisonTreeRef.current.sections[deptIds[0]]);
+        } else if (comparisonTreeRef.current.departments) {
           setComparisonStats(comparisonTreeRef.current.departments);
         }
       }
     } else if (type === "section") {
-      const sectId = Array.isArray(value)
-        ? (value[0] !== undefined && value[0] !== null ? String(value[0]) : "")
-        : (value !== undefined && value !== null ? String(value) : "");
+      const sectIds = Array.isArray(value)
+        ? value.map(String).filter(Boolean)
+        : (value !== undefined && value !== null && value !== "" && value !== "all" ? [String(value)] : []);
+      const sectId = sectIds.join(",");
       setSelectedSectionId(sectId);
       if (!Array.isArray(value)) {
         setSelectedTeamId("");
       }
 
       if (comparisonTreeRef.current) {
-        if (sectId && comparisonTreeRef.current.teams?.[sectId]) {
-          setComparisonStats(comparisonTreeRef.current.teams[sectId]);
-        } else if (!sectId && selectedDeptId && comparisonTreeRef.current.sections?.[selectedDeptId]) {
-          setComparisonStats(comparisonTreeRef.current.sections[selectedDeptId]);
+        if (sectIds.length === 1 && comparisonTreeRef.current.teams?.[sectIds[0]]) {
+          setComparisonStats(comparisonTreeRef.current.teams[sectIds[0]]);
+        } else if (comparisonTreeRef.current.sections && selectedDeptId) {
+          const firstDept = selectedDeptId.split(",")[0];
+          setComparisonStats(comparisonTreeRef.current.sections[firstDept] || []);
         }
       }
     } else if (type === "team") {
-      const teamId = Array.isArray(value)
-        ? (value[0] !== undefined && value[0] !== null ? String(value[0]) : "")
-        : (value !== undefined && value !== null ? String(value) : "");
+      const teamIds = Array.isArray(value)
+        ? value.map(String).filter(Boolean)
+        : (value !== undefined && value !== null && value !== "" && value !== "all" ? [String(value)] : []);
+      const teamId = teamIds.join(",");
       setSelectedTeamId(teamId);
     } else if (type === "status") {
       // If clicking the same status, deselect it
@@ -715,12 +733,24 @@ export default function DashboardPage() {
 
   const unitName = useMemo(() => {
     if (cleanTeamId) {
+      const ids = cleanTeamId.split(",");
+      if (ids.length > 1) {
+        return `${ids.length} חוליות`;
+      }
       return currentTeam ? formatUnitName("team", currentTeam.name) : `חוליה ${cleanTeamId}`;
     }
     if (cleanSectionId) {
+      const ids = cleanSectionId.split(",");
+      if (ids.length > 1) {
+        return `${ids.length} מדורים`;
+      }
       return currentSection ? formatUnitName("section", currentSection.name) : `מדור ${cleanSectionId}`;
     }
     if (cleanDeptId) {
+      const ids = cleanDeptId.split(",");
+      if (ids.length > 1) {
+        return `${ids.length} מחלקות`;
+      }
       return currentDept ? formatUnitName("department", currentDept.name) : `מחלקה ${cleanDeptId}`;
     }
 
@@ -804,12 +834,27 @@ export default function DashboardPage() {
     }
     
     // Add org filter tag if selected
-    if (cleanTeamId && currentTeam) {
-      tags.push(formatUnitName("team", currentTeam.name));
-    } else if (cleanSectionId && currentSection) {
-      tags.push(formatUnitName("section", currentSection.name));
-    } else if (cleanDeptId && currentDept) {
-      tags.push(formatUnitName("department", currentDept.name));
+    if (cleanTeamId) {
+      const ids = cleanTeamId.split(",");
+      if (ids.length > 1) {
+        tags.push(`${ids.length} חוליות`);
+      } else if (currentTeam) {
+        tags.push(formatUnitName("team", currentTeam.name));
+      }
+    } else if (cleanSectionId) {
+      const ids = cleanSectionId.split(",");
+      if (ids.length > 1) {
+        tags.push(`${ids.length} מדורים`);
+      } else if (currentSection) {
+        tags.push(formatUnitName("section", currentSection.name));
+      }
+    } else if (cleanDeptId) {
+      const ids = cleanDeptId.split(",");
+      if (ids.length > 1) {
+        tags.push(`${ids.length} מחלקות`);
+      } else if (currentDept) {
+        tags.push(formatUnitName("department", currentDept.name));
+      }
     }
 
     return tags;
@@ -1032,8 +1077,13 @@ export default function DashboardPage() {
                 totalEmployees={selectedStatusId !== null ? ageDistribution.reduce((acc, curr) => acc + curr.count, 0) : totalEmployees}
                 filterTags={activeFilterTags}
                 onRangeSelect={(range) => handleFilterChange("ageRange", range)}
+                selectedRanges={selectedAgeRanges}
                 selectedRange={
-                  selectedAgeRange?.min
+                  selectedAgeRanges.length === 1
+                    ? selectedAgeRanges[0]
+                    : selectedAgeRanges.length > 1
+                    ? selectedAgeRanges.join(", ")
+                    : selectedAgeRange?.min
                     ? selectedAgeRange.max
                       ? `${selectedAgeRange.min}-${selectedAgeRange.max}`
                       : `${selectedAgeRange.min}+`
@@ -1085,21 +1135,23 @@ export default function DashboardPage() {
                 canGoBack={canGoBack}
                 onGoBack={handleGoBack}
                 selectedUnitId={
-                  cleanTeamId ? parseInt(cleanTeamId) :
-                  cleanSectionId ? parseInt(cleanSectionId) :
-                  cleanDeptId ? parseInt(cleanDeptId) : null
+                  cleanTeamId ? parseInt(cleanTeamId.split(",")[0]) :
+                  cleanSectionId ? parseInt(cleanSectionId.split(",")[0]) :
+                  cleanDeptId ? parseInt(cleanDeptId.split(",")[0]) : null
+                }
+                selectedUnitIds={
+                  cleanTeamId ? cleanTeamId.split(",").map(Number).filter(Boolean) :
+                  cleanSectionId ? cleanSectionId.split(",").map(Number).filter(Boolean) :
+                  cleanDeptId ? cleanDeptId.split(",").map(Number).filter(Boolean) : undefined
                 }
                 onUnitClick={(unitId, level) => {
-                  const isSelected = 
-                    (level === 'department' && cleanDeptId === unitId.toString()) ||
-                    (level === 'section' && cleanSectionId === unitId.toString()) ||
-                    (level === 'team' && cleanTeamId === unitId.toString());
-
-                  if (isSelected) {
-                    handleFilterChange(level as any, ""); // Clear the filter
-                  } else {
-                    handleFilterChange(level as any, unitId.toString());
-                  }
+                  const currentStr = level === 'department' ? cleanDeptId : level === 'section' ? cleanSectionId : cleanTeamId;
+                  const currentIds = currentStr ? currentStr.split(",").filter(Boolean) : [];
+                  const idStr = unitId.toString();
+                  const nextIds = currentIds.includes(idStr)
+                    ? currentIds.filter((id) => id !== idStr)
+                    : [...currentIds, idStr];
+                  handleFilterChange(level as any, nextIds);
                 }}
               />
             </div>

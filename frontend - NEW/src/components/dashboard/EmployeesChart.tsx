@@ -238,6 +238,21 @@ const EmployeesChartComponent = (
     return { chartData: data, officeSubItems: officeItems, displayTotal: total };
   }, [stats, isOfficeSelected, total]);
 
+  const selectedEntry = useMemo(() => {
+    if (selectedStatusId === null || selectedStatusId === undefined || selectedStatusId === -999) {
+      return null;
+    }
+    return (
+      chartData.find(
+        (d) =>
+          d.id === selectedStatusId ||
+          (d.isGroup && officeSubItems.some((s) => s.status_id === selectedStatusId)),
+      ) || null
+    );
+  }, [selectedStatusId, chartData, officeSubItems]);
+
+  const displayEntry = hoveredEntry || selectedEntry;
+
   const handleStatusInteraction = (entry: any) => {
     if (entry.isGroup) {
       setIsOfficeSelected(true);
@@ -375,7 +390,7 @@ const EmployeesChartComponent = (
             </div>
           ) : (
             <div
-              className="flex flex-col flex-1 w-full min-h-[200px] sm:min-h-[210px] md:min-h-[220px] relative mt-0 overflow-visible cursor-pointer select-none"
+              className="flex flex-col flex-1 w-full min-h-[220px] sm:min-h-[240px] md:min-h-[320px] relative mt-0 overflow-visible cursor-pointer select-none"
               style={{ direction: "ltr" }}
               onDoubleClick={() => {
                 if (isMobile) {
@@ -552,14 +567,14 @@ const EmployeesChartComponent = (
                 ) : (
                   <BarChart
                     data={chartData}
-                    margin={{ top: 28, right: 12, left: 12, bottom: 8 }}
+                    margin={{ top: 25, right: 10, left: 10, bottom: 0 }}
                   >
                     <XAxis
                       dataKey="name"
                       axisLine={false}
                       tickLine={false}
                       interval={0}
-                      height={isMobile ? 18 : 22}
+                      height={isMobile ? 15 : 20}
                       tick={{
                         fontSize: isMobile ? 11 : 12,
                         fontWeight: 700,
@@ -569,7 +584,7 @@ const EmployeesChartComponent = (
                     />
                     <YAxis
                       hide={true}
-                      domain={[0, (dataMax: number) => Math.max(Math.ceil(dataMax * 1.25), 5)]}
+                      domain={[0, totalEmployeesInScope || 10]}
                     />
                     <Tooltip
                       cursor={{ fill: "transparent" }}
@@ -648,30 +663,30 @@ const EmployeesChartComponent = (
             </div>
           )}
 
-          {/* Fixed Hover Info Card — stays in place, only content updates */}
+          {/* Fixed Hover/Selected Info Card — stays in place, only content updates */}
           {chartType === "pie" && (
             <div
               className="mx-3 sm:mx-4 md:mx-6 mb-3"
               style={{
-                opacity: hoveredEntry ? 1 : 0,
-                transform: hoveredEntry ? 'scale(1)' : 'scale(0.98)',
+                opacity: displayEntry ? 1 : 0,
+                transform: displayEntry ? 'scale(1)' : 'scale(0.98)',
                 transition: 'opacity 120ms ease, transform 120ms ease',
                 pointerEvents: 'none',
                 minHeight: '56px',
               }}
             >
-              {hoveredEntry && (
+              {displayEntry && (
                 <div
                   dir="rtl"
                   className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm"
                 >
                   <div
                     className="w-3 h-3 rounded-full shrink-0"
-                    style={{ backgroundColor: hoveredEntry.fill }}
+                    style={{ backgroundColor: displayEntry.fill }}
                   />
                   <div className="flex flex-col min-w-0">
                     <span className="font-black text-slate-800 dark:text-slate-100 text-sm leading-tight">
-                      {hoveredEntry.name}
+                      {displayEntry.name}
                     </span>
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
                       {isOfficeSelected ? 'מפירוט משרד' : 'מכלל היחידה'}
@@ -679,11 +694,11 @@ const EmployeesChartComponent = (
                   </div>
                   <div className="mr-auto flex items-baseline gap-1">
                     <span className="font-extrabold text-primary dark:text-blue-400 text-base tabular-nums leading-none">
-                      {hoveredEntry.value}
+                      {displayEntry.value}
                     </span>
                     <span className="text-[10px] text-slate-400 font-bold">שוטרים</span>
                     <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 mr-1">
-                      {hoveredEntry.percentage}%
+                      {displayEntry.percentage}%
                     </span>
                   </div>
                 </div>

@@ -531,16 +531,13 @@ export default function TransfersPage() {
             />
 
             <div className="flex items-center justify-between gap-2.5 sm:gap-4">
-              <div className="space-y-1 text-right min-w-0 flex-1">
-                <span className="text-xs sm:text-sm font-semibold text-muted-foreground truncate block">
-                  בהמתנה לטיפול
+              <div className="space-y-0.5 text-right min-w-0 flex-1">
+                <span className="text-xs sm:text-sm font-semibold text-muted-foreground block">
+                  ממתינות
                 </span>
-                <div className="flex items-baseline gap-1.5 sm:gap-2">
+                <div className="flex items-baseline">
                   <span className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-none">
                     {stats.pending}
-                  </span>
-                  <span className="text-xs text-muted-foreground font-normal">
-                    בקשות
                   </span>
                 </div>
               </div>
@@ -582,16 +579,13 @@ export default function TransfersPage() {
             />
 
             <div className="flex items-center justify-between gap-2.5 sm:gap-4">
-              <div className="space-y-1 text-right min-w-0 flex-1">
-                <span className="text-xs sm:text-sm font-semibold text-muted-foreground truncate block">
-                  בקשות שאושרו
+              <div className="space-y-0.5 text-right min-w-0 flex-1">
+                <span className="text-xs sm:text-sm font-semibold text-muted-foreground block">
+                  אושרו
                 </span>
-                <div className="flex items-baseline gap-1.5 sm:gap-2">
+                <div className="flex items-baseline">
                   <span className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-none">
                     {stats.approved}
-                  </span>
-                  <span className="text-xs text-muted-foreground font-normal">
-                    בוצעו
                   </span>
                 </div>
               </div>
@@ -633,16 +627,13 @@ export default function TransfersPage() {
             />
 
             <div className="flex items-center justify-between gap-2.5 sm:gap-4">
-              <div className="space-y-1 text-right min-w-0 flex-1">
-                <span className="text-xs sm:text-sm font-semibold text-muted-foreground truncate block">
-                  בקשות שנדחו
+              <div className="space-y-0.5 text-right min-w-0 flex-1">
+                <span className="text-xs sm:text-sm font-semibold text-muted-foreground block">
+                  נדחו
                 </span>
-                <div className="flex items-baseline gap-1.5 sm:gap-2">
+                <div className="flex items-baseline">
                   <span className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-none">
                     {stats.rejected}
-                  </span>
-                  <span className="text-xs text-muted-foreground font-normal">
-                    נדחו
                   </span>
                 </div>
               </div>
