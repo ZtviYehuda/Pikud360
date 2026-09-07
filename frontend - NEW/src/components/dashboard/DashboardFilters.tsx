@@ -56,6 +56,10 @@ interface DashboardFiltersProps {
   selectedSectionId?: string | string[];
   selectedTeamId?: string | string[];
   selectedStatusId?: string | string[];
+  selectedDepartments?: string[];
+  selectedSections?: string[];
+  selectedTeams?: string[];
+  selectedStatuses?: string[];
   serviceTypes?: { id: number; name: string }[];
   selectedServiceTypes?: string[];
   selectedAgeRange?: { min?: number; max?: number };
@@ -102,6 +106,10 @@ export const DashboardFilters = ({
   selectedSectionId,
   selectedTeamId,
   selectedStatusId,
+  selectedDepartments,
+  selectedSections,
+  selectedTeams,
+  selectedStatuses,
   serviceTypes: propServiceTypes,
   selectedServiceTypes = DEFAULT_SERVICE_TYPES,
   selectedAgeRange = DEFAULT_AGE_RANGE,
@@ -161,6 +169,80 @@ export const DashboardFilters = ({
   const canSelectSection = propCanSelectSection !== undefined ? propCanSelectSection : activeUser?.is_admin || !activeUser?.section_id;
   const canSelectTeam = propCanSelectTeam !== undefined ? propCanSelectTeam : activeUser?.is_admin || !activeUser?.team_id;
 
+  // Helper to resolve unit IDs from either explicit ID props or name-based props
+  const resolveInitialFilters = () => {
+    let resolvedDeptIds = parseIdList(selectedDeptId);
+    let resolvedSectionIds = parseIdList(selectedSectionId);
+    let resolvedTeamIds = parseIdList(selectedTeamId);
+    let resolvedStatusIds = parseIdList(selectedStatusId);
+
+    // If structure is available, map names to IDs and ensure hierarchy is selected
+    if (structure && structure.length > 0) {
+      if (selectedDepartments && selectedDepartments.length > 0) {
+        structure.forEach((d) => {
+          if (selectedDepartments.includes(d.name) && !resolvedDeptIds.includes(String(d.id))) {
+            resolvedDeptIds.push(String(d.id));
+          }
+        });
+      }
+
+      if (selectedSections && selectedSections.length > 0) {
+        structure.forEach((d) => {
+          (d.sections || []).forEach((s) => {
+            if (selectedSections.includes(s.name)) {
+              if (!resolvedSectionIds.includes(String(s.id))) {
+                resolvedSectionIds.push(String(s.id));
+              }
+              // Also auto-select the parent department so sections are visible!
+              if (!resolvedDeptIds.includes(String(d.id))) {
+                resolvedDeptIds.push(String(d.id));
+              }
+            }
+          });
+        });
+      }
+
+      if (selectedTeams && selectedTeams.length > 0) {
+        structure.forEach((d) => {
+          (d.sections || []).forEach((s) => {
+            (s.teams || []).forEach((t) => {
+              if (selectedTeams.includes(t.name)) {
+                if (!resolvedTeamIds.includes(String(t.id))) {
+                  resolvedTeamIds.push(String(t.id));
+                }
+                if (!resolvedSectionIds.includes(String(s.id))) {
+                  resolvedSectionIds.push(String(s.id));
+                }
+                if (!resolvedDeptIds.includes(String(d.id))) {
+                  resolvedDeptIds.push(String(d.id));
+                }
+              }
+            });
+          });
+        });
+      }
+    }
+
+    if (allStatusTypes && allStatusTypes.length > 0 && selectedStatuses && selectedStatuses.length > 0) {
+      allStatusTypes.forEach((st: any) => {
+        const name = st.status_name || st.name;
+        const idStr = String(st.status_id ?? st.id ?? "");
+        if (name && selectedStatuses.includes(name) && !resolvedStatusIds.includes(idStr)) {
+          resolvedStatusIds.push(idStr);
+        }
+      });
+    }
+
+    return {
+      deptIds: Array.from(new Set(resolvedDeptIds)),
+      sectionIds: Array.from(new Set(resolvedSectionIds)),
+      teamIds: Array.from(new Set(resolvedTeamIds)),
+      statusIds: Array.from(new Set(resolvedStatusIds)),
+      serviceTypes: selectedServiceTypes || [],
+      ageRange: selectedAgeRange || {},
+    };
+  };
+
   const [activeTab, setActiveTab] = useState("org");
   const [stagedFilters, setStagedFilters] = useState<{
     deptIds: string[];
@@ -169,37 +251,40 @@ export const DashboardFilters = ({
     statusIds: string[];
     serviceTypes: string[];
     ageRange: { min?: number; max?: number };
-  }>(() => ({
-    deptIds: parseIdList(selectedDeptId),
-    sectionIds: parseIdList(selectedSectionId),
-    teamIds: parseIdList(selectedTeamId),
-    statusIds: parseIdList(selectedStatusId),
-    serviceTypes: selectedServiceTypes || [],
-    ageRange: selectedAgeRange || {},
-  }));
+  }>(() => resolveInitialFilters());
 
-  const deptPropKey = parseIdList(selectedDeptId).sort().join(",");
-  const secPropKey = parseIdList(selectedSectionId).sort().join(",");
-  const teamPropKey = parseIdList(selectedTeamId).sort().join(",");
-  const statusPropKey = parseIdList(selectedStatusId).sort().join(",");
+  const deptPropKey = [
+    ...parseIdList(selectedDeptId),
+    ...(selectedDepartments || []),
+  ].sort().join(",");
+
+  const secPropKey = [
+    ...parseIdList(selectedSectionId),
+    ...(selectedSections || []),
+  ].sort().join(",");
+
+  const teamPropKey = [
+    ...parseIdList(selectedTeamId),
+    ...(selectedTeams || []),
+  ].sort().join(",");
+
+  const statusPropKey = [
+    ...parseIdList(selectedStatusId),
+    ...(selectedStatuses || []),
+  ].sort().join(",");
+
   const servicePropKey = (selectedServiceTypes || []).slice().sort().join(",");
   const agePropKey = `${selectedAgeRange?.min ?? ""}-${selectedAgeRange?.max ?? ""}`;
-  const currentPropsKey = `${deptPropKey}|${secPropKey}|${teamPropKey}|${statusPropKey}|${servicePropKey}|${agePropKey}`;
+  const structureKey = (structure || []).map((d) => d.id).join(",");
+  const currentPropsKey = `${deptPropKey}|${secPropKey}|${teamPropKey}|${statusPropKey}|${servicePropKey}|${agePropKey}|${structureKey}`;
 
   const lastPropsKeyRef = useRef<string>(currentPropsKey);
 
-  // Keep stagedFilters in sync ONLY when external filter props ACTUALLY change (e.g. external reset, drill-down)
+  // Keep stagedFilters in sync ONLY when external filter props ACTUALLY change (e.g. external reset, drill-down, structure load)
   useEffect(() => {
     if (lastPropsKeyRef.current !== currentPropsKey) {
       lastPropsKeyRef.current = currentPropsKey;
-      setStagedFilters({
-        deptIds: parseIdList(selectedDeptId),
-        sectionIds: parseIdList(selectedSectionId),
-        teamIds: parseIdList(selectedTeamId),
-        statusIds: parseIdList(selectedStatusId),
-        serviceTypes: selectedServiceTypes || [],
-        ageRange: selectedAgeRange || {},
-      });
+      setStagedFilters(resolveInitialFilters());
     }
   }, [
     currentPropsKey,
@@ -207,8 +292,14 @@ export const DashboardFilters = ({
     selectedSectionId,
     selectedTeamId,
     selectedStatusId,
+    selectedDepartments,
+    selectedSections,
+    selectedTeams,
+    selectedStatuses,
     selectedServiceTypes,
     selectedAgeRange,
+    structure,
+    allStatusTypes,
   ]);
 
   const handleApply = () => {

@@ -13,9 +13,14 @@ interface FilterModalProps {
   onOpenChange: (open: boolean) => void;
   onApply: (filters: EmployeeFilters) => void;
   employees?: Employee[];
+  activeFilters?: EmployeeFilters;
 }
 
 export interface EmployeeFilters {
+  deptIds?: string[];
+  sectionIds?: string[];
+  teamIds?: string[];
+  statusIds?: string[];
   departments?: string[];
   sections?: string[];
   teams?: string[];
@@ -34,6 +39,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   open,
   onOpenChange,
   onApply,
+  activeFilters,
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -48,6 +54,20 @@ export const FilterModal: React.FC<FilterModalProps> = ({
             key="open-filter-modal"
             isDialogContent={true}
             onClose={() => onOpenChange(false)}
+            selectedDeptId={activeFilters?.deptIds}
+            selectedSectionId={activeFilters?.sectionIds}
+            selectedTeamId={activeFilters?.teamIds}
+            selectedStatusId={activeFilters?.statusIds}
+            selectedDepartments={activeFilters?.departments}
+            selectedSections={activeFilters?.sections}
+            selectedTeams={activeFilters?.teams}
+            selectedStatuses={activeFilters?.statuses}
+            selectedServiceTypes={activeFilters?.serviceTypes}
+            selectedAgeRange={
+              activeFilters?.ageRange
+                ? { min: activeFilters.ageRange[0], max: activeFilters.ageRange[1] }
+                : undefined
+            }
             onApplyModal={(filters) => {
               onApply(filters);
               onOpenChange(false);

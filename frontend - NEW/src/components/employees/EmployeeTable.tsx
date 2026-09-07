@@ -875,6 +875,7 @@ export const EmployeeTable = ({
         onOpenChange={setFilterModalOpen}
         onApply={handleApplyFilters}
         employees={employees}
+        activeFilters={activeFilters}
       />
 
       <ImportEmployeesModal
