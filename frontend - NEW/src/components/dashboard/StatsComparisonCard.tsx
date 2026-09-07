@@ -207,20 +207,28 @@ export const StatsComparisonCard = forwardRef(function StatsComparisonCard(
         </CardHeader>
       )}
 
-      <CardContent className="flex-1 overflow-y-auto no-scrollbar p-4 sm:p-5 space-y-2.5 sm:space-y-3">
+      <CardContent className="flex-1 flex flex-col overflow-y-auto no-scrollbar p-4 sm:p-6">
         {loading && safeData.length === 0 ? (
-          <div className="py-8 flex flex-col items-center justify-center space-y-2.5 text-center">
-            <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          <div className="flex-1 flex flex-col items-center justify-center py-12 space-y-3 text-center">
+            <div className="w-7 h-7 rounded-full border-2 border-primary border-t-transparent animate-spin" />
             <p className="text-xs font-semibold text-muted-foreground">
               טוען נתונים ארגוניים...
             </p>
           </div>
         ) : safeData.length === 0 ? (
-          <div className="py-8 flex flex-col items-center justify-center space-y-1.5 text-center text-muted-foreground">
+          <div className="flex-1 flex flex-col items-center justify-center py-12 space-y-2 text-center text-muted-foreground">
             <p className="text-xs font-semibold">אין נתוני השוואה להצגה</p>
           </div>
         ) : (
-          <div className="space-y-2.5 sm:space-y-3">
+          <div
+            className={cn(
+              "flex flex-col flex-1 w-full",
+              safeData.length === 1 && "justify-center py-4",
+              safeData.length === 2 && "justify-around py-3 gap-6",
+              (safeData.length === 3 || safeData.length === 4) && "justify-between py-1 gap-4 sm:gap-6",
+              safeData.length > 4 && "gap-3.5 py-1"
+            )}
+          >
             {safeData.map((item: ComparisonStat) => {
               const availability =
                 item.total_count > 0
@@ -266,40 +274,37 @@ export const StatsComparisonCard = forwardRef(function StatsComparisonCard(
                     }
                   }}
                   className={cn(
-                    "group p-3 rounded-xl border transition-all duration-200",
-                    "bg-card/50 hover:bg-accent/40 border-border/40 hover:border-border/70",
+                    "group rounded-xl border transition-all duration-200",
+                    "bg-card/50 hover:bg-accent/40 border-border/40 hover:border-border/80",
+                    safeData.length <= 4 ? "p-3.5 sm:p-4" : "p-3",
                     isClickable && "cursor-pointer active:scale-[0.99]",
                     isSelected &&
                       "bg-primary/[0.04] border-primary/40 ring-1 ring-primary/20",
                   )}
                 >
-                  <div className="flex items-center justify-between text-xs sm:text-sm font-semibold mb-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="truncate group-hover:text-primary transition-colors text-xs sm:text-sm font-bold text-foreground">
+                  <div className="flex items-center justify-between text-xs sm:text-sm font-semibold mb-2.5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="truncate group-hover:text-primary transition-colors">
                         {item.unit_name}
                       </span>
                       {item.level && item.level !== "department" && (
                         <Badge
                           variant="outline"
-                          className="text-[9px] px-1.5 py-0 h-3.5 border-border/50 text-muted-foreground font-normal rounded shrink-0"
+                          className="text-[10px] px-1.5 py-0 h-4 border-border/60 text-muted-foreground"
                         >
-                          {item.level === "section"
-                            ? "מדור"
-                            : item.level === "team"
-                              ? "חוליה"
-                              : "שוטר"}
+                          {item.level === "section" ? "מדור" : "חוליה"}
                         </Badge>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2.5 shrink-0">
                       <span className="text-xs text-muted-foreground tabular-nums font-medium">
                         {item.present_count} / {item.total_count}
                       </span>
                       <Badge
                         variant="secondary"
                         className={cn(
-                          "text-[11px] font-bold px-1.5 py-0.5 rounded tabular-nums border",
+                          "text-[11px] font-black px-2 py-0.5 rounded-md tabular-nums border",
                           statusStyle.badge,
                         )}
                       >
@@ -309,10 +314,10 @@ export const StatsComparisonCard = forwardRef(function StatsComparisonCard(
                   </div>
 
                   {/* Clean Modern Progress Track */}
-                  <div className="w-full h-1.5 bg-muted/60 dark:bg-muted/40 rounded-full overflow-hidden">
+                  <div className="w-full h-2.5 bg-muted/60 dark:bg-muted/40 rounded-full overflow-hidden">
                     <div
                       className={cn(
-                        "h-full rounded-full transition-all duration-500",
+                        "h-full rounded-full transition-all duration-700",
                         statusStyle.bar,
                       )}
                       style={{
