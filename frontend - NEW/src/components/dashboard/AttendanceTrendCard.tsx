@@ -159,22 +159,22 @@ export const AttendanceTrendCard = forwardRef(
           </CardHeader>
         )}
 
-        <CardContent className="flex-1 p-4 sm:p-6 flex flex-col justify-center min-h-[220px]">
+        <CardContent className="flex-1 p-3 sm:p-5 flex flex-col justify-between min-h-0">
           {loading && chartData.length === 0 ? (
-            <div className="py-12 flex flex-col items-center justify-center space-y-3 text-center">
+            <div className="flex-1 flex flex-col items-center justify-center space-y-3 text-center py-12">
               <div className="w-7 h-7 rounded-full border-2 border-primary border-t-transparent animate-spin" />
               <p className="text-xs font-semibold text-muted-foreground">טוען מגמת נוכחות...</p>
             </div>
           ) : chartData.length === 0 ? (
-            <div className="py-12 flex flex-col items-center justify-center space-y-2 text-center text-muted-foreground">
+            <div className="flex-1 flex flex-col items-center justify-center space-y-2 text-center text-muted-foreground py-12">
               <p className="text-xs font-semibold">אין נתוני מגמה לתקופה זו</p>
             </div>
           ) : (
-            <div className="w-full h-[200px] sm:h-[240px] min-w-0">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200} initialDimension={{ width: 300, height: 200 }}>
+            <div className="w-full flex-1 min-h-[260px] sm:min-h-[290px] min-w-0 flex flex-col">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={260} initialDimension={{ width: 450, height: 290 }}>
                 <AreaChart
                   data={chartData}
-                  margin={{ top: 12, right: 8, left: -20, bottom: 0 }}
+                  margin={{ top: 16, right: 12, left: -20, bottom: 4 }}
                   onClick={(e) => {
                     if (e && e.activePayload && e.activePayload.length && onDateSelect) {
                       const item = e.activePayload[0].payload;

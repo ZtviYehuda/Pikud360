@@ -191,16 +191,16 @@ export const AgeDistributionChart = ({
       </div>
 
       {/* Chart Container */}
-      <div className="flex flex-col flex-1 w-full min-h-[170px] sm:min-h-[220px] md:min-h-[280px] relative mt-0 overflow-visible select-none px-2">
+      <div className="flex flex-col flex-1 w-full min-h-[220px] sm:min-h-[260px] md:min-h-[290px] relative mt-0 overflow-visible select-none px-2 pb-2">
         {!hasData ? (
           <div className="flex-1 flex items-center justify-center py-12 text-center text-muted-foreground font-bold tracking-tight text-xs sm:text-sm">
             אין נתונים להצגה
           </div>
         ) : (
-        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={170} initialDimension={{ width: 300, height: 220 }}>
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={220} initialDimension={{ width: 300, height: 260 }}>
           <BarChart
             data={chartData}
-            margin={{ top: 25, right: 10, left: 10, bottom: 5 }}
+            margin={{ top: 28, right: 8, left: 8, bottom: 4 }}
           >
             <CartesianGrid 
               strokeDasharray="4 4" 
@@ -218,7 +218,8 @@ export const AgeDistributionChart = ({
               tick={{ fontSize: isMobile ? 11 : 12, fontWeight: 700, fontFamily: "Noto Sans Hebrew, sans-serif", fill: "var(--foreground)" }}
               tickFormatter={(tick) => tick === "36-99" ? "36+" : tick}
             />
-            <YAxis hide domain={[0, maxCount + 1]} />
+            {/* Provide headroom so columns are pleasantly proportioned and slightly lower */}
+            <YAxis hide domain={[0, Math.max(Math.ceil(maxCount * 1.25), maxCount + 3)]} />
             
             <Tooltip
               cursor={{ fill: "transparent" }}

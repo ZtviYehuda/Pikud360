@@ -162,9 +162,9 @@ export const BirthdaysCard = forwardRef(
             </div>
           </CardHeader>
 
-          <CardContent className="flex-1 p-3.5 sm:p-4 flex flex-col min-h-0 relative">
+          <CardContent className="flex-1 p-3 sm:p-4 flex flex-col min-h-0 relative justify-between">
             {sortedBirthdays.length === 0 ? (
-              <div className="flex flex-col items-center justify-center w-full h-full min-h-[220px] text-center p-6 opacity-60">
+              <div className="flex flex-col items-center justify-center w-full h-full min-h-[240px] text-center p-6 opacity-60">
                 <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
                   <Calendar className="w-6 h-6" />
                 </div>
@@ -172,7 +172,7 @@ export const BirthdaysCard = forwardRef(
                 <p className="text-xs text-muted-foreground mt-1">כל החוגגים הבאים יוצגו כאן אוטומטית</p>
               </div>
             ) : (
-              <div className="w-full flex-1 flex flex-col min-h-0 overflow-y-auto no-scrollbar space-y-2.5 pr-0.5">
+              <div className="w-full flex-1 flex flex-col min-h-0 overflow-y-auto no-scrollbar justify-start space-y-2 pr-0.5">
                 {sortedBirthdays.map((employee) => {
                   const today = new Date(
                     referenceDate.getFullYear(),
@@ -223,18 +223,18 @@ export const BirthdaysCard = forwardRef(
                       key={employee.id}
                       onClick={() => openProfile(employee.id)}
                       className={cn(
-                        "w-full flex items-center justify-between gap-3 p-3 sm:p-3.5 rounded-2xl border transition-all cursor-pointer group relative overflow-hidden",
+                        "w-full flex items-center justify-between gap-2.5 px-3 py-2 sm:py-2.5 rounded-xl border transition-all cursor-pointer group relative overflow-hidden",
                         isToday
                           ? "bg-primary/[0.06] dark:bg-primary/[0.08] border-primary/30 ring-1 ring-primary/20 shadow-xs hover:border-primary/50"
                           : "bg-background/50 dark:bg-card/40 border-border/50 hover:border-border hover:bg-muted/40 hover:shadow-2xs"
                       )}
                     >
                       {/* Right side (RTL): Avatar & Employee Details */}
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <div className="relative shrink-0">
                           <div
                             className={cn(
-                              "w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-xs sm:text-sm font-black transition-all group-hover:scale-105 shadow-2xs",
+                              "w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-xs font-black transition-all group-hover:scale-105 shadow-2xs",
                               isToday
                                 ? "bg-primary text-primary-foreground shadow-primary/25"
                                 : "bg-primary/10 text-primary border border-primary/20"
