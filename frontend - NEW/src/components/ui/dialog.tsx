@@ -50,16 +50,8 @@ function DialogOverlay({
  * Renders a small pill at the top center of the dialog. Only visible on mobile.
  */
 function DialogDragHandle({ className }: { className?: string }) {
-  return (
-    <div
-      data-slot="dialog-drag-handle"
-      className={cn(
-        "mx-auto mt-3 mb-1 w-9 h-[5px] rounded-full bg-foreground/20 shrink-0 sm:hidden",
-        className,
-      )}
-      aria-hidden
-    />
-  );
+  // Return null to avoid double handle on mobile, since DialogContent already provides the root swipe handle.
+  return null;
 }
 
 function DialogContent({
@@ -229,7 +221,7 @@ function DialogContent({
         }}
         className={cn(
           // ── Mobile: Native Edge-to-Edge Bottom Sheet ──
-          "bg-background text-foreground fixed z-50 flex flex-col outline-none overflow-y-auto custom-scrollbar border-none shadow-2xl transition-all",
+          "bg-card text-foreground fixed z-50 flex flex-col outline-none overflow-y-auto custom-scrollbar border-none shadow-2xl transition-all",
           "bottom-0 left-0 right-0 w-full max-w-full max-h-[94dvh] rounded-t-[2.2rem] rounded-b-none p-4 sm:p-6",
           // Mobile slide-up animation
           "data-[state=open]:animate-slide-up-mobile data-[state=closed]:animate-slide-down-mobile",
@@ -242,8 +234,8 @@ function DialogContent({
         {...props}
       >
         {/* Swipe Handle Indicator at top on Mobile */}
-        <div className="w-full pt-1 pb-3 flex justify-center items-center shrink-0 sm:hidden touch-none select-none">
-          <div className="w-12 h-1.5 rounded-full bg-foreground/20 hover:bg-foreground/30 transition-colors" />
+        <div className="w-full pt-2.5 pb-2 flex justify-center items-center shrink-0 sm:hidden touch-none select-none bg-card">
+          <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
         </div>
 
         {children}
