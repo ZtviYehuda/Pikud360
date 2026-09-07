@@ -139,12 +139,12 @@ export const StatsComparisonCard = forwardRef(function StatsComparisonCard(
       ref={cardRef}
       id="stats-comparison-card"
       className={cn(
-        "bg-card/70 dark:bg-card/50 backdrop-blur-md text-card-foreground rounded-2xl border border-border/60 shadow-xs flex flex-col overflow-hidden h-full relative transition-all py-0 gap-0",
+        "bg-card/70 dark:bg-card/50 backdrop-blur-md text-card-foreground rounded-2xl border border-border/60 shadow-xs flex flex-col overflow-hidden h-full relative transition-all",
         className,
       )}
     >
       {!hideHeader && (
-        <CardHeader className="px-4 sm:px-6 py-3 sm:py-3.5 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3 shrink-0">
+        <CardHeader className="px-4 sm:px-6 py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3">
           <div className="space-y-1 min-w-0 flex-1">
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -207,20 +207,27 @@ export const StatsComparisonCard = forwardRef(function StatsComparisonCard(
         </CardHeader>
       )}
 
-      <CardContent className="flex-1 overflow-y-auto no-scrollbar p-3 sm:p-4 space-y-2.5">
+      <CardContent className="flex-1 overflow-y-auto no-scrollbar p-4 sm:p-6 flex flex-col justify-between">
         {loading && safeData.length === 0 ? (
-          <div className="py-8 flex flex-col items-center justify-center space-y-2.5 text-center">
+          <div className="py-12 flex flex-col items-center justify-center space-y-3 text-center my-auto">
             <div className="w-7 h-7 rounded-full border-2 border-primary border-t-transparent animate-spin" />
             <p className="text-xs font-semibold text-muted-foreground">
               טוען נתונים ארגוניים...
             </p>
           </div>
         ) : safeData.length === 0 ? (
-          <div className="py-8 flex flex-col items-center justify-center space-y-2 text-center text-muted-foreground">
+          <div className="py-12 flex flex-col items-center justify-center space-y-2 text-center text-muted-foreground my-auto">
             <p className="text-xs font-semibold">אין נתוני השוואה להצגה</p>
           </div>
         ) : (
-          <div className="space-y-2.5">
+          <div
+            className={cn(
+              "flex-1 flex flex-col",
+              safeData.length <= 4
+                ? "justify-between gap-4 py-1"
+                : "gap-3.5"
+            )}
+          >
             {safeData.map((item: ComparisonStat) => {
               const availability =
                 item.total_count > 0
@@ -266,36 +273,42 @@ export const StatsComparisonCard = forwardRef(function StatsComparisonCard(
                     }
                   }}
                   className={cn(
-                    "group p-2.5 sm:p-3 rounded-xl border transition-all duration-200",
-                    "bg-card/50 hover:bg-accent/40 border-border/40 hover:border-border/80",
+                    "group p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border transition-all duration-200",
+                    "bg-card/60 hover:bg-accent/40 border-border/50 hover:border-border/80 shadow-2xs",
                     isClickable && "cursor-pointer active:scale-[0.99]",
                     isSelected &&
                       "bg-primary/[0.04] border-primary/40 ring-1 ring-primary/20",
                   )}
                 >
-                  <div className="flex items-center justify-between text-xs sm:text-sm font-semibold mb-1.5">
+                  <div className="flex items-center justify-between text-xs sm:text-sm font-semibold mb-2.5 sm:mb-3">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="truncate group-hover:text-primary transition-colors">
+                      <span className="truncate group-hover:text-primary transition-colors text-sm sm:text-base font-bold text-foreground">
                         {item.unit_name}
                       </span>
-                      {item.level && item.level !== "department" && (
+                      {item.level && (
                         <Badge
                           variant="outline"
-                          className="text-[10px] px-1.5 py-0 h-4 border-border/60 text-muted-foreground"
+                          className="text-[10px] px-2 py-0.5 h-4.5 border-border/60 text-muted-foreground font-medium rounded-md shrink-0"
                         >
-                          {item.level === "section" ? "מדור" : "חוליה"}
+                          {item.level === "department"
+                            ? "מחלקה"
+                            : item.level === "section"
+                              ? "מדור"
+                              : item.level === "team"
+                                ? "חוליה"
+                                : "שוטר"}
                         </Badge>
                       )}
                     </div>
 
                     <div className="flex items-center gap-2.5 shrink-0">
-                      <span className="text-xs text-muted-foreground tabular-nums font-medium">
+                      <span className="text-xs sm:text-sm text-muted-foreground tabular-nums font-medium">
                         {item.present_count} / {item.total_count}
                       </span>
                       <Badge
                         variant="secondary"
                         className={cn(
-                          "text-[11px] font-black px-2 py-0.5 rounded-md tabular-nums border",
+                          "text-xs font-black px-2.5 py-0.5 rounded-md tabular-nums border",
                           statusStyle.badge,
                         )}
                       >
@@ -305,7 +318,7 @@ export const StatsComparisonCard = forwardRef(function StatsComparisonCard(
                   </div>
 
                   {/* Clean Modern Progress Track */}
-                  <div className="w-full h-2 bg-muted/60 dark:bg-muted/40 rounded-full overflow-hidden">
+                  <div className="w-full h-2.5 bg-muted/60 dark:bg-muted/40 rounded-full overflow-hidden">
                     <div
                       className={cn(
                         "h-full rounded-full transition-all duration-700",

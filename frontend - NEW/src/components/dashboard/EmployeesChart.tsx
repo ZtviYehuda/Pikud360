@@ -254,7 +254,7 @@ const EmployeesChartComponent = (
       ref={cardRef}
       id="attendance-snapshot-card"
       className={cn(
-        "bg-card/70 dark:bg-card/50 backdrop-blur-md text-card-foreground rounded-2xl border border-border/60 shadow-xs flex flex-col overflow-visible h-full relative transition-all py-0 gap-0",
+        "bg-card/70 dark:bg-card/50 backdrop-blur-md text-card-foreground rounded-2xl border border-border/60 shadow-xs flex flex-col overflow-visible h-full relative transition-all",
         compact && "bg-transparent border-0 shadow-none",
       )}
     >
@@ -552,14 +552,14 @@ const EmployeesChartComponent = (
                 ) : (
                   <BarChart
                     data={chartData}
-                    margin={{ top: 25, right: 10, left: 10, bottom: 0 }}
+                    margin={{ top: 28, right: 12, left: 12, bottom: 8 }}
                   >
                     <XAxis
                       dataKey="name"
                       axisLine={false}
                       tickLine={false}
                       interval={0}
-                      height={isMobile ? 15 : 20}
+                      height={isMobile ? 18 : 22}
                       tick={{
                         fontSize: isMobile ? 11 : 12,
                         fontWeight: 700,
@@ -569,7 +569,7 @@ const EmployeesChartComponent = (
                     />
                     <YAxis
                       hide={true}
-                      domain={[0, totalEmployeesInScope || 10]}
+                      domain={[0, (dataMax: number) => Math.max(Math.ceil(dataMax * 1.25), 5)]}
                     />
                     <Tooltip
                       cursor={{ fill: "transparent" }}
