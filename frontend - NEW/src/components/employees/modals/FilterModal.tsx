@@ -47,6 +47,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
           <DashboardFilters
             key="open-filter-modal"
             isDialogContent={true}
+            onClose={() => onOpenChange(false)}
             onApplyModal={(filters) => {
               onApply(filters);
               onOpenChange(false);

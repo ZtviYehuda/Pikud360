@@ -80,6 +80,7 @@ interface DashboardFiltersProps {
   isMobile?: boolean;
   pillsOnly?: boolean;
   isDialogContent?: boolean;
+  onClose?: () => void;
   className?: string;
 }
 
@@ -115,10 +116,13 @@ export const DashboardFilters = ({
   isMobile = false,
   pillsOnly = false,
   isDialogContent = false,
+  onClose,
   className,
 }: DashboardFiltersProps) => {
   const { user: authUser } = useAuthContext();
   const activeUser = propUser || authUser;
+
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   const [internalStructure, setInternalStructure] = useState<Department[]>([]);
   const [internalStatuses, setInternalStatuses] = useState<any[]>([]);
@@ -275,6 +279,9 @@ export const DashboardFilters = ({
       }
       onApplyModal(modalPayload);
     }
+
+    setPopoverOpen(false);
+    onClose?.();
   };
 
   const handleLocalReset = () => {
@@ -337,16 +344,31 @@ export const DashboardFilters = ({
           <h2 className="text-base font-bold text-foreground tracking-tight">סינון</h2>
         </div>
 
-        {/* Reset Action */}
-        {hasActiveFilters && (
+        <div className="flex items-center gap-3">
+          {/* Reset Action */}
+          {hasActiveFilters && (
+            <button
+              onClick={handleLocalReset}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>איפוס הכל</span>
+            </button>
+          )}
+
+          {/* Close button for Popover or Dialog */}
           <button
-            onClick={handleLocalReset}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+            type="button"
+            onClick={() => {
+              setPopoverOpen(false);
+              onClose?.();
+            }}
+            className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+            aria-label="סגור"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>איפוס הכל</span>
+            <X className="w-4 h-4" />
           </button>
-        )}
+        </div>
       </div>
 
       {/* Tabs Strip */}
@@ -978,7 +1000,7 @@ export const DashboardFilters = ({
             className,
           )}
         >
-          <Popover>
+          <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
             <div className="relative group">
               <PopoverTrigger asChild>
                 <Button

@@ -1215,6 +1215,7 @@ export default function DashboardPage() {
               activeFilterCountExternal={activeFilterInfo.count}
               user={user}
               isMobile={true}
+              onClose={() => setFilterOpen(false)}
             />
           </DialogContent>
         </Dialog>

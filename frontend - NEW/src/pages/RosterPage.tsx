@@ -842,6 +842,7 @@ export default function RosterPage() {
             {filterModalOpen && (
               <DashboardFilters
                 isDialogContent={true}
+                onClose={() => setFilterModalOpen(false)}
                 selectedDeptId={selectedDept}
                 selectedSectionId={selectedSection}
                 selectedTeamId={selectedTeam}
