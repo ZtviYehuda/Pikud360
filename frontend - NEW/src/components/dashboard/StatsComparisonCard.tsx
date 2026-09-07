@@ -139,12 +139,12 @@ export const StatsComparisonCard = forwardRef(function StatsComparisonCard(
       ref={cardRef}
       id="stats-comparison-card"
       className={cn(
-        "bg-card/70 dark:bg-card/50 backdrop-blur-md text-card-foreground rounded-2xl border border-border/60 shadow-xs flex flex-col overflow-hidden h-full relative transition-all",
+        "bg-card/70 dark:bg-card/50 backdrop-blur-md text-card-foreground rounded-2xl border border-border/60 shadow-xs flex flex-col overflow-hidden h-full relative transition-all py-0 gap-0",
         className,
       )}
     >
       {!hideHeader && (
-        <CardHeader className="px-4 sm:px-6 py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3">
+        <CardHeader className="px-4 sm:px-6 py-3 sm:py-3.5 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3 shrink-0">
           <div className="space-y-1 min-w-0 flex-1">
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -207,20 +207,20 @@ export const StatsComparisonCard = forwardRef(function StatsComparisonCard(
         </CardHeader>
       )}
 
-      <CardContent className="flex-1 overflow-y-auto no-scrollbar p-4 sm:p-6 space-y-4">
+      <CardContent className="flex-1 overflow-y-auto no-scrollbar p-3 sm:p-4 space-y-2.5">
         {loading && safeData.length === 0 ? (
-          <div className="py-12 flex flex-col items-center justify-center space-y-3 text-center">
+          <div className="py-8 flex flex-col items-center justify-center space-y-2.5 text-center">
             <div className="w-7 h-7 rounded-full border-2 border-primary border-t-transparent animate-spin" />
             <p className="text-xs font-semibold text-muted-foreground">
               טוען נתונים ארגוניים...
             </p>
           </div>
         ) : safeData.length === 0 ? (
-          <div className="py-12 flex flex-col items-center justify-center space-y-2 text-center text-muted-foreground">
+          <div className="py-8 flex flex-col items-center justify-center space-y-2 text-center text-muted-foreground">
             <p className="text-xs font-semibold">אין נתוני השוואה להצגה</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2.5">
             {safeData.map((item: ComparisonStat) => {
               const availability =
                 item.total_count > 0
@@ -266,14 +266,14 @@ export const StatsComparisonCard = forwardRef(function StatsComparisonCard(
                     }
                   }}
                   className={cn(
-                    "group p-3 rounded-xl border transition-all duration-200",
+                    "group p-2.5 sm:p-3 rounded-xl border transition-all duration-200",
                     "bg-card/50 hover:bg-accent/40 border-border/40 hover:border-border/80",
                     isClickable && "cursor-pointer active:scale-[0.99]",
                     isSelected &&
                       "bg-primary/[0.04] border-primary/40 ring-1 ring-primary/20",
                   )}
                 >
-                  <div className="flex items-center justify-between text-xs sm:text-sm font-semibold mb-2">
+                  <div className="flex items-center justify-between text-xs sm:text-sm font-semibold mb-1.5">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="truncate group-hover:text-primary transition-colors">
                         {item.unit_name}
