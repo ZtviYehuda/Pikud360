@@ -1936,9 +1936,9 @@ export default function EmployeeViewPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground font-medium">מעמד ארגוני</span>
-                  <Badge variant="outline" className="font-semibold text-[11px] px-2 py-0">
-                    {activeServiceTypeName || "לא הוגדר"}
-                  </Badge>
+                  <span className="font-semibold text-foreground">
+                    {activeServiceTypeName || "—"}
+                  </span>
                 </div>
               </div>
 
