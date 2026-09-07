@@ -1697,9 +1697,9 @@ export default function EmployeeViewPage() {
 
       <div className="w-full px-3 sm:px-6 lg:px-8 pt-2 sm:pt-6 pb-32 lg:pb-12 space-y-4 sm:space-y-6">
         {/* Top Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-5">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <button
                 type="button"
                 onClick={() =>
@@ -1707,7 +1707,7 @@ export default function EmployeeViewPage() {
                 }
                 className="flex items-center gap-1.5 hover:text-foreground transition-colors cursor-pointer"
               >
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-4 h-4" />
                 <span>{editMode ? "חזור לדף פרופיל" : "רשימת שוטרים"}</span>
               </button>
               <span>/</span>
@@ -1716,32 +1716,24 @@ export default function EmployeeViewPage() {
               </span>
             </div>
 
-            <div className="flex items-center gap-3 flex-wrap pt-0.5">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                {editMode
-                  ? `${formData.first_name || ""} ${formData.last_name || ""}`
-                  : displayName}
-              </h1>
+            {!employee.is_active && (
+              <Badge
+                variant="destructive"
+                className="text-xs font-bold px-2 py-0.5 rounded-md bg-destructive/10 text-destructive border-destructive/20"
+              >
+                לא פעיל
+              </Badge>
+            )}
 
-              {!employee.is_active && (
-                <Badge
-                  variant="destructive"
-                  className="text-xs font-bold px-2 py-0.5 rounded-md bg-destructive/10 text-destructive border-destructive/20"
-                >
-                  לא פעיל
-                </Badge>
-              )}
-
-              {commanderTitle && (
-                <Badge
-                  variant="secondary"
-                  className="gap-1 font-semibold text-xs py-0.5"
-                >
-                  <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                  {commanderTitle}
-                </Badge>
-              )}
-            </div>
+            {commanderTitle && (
+              <Badge
+                variant="secondary"
+                className="gap-1 font-semibold text-xs py-0.5"
+              >
+                <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                {commanderTitle}
+              </Badge>
+            )}
           </div>
 
           {/* Desktop Actions Toolbar */}
