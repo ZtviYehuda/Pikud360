@@ -12,6 +12,12 @@ from app.modules.security.repositories import AuditLogRepository, UserPreference
 from app.modules.workforce.services import WorkforceService
 from app.modules.workforce.encryption import decrypt_value, encrypt_value, generate_blind_index
 from app.core.authorization import require_permission, ScopeType, AccessDeniedError
+from app.core.authorization.org_hierarchy import (
+    FULL_ORGANIZATION_STRUCTURE,
+    get_org_hierarchy_map,
+    get_user_effective_scope,
+    filter_structure_for_scope
+)
 from app.core.responses import ApiResponse
 
 logger = logging.getLogger("matzevet.modules.workforce.routes")
@@ -334,129 +340,14 @@ def update_chat_status():
         return jsonify({"error": str(e)}), 500
 
 
-FULL_ORGANIZATION_STRUCTURE = [
-    {
-        "id": 1,
-        "name": "מחלקת טכנולוגיות",
-        "code": "TECH_DEPT",
-        "sections": [
-            {
-                "id": 101,
-                "name": "מדור הסייבר המבצעי",
-                "code": "TECH_OPS_CYBER_SECT",
-                "teams": [
-                    {"id": 1001, "name": "חוליית מו\"פ"},
-                    {"id": 1002, "name": "חוליית סייבר מבצעי"},
-                    {"id": 1003, "name": "חוליית נגישות בסייבר"}
-                ]
-            },
-            {
-                "id": 102,
-                "name": "מדור מערכות הסייבר",
-                "code": "TECH_CYBER_SYS_SECT",
-                "teams": [
-                    {"id": 1004, "name": "חוליית חברות תקשורת"},
-                    {"id": 1005, "name": "חולייה פרויקטים ואמצעים"}
-                ]
-            },
-            {
-                "id": 103,
-                "name": "מדור סיגמ\"ה",
-                "code": "TECH_SIGMA_SECT",
-                "teams": [
-                    {"id": 1006, "name": "חוליית אמצעי קצה"},
-                    {"id": 1007, "name": "חוליית סיוע מבצעי"},
-                    {"id": 1008, "name": "חוליית מענים מהירים"}
-                ]
-            }
-        ]
-    },
-    {
-        "id": 2,
-        "name": "מחלקת התעצמות",
-        "code": "EMPOWERMENT_DEPT",
-        "sections": [
-            {
-                "id": 201,
-                "name": "מדור תכנון ייעודי ואסטרטגיה",
-                "code": "EMP_STRAT_PLAN_SECT",
-                "teams": [
-                    {"id": 2001, "name": "חוליית תקציב"},
-                    {"id": 2002, "name": "חוליית מערכה (אורית)"},
-                    {"id": 2003, "name": "חוליית מערכה (רפאל)"},
-                    {"id": 2004, "name": "חוליית נ\"מ"},
-                    {"id": 2005, "name": "חוליית קש\"ח ושותפויות"}
-                ]
-            },
-            {
-                "id": 202,
-                "name": "מדור הכוונה מבצעית",
-                "code": "EMP_OPS_DIR_SECT",
-                "teams": [
-                    {"id": 2006, "name": "חוליית הפקה ארצית"},
-                    {"id": 2007, "name": "חוליית ב\"ר"},
-                    {"id": 2008, "name": "חוליית סייבר"},
-                    {"id": 2009, "name": "חוליית מחת\"ק"},
-                    {"id": 2010, "name": "חוליית בקרות"}
-                ]
-            }
-        ]
-    },
-    {
-        "id": 3,
-        "name": "מחלקת מענה מבצעי",
-        "code": "OPERATIONAL_RESPONSE_DEPT",
-        "sections": [
-            {
-                "id": 301,
-                "name": "מדור שטח",
-                "code": "OPS_FIELD_SECT",
-                "teams": [
-                    {"id": 3001, "name": "חוליית מ\"מ"},
-                    {"id": 3002, "name": "חוליית ביטחון מידע וחסיונות"},
-                    {"id": 3003, "name": "חוליית חות\"ם"},
-                    {"id": 3004, "name": "חוליית חוס\"ם"}
-                ]
-            },
-            {
-                "id": 302,
-                "name": "מדור יחידות ארציות",
-                "code": "OPS_NAT_UNITS_SECT",
-                "teams": [
-                    {"id": 3005, "name": "חוליית סלע"},
-                    {"id": 3006, "name": "חוליית שהם"},
-                    {"id": 3007, "name": "חוליית רשויות"},
-                    {"id": 3008, "name": "חוליית קיסר"}
-                ]
-            },
-            {
-                "id": 303,
-                "name": "מדור שליטה מבצעית",
-                "code": "OPS_CONTROL_SECT",
-                "teams": [
-                    {"id": 3009, "name": "חוליית 7100"},
-                    {"id": 3010, "name": "חוליית 7103"},
-                    {"id": 3011, "name": "חוליית משל\"ט טכנו סיגינטי"}
-                ]
-            },
-            {
-                "id": 304,
-                "name": "מדור סייבר ארצי",
-                "code": "OPS_NAT_CYBER_SECT",
-                "teams": [
-                    {"id": 3012, "name": "חוליית מס\"א"},
-                    {"id": 3013, "name": "חוליית קריפטו"}
-                ]
-            }
-        ]
-    }
-]
-
-
 @workforce_bp.route("/employees/structure", methods=["GET"])
 @jwt_required(optional=True)
 def get_employees_structure():
-    return jsonify(FULL_ORGANIZATION_STRUCTURE), 200
+    user_id = get_jwt_identity()
+    claims = get_jwt() or {}
+    scope = get_user_effective_scope(user_id, claims)
+    filtered = filter_structure_for_scope(scope)
+    return jsonify(filtered), 200
 
 
 @workforce_bp.route("/employees/roles", methods=["GET"])
@@ -805,87 +696,16 @@ def get_attendance_status_types():
     return jsonify(get_configured_attendance_status_types()), 200
 
 
-def _get_org_hierarchy_map():
-    mapping = {}
-    for d in FULL_ORGANIZATION_STRUCTURE:
-        d_id = str(d["id"])
-        d_name = d["name"]
-        d_code = d.get("code")
-        d_info = {
-            "dept_id": d_id,
-            "department_id": int(d_id),
-            "department_name": d_name,
-            "sect_id": None,
-            "section_id": None,
-            "section_name": None,
-            "team_id": None,
-            "team_name": None,
-        }
-        mapping[d_id] = d_info
-        mapping[f"00000000-0000-0000-0000-{int(d_id):012d}"] = d_info
-        if d_code:
-            mapping[d_code] = d_info
-
-        for s in d.get("sections", []):
-            s_id = str(s["id"])
-            s_name = s["name"]
-            s_code = s.get("code")
-            s_info = {
-                "dept_id": d_id,
-                "department_id": int(d_id),
-                "department_name": d_name,
-                "sect_id": s_id,
-                "section_id": int(s_id),
-                "section_name": s_name,
-                "team_id": None,
-                "team_name": None,
-            }
-            mapping[s_id] = s_info
-            mapping[f"00000000-0000-0000-0000-{int(s_id):012d}"] = s_info
-            if s_code:
-                mapping[s_code] = s_info
-
-            for t in s.get("teams", []):
-                t_id = str(t["id"])
-                t_name = t["name"]
-                t_code = t.get("code")
-                t_info = {
-                    "dept_id": d_id,
-                    "department_id": int(d_id),
-                    "department_name": d_name,
-                    "sect_id": s_id,
-                    "section_id": int(s_id),
-                    "section_name": s_name,
-                    "team_id": int(t_id),
-                    "team_name": t_name,
-                }
-                mapping[t_id] = t_info
-                mapping[f"00000000-0000-0000-0000-{int(t_id):012d}"] = t_info
-                if t_code:
-                    mapping[t_code] = t_info
-
-    try:
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT id, name, code FROM core.organization_units WHERE deleted_at IS NULL;")
-                for r in cur.fetchall():
-                    u_id, u_name, u_code = str(r[0]), r[1], r[2] or ""
-                    if u_id not in mapping:
-                        if u_code in mapping:
-                            mapping[u_id] = mapping[u_code]
-                        else:
-                            m = re.search(r"(\d+)$", u_code)
-                            if m and m.group(1) in mapping:
-                                mapping[u_id] = mapping[m.group(1)]
-    except Exception as e:
-        logger.warning(f"Failed to map core.organization_units: {e}")
-
-    return mapping
+_get_org_hierarchy_map = get_org_hierarchy_map
 
 
 @workforce_bp.route("/attendance/stats", methods=["GET"])
 @jwt_required(optional=True)
 def get_attendance_stats():
+    user_id = get_jwt_identity()
+    claims = get_jwt() or {}
+    scope = get_user_effective_scope(user_id, claims)
+
     date_param = request.args.get("date")
     target_date = datetime.strptime(date_param, "%Y-%m-%d").date() if date_param else date.today()
 
@@ -898,7 +718,36 @@ def get_attendance_stats():
     status_id_param = request.args.get("status_id")
     service_types_param = request.args.get("serviceTypes")
 
-    org_map = _get_org_hierarchy_map()
+    # CRITICAL SERVER-SIDE AUTHORIZATION: Intersect requested filters with user's allowed scope
+    allowed_depts = set(scope["allowed_dept_ids"]) if scope["allowed_dept_ids"] is not None else None
+    allowed_sects = set(scope["allowed_sect_ids"]) if scope["allowed_sect_ids"] is not None else None
+    allowed_teams = set(scope["allowed_team_ids"]) if scope["allowed_team_ids"] is not None else None
+
+    if allowed_depts is not None:
+        if dept_ids:
+            dept_ids = [d for d in dept_ids if d in allowed_depts]
+            if not dept_ids:
+                dept_ids = ["__UNAUTHORIZED__"]
+        else:
+            dept_ids = list(allowed_depts)
+
+    if allowed_sects is not None:
+        if sect_ids:
+            sect_ids = [s for s in sect_ids if s in allowed_sects]
+            if not sect_ids:
+                sect_ids = ["__UNAUTHORIZED__"]
+        else:
+            sect_ids = list(allowed_sects)
+
+    if allowed_teams is not None:
+        if team_ids:
+            team_ids = [t for t in team_ids if t in allowed_teams]
+            if not team_ids:
+                team_ids = ["__UNAUTHORIZED__"]
+        else:
+            team_ids = list(allowed_teams)
+
+    org_map = get_org_hierarchy_map()
     all_team_keys = [str(t["id"]) for d in FULL_ORGANIZATION_STRUCTURE for s in d.get("sections", []) for t in s.get("teams", [])]
 
     total = 0
@@ -1030,46 +879,49 @@ def get_attendance_stats():
                             else:
                                 age_buckets["50+"] += 1
 
-                            # Check if birthday is in current week
-                            if abs((bd.replace(year=target_date.year) - target_date).days) <= 7:
+                            # Check birthday this week
+                            target_dow = target_date.weekday() # 0=Mon, 6=Sun
+                            days_from_sun = (target_dow + 1) % 7
+                            sunday_of_week = target_date - timedelta(days=days_from_sun)
+                            saturday_of_week = sunday_of_week + timedelta(days=6)
+
+                            this_year_bday = bd.replace(year=target_date.year)
+                            if sunday_of_week <= this_year_bday <= saturday_of_week:
+                                bday_dow = this_year_bday.weekday()
+                                bday_dow_israel = (bday_dow + 1) % 7 # 0=Sunday
+                                hebrew_days = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"]
                                 birthdays.append({
-                                    "id": emp[0],
+                                    "id": emp_id,
                                     "first_name": emp[2],
                                     "last_name": emp[3],
-                                    "birth_date": bd_str,
-                                    "day": bd.day,
-                                    "month": bd.month,
-                                    "phone_number": "",
-                                    "rank": emp[8] or "",
-                                    "position": emp[9] or ""
+                                    "date": this_year_bday.strftime("%d/%m"),
+                                    "raw_date": this_year_bday.strftime("%Y-%m-%d"),
+                                    "day_of_week": hebrew_days[bday_dow_israel],
+                                    "department": h_info.get("department_name", "כללי"),
+                                    "department_id": h_info.get("dept_id", 1),
+                                    "unit": h_info.get("section_name") or h_info.get("team_name") or "כללי",
+                                    "role": emp[9] or "עובד",
+                                    "age": age + 1
                                 })
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"Error parsing birthdate for {emp_id}: {e}")
 
     except Exception as e:
-        logger.error(f"Error fetching attendance stats: {e}", exc_info=True)
+        logger.error(f"Error querying attendance stats: {e}", exc_info=True)
 
-    stats_list = list(status_counts.values())
-    if not stats_list and total > 0:
-        stats_list = [
-            {"status_id": 1, "status_name": "נוכח", "count": present, "color": "#10B981"},
-            {"status_id": 2, "status_name": "חופשה", "count": vacation, "color": "#F59E0B"},
-            {"status_id": 3, "status_name": "מחלה", "count": sick, "color": "#EF4444"}
-        ]
-
-    avg_age = round(sum(ages) / len(ages), 1) if ages else 28.5
-    age_dist = [{"range": k, "count": v} for k, v in age_buckets.items()]
+    # Calculate operational readiness (present / total)
+    op_readiness = round((present / total * 100)) if total > 0 else 0
+    avg_age = round(sum(ages) / len(ages), 1) if ages else 0.0
 
     return jsonify({
-        "success": True,
+        "total": total,
         "present": present,
         "absent": absent,
         "vacation": vacation,
         "sick": sick,
-        "total": total,
-        "total_employees": total,
-        "stats": stats_list,
-        "age_distribution": age_dist,
+        "operational_readiness": op_readiness,
+        "status_distribution": list(status_counts.values()),
+        "age_distribution": age_buckets,
         "average_age": avg_age,
         "birthdays": birthdays
     }), 200
@@ -1078,6 +930,10 @@ def get_attendance_stats():
 @workforce_bp.route("/attendance/stats/trend", methods=["GET"])
 @jwt_required(optional=True)
 def get_attendance_stats_trend():
+    user_id = get_jwt_identity()
+    claims = get_jwt() or {}
+    scope = get_user_effective_scope(user_id, claims)
+
     try:
         days = int(request.args.get("days", 30))
     except (ValueError, TypeError):
@@ -1093,7 +949,36 @@ def get_attendance_stats_trend():
     sect_ids = [s.strip() for s in sect_id.split(",") if s.strip()] if sect_id else []
     team_ids = [t.strip() for t in team_id.split(",") if t.strip()] if team_id else []
 
-    org_map = _get_org_hierarchy_map()
+    # CRITICAL SERVER-SIDE AUTHORIZATION: Intersect requested filters with user's allowed scope
+    allowed_depts = set(scope["allowed_dept_ids"]) if scope["allowed_dept_ids"] is not None else None
+    allowed_sects = set(scope["allowed_sect_ids"]) if scope["allowed_sect_ids"] is not None else None
+    allowed_teams = set(scope["allowed_team_ids"]) if scope["allowed_team_ids"] is not None else None
+
+    if allowed_depts is not None:
+        if dept_ids:
+            dept_ids = [d for d in dept_ids if d in allowed_depts]
+            if not dept_ids:
+                dept_ids = ["__UNAUTHORIZED__"]
+        else:
+            dept_ids = list(allowed_depts)
+
+    if allowed_sects is not None:
+        if sect_ids:
+            sect_ids = [s for s in sect_ids if s in allowed_sects]
+            if not sect_ids:
+                sect_ids = ["__UNAUTHORIZED__"]
+        else:
+            sect_ids = list(allowed_sects)
+
+    if allowed_teams is not None:
+        if team_ids:
+            team_ids = [t for t in team_ids if t in allowed_teams]
+            if not team_ids:
+                team_ids = ["__UNAUTHORIZED__"]
+        else:
+            team_ids = list(allowed_teams)
+
+    org_map = get_org_hierarchy_map()
     all_team_keys = [str(t["id"]) for d in FULL_ORGANIZATION_STRUCTURE for s in d.get("sections", []) for t in s.get("teams", [])]
 
     trend = []
@@ -1183,12 +1068,17 @@ def get_attendance_stats_trend():
 @workforce_bp.route("/attendance/stats/comparison", methods=["GET"])
 @jwt_required(optional=True)
 def get_attendance_stats_comparison():
+    user_id = get_jwt_identity()
+    claims = get_jwt() or {}
+    scope = get_user_effective_scope(user_id, claims)
+
     dept_id_param = request.args.get("department_id")
     sect_id_param = request.args.get("section_id")
+    team_id_param = request.args.get("team_id")
     date_param = request.args.get("date")
     target_date = datetime.strptime(date_param, "%Y-%m-%d").date() if date_param else date.today()
 
-    org_map = _get_org_hierarchy_map()
+    org_map = get_org_hierarchy_map()
     all_team_keys = [str(t["id"]) for d in FULL_ORGANIZATION_STRUCTURE for s in d.get("sections", []) for t in s.get("teams", [])]
 
     team_stats = {t_id: {"total": 0, "present": 0, "absent": 0} for t_id in all_team_keys}
@@ -1244,13 +1134,20 @@ def get_attendance_stats_comparison():
     except Exception as e:
         logger.error(f"Error querying comparison stats: {e}", exc_info=True)
 
-    # Build full 3-level tree
+    allowed_depts = set(scope["allowed_dept_ids"]) if scope["allowed_dept_ids"] is not None else None
+    allowed_sects = set(scope["allowed_sect_ids"]) if scope["allowed_sect_ids"] is not None else None
+    allowed_teams = set(scope["allowed_team_ids"]) if scope["allowed_team_ids"] is not None else None
+
+    # Build 3-level tree containing ONLY allowed units (prevents leaking unauthorized names/stats)
     all_departments = []
     all_sections = {}
     all_teams = {}
 
     for d in FULL_ORGANIZATION_STRUCTURE:
         dept_id_str = str(d["id"])
+        if allowed_depts is not None and dept_id_str not in allowed_depts:
+            continue
+
         d_total = 0
         d_present = 0
         d_absent = 0
@@ -1258,6 +1155,9 @@ def get_attendance_stats_comparison():
 
         for s in d.get("sections", []):
             sect_id_str = str(s["id"])
+            if allowed_sects is not None and sect_id_str not in allowed_sects:
+                continue
+
             s_total = 0
             s_present = 0
             s_absent = 0
@@ -1265,6 +1165,9 @@ def get_attendance_stats_comparison():
 
             for t in s.get("teams", []):
                 t_id_str = str(t["id"])
+                if allowed_teams is not None and t_id_str not in allowed_teams:
+                    continue
+
                 t_st = team_stats.get(t_id_str, {"total": 0, "present": 0, "absent": 0})
                 s_total += t_st["total"]
                 s_present += t_st["present"]
@@ -1308,18 +1211,46 @@ def get_attendance_stats_comparison():
             "level": "department"
         })
 
-    if sect_id_param:
+    # Determine comparison list based on requested filter and effective scope
+    if scope.get("level") == "team" or (allowed_teams is not None and len(allowed_teams) == 1):
+        target_t = list(allowed_teams) if allowed_teams else []
+        if team_id_param:
+            req_t = [t.strip() for t in str(team_id_param).split(",") if t.strip()]
+            target_t = [t for t in req_t if t in allowed_teams] if allowed_teams else req_t
+        comparison = [t for s_teams in all_teams.values() for t in s_teams if str(t["unit_id"]) in target_t]
+    elif scope.get("level") == "section" or (allowed_sects is not None and len(allowed_sects) == 1):
+        sect_id_val = list(allowed_sects)[0]
+        if team_id_param:
+            t_ids = [t.strip() for t in str(team_id_param).split(",") if t.strip()]
+            if allowed_teams is not None:
+                t_ids = [t for t in t_ids if t in allowed_teams]
+            comparison = [t for s_teams in all_teams.values() for t in s_teams if str(t["unit_id"]) in t_ids]
+        else:
+            comparison = all_teams.get(sect_id_val, [])
+    elif team_id_param:
+        t_ids = [t.strip() for t in str(team_id_param).split(",") if t.strip()]
+        if allowed_teams is not None:
+            t_ids = [t for t in t_ids if t in allowed_teams]
+        comparison = [t for s_teams in all_teams.values() for t in s_teams if str(t["unit_id"]) in t_ids]
+    elif sect_id_param:
         s_ids = [s.strip() for s in str(sect_id_param).split(",") if s.strip()]
+        if allowed_sects is not None:
+            s_ids = [s for s in s_ids if s in allowed_sects]
         if len(s_ids) == 1:
             comparison = all_teams.get(s_ids[0], [])
         else:
             comparison = [t for s_id in s_ids for t in all_teams.get(s_id, [])]
     elif dept_id_param:
         d_ids = [d.strip() for d in str(dept_id_param).split(",") if d.strip()]
+        if allowed_depts is not None:
+            d_ids = [d for d in d_ids if d in allowed_depts]
         if len(d_ids) == 1:
             comparison = all_sections.get(d_ids[0], [])
         else:
             comparison = [s for d_id in d_ids for s in all_sections.get(d_id, [])]
+    elif scope.get("level") == "department" or (allowed_depts is not None and len(allowed_depts) == 1):
+        dept_id_val = list(allowed_depts)[0]
+        comparison = all_sections.get(dept_id_val, [])
     else:
         comparison = all_departments
 

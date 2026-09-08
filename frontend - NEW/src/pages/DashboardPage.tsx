@@ -249,21 +249,21 @@ export default function DashboardPage() {
     user?.is_impersonated,
   ]);
 
-  // Determine if user has top-level organizational command access (admin, commander, or unassigned top level)
+  // Determine if user has top-level organizational command access (admin or unassigned top level commander)
   const isTopLevelCommander = useMemo(() => {
     if (!user) return true;
-    if (user.is_admin || user.is_commander) return true;
+    if (user.is_admin) return true;
     if (
-      !user.commands_department_id &&
-      !user.commands_section_id &&
-      !user.commands_team_id &&
-      !user.assigned_department_id &&
-      !user.assigned_section_id &&
-      !user.assigned_team_id
+      user.commands_team_id ||
+      user.assigned_team_id ||
+      user.commands_section_id ||
+      user.assigned_section_id ||
+      user.commands_department_id ||
+      user.assigned_department_id
     ) {
-      return true;
+      return false;
     }
-    return false;
+    return !!user.is_commander;
   }, [user]);
 
   // Initialize filters based on user permissions (only if no saved filters AND initialized)
@@ -292,21 +292,24 @@ export default function DashboardPage() {
         }
       })();
 
-    if (hasSavedData) return;
+    if (hasSavedData && isTopLevelCommander) return;
 
     if (!isTopLevelCommander && user) {
-      if (user.commands_department_id || user.assigned_department_id) {
-        setSelectedDeptId((user.commands_department_id || user.assigned_department_id).toString());
-      } else if (user.commands_section_id || user.assigned_section_id) {
-        if (user.assigned_department_id)
-          setSelectedDeptId(user.assigned_department_id.toString());
-        setSelectedSectionId((user.commands_section_id || user.assigned_section_id).toString());
-      } else if (user.commands_team_id || user.assigned_team_id) {
+      if (user.commands_team_id || user.assigned_team_id) {
         if (user.assigned_department_id)
           setSelectedDeptId(user.assigned_department_id.toString());
         if (user.assigned_section_id)
           setSelectedSectionId(user.assigned_section_id.toString());
         setSelectedTeamId((user.commands_team_id || user.assigned_team_id).toString());
+      } else if (user.commands_section_id || user.assigned_section_id) {
+        if (user.assigned_department_id)
+          setSelectedDeptId(user.assigned_department_id.toString());
+        setSelectedSectionId((user.commands_section_id || user.assigned_section_id).toString());
+        setSelectedTeamId("");
+      } else if (user.commands_department_id || user.assigned_department_id) {
+        setSelectedDeptId((user.commands_department_id || user.assigned_department_id).toString());
+        setSelectedSectionId("");
+        setSelectedTeamId("");
       }
     } else {
       setSelectedDeptId("");
@@ -429,9 +432,16 @@ export default function DashboardPage() {
 
         if (data) {
           setStats(data.stats || []);
-          setTotalEmployees(data.total_employees || 0);
-          setBirthdays(data.birthdays || []);
-          setAgeDistribution(data.age_distribution || []);
+          const rawAgeDist = data.age_distribution;
+          const parsedAgeDist = Array.isArray(rawAgeDist)
+            ? rawAgeDist
+            : rawAgeDist && typeof rawAgeDist === "object"
+            ? Object.entries(rawAgeDist).map(([range, count]) => ({
+                range: String(range),
+                count: typeof count === "number" ? count : Number(count) || 0,
+              }))
+            : [];
+          setAgeDistribution(parsedAgeDist);
           setAverageAge(data.average_age || 0);
           // setHasArchiveAccess(data.has_archive_access || false);
         }
@@ -474,20 +484,20 @@ export default function DashboardPage() {
         setSelectedDeptId("");
         setSelectedSectionId("");
         setSelectedTeamId("");
-      } else if (user?.commands_department_id || user?.assigned_department_id) {
-        setSelectedDeptId((user.commands_department_id || user.assigned_department_id).toString());
-        setSelectedSectionId("");
-        setSelectedTeamId("");
+      } else if (user?.commands_team_id || user?.assigned_team_id) {
+        if (user?.assigned_department_id) setSelectedDeptId(user.assigned_department_id.toString());
+        if (user?.assigned_section_id) setSelectedSectionId(user.assigned_section_id.toString());
+        setSelectedTeamId((user.commands_team_id || user.assigned_team_id).toString());
       } else if (user?.commands_section_id || user?.assigned_section_id) {
         if (user?.assigned_department_id) {
           setSelectedDeptId(user.assigned_department_id.toString());
         }
         setSelectedSectionId((user.commands_section_id || user.assigned_section_id).toString());
         setSelectedTeamId("");
-      } else if (user?.commands_team_id || user?.assigned_team_id) {
-        if (user?.assigned_department_id) setSelectedDeptId(user.assigned_department_id.toString());
-        if (user?.assigned_section_id) setSelectedSectionId(user.assigned_section_id.toString());
-        setSelectedTeamId((user.commands_team_id || user.assigned_team_id).toString());
+      } else if (user?.commands_department_id || user?.assigned_department_id) {
+        setSelectedDeptId((user.commands_department_id || user.assigned_department_id).toString());
+        setSelectedSectionId("");
+        setSelectedTeamId("");
       } else {
         setSelectedDeptId("");
         setSelectedSectionId("");
@@ -666,7 +676,7 @@ export default function DashboardPage() {
   const handleGoBack = () => {
     if (cleanTeamId) {
       handleFilterChange("team", "");
-    } else if (cleanSectionId) {
+    } else if (cleanSectionId && (isTopLevelCommander || user?.commands_department_id)) {
       handleFilterChange("section", "");
     } else if (cleanDeptId && isTopLevelCommander) {
       handleFilterChange("department", "");
@@ -732,6 +742,7 @@ export default function DashboardPage() {
   }, [allDepartments, cleanDeptId, currentSection, currentTeam]);
 
   const unitName = useMemo(() => {
+    // If specific team filter active
     if (cleanTeamId) {
       const ids = cleanTeamId.split(",");
       if (ids.length > 1) {
@@ -739,6 +750,15 @@ export default function DashboardPage() {
       }
       return currentTeam ? formatUnitName("team", currentTeam.name) : `חוליה ${cleanTeamId}`;
     }
+
+    // If user is a Team Commander / assigned only to a team
+    if (user?.commands_team_id || (!user?.is_admin && !user?.commands_section_id && !user?.commands_department_id && user?.assigned_team_id)) {
+      const teamId = user?.commands_team_id || user?.assigned_team_id;
+      const userTeam = allTeams.find((t) => String(t.id) === String(teamId));
+      return userTeam ? formatUnitName("team", userTeam.name) : "כלל החוליה";
+    }
+
+    // If specific section filter active
     if (cleanSectionId) {
       const ids = cleanSectionId.split(",");
       if (ids.length > 1) {
@@ -746,6 +766,15 @@ export default function DashboardPage() {
       }
       return currentSection ? formatUnitName("section", currentSection.name) : `מדור ${cleanSectionId}`;
     }
+
+    // If user is a Section Commander
+    if (user?.commands_section_id || (!user?.is_admin && !user?.commands_department_id && user?.assigned_section_id)) {
+      const sectId = user?.commands_section_id || user?.assigned_section_id;
+      const userSection = allSections.find((s) => String(s.id) === String(sectId));
+      return userSection ? formatUnitName("section", userSection.name) : "כלל המדור";
+    }
+
+    // If specific department filter active
     if (cleanDeptId) {
       const ids = cleanDeptId.split(",");
       if (ids.length > 1) {
@@ -754,18 +783,13 @@ export default function DashboardPage() {
       return currentDept ? formatUnitName("department", currentDept.name) : `מחלקה ${cleanDeptId}`;
     }
 
-    if (user?.commands_team_id) {
-      const userTeam = allTeams.find((t) => String(t.id) === String(user.commands_team_id));
-      return userTeam ? formatUnitName("team", userTeam.name) : "כלל החוליה";
-    }
-    if (user?.commands_section_id) {
-      const userSection = allSections.find((s) => String(s.id) === String(user.commands_section_id));
-      return userSection ? formatUnitName("section", userSection.name) : "כלל המדור";
-    }
-    if (user?.commands_department_id) {
-      const userDept = allDepartments.find((d) => String(d.id) === String(user.commands_department_id));
+    // If user is a Department Commander
+    if (user?.commands_department_id || (!user?.is_admin && user?.assigned_department_id)) {
+      const deptId = user?.commands_department_id || user?.assigned_department_id;
+      const userDept = allDepartments.find((d) => String(d.id) === String(deptId));
       return userDept ? formatUnitName("department", userDept.name) : "כלל המחלקה";
     }
+
     return "כלל היחידה";
   }, [
     cleanTeamId,
@@ -787,21 +811,22 @@ export default function DashboardPage() {
       !!selectedAgeRange.min || !!selectedAgeRange.max,
     ];
 
-    // For admins, any org filter is "active"
     if (user?.is_admin) {
       filters.push(!!cleanDeptId, !!cleanSectionId, !!cleanTeamId);
+    } else if (user?.commands_department_id) {
+      filters.push(!!cleanSectionId, !!cleanTeamId);
+    } else if (user?.commands_section_id) {
+      filters.push(!!cleanTeamId);
+    } else if (user?.commands_team_id) {
+      // Team commander base view has no additional org filters
+    } else if (user?.assigned_team_id) {
+      // Team member base view has no additional org filters
+    } else if (user?.assigned_section_id) {
+      filters.push(!!cleanTeamId);
+    } else if (user?.assigned_department_id) {
+      filters.push(!!cleanSectionId, !!cleanTeamId);
     } else {
-      // For commanders, only count org filters if they go BEYOND their default view
-      if (user?.commands_department_id) {
-        filters.push(!!cleanSectionId, !!cleanTeamId);
-      } else if (user?.commands_section_id) {
-        filters.push(!!cleanTeamId);
-      } else if (user?.commands_team_id) {
-        // Team commanders are already at the lowest level
-      } else {
-        // Regular users/others
-        filters.push(!!cleanDeptId, !!cleanSectionId, !!cleanTeamId);
-      }
+      filters.push(!!cleanDeptId, !!cleanSectionId, !!cleanTeamId);
     }
 
     return {
@@ -1074,7 +1099,7 @@ export default function DashboardPage() {
               <AgeDistributionChart
                 data={ageDistribution}
                 averageAge={averageAge}
-                totalEmployees={selectedStatusId !== null ? ageDistribution.reduce((acc, curr) => acc + curr.count, 0) : totalEmployees}
+                totalEmployees={selectedStatusId !== null && Array.isArray(ageDistribution) ? ageDistribution.reduce((acc, curr) => acc + (curr?.count || 0), 0) : totalEmployees}
                 filterTags={activeFilterTags}
                 onRangeSelect={(range) => handleFilterChange("ageRange", range)}
                 selectedRanges={selectedAgeRanges}

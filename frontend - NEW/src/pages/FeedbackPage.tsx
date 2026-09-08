@@ -690,9 +690,9 @@ const FeedbackPage = () => {
     return alerts.filter((a) => a.id.startsWith("msg-")).length;
   }, [alerts]);
 
-  const filteredItems = useMemo(() => {
+  const allAdminItems = useMemo(() => {
     if (!isAdmin) return [];
-    const items = [
+    return [
       ...allTickets.map((t) => ({ ...t, type: "feedback" as const })),
       ...supportTickets.map((t) => ({
         ...t,
@@ -701,11 +701,87 @@ const FeedbackPage = () => {
         category: t.subject,
       })),
     ];
-    return items
+  }, [allTickets, supportTickets, isAdmin]);
+
+  const pendingTicketsCount = useMemo(() => {
+    return allAdminItems.filter(
+      (item) =>
+        item.status !== "done" &&
+        item.status !== "dismissed" &&
+        item.status !== "irrelevant" &&
+        item.status !== "closed",
+    ).length;
+  }, [allAdminItems]);
+
+  const archivedTicketsCount = useMemo(() => {
+    return allAdminItems.filter(
+      (item) =>
+        item.status === "done" ||
+        item.status === "dismissed" ||
+        item.status === "irrelevant" ||
+        item.status === "closed",
+    ).length;
+  }, [allAdminItems]);
+
+  const getAuthorName = (item: any) => {
+    if (!item) return "משתמש מערכת";
+    const name =
+      item.sender_name ||
+      (item.type === "feedback"
+        ? [item.first_name, item.last_name].filter(Boolean).join(" ")
+        : item.full_name) ||
+      item.user_name ||
+      item.submitted_by_name;
+    return name && name.trim() ? name.trim() : "משתמש מערכת";
+  };
+
+  const getCategoryBadge = (category: string, type: "feedback" | "support") => {
+    if (type === "support") {
+      return (
+        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 shrink-0">
+          קריאת תמיכה
+        </span>
+      );
+    }
+    switch (category) {
+      case "bug":
+      case "באג":
+        return (
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 shrink-0">
+            באג / תקלה
+          </span>
+        );
+      case "improvement":
+      case "הצעה לשיפור":
+        return (
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 shrink-0">
+            הצעה לשיפור
+          </span>
+        );
+      case "feature":
+      case "פיצ'ר חדש":
+        return (
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+            פיצ'ר חדש
+          </span>
+        );
+      default:
+        return (
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border/40 shrink-0">
+            משוב כללי
+          </span>
+        );
+    }
+  };
+
+  const filteredItems = useMemo(() => {
+    if (!isAdmin) return [];
+    return allAdminItems
       .filter((item) => {
+        const authorName = getAuthorName(item);
         if (
           searchQuery &&
-          !`${(item as any).first_name || ""} ${(item as any).last_name || ""} ${(item as any).full_name || ""} ${item.description}`
+          !`${authorName} ${item.description || ""} ${item.category || ""} ${(item as any).department_name || ""}`
             .toLowerCase()
             .includes(searchQuery.toLowerCase())
         )
@@ -714,15 +790,16 @@ const FeedbackPage = () => {
           adminFilter === "pending" &&
           (item.status === "done" ||
             item.status === "dismissed" ||
-            item.status === "irrelevant")
+            item.status === "irrelevant" ||
+            item.status === "closed")
         )
           return false;
-        if (adminFilter === "done" && item.status !== "done") return false;
         if (
           adminFilter === "dismissed" &&
           item.status !== "done" &&
           item.status !== "dismissed" &&
-          item.status !== "irrelevant"
+          item.status !== "irrelevant" &&
+          item.status !== "closed"
         )
           return false;
         if (adminCategoryFilter === "support" && item.type !== "support")
@@ -753,8 +830,7 @@ const FeedbackPage = () => {
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
   }, [
-    allTickets,
-    supportTickets,
+    allAdminItems,
     adminFilter,
     adminCategoryFilter,
     searchQuery,
@@ -764,48 +840,49 @@ const FeedbackPage = () => {
   const getStatusBadge = (status: string) => {
     const configs: any = {
       received: {
-        label: "ממתין",
-        classes: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+        label: "ממתין לטיפול",
+        classes: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
       },
       reviewing: {
         label: "בבדיקה",
-        classes: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+        classes: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
       },
       in_progress: {
         label: "בטיפול",
-        classes: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+        classes: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",
       },
       done: {
-        label: "בוצע",
-        classes: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+        label: "טופל",
+        classes: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
       },
       dismissed: {
-        label: "נדחה",
-        classes: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+        label: "בארכיון",
+        classes: "bg-muted text-muted-foreground border-border/40",
       },
       irrelevant: {
         label: "לא רלוונטי",
-        classes: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+        classes: "bg-muted text-muted-foreground border-border/40",
       },
       open: {
         label: "פתוח",
-        classes: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+        classes: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
       },
       closed: {
         label: "נענה",
-        classes: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+        classes: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
       },
     };
     const config = configs[status] || configs.received;
     return (
-      <Badge
+      <span
         className={cn(
-          "px-3 py-1 rounded-full font-black text-[10px] border shadow-sm",
+          "text-[11px] font-semibold px-2.5 py-0.5 rounded-full border inline-flex items-center gap-1.5 shrink-0 select-none",
           config.classes,
         )}
       >
+        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-75 shrink-0" />
         {config.label}
-      </Badge>
+      </span>
     );
   };
 
@@ -1051,13 +1128,13 @@ const FeedbackPage = () => {
                       </Card>
 
                       {/* ── Section 2: Tickets & User Inquiries Management ── */}
-                      <Card className="p-4 sm:p-5 rounded-2xl bg-card/60 border border-border/40 shadow-sm space-y-3">
-                        <div className="flex items-center justify-between">
+                      <Card className="p-4 sm:p-5 rounded-2xl bg-card/60 border border-border/40 shadow-xs space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <div>
                             <h3 className="text-sm font-bold text-foreground">
                               פניות משתמשים ומשימות
                             </h3>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                               מעקב, טיפול וארכוב פניות משוב ותמיכה
                             </p>
                           </div>
@@ -1066,7 +1143,7 @@ const FeedbackPage = () => {
                             size="sm"
                             onClick={fetchAdminTickets}
                             disabled={isLoadingTickets}
-                            className="h-8 text-xs px-2.5 rounded-xl border-border/50 gap-1.5 bg-background shadow-none"
+                            className="h-8 text-xs px-3 rounded-xl border-border/50 gap-1.5 bg-background shadow-none self-start sm:self-auto cursor-pointer"
                           >
                             <RefreshCw
                               className={cn(
@@ -1074,23 +1151,32 @@ const FeedbackPage = () => {
                                 isLoadingTickets && "animate-spin",
                               )}
                             />
-                            רענן
+                            <span>רענן פניות</span>
                           </Button>
                         </div>
 
                         {/* Search & Category Filter */}
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
+                        <div className="space-y-3">
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                             {/* Search Bar */}
                             <div className="relative flex-1">
                               <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
                               <input
                                 type="text"
-                                placeholder="חיפוש פנייה..."
+                                placeholder="חיפוש לפי שם, תוכן או מחלקה..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full h-10 pr-10 pl-4 bg-background border border-border/40 rounded-xl text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground/50 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                                className="w-full h-9.5 pr-10 pl-8 bg-background border border-border/50 rounded-xl text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground/50 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                               />
+                              {searchQuery && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSearchQuery("")}
+                                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
 
                             {/* Category Filter Popover Menu (shadcn) */}
@@ -1102,10 +1188,10 @@ const FeedbackPage = () => {
                                 <Button
                                   variant="outline"
                                   className={cn(
-                                    "h-10 px-3 justify-between text-xs font-semibold rounded-xl border shrink-0 bg-background min-w-[125px] sm:min-w-[145px]",
+                                    "h-9.5 px-3 justify-between text-xs font-semibold rounded-xl border shrink-0 bg-background min-w-[130px] sm:min-w-[150px] cursor-pointer",
                                     adminCategoryFilter !== "all"
-                                      ? "border-primary text-primary bg-primary/5"
-                                      : "border-border/40 text-foreground",
+                                      ? "border-primary/50 text-primary bg-primary/5"
+                                      : "border-border/50 text-foreground",
                                   )}
                                 >
                                   <div className="flex items-center gap-1.5 truncate">
@@ -1121,10 +1207,10 @@ const FeedbackPage = () => {
                               </PopoverTrigger>
                               <PopoverContent
                                 align="end"
-                                className="w-48 p-1.5 rounded-2xl shadow-xl border bg-popover text-right z-50"
+                                className="w-48 p-1.5 rounded-xl shadow-lg border border-border/50 bg-popover text-right z-50"
                                 dir="rtl"
                               >
-                                <div className="space-y-1">
+                                <div className="space-y-0.5">
                                   {categoryOptions.map((opt) => {
                                     const isSelected =
                                       adminCategoryFilter === opt.value;
@@ -1137,7 +1223,7 @@ const FeedbackPage = () => {
                                           setCategoryPopoverOpen(false);
                                         }}
                                         className={cn(
-                                          "w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors text-right select-none",
+                                          "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors text-right select-none cursor-pointer",
                                           isSelected
                                             ? "bg-primary/10 text-primary font-bold"
                                             : "hover:bg-muted text-foreground",
@@ -1155,134 +1241,184 @@ const FeedbackPage = () => {
                             </Popover>
                           </div>
 
-                          {/* Status Tabs: 3 Equal Width Columns (ממתין לטיפול | ארכיון | הכל) */}
-                          <div className="grid grid-cols-3 bg-muted/60 p-1 rounded-2xl border border-border/40 gap-1 text-center w-full">
+                          {/* Status Tabs: Enterprise Segmented Control */}
+                          <div className="grid grid-cols-3 bg-muted/60 p-1 rounded-xl border border-border/40 gap-1 text-center w-full">
                             {(
                               [
-                                { value: "pending", label: "ממתין לטיפול" },
-                                { value: "dismissed", label: "ארכיון" },
-                                { value: "all", label: "הכל" },
+                                {
+                                  value: "pending",
+                                  label: "ממתין לטיפול",
+                                  count: pendingTicketsCount,
+                                },
+                                {
+                                  value: "dismissed",
+                                  label: "ארכיון וטופלו",
+                                  count: archivedTicketsCount,
+                                },
+                                {
+                                  value: "all",
+                                  label: "כל הפניות",
+                                  count: allAdminItems.length,
+                                },
                               ] as const
-                            ).map(({ value, label }) => (
+                            ).map(({ value, label, count }) => (
                               <button
                                 key={value}
                                 type="button"
                                 onClick={() => setAdminFilter(value)}
                                 className={cn(
-                                  "py-2 px-1 rounded-xl text-xs font-semibold transition-all text-center truncate select-none cursor-pointer",
+                                  "py-1.5 px-2 rounded-lg text-xs transition-all flex items-center justify-center gap-1.5 truncate select-none cursor-pointer",
                                   adminFilter === value
-                                    ? "bg-primary text-primary-foreground shadow-xs font-bold"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-background/40",
+                                    ? "bg-card text-foreground shadow-xs border border-border/40 font-bold"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-background/40 font-medium",
                                 )}
                               >
-                                {label}
+                                <span className="truncate">{label}</span>
+                                <span
+                                  className={cn(
+                                    "px-1.5 py-0.2 rounded-full text-[10px] font-bold shrink-0",
+                                    adminFilter === value
+                                      ? "bg-primary/10 text-primary"
+                                      : "bg-muted text-muted-foreground",
+                                  )}
+                                >
+                                  {count}
+                                </span>
                               </button>
                             ))}
                           </div>
 
-                          {/* Active Filter Glass Pill Banner */}
+                          {/* Active Custom Filter Reset Banner */}
                           {(adminCategoryFilter !== "all" ||
-                            searchQuery.trim() !== "" ||
-                            adminFilter !== "all") && (
-                            <div className="flex items-center justify-between p-2.5 px-3 rounded-2xl bg-card/80 backdrop-blur-md border border-border/60 shadow-xs transition-all animate-in fade-in slide-in-from-top-1 duration-200">
+                            searchQuery.trim() !== "") && (
+                            <div className="flex items-center justify-between p-2 px-3 rounded-xl bg-muted/30 border border-border/40 text-xs transition-all animate-in fade-in duration-200">
                               <div className="flex items-center gap-2 min-w-0">
-                                <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
-                                  <Filter className="w-3.5 h-3.5" />
-                                </div>
-                                <div className="flex items-center gap-1.5 truncate text-xs">
+                                <Filter className="w-3.5 h-3.5 text-primary shrink-0" />
+                                <div className="flex items-center gap-1.5 truncate">
                                   <span className="text-muted-foreground font-medium">
                                     סינון פעיל:
                                   </span>
-                                  <span className="font-bold text-foreground truncate">
-                                    {adminFilter === "pending"
-                                      ? "ממתין לטיפול"
-                                      : adminFilter === "dismissed"
-                                        ? "ארכיון פניות"
-                                        : "סינון מותאם"}
-                                  </span>
-                                  <span className="px-1.5 py-0.5 rounded-md bg-muted/60 text-[10px] font-bold text-muted-foreground shrink-0">
-                                    {filteredItems.length} פניות
+                                  {adminCategoryFilter !== "all" && (
+                                    <span className="font-semibold text-foreground">
+                                      {
+                                        categoryOptions.find(
+                                          (c) =>
+                                            c.value === adminCategoryFilter,
+                                        )?.label
+                                      }
+                                    </span>
+                                  )}
+                                  {searchQuery.trim() && (
+                                    <span className="font-semibold text-foreground">
+                                      "{searchQuery}"
+                                    </span>
+                                  )}
+                                  <span className="text-muted-foreground font-normal">
+                                    ({filteredItems.length} תוצאות)
                                   </span>
                                 </div>
                               </div>
 
                               <Button
                                 type="button"
-                                variant="outline"
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => {
                                   setAdminCategoryFilter("all");
                                   setSearchQuery("");
-                                  setAdminFilter("all");
                                 }}
-                                className="h-7 px-2.5 text-xs font-bold text-primary hover:text-primary-foreground hover:bg-primary border-primary/30 rounded-lg flex items-center gap-1.5 transition-all shadow-2xs shrink-0 cursor-pointer"
+                                className="h-6 px-2 text-xs font-semibold text-primary hover:text-primary hover:bg-primary/10 rounded-md flex items-center gap-1 shrink-0 cursor-pointer"
                               >
                                 <RotateCcw className="w-3 h-3" />
-                                <span>חזרה לכל הפניות</span>
+                                <span>איפוס סינון</span>
                               </Button>
                             </div>
                           )}
                         </div>
                       </Card>
+
                       {/* Stylized Cards List */}
-                      <div className="space-y-3">
+                      <div className="space-y-2.5">
                         {filteredItems.length === 0 ? (
-                          <div className="py-16 flex flex-col items-center justify-center text-center bg-card/10 rounded-[2rem] border border-border/30 backdrop-blur-sm relative overflow-hidden">
-                            {/* Graphic visual: modern minimalist envelope ticket */}
-                            <div className="relative w-16 h-12 mb-4 flex items-center justify-center">
-                              <div className="absolute inset-0 bg-primary/5 rounded-xl border border-primary/20 transform rotate-3" />
-                              <div className="absolute inset-0 bg-card rounded-xl border border-border/50 shadow-sm flex flex-col justify-between p-2 transform -rotate-2">
-                                <div className="w-8 h-1 bg-primary/20 rounded" />
-                                <div className="w-12 h-1 bg-muted-foreground/10 rounded" />
-                                <div className="w-6 h-1 bg-muted-foreground/10 rounded" />
-                              </div>
+                          <div className="py-14 flex flex-col items-center justify-center text-center bg-card/40 rounded-2xl border border-dashed border-border/50">
+                            <div className="w-12 h-12 mb-3 rounded-2xl bg-muted/50 flex items-center justify-center text-muted-foreground/50 border border-border/40">
+                              <Archive className="w-6 h-6" />
                             </div>
-                            <h3 className="text-xs font-black text-foreground">
+                            <h3 className="text-xs font-bold text-foreground">
                               אין פניות תואמות
                             </h3>
-                            <p className="text-[10px] text-muted-foreground mt-1 max-w-[200px] leading-relaxed">
-                              לא נמצאו פניות העונות לסינון שהגדרת.
+                            <p className="text-[11px] text-muted-foreground mt-1 max-w-[240px] leading-relaxed">
+                              לא נמצאו פניות העונות לתנאי הסינון שהוגדרו.
                             </p>
                           </div>
                         ) : (
-                          filteredItems.map((item) => (
-                            <Card
-                              key={`${item.type}-${item.id}`}
-                              onClick={() =>
-                                setSelectedItem({ data: item, type: item.type })
-                              }
-                              className="group bg-card/40 border border-border/40 backdrop-blur-xl rounded-3xl p-4 sm:p-5 hover:bg-card/60 hover:border-primary/30 transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shadow-sm active:scale-[0.98]"
-                            >
-                              <div className="flex items-center gap-4 flex-1">
-                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black text-sm sm:text-base shrink-0 border border-primary/20">
-                                  {(item.type === "feedback"
-                                    ? item.first_name?.[0]
-                                    : item.full_name?.[0]) || "U"}
-                                </div>
-                                <div className="space-y-1 flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-black text-sm text-foreground truncate">
-                                      {item.type === "feedback"
-                                        ? `${item.first_name} ${item.last_name}`
-                                        : item.full_name}
-                                    </span>
-                                    <span className="text-[10px] font-bold text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full shrink-0">
-                                      {new Date(
-                                        item.created_at,
-                                      ).toLocaleDateString("he-IL")}
-                                    </span>
+                          filteredItems.map((item) => {
+                            const authorName = getAuthorName(item);
+                            const initials =
+                              authorName
+                                .split(" ")
+                                .filter(Boolean)
+                                .slice(0, 2)
+                                .map((n: string) => n[0])
+                                .join("") || "U";
+
+                            return (
+                              <Card
+                                key={`${item.type}-${item.id}`}
+                                onClick={() =>
+                                  setSelectedItem({
+                                    data: item,
+                                    type: item.type,
+                                  })
+                                }
+                                className="group bg-card/60 border border-border/40 hover:border-border hover:bg-card hover:shadow-xs transition-all duration-150 rounded-2xl p-3.5 sm:p-4 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 select-none"
+                              >
+                                <div className="flex items-start sm:items-center gap-3.5 flex-1 min-w-0">
+                                  <div className="w-10 h-10 rounded-xl bg-muted text-foreground border border-border/50 flex items-center justify-center font-bold text-xs sm:text-sm shrink-0">
+                                    {initials}
                                   </div>
-                                  <p className="text-xs font-medium text-muted-foreground line-clamp-1 opacity-70">
-                                    {item.description}
-                                  </p>
+                                  <div className="space-y-1 flex-1 min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <span className="font-bold text-sm text-foreground truncate">
+                                        {authorName}
+                                      </span>
+                                      {item.department_name && (
+                                        <span className="text-[10px] text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded font-medium shrink-0">
+                                          {item.department_name}
+                                        </span>
+                                      )}
+                                      {getCategoryBadge(
+                                        item.category,
+                                        item.type,
+                                      )}
+                                      {item.screenshot_url && (
+                                        <span className="text-[10px] text-muted-foreground flex items-center gap-1 bg-muted/40 px-1.5 py-0.5 rounded border border-border/30 shrink-0">
+                                          <Eye className="w-3 h-3" />
+                                          צילום מסך
+                                        </span>
+                                      )}
+                                      <span className="text-[11px] text-muted-foreground mr-auto shrink-0">
+                                        {new Date(
+                                          item.created_at,
+                                        ).toLocaleDateString("he-IL", {
+                                          day: "numeric",
+                                          month: "numeric",
+                                          year: "numeric",
+                                        })}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground line-clamp-1 leading-relaxed">
+                                      {item.description}
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="flex items-center justify-between sm:justify-end gap-4 mt-1 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-border/10">
-                                {getStatusBadge(item.status)}
-                                <ChevronLeft className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-all translate-x-1 group-hover:translate-x-0" />
-                              </div>
-                            </Card>
-                          ))
+                                <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/20">
+                                  {getStatusBadge(item.status)}
+                                  <ChevronLeft className="w-4 h-4 text-muted-foreground/40 group-hover:text-foreground group-hover:-translate-x-0.5 transition-all" />
+                                </div>
+                              </Card>
+                            );
+                          })
                         )}
                       </div>
                     </motion.div>
@@ -2406,27 +2542,34 @@ const FeedbackPage = () => {
                 exit={{ x: "100%" }}
                 className="fixed top-0 right-0 h-screen w-full sm:w-[450px] bg-card border-r border-border/50 shadow-2xl z-[250] flex flex-col"
               >
-                <div className="p-4 sm:p-6 border-b border-border/50 flex items-center justify-between bg-card/50 backdrop-blur-xl">
+                <div className="p-4 sm:p-5 border-b border-border/40 flex items-center justify-between bg-card">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
-                      <User className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-muted text-foreground border border-border/50 flex items-center justify-center font-bold text-xs sm:text-sm shrink-0">
+                      {getAuthorName(selectedItem.data)
+                        .split(" ")
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((n: string) => n[0])
+                        .join("") || "U"}
                     </div>
                     <div>
-                      <h3 className="font-black text-xs sm:text-sm text-foreground truncate max-w-[180px] sm:max-w-none">
-                        {selectedItem.type === "feedback"
-                          ? `${(selectedItem.data as any).first_name} ${(selectedItem.data as any).last_name}`
-                          : (selectedItem.data as any).full_name}
+                      <h3 className="font-bold text-xs sm:text-sm text-foreground truncate max-w-[180px] sm:max-w-none">
+                        {getAuthorName(selectedItem.data)}
                       </h3>
-                      <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                        {selectedItem.type === "feedback"
-                          ? "פניית משוב"
-                          : "שיחת תמיכה"}
-                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] font-medium text-muted-foreground">
+                          {selectedItem.data.department_name ||
+                            (selectedItem.type === "feedback"
+                              ? "פניית משוב"
+                              : "קריאת תמיכה")}
+                        </span>
+                        {getStatusBadge(selectedItem.data.status)}
+                      </div>
                     </div>
                   </div>
                   <button
                     onClick={() => setSelectedItem(null)}
-                    className="p-2 text-muted-foreground hover:bg-muted rounded-xl transition-all"
+                    className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-all cursor-pointer"
                   >
                     <X className="w-5 h-5" />
                   </button>

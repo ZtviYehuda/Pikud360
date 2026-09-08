@@ -237,14 +237,35 @@ export const ReportHub: React.FC<ReportHubProps> = ({
   }, [isOpen, localDate, activeDaysRange, stableFilters]);
 
   const downloadCard = async (ref: any) => {
-    if (!ref.current) return;
+    if (!ref?.current) {
+      toast.error("טוען את נתוני הדוח, אנא נסה שוב בעוד רגע");
+      return;
+    }
     try {
-      if (ref.current.download) await ref.current.download();
-    } catch (e) { toast.error("שגיאה בהורדה"); }
+      if (ref.current.download) {
+        await ref.current.download();
+      } else {
+        toast.error("שגיאה בהורדת הגרף");
+      }
+    } catch (e) {
+      toast.error("שגיאה בהורדה");
+    }
   };
 
   const shareCard = async (ref: any) => {
-    if (ref.current && ref.current.share) await ref.current.share();
+    if (!ref?.current) {
+      toast.error("טוען את נתוני הדוח, אנא נסה שוב בעוד רגע");
+      return;
+    }
+    try {
+      if (ref.current.share) {
+        await ref.current.share();
+      } else {
+        toast.error("שגיאה בשיתוף הגרף");
+      }
+    } catch (e) {
+      toast.error("שגיאה בשיתוף");
+    }
   };
 
   // Distinct, card-like container with rounded square action buttons
@@ -564,9 +585,9 @@ export const ReportHub: React.FC<ReportHubProps> = ({
       {/* Hidden high-res capture divs — only mount when dialog is open and rendering is stable to prevent recharts measuring zero-sized containers */}
       {isOpen && renderCharts && (
         <div className="fixed -left-[9999px] top-0 pointer-events-none text-right" dir="rtl">
-          <div style={{ width: "650px", height: "460px" }}><EmployeesChart ref={snapshotRef} stats={snapshotStats} total={snapshotTotal} loading={loading} unitName={filters.unitName} selectedDate={localDate} /></div>
-          <div style={{ width: "650px", height: "460px" }}><AttendanceTrendCard ref={trendRef} data={trendStats} loading={loading} range={activeDaysRange} unitName={filters.unitName} selectedDate={localDate} /></div>
-          <div style={{ width: "650px", height: "460px" }}><StatsComparisonCard ref={comparisonRef} data={comparisonStats} loading={loading} days={activeDaysRange} unitName={filters.unitName} selectedDate={localDate} /></div>
+          <div style={{ width: "750px", height: "480px" }}><EmployeesChart ref={snapshotRef} stats={snapshotStats} total={snapshotTotal} loading={loading} unitName={filters.unitName} selectedDate={localDate} /></div>
+          <div style={{ width: "750px", height: "480px" }}><AttendanceTrendCard ref={trendRef} data={trendStats} loading={loading} range={activeDaysRange} unitName={filters.unitName} selectedDate={localDate} /></div>
+          <div style={{ width: "750px", height: "480px" }}><StatsComparisonCard ref={comparisonRef} data={comparisonStats} loading={loading} days={activeDaysRange} unitName={filters.unitName} selectedDate={localDate} /></div>
         </div>
       )}
 

@@ -20,6 +20,8 @@ import {
   AreaChart,
 } from "recharts";
 import { format, parseISO } from "date-fns";
+import { toPng, toBlob } from "html-to-image";
+import { toast } from "sonner";
 
 interface TrendData {
   date?: string;
@@ -64,6 +66,67 @@ export const AttendanceTrendCard = forwardRef(
     ref: any
   ) {
     const cardRef = useRef<HTMLDivElement>(null);
+
+    useImperativeHandle(ref, () => ({
+      download: handleDownload,
+      share: handleWhatsAppShare,
+    }));
+
+    const handleDownload = async () => {
+      if (!cardRef.current) return;
+      try {
+        const dataUrl = await toPng(cardRef.current, {
+          backgroundColor: "#ffffff",
+          cacheBust: true,
+          quality: 0.95,
+          filter: (node) => {
+            if (node.classList && node.classList.contains("no-export")) {
+              return false;
+            }
+            return true;
+          },
+        });
+        const link = document.createElement("a");
+        link.download = `מגמת_נוכחות_${format(selectedDate, "yyyy-MM-dd")}.png`;
+        link.href = dataUrl;
+        link.click();
+        toast.success("הגרף הורד בהצלחה");
+      } catch (err) {
+        toast.error("שגיאה בהורדת הגרף");
+      }
+    };
+
+    const handleWhatsAppShare = async () => {
+      if (!cardRef.current) return;
+      try {
+        const blob = await toBlob(cardRef.current, {
+          backgroundColor: "#ffffff",
+          cacheBust: true,
+          quality: 0.95,
+          filter: (node) => {
+            if (node.classList && node.classList.contains("no-export")) {
+              return false;
+            }
+            return true;
+          },
+        });
+        if (!blob) return;
+        const message = `*מגמת נוכחות וזמינות - ${unitName}*\nתאריך דוח: ${format(selectedDate, "dd/MM/yyyy")}\nטווח: ${range} ימים אחרונים`;
+        const file = new File([blob], `attendance-trend.png`, {
+          type: "image/png",
+        });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: "מגמת נוכחות וזמינות", text: message });
+          return;
+        }
+        window.open(
+          `https://wa.me/?text=${encodeURIComponent(message)}`,
+          "_blank",
+        );
+      } catch (err) {
+        toast.error("שגיאה בשיתוף");
+      }
+    };
 
     const chartData = useMemo(() => {
       const rawList = Array.isArray(data) 
@@ -118,43 +181,40 @@ export const AttendanceTrendCard = forwardRef(
         )}
       >
         {!hideHeader && (
-          <CardHeader className="px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-0 border-b border-border/40 gap-2.5 sm:gap-3">
-            <div className="flex items-center justify-between gap-2 w-full sm:w-auto min-w-0">
-              <div className="flex items-center gap-2 min-w-0">
+          <CardHeader className="px-4 sm:px-6 py-3 sm:py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3">
+            <div className="space-y-1 min-w-0 flex-1">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                   <TrendingUp className="w-4 h-4" />
                 </div>
-                <CardTitle className="text-sm sm:text-base font-bold text-foreground tracking-tight whitespace-nowrap">
+                <CardTitle className="text-sm sm:text-base font-bold text-foreground tracking-tight whitespace-nowrap shrink-0">
                   מגמת נוכחות וזמינות
                 </CardTitle>
+                <Badge variant="secondary" className="text-[11px] font-bold bg-primary/10 text-primary border border-primary/20 shrink-0">
+                  ממוצע {averagePct}%
+                </Badge>
               </div>
-              <Badge variant="secondary" className="text-[11px] font-bold bg-primary/10 text-primary border border-primary/20 shrink-0">
-                ממוצע {averagePct}%
-              </Badge>
-            </div>
-
-            <div className="flex items-center justify-between gap-3 w-full sm:w-auto">
               <CardDescription className="text-xs text-muted-foreground truncate">
                 {unitName} • {range} ימים אחרונים
               </CardDescription>
+            </div>
 
-              {/* Range Selector Pills */}
-              <div className="flex items-center gap-1 bg-muted/60 p-0.5 sm:p-1 rounded-xl border border-border/40 shrink-0">
-                {ranges.map((r) => (
-                  <button
-                    key={r.value}
-                    onClick={() => onRangeChange?.(r.value)}
-                    className={cn(
-                      "px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all",
-                      range === r.value
-                        ? "bg-card text-foreground shadow-xs"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {r.label}
-                  </button>
-                ))}
-              </div>
+            {/* Range Selector Pills (Hidden on Export) */}
+            <div className="flex items-center gap-1 bg-muted/60 p-0.5 sm:p-1 rounded-xl border border-border/40 shrink-0 no-export">
+              {ranges.map((r) => (
+                <button
+                  key={r.value}
+                  onClick={() => onRangeChange?.(r.value)}
+                  className={cn(
+                    "px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all",
+                    range === r.value
+                      ? "bg-card text-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {r.label}
+                </button>
+              ))}
             </div>
           </CardHeader>
         )}

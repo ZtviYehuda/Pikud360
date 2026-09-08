@@ -43,6 +43,16 @@ export const AgeDistributionChart = ({
   }, []);
 
   const chartData = useMemo(() => {
+    // Normalize data safely if passed as an object or array
+    const rawList: { range: string; count: number }[] = Array.isArray(data)
+      ? data
+      : data && typeof data === "object"
+      ? Object.entries(data).map(([range, count]) => ({
+          range: String(range),
+          count: typeof count === "number" ? count : Number(count) || 0,
+        }))
+      : [];
+
     if (!isMobile) {
       // Default desktop ranges to keep graph structured and consistent
       const defaultDesktop = [
@@ -56,7 +66,7 @@ export const AgeDistributionChart = ({
       ];
 
       // Merge backend data
-      data.forEach((item) => {
+      rawList.forEach((item) => {
         const match = defaultDesktop.find((d) => d.range === item.range);
         if (match) {
           match.count = item.count;
@@ -75,8 +85,8 @@ export const AgeDistributionChart = ({
       { range: "36-99", count: 0 },
     ];
 
-    data.forEach((item) => {
-      const cleanRange = item.range.replace(/\s+/g, "");
+    rawList.forEach((item) => {
+      const cleanRange = (item.range || "").replace(/\s+/g, "");
       let min = 0;
       let max = 0;
       if (cleanRange.includes("+")) {

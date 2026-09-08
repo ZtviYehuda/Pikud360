@@ -46,111 +46,68 @@ class AuthorizationContext:
 # redis_client.get(f"auth_ctx:{user_id}") -> deserialize to AuthorizationContext
 # redis_client.setex(f"auth_ctx:{user_id}", 300, json.dumps(context.to_dict()))
 
-def resolve_access_scope(user_id: str, tenant_id: str) -> AuthorizationContext:
+def resolve_access_scope(user_id: str, tenant_id: str, claims: Optional[dict] = None) -> AuthorizationContext:
     """
-    Queries user permissions and organizational unit accesses from the database,
-    expanding subtrees via unit closure matrices.
+    CRITICAL SECURITY POLICY:
+    Independently resolves user permissions and allowed organizational unit boundaries.
+    Non-admins are strictly confined to their assigned organization hierarchy.
     """
-    if not user_id or str(user_id) == "admin":
+    from app.core.authorization.org_hierarchy import get_user_effective_scope
+
+    effective = get_user_effective_scope(user_id, claims=claims)
+
+    default_perms = [
+        "employees.*",
+        "employees.view",
+        "employees.create",
+        "employees.update",
+        "employees.delete",
+        "employees.history.view",
+        "schedule.view",
+        "schedule.manage",
+        "analytics.view",
+        "organization.view",
+        "transfers.view",
+    ]
+
+    if effective.get("is_admin") or effective.get("level") == "global":
         return AuthorizationContext(
-            user_id="admin",
+            user_id=str(user_id) if user_id else "admin",
             tenant_id=tenant_id,
-            permissions=["*"],
+            permissions=["*"] + default_perms,
             organization_units=[],
-            scope_type=ScopeType.GLOBAL
+            scope_type=ScopeType.GLOBAL.value
         )
 
+    # For non-admin users, query any custom roles/permissions or use default permissions
     permissions = []
-    organization_units = []
-    max_scope = ScopeType.SELF
-
-    # 1. Load User Permissions and their associated Scopes
-    # Joining user_roles -> role_permissions -> permissions to resolve code and scope
     perm_query = """
-        SELECT DISTINCT p.code, rp.permission_scope_type
+        SELECT DISTINCT p.code
         FROM security.permissions p
         JOIN security.role_permissions rp ON rp.permission_id = p.id
         JOIN security.user_roles ur ON ur.role_id = rp.role_id
         LEFT JOIN security.users u ON u.id = ur.user_id
         WHERE ur.user_id::text = %s OR u.username = %s;
     """
-
-    # 2. Load and expand assigned organization units using the closure table
-    # Handles recursive expansion if is_inheritable = True, else retrieves only root (depth = 0)
-    units_query = """
-        SELECT DISTINCT ouc.descendant_id 
-        FROM security.user_organization_access uoa
-        JOIN core.organization_unit_closure ouc ON ouc.ancestor_id = uoa.organization_unit_id
-        LEFT JOIN security.users u ON u.id = uoa.user_id
-        WHERE (uoa.user_id::text = %s OR u.username = %s)
-        AND (uoa.is_inheritable = TRUE OR ouc.depth = 0);
-    """
-
     try:
         with get_db_connection() as conn:
             with conn.cursor() as cur:
-                # Resolve permissions & scopes
                 cur.execute(perm_query, (str(user_id), str(user_id)))
                 perm_rows = cur.fetchall()
-                
-                # Determine maximum scope type
-                scopes_seen = set()
                 for row in perm_rows:
-                    code, scope = row[0], row[1]
-                    permissions.append(code)
-                    if scope:
-                        scopes_seen.add(scope)
-
-                # Rank scopes to determine max scope: GLOBAL > ORGANIZATION_UNIT > DIRECT_CHILDREN > SELF
-                if ScopeType.GLOBAL in scopes_seen:
-                    max_scope = ScopeType.GLOBAL
-                elif ScopeType.ORGANIZATION_UNIT in scopes_seen:
-                    max_scope = ScopeType.ORGANIZATION_UNIT
-                elif ScopeType.DIRECT_CHILDREN in scopes_seen:
-                    max_scope = ScopeType.DIRECT_CHILDREN
-                
-                # Fallback for system users / dev environments when security tables are unseeded:
-                if not permissions:
-                    permissions = [
-                        "employees.*",
-                        "employees.view",
-                        "employees.create",
-                        "employees.update",
-                        "employees.delete",
-                        "employees.history.view",
-                        "schedule.view",
-                        "analytics.view",
-                        "organization.view",
-                        "transfers.view",
-                    ]
-                    max_scope = ScopeType.GLOBAL
-
-                # Resolve organization units
-                cur.execute(units_query, (str(user_id), str(user_id)))
-                unit_rows = cur.fetchall()
-                organization_units = [row[0] for row in unit_rows]
-
+                    permissions.append(row[0])
     except Exception as e:
-        logger.error(f"Failed resolving access scope for user {user_id}: {e}", exc_info=True)
-        # Default safe fallback
-        permissions = [
-            "employees.*",
-            "employees.view",
-            "employees.create",
-            "employees.update",
-            "employees.delete",
-            "employees.history.view",
-            "schedule.view",
-            "analytics.view",
-            "organization.view",
-            "transfers.view",
-        ]
-        max_scope = ScopeType.GLOBAL
+        logger.warning(f"Error fetching role permissions for {user_id}: {e}")
+
+    if not permissions:
+        permissions = default_perms
+
+    allowed_units = list(effective.get("allowed_unit_ids") or [])
 
     return AuthorizationContext(
-        user_id=user_id,
+        user_id=str(user_id),
         tenant_id=tenant_id,
         permissions=permissions,
-        organization_units=organization_units,
-        scope_type=max_scope.value if hasattr(max_scope, "value") else str(max_scope)
+        organization_units=allowed_units,
+        scope_type=ScopeType.ORGANIZATION_UNIT.value if allowed_units else ScopeType.SELF.value
     )

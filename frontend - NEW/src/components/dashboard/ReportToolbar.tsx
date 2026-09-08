@@ -47,7 +47,7 @@ export function ReportDatePicker({
     return (
       <div
         className={cn(
-          "flex items-center gap-2 text-xs sm:text-sm font-bold px-3 py-1.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/60 shrink-0 font-mono border-0 text-foreground",
+          "flex items-center gap-2 text-xs sm:text-sm font-bold px-3 py-1.5 rounded-xl bg-muted/60 dark:bg-muted/40 shrink-0 font-mono border border-border/50 text-foreground",
           className
         )}
       >
@@ -63,8 +63,8 @@ export function ReportDatePicker({
         <Button
           variant="ghost"
           className={cn(
-            "h-9 px-3 bg-slate-100/80 dark:bg-slate-800/60 hover:bg-slate-200/70 dark:hover:bg-slate-700/60 rounded-xl transition-all gap-2 text-xs sm:text-sm font-bold shadow-none text-foreground border-0",
-            viewMode === "custom" && "bg-primary/10 text-primary",
+            "h-9 px-3.5 bg-muted/60 dark:bg-muted/40 hover:bg-muted dark:hover:bg-muted/80 border border-border/50 rounded-xl transition-all gap-2 text-xs sm:text-sm font-bold shadow-none text-foreground",
+            viewMode === "custom" && "bg-muted text-foreground border-primary/40",
             className
           )}
         >
@@ -165,7 +165,7 @@ export function ReportToolbar({
       >
         <TabsList
           dir="rtl"
-          className="grid grid-cols-4 w-full h-10 p-1 gap-1 bg-slate-100/80 dark:bg-slate-800/60 rounded-xl border-0 shadow-none"
+          className="grid grid-cols-4 w-full h-11 p-1 gap-1 bg-muted/60 dark:bg-muted/40 border border-border/50 rounded-2xl shadow-none"
         >
           {[
             { id: "daily", label: "יומי" },
@@ -176,7 +176,7 @@ export function ReportToolbar({
             <TabsTrigger
               key={tab.id}
               value={tab.id}
-              className="rounded-lg py-1.5 text-xs sm:text-sm font-bold border-0 shadow-none transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white data-[state=active]:bg-primary data-[state=active]:text-white dark:data-[state=active]:text-white data-[state=active]:shadow-sm"
+              className="rounded-xl py-2 text-xs sm:text-sm font-bold transition-all text-muted-foreground hover:text-foreground data-[state=active]:bg-card dark:data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs data-[state=active]:border data-[state=active]:border-border/60 cursor-pointer select-none"
             >
               {tab.label}
             </TabsTrigger>

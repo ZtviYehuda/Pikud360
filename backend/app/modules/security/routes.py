@@ -24,6 +24,7 @@ from app.modules.security.repositories import (
 from app.modules.workforce.repositories import EmployeeRepository
 from app.modules.security.services import SecurityService
 from app.modules.security.permissions import get_user_permissions_and_scopes, get_user_roles
+from app.core.authorization.org_hierarchy import get_user_effective_scope
 from app.database.connection import get_db_connection
 
 logger = logging.getLogger("matzevet.security.routes")
@@ -201,20 +202,21 @@ def login():
     except Exception as e:
         logger.warning(f'Notice in employee query: {e}')
 
-    is_admin = (user.username == 'admin') or (user.email == 'admin@matzevet.gov.il') or ('ADMIN' in user_roles)
-    is_commander = ('COMMANDER' in user_roles) or is_admin
+    scope_info = get_user_effective_scope(user.id)
+    is_admin = scope_info.get("is_admin", False)
+    is_commander = bool(is_admin or ("COMMANDER" in user_roles) or scope_info.get("commands_team_id") or scope_info.get("commands_section_id") or scope_info.get("commands_department_id"))
 
     # Fetch user preferences from PostgreSQL DB
     user_prefs = user_preference_repo.get_by_user_id(str(user.id)) or {}
 
     first_name = (emp_record[0] if emp_record and emp_record[0] else None) or user_prefs.get('first_name') or ('מנהל' if is_admin else 'רוית')
     last_name = (emp_record[1] if emp_record and emp_record[1] else None) or user_prefs.get('last_name') or 'מערכת'
-    dept_id = 1
-    sect_id = 11
-    team_id = 111
-    dept_name = (emp_record[3] if emp_record and emp_record[3] else None) or 'מטה הפיקוד'
-    sect_name = 'ניהול מערכת'
-    team_name = 'צוות תמיכה'
+    dept_id = scope_info.get("department_id")
+    sect_id = scope_info.get("section_id")
+    team_id = scope_info.get("team_id")
+    dept_name = scope_info.get("department_name") or (emp_record[3] if emp_record and emp_record[3] else None)
+    sect_name = scope_info.get("section_name")
+    team_name = scope_info.get("team_name")
     phone_number = user_prefs.get('phone_number') or '0501234567'
 
     user_obj = {
@@ -241,6 +243,12 @@ def login():
         "department_name": dept_name,
         "section_name": sect_name,
         "team_name": team_name,
+        "assigned_department_id": scope_info.get("assigned_department_id"),
+        "assigned_section_id": scope_info.get("assigned_section_id"),
+        "assigned_team_id": scope_info.get("assigned_team_id"),
+        "commands_department_id": scope_info.get("commands_department_id"),
+        "commands_section_id": scope_info.get("commands_section_id"),
+        "commands_team_id": scope_info.get("commands_team_id"),
         "role_name": "מנהל מערכת ראשי" if is_admin else ("מפקד" if is_commander else "שוטר"),
         "terms_accepted": bool(user.terms_accepted),
         "terms_accepted_at": user.terms_accepted_at.isoformat() if user.terms_accepted_at else None,
@@ -305,10 +313,12 @@ def me():
     email = user.email if user else (getattr(emp, "personal_email", None) or "")
 
     user_roles = get_user_roles(user.id) if user else []
-    is_admin = (not is_impersonated) and ((username == "admin") or (email == "admin@matzevet.gov.il") or ("ADMIN" in user_roles))
+    
+    scope_info = get_user_effective_scope(user_id or username, claims)
+    is_admin = scope_info.get("is_admin", False)
     
     user_prefs = user_preference_repo.get_by_user_id(user_id) if user_id else {}
-    is_commander = bool(is_admin or ("COMMANDER" in user_roles) or user_prefs.get("is_commander", False) or (getattr(emp, "position", "") in ["מפקד", "קצין"]))
+    is_commander = bool(is_admin or ("COMMANDER" in user_roles) or scope_info.get("commands_team_id") or scope_info.get("commands_section_id") or scope_info.get("commands_department_id") or (getattr(emp, "position", "") in ["מפקד", "קצין"]))
 
     first_name = (
         user_prefs.get("first_name")
@@ -325,6 +335,13 @@ def me():
         or (emp.phone if emp else None)
         or "0501234567"
     )
+
+    dept_id = scope_info.get("department_id")
+    sect_id = scope_info.get("section_id")
+    team_id = scope_info.get("team_id")
+    dept_name = scope_info.get("department_name")
+    sect_name = scope_info.get("section_name")
+    team_name = scope_info.get("team_name")
 
     user_obj = {
         "id": user_id,
@@ -345,12 +362,18 @@ def me():
         "is_commander": is_commander,
         "is_impersonated": is_impersonated,
         "impersonated_by": claims.get("impersonated_by", "admin"),
-        "department_id": getattr(emp, "department_id", 1) if emp else 1,
-        "section_id": getattr(emp, "section_id", 11) if emp else 11,
-        "team_id": getattr(emp, "team_id", 111) if emp else 111,
-        "department_name": getattr(emp, "department_name", "מטה הפיקוד") if emp else "מטה הפיקוד",
-        "section_name": getattr(emp, "section_name", "ניהול מערכת") if emp else "ניהול מערכת",
-        "team_name": getattr(emp, "team_name", "צוות תמיכה") if emp else "צוות תמיכה",
+        "department_id": dept_id,
+        "section_id": sect_id,
+        "team_id": team_id,
+        "department_name": dept_name,
+        "section_name": sect_name,
+        "team_name": team_name,
+        "assigned_department_id": scope_info.get("assigned_department_id"),
+        "assigned_section_id": scope_info.get("assigned_section_id"),
+        "assigned_team_id": scope_info.get("assigned_team_id"),
+        "commands_department_id": scope_info.get("commands_department_id"),
+        "commands_section_id": scope_info.get("commands_section_id"),
+        "commands_team_id": scope_info.get("commands_team_id"),
         "role_name": "מנהל מערכת ראשי" if is_admin else getattr(emp, "rank", "מפקד"),
     }
 
@@ -860,22 +883,38 @@ def impersonate():
         severity="WARNING"
     )
 
-    # 4. Generate JWT tokens with is_impersonated flag
+    # 4. Generate JWT tokens with is_impersonated flag and target user's strict scope
     target_roles = get_user_roles(target_user.id)
     target_permissions = [code for code, scope in get_user_permissions_and_scopes(target_user.id)]
+
+    scope_info = get_user_effective_scope(target_user.id, {"is_impersonated": True})
 
     additional_claims = {
         "tenant_id": target_user.tenant_id,
         "roles": target_roles,
         "permissions": target_permissions,
         "is_impersonated": True,
-        "impersonated_by": admin_user.username if admin_user else "admin"
+        "impersonated_by": admin_user.username if admin_user else "admin",
+        "commands_department_id": scope_info.get("commands_department_id"),
+        "commands_section_id": scope_info.get("commands_section_id"),
+        "commands_team_id": scope_info.get("commands_team_id"),
+        "assigned_department_id": scope_info.get("assigned_department_id"),
+        "assigned_section_id": scope_info.get("assigned_section_id"),
+        "assigned_team_id": scope_info.get("assigned_team_id"),
     }
 
     access_token = create_access_token(
         identity=str(target_user.id),
         additional_claims=additional_claims,
         expires_delta=timedelta(hours=2)
+    )
+
+    is_cmd = bool(
+        ("COMMANDER" in target_roles)
+        or scope_info.get("commands_team_id")
+        or scope_info.get("commands_section_id")
+        or scope_info.get("commands_department_id")
+        or (target_emp and target_emp.position != "עובד")
     )
 
     return jsonify({
@@ -889,9 +928,21 @@ def impersonate():
             "first_name": target_emp.first_name if target_emp else target_user.username,
             "last_name": target_emp.last_name if target_emp else "",
             "roles": target_roles,
-            "is_commander": target_emp.position != "עובד" if target_emp else False,
-            "is_admin": "ADMIN" in target_roles,
-            "is_impersonated": True
+            "is_commander": is_cmd,
+            "is_admin": False,
+            "is_impersonated": True,
+            "department_id": scope_info.get("department_id"),
+            "section_id": scope_info.get("section_id"),
+            "team_id": scope_info.get("team_id"),
+            "department_name": scope_info.get("department_name"),
+            "section_name": scope_info.get("section_name"),
+            "team_name": scope_info.get("team_name"),
+            "assigned_department_id": scope_info.get("assigned_department_id"),
+            "assigned_section_id": scope_info.get("assigned_section_id"),
+            "assigned_team_id": scope_info.get("assigned_team_id"),
+            "commands_department_id": scope_info.get("commands_department_id"),
+            "commands_section_id": scope_info.get("commands_section_id"),
+            "commands_team_id": scope_info.get("commands_team_id"),
         },
         "message": f"התחברת בהצלחה כ-{impersonated_name}"
     }), 200

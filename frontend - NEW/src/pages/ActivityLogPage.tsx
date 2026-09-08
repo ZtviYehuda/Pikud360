@@ -812,28 +812,29 @@ function ArchivePreviewModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="w-full sm:w-auto sm:max-w-4xl lg:max-w-5xl rounded-t-[2.2rem] rounded-b-none sm:rounded-3xl p-4 sm:p-6 text-right max-h-[94dvh] sm:max-h-[90vh] flex flex-col bg-card border-0 sm:border border-border/50 shadow-2xl"
+        className="w-full sm:w-[94vw] max-w-6xl xl:max-w-7xl h-[92dvh] sm:h-[88vh] max-h-[920px] rounded-t-[2.2rem] rounded-b-none sm:rounded-3xl p-4 sm:p-6 text-right flex flex-col bg-card border-0 sm:border border-border/50 shadow-2xl overflow-hidden"
         dir="rtl"
       >
         {/* Mobile Drag Indicator Handle */}
         <div className="w-12 h-1 bg-muted-foreground/20 rounded-full mx-auto -mt-1 mb-1 sm:hidden shrink-0" />
 
         <DialogHeader className="text-right pb-3 border-b border-border/40 space-y-1 shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shrink-0">
                 <FileText className="w-5 h-5" />
               </div>
-              <div>
-                <DialogTitle className="text-base sm:text-lg font-black text-foreground">
+              <div className="min-w-0">
+                <DialogTitle className="text-base sm:text-lg font-black text-foreground truncate">
                   צפייה בקובץ ארכיון
                 </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground font-mono">
+                <DialogDescription className="text-xs text-muted-foreground font-mono truncate">
                   {archive?.filename}
                 </DialogDescription>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            {/* Action buttons on the left in RTL, with margin/padding to prevent overlapping the close X button */}
+            <div className="flex items-center gap-2 pl-8 sm:pl-12 shrink-0">
               <Button
                 variant="outline"
                 size="sm"
@@ -846,8 +847,8 @@ function ArchivePreviewModal({
               </Button>
               <Button
                 size="sm"
-                onClick={() => onDownload(archive.filename)}
-                className="h-8 px-3 rounded-xl text-xs gap-1.5 font-bold bg-primary text-primary-foreground"
+                onClick={() => onDownload(archive?.filename)}
+                className="h-8 px-3 rounded-xl text-xs gap-1.5 font-bold bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>הורד קובץ</span>
@@ -857,33 +858,33 @@ function ArchivePreviewModal({
         </DialogHeader>
 
         {/* Metadata summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 py-2 shrink-0">
-          <div className="p-2.5 rounded-xl bg-muted/30 border border-border/40 text-right">
-            <span className="text-[10px] text-muted-foreground font-bold">גודל דחוס:</span>
-            <p className="text-xs font-black text-foreground">{archive?.size_kb} KB</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4 py-2.5 shrink-0">
+          <div className="p-3 rounded-2xl bg-muted/30 border border-border/40 text-right flex flex-col justify-between">
+            <span className="text-[11px] text-muted-foreground font-bold">גודל דחוס:</span>
+            <p className="text-sm font-black text-foreground mt-0.5">{archive?.size_kb} KB</p>
           </div>
-          <div className="p-2.5 rounded-xl bg-muted/30 border border-border/40 text-right">
-            <span className="text-[10px] text-muted-foreground font-bold">סה"כ רשומות:</span>
-            <p className="text-xs font-black text-foreground">{data?.total_records || records.length || archive?.records_count || 0}</p>
+          <div className="p-3 rounded-2xl bg-muted/30 border border-border/40 text-right flex flex-col justify-between">
+            <span className="text-[11px] text-muted-foreground font-bold">סה"כ רשומות:</span>
+            <p className="text-sm font-black text-foreground mt-0.5">{data?.total_records || records.length || archive?.records_count || 0}</p>
           </div>
-          <div className="p-2.5 rounded-xl bg-muted/30 border border-border/40 text-right">
-            <span className="text-[10px] text-muted-foreground font-bold">פורמט:</span>
-            <p className="text-xs font-black text-foreground">JSON Snapshot (.gz)</p>
+          <div className="p-3 rounded-2xl bg-muted/30 border border-border/40 text-right flex flex-col justify-between">
+            <span className="text-[11px] text-muted-foreground font-bold">פורמט:</span>
+            <p className="text-sm font-black text-foreground mt-0.5">JSON Snapshot (.gz)</p>
           </div>
-          <div className="p-2.5 rounded-xl bg-muted/30 border border-border/40 text-right">
-            <span className="text-[10px] text-muted-foreground font-bold">מועד יצירה:</span>
-            <p className="text-xs font-black text-foreground">{archive?.created_at ? format(new Date(archive.created_at), "dd/MM/yyyy HH:mm") : "-"}</p>
+          <div className="p-3 rounded-2xl bg-muted/30 border border-border/40 text-right flex flex-col justify-between">
+            <span className="text-[11px] text-muted-foreground font-bold">מועד יצירה:</span>
+            <p className="text-sm font-black text-foreground mt-0.5">{archive?.created_at ? format(new Date(archive.created_at), "dd/MM/yyyy HH:mm") : "-"}</p>
           </div>
         </div>
 
         {/* Search Bar inside archive */}
-        <div className="relative shrink-0 pb-1">
+        <div className="relative shrink-0 pb-1.5">
           <Search className="w-4 h-4 absolute right-3 top-2.5 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="חיפוש ברשומות הקובץ (שם משתמש, פעולה, תיאור, כתובת IP)..."
-            className="h-9 pr-9 text-xs rounded-xl bg-muted/20 border-border/40"
+            className="h-9 pr-9 text-xs rounded-xl bg-muted/20 border-border/40 focus-visible:ring-primary/20"
           />
         </div>
 
@@ -902,20 +903,25 @@ function ArchivePreviewModal({
           ) : (
             filteredRecords.map((r: any, idx: number) => {
               const isSelected = selectedLog?.id === r.id;
+              const actionConf = ACTION_CONFIG[r.action_type] || {
+                label: r.action_type || "פעולה",
+                color: "text-primary",
+                bg: "bg-primary/10",
+              };
               return (
                 <div
                   key={r.id || idx}
                   onClick={() => setSelectedLog(isSelected ? null : r)}
                   className={cn(
-                    "p-3 text-right transition-colors cursor-pointer hover:bg-muted/30 flex flex-col gap-1.5",
+                    "p-3.5 text-right transition-colors cursor-pointer hover:bg-muted/30 flex flex-col gap-1.5",
                     isSelected && "bg-primary/5 border-r-2 border-primary"
                   )}
                 >
                   <div className="flex items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="font-black text-foreground truncate">{r.user_name || "מערכת"}</span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary shrink-0">
-                        {r.action_type || "פעולה"}
+                      <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0", actionConf.bg, actionConf.color)}>
+                        {actionConf.label}
                       </span>
                     </div>
                     <span className="text-[11px] text-muted-foreground shrink-0 font-mono">
@@ -923,16 +929,31 @@ function ArchivePreviewModal({
                     </span>
                   </div>
 
-                  <p className="text-xs text-muted-foreground leading-relaxed">{r.description}</p>
+                  <p className="text-xs text-foreground/90 font-medium leading-relaxed">{r.description}</p>
 
-                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground/70 font-mono">
-                    <span>IP: {r.ip_address}</span>
-                    {r.table_name && <span>טבלה: {r.table_name}</span>}
-                    {r.record_id && <span>מזהה: {r.record_id}</span>}
+                  <div className="flex flex-wrap items-center gap-2.5 text-[10px] text-muted-foreground font-mono">
+                    <span className="bg-muted/40 px-2 py-0.5 rounded-md border border-border/30">IP: {r.ip_address}</span>
+                    {r.table_name && <span className="bg-muted/40 px-2 py-0.5 rounded-md border border-border/30">טבלה: {r.table_name}</span>}
+                    {r.record_id && <span className="bg-muted/40 px-2 py-0.5 rounded-md border border-border/30">מזהה: {r.record_id}</span>}
                   </div>
 
                   {isSelected && (
-                    <div className="mt-2 p-2.5 rounded-xl bg-background border border-border/40 text-[11px] font-mono overflow-x-auto text-left ltr" dir="ltr">
+                    <div className="mt-2 p-3 rounded-xl bg-background border border-border/40 text-[11px] font-mono overflow-x-auto text-left ltr space-y-2" dir="ltr">
+                      <div className="flex justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(JSON.stringify(r, null, 2));
+                            toast.success("רשומה הועתקה ללוח");
+                          }}
+                          className="h-6 px-2 text-[10px] gap-1"
+                        >
+                          <Copy className="w-3 h-3" />
+                          <span>Copy Entry</span>
+                        </Button>
+                      </div>
                       <pre className="whitespace-pre-wrap">{JSON.stringify(r, null, 2)}</pre>
                     </div>
                   )}
@@ -943,7 +964,7 @@ function ArchivePreviewModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-border/40 shrink-0">
+        <div className="flex items-center justify-between pt-2.5 border-t border-border/40 shrink-0">
           <span className="text-[11px] text-muted-foreground font-bold">
             מציג {filteredRecords.length} מתוך {records.length} רשומות
           </span>
