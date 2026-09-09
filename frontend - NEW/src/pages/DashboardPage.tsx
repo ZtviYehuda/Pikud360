@@ -431,7 +431,16 @@ export default function DashboardPage() {
         });
 
         if (data) {
-          setStats(data.stats || []);
+          const statsArr = Array.isArray(data.stats)
+            ? data.stats
+            : Array.isArray(data.status_distribution)
+            ? data.status_distribution
+            : [];
+          setStats(statsArr);
+          const totalVal = typeof data.total === "number" && data.total > 0
+            ? data.total
+            : statsArr.reduce((acc: number, curr: any) => acc + (curr?.count || 0), 0);
+          setTotalEmployees(totalVal);
           const rawAgeDist = data.age_distribution;
           const parsedAgeDist = Array.isArray(rawAgeDist)
             ? rawAgeDist
@@ -443,7 +452,9 @@ export default function DashboardPage() {
             : [];
           setAgeDistribution(parsedAgeDist);
           setAverageAge(data.average_age || 0);
-          // setHasArchiveAccess(data.has_archive_access || false);
+          if (Array.isArray(data.birthdays)) {
+            setBirthdays(data.birthdays);
+          }
         }
       } catch (error) {
         console.error("DashboardPage fetchStatsData error", error);

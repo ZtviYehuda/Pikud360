@@ -788,11 +788,11 @@ def get_attendance_stats():
 
                 # 2. Fetch daily schedules for target date
                 cur.execute("""
-                    SELECT employee_id, status_id
+                    SELECT employee_id, status_id, notes
                     FROM workforce.employee_daily_schedule
                     WHERE schedule_date = %s;
                 """, (target_date,))
-                daily_schedules = {str(r[0]): str(r[1]) for r in cur.fetchall()}
+                daily_schedules = {str(r[0]): (str(r[1]), r[2] or "") for r in cur.fetchall()}
 
                 # 3. Fetch schedule status metadata (id, code, name, category, color)
                 cur.execute("SELECT id, code, name, category, color FROM workforce.schedule_statuses;")
@@ -831,10 +831,19 @@ def get_attendance_stats():
                     total += 1
 
                     # Determine employee status for this date
-                    st_id = daily_schedules.get(emp_id)
+                    sched_entry = daily_schedules.get(emp_id)
+                    st_id = sched_entry[0] if sched_entry else None
+                    st_note = sched_entry[1] if sched_entry else ""
                     st_info = status_meta.get(st_id)
                     st_code = st_info["code"] if st_info else (emp[11] or "AVAILABLE")
-                    st_name = st_info["name"] if st_info else ("משרד" if st_code in ('PRESENT', 'AVAILABLE', 'ACTIVE', 'נוכח', 'OFFICE') else "חופשה")
+                    
+                    if st_note and (st_code == "OTHER" or (st_info and st_info.get("name") == "אחר")):
+                        st_name = st_note
+                    elif st_code == "MISSION" or (st_info and st_info.get("name") == "משימה"):
+                        st_name = "יום יחידה"
+                    else:
+                        st_name = st_info["name"] if st_info else ("משרד" if st_code in ('PRESENT', 'AVAILABLE', 'ACTIVE', 'נוכח', 'OFFICE') else "חופשה")
+
                     st_color = st_info["color"] if st_info else ("#10B981" if st_code in ('PRESENT', 'AVAILABLE', 'ACTIVE', 'נוכח', 'OFFICE') else "#F59E0B")
                     st_cat = st_info.get("category", "PRESENT") if st_info else "PRESENT"
 
@@ -926,6 +935,7 @@ def get_attendance_stats():
         "sick": sick,
         "operational_readiness": op_readiness,
         "status_distribution": list(status_counts.values()),
+        "stats": list(status_counts.values()),
         "age_distribution": age_buckets,
         "average_age": avg_age,
         "birthdays": birthdays

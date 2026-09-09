@@ -235,7 +235,11 @@ const EmployeesChartComponent = (
       };
     });
 
-    return { chartData: data, officeSubItems: officeItems, displayTotal: total };
+    return {
+      chartData: data,
+      officeSubItems: officeItems,
+      displayTotal: total && total > 0 ? total : baseTotal,
+    };
   }, [stats, isOfficeSelected, total]);
 
   const selectedEntry = useMemo(() => {

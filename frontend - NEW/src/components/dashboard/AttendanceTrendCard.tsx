@@ -237,21 +237,10 @@ export const AttendanceTrendCard = forwardRef(
             </div>
           ) : (
             <div className="w-full flex-1 min-h-[260px] sm:min-h-[290px] min-w-0 flex flex-col">
-              <div className="flex items-center justify-end gap-3 mb-2 px-2 text-[10px] sm:text-[11px] text-muted-foreground font-bold">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-[#60a5fa]" />
-                  <span>שגרה</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-[#f43f5e]" />
-                  <span>היום / נבחר</span>
-                </div>
-              </div>
-
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240} initialDimension={{ width: 450, height: 270 }}>
                 <BarChart
                   data={chartData}
-                  margin={{ top: 16, right: 12, left: -20, bottom: 4 }}
+                  margin={{ top: 16, right: 16, left: -10, bottom: 4 }}
                   barCategoryGap={range === 7 ? "24%" : range === 30 ? "14%" : "6%"}
                   onClick={(e) => {
                     if (e && e.activePayload && e.activePayload.length && onDateSelect) {
@@ -285,7 +274,7 @@ export const AttendanceTrendCard = forwardRef(
                   />
 
                   <YAxis
-                    width={36}
+                    width={60}
                     domain={[0, 100]}
                     axisLine={false}
                     tickLine={false}
@@ -294,7 +283,7 @@ export const AttendanceTrendCard = forwardRef(
                       fill: "var(--color-muted-foreground, #94a3b8)",
                       fontFamily: "Noto Sans Hebrew, sans-serif",
                       fontWeight: 600,
-                      dx: -2,
+                      dx: -24,
                       textAnchor: "end",
                     }}
                     tickFormatter={(val) => `${val}%`}

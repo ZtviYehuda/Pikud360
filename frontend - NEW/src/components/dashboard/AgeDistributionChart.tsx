@@ -10,7 +10,13 @@ import {
   Cell,
   CartesianGrid,
 } from "recharts";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -155,31 +161,34 @@ export const AgeDistributionChart = ({
     return chartData.some((d) => d.count > 0);
   }, [chartData]);
 
-  const maxCount = useMemo(() => {
-    const counts = chartData.map((d) => d.count);
-    const maxVal = Math.max(...counts, 0);
-    return maxVal === 0 ? 5 : maxVal;
-  }, [chartData]);
-
   return (
-    <Card id="age-distribution-card" className="bg-card/70 dark:bg-card/50 backdrop-blur-md text-card-foreground rounded-2xl border border-border/60 shadow-xs flex flex-col overflow-hidden h-full relative transition-all">
-      {/* Header matching Attendance Trend */}
-      <div className="px-4 sm:px-6 py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3">
+    <Card
+      id="age-distribution-card"
+      className="bg-card/70 dark:bg-card/50 backdrop-blur-md text-card-foreground rounded-2xl border border-border/60 shadow-xs flex flex-col overflow-hidden h-full relative transition-all"
+    >
+      {/* Header matching Attendance Trend exactly */}
+      <CardHeader className="px-4 sm:px-6 py-3 sm:py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3">
         <div className="space-y-1 min-w-0 flex-1">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0 flex-wrap">
             <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Users className="w-4 h-4" />
             </div>
-            <h3 className="text-sm sm:text-base font-bold text-foreground tracking-tight truncate">
+            <CardTitle className="text-sm sm:text-base font-bold text-foreground tracking-tight whitespace-nowrap shrink-0">
               חתך גילאים
-            </h3>
+            </CardTitle>
+            <Badge
+              variant="secondary"
+              className="text-[11px] font-bold bg-primary/10 text-primary border border-primary/20 shrink-0"
+            >
+              גיל ממוצע: {averageAge}
+            </Badge>
             {filterTags.length > 0 && (
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                 {filterTags.map((tag, idx) => (
-                  <Badge 
-                    key={idx} 
-                    variant="outline" 
-                    className="text-[9px] h-5 px-2 font-bold bg-background/25 text-primary border-primary/20 backdrop-blur-sm whitespace-nowrap rounded-md hover:bg-primary/5 transition-all"
+                  <Badge
+                    key={idx}
+                    variant="outline"
+                    className="text-[9px] h-5 px-2 font-bold bg-background/25 text-primary border-primary/20 backdrop-blur-sm whitespace-nowrap rounded-md"
                   >
                     {tag}
                   </Badge>
@@ -187,150 +196,156 @@ export const AgeDistributionChart = ({
               </div>
             )}
           </div>
-          <p className="text-xs text-muted-foreground truncate">
+          <CardDescription className="text-xs text-muted-foreground truncate">
             התפלגות שוטרים לפי קבוצות גיל
-          </p>
+          </CardDescription>
         </div>
-        
-        {/* Average Age Badge */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Badge variant="secondary" className="text-xs font-bold bg-primary/10 text-primary border border-primary/20 py-1 px-2.5 rounded-lg">
-            גיל ממוצע: {averageAge}
-          </Badge>
-        </div>
-      </div>
+      </CardHeader>
 
-      {/* Chart Container */}
-      <div className="flex flex-col flex-1 w-full min-h-[220px] sm:min-h-[260px] md:min-h-[290px] relative mt-0 overflow-visible select-none px-2 pb-2">
+      {/* Card Content & Chart matching Attendance Trend */}
+      <CardContent className="flex-1 p-3 sm:p-5 flex flex-col justify-between min-h-0">
         {!hasData ? (
           <div className="flex-1 flex items-center justify-center py-12 text-center text-muted-foreground font-bold tracking-tight text-xs sm:text-sm">
             אין נתונים להצגה
           </div>
         ) : (
-        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={220} initialDimension={{ width: 300, height: 260 }}>
-          <BarChart
-            data={chartData}
-            margin={{ top: 28, right: 8, left: 8, bottom: 4 }}
-          >
-            <CartesianGrid 
-              strokeDasharray="4 4" 
-              vertical={false} 
-              stroke="var(--border)" 
-              opacity={0.15}
-            />
-
-            <XAxis
-              dataKey="range"
-              axisLine={false}
-              tickLine={false}
-              interval={0}
-              height={isMobile ? 15 : 20}
-              tick={{ fontSize: isMobile ? 11 : 12, fontWeight: 700, fontFamily: "Noto Sans Hebrew, sans-serif", fill: "var(--foreground)" }}
-              tickFormatter={(tick) => tick === "36-99" ? "36+" : tick}
-            />
-            {/* Provide headroom so columns are pleasantly proportioned and slightly lower */}
-            <YAxis hide domain={[0, Math.max(Math.ceil(maxCount * 1.25), maxCount + 3)]} />
-            
-            <Tooltip
-              cursor={{ fill: "transparent" }}
-              content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  const displayRange = payload[0].payload.range === "36-99" ? "36+" : payload[0].payload.range;
-                  const count = payload[0].value;
-                  return (
-                    <div className="bg-card border border-border rounded-xl p-3 shadow-md text-right min-w-[120px] space-y-1">
-                      <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest leading-none">
-                        טווח גילאים
-                      </p>
-                      <h4 className="text-xs sm:text-sm font-black text-foreground leading-none">
-                        {displayRange}
-                      </h4>
-                      <div className="h-px bg-border/50 my-1.5" />
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-[10px] font-bold text-muted-foreground">כמות:</span>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-sm font-black text-primary tabular-nums">
-                            {count}
-                          </span>
-                          <span className="text-[9px] font-bold text-muted-foreground">שוטרים</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              }}
-            />
-            
-            <Bar
-              dataKey="count"
-              radius={[6, 6, 0, 0]}
-              barSize={isMobile ? 18 : 26}
-              isAnimationActive={false}
+          <div className="w-full flex-1 min-h-[260px] sm:min-h-[290px] min-w-0 flex flex-col">
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+              minWidth={0}
+              minHeight={240}
+              initialDimension={{ width: 300, height: 270 }}
             >
-               {chartData.map((entry, index) => {
-                const isSelected = isSelectedRange(entry.range);
+              <BarChart
+                data={chartData}
+                margin={{ top: 16, right: 8, left: 8, bottom: 4 }}
+                barCategoryGap="18%"
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="rgba(148, 163, 184, 0.15)"
+                />
 
-                let fill = "var(--primary)";
-                let fillOpacity = 0.38;
-                let stroke = isSelected ? "var(--primary)" : "none";
-                let strokeWidth = isSelected ? 2 : 0;
-
-                if (isAnyFilterActive) {
-                  if (isSelected) {
-                    fill = "var(--primary)";
-                    fillOpacity = 0.95;
-                  } else {
-                    fill = "var(--primary)";
-                    fillOpacity = 0.15;
+                <XAxis
+                  dataKey="range"
+                  axisLine={false}
+                  tickLine={false}
+                  interval={0}
+                  tick={{
+                    fontSize: 11,
+                    fill: "var(--color-muted-foreground, #94a3b8)",
+                    fontFamily: "Noto Sans Hebrew, sans-serif",
+                    fontWeight: 600,
+                  }}
+                  dy={6}
+                  tickFormatter={(tick) =>
+                    tick === "36-99" ? "36+" : tick === "50+" ? "+50" : tick
                   }
-                } else {
-                  fill = "var(--primary)";
-                  fillOpacity = 0.38;
-                }
+                />
 
-                return (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    className={cn(
-                      "transition-all outline-none hover:brightness-110",
-                      (entry.count > 0 || isSelected) ? "cursor-pointer" : "cursor-default"
-                    )}
-                    onClick={() => {
-                      if (entry.count > 0 || isSelected) {
-                        onRangeSelect?.(entry.range);
-                      }
+                <YAxis
+                  hide
+                  domain={[
+                    0,
+                    (dataMax: number) =>
+                      Math.max(Math.ceil(dataMax * 1.25), 5),
+                  ]}
+                />
+
+                <Tooltip
+                  cursor={{ fill: "rgba(148, 163, 184, 0.12)", radius: [6, 6, 0, 0] }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const displayRange =
+                        payload[0].payload.range === "36-99"
+                          ? "36+"
+                          : payload[0].payload.range;
+                      const count = payload[0].value;
+                      return (
+                        <div
+                          className="bg-popover/95 backdrop-blur-md border border-border/70 shadow-xl rounded-xl p-3 text-right text-xs space-y-1.5 min-w-[130px]"
+                          dir="rtl"
+                        >
+                          <div className="flex items-center justify-between gap-3 border-b border-border/40 pb-1">
+                            <span className="font-extrabold text-foreground">
+                              טווח גילאים
+                            </span>
+                            <span className="text-[10px] font-black bg-primary/15 text-primary px-1.5 py-0.5 rounded-md">
+                              {displayRange}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-4 pt-1">
+                            <span className="text-muted-foreground font-medium">
+                              כמות שוטרים:
+                            </span>
+                            <span className="font-black text-sm text-blue-500 dark:text-blue-400">
+                              {count}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+
+                <Bar
+                  dataKey="count"
+                  radius={[6, 6, 2, 2]}
+                  maxBarSize={36}
+                  animationDuration={800}
+                >
+                  {chartData.map((entry, index) => {
+                    const isSelected = isSelectedRange(entry.range);
+                    const fill = isSelected ? "#f43f5e" : "#60a5fa";
+
+                    return (
+                      <Cell
+                        key={`cell-${index}`}
+                        className={cn(
+                          "transition-all duration-300 hover:opacity-85 outline-none",
+                          entry.count > 0 || isSelected
+                            ? "cursor-pointer"
+                            : "cursor-default"
+                        )}
+                        onClick={() => {
+                          if (entry.count > 0 || isSelected) {
+                            onRangeSelect?.(entry.range);
+                          }
+                        }}
+                        fill={fill}
+                      />
+                    );
+                  })}
+                  <LabelList
+                    dataKey="count"
+                    position="top"
+                    content={(props: any) => {
+                      const { x, y, width, value } = props;
+                      if (value === undefined || value === null || value === 0)
+                        return null;
+                      return (
+                        <text
+                          x={x + width / 2}
+                          y={y - 6}
+                          textAnchor="middle"
+                          className="text-[11px] font-bold fill-foreground"
+                          style={{ fontFamily: "Noto Sans Hebrew, sans-serif" }}
+                        >
+                          {value}
+                        </text>
+                      );
                     }}
-                    fill={fill}
-                    fillOpacity={fillOpacity}
-                    stroke={stroke}
-                    strokeWidth={strokeWidth}
                   />
-                );
-              })}
-              <LabelList
-                dataKey="count"
-                content={(props: any) => {
-                  const { x, y, width, value } = props;
-                  if (value === undefined || value === null || value === 0) return null;
-                  return (
-                    <text
-                      x={x + width / 2}
-                      y={y - 8}
-                      textAnchor="middle"
-                      className="text-[10px] sm:text-xs font-bold fill-slate-700 dark:fill-slate-300"
-                      style={{ fontFamily: "Noto Sans Hebrew, sans-serif", fontWeight: 700 }}
-                    >
-                      {value}
-                    </text>
-                  );
-                }}
-              />
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         )}
-      </div>
+      </CardContent>
     </Card>
   );
 };
+
