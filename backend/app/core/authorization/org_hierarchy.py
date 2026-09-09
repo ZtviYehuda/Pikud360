@@ -239,7 +239,7 @@ def get_user_effective_scope(user_id: Optional[str], claims: Optional[dict] = No
     # Check if user is truly system administrator (impersonated users are NEVER treated as admin)
     is_admin = False
     if not is_impersonated:
-        if str(user_id) == "admin" or "ADMIN" in roles:
+        if str(user_id) == "admin" or "ADMIN" in roles or claims.get("is_admin"):
             is_admin = True
         else:
             try:

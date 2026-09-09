@@ -28,6 +28,18 @@ import {
   Filter,
   X,
   RotateCcw,
+  Home,
+  Building2,
+  MapPin,
+  UserCheck,
+  Sun,
+  Activity,
+  GraduationCap,
+  Shield,
+  Plane,
+  Briefcase,
+  Flag,
+  Check,
 } from "lucide-react";
 
 import { ShabbatIcon } from "@/components/common/ShabbatIcon";
@@ -56,75 +68,100 @@ import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDateContext } from "@/context/DateContext";
 
+const getStatusIcon = (name: string) => {
+  const n = (name || "").toLowerCase();
+  if (n === "מהבית" || n.includes("בית")) return Home;
+  if (n === "מתקן חיצוני" || n.includes("מתקן") || n.includes("חיצוני")) return Building2;
+  if (n === "שטח" || n.includes("שטח")) return MapPin;
+  if (n.includes("נוכח") || n.includes("משרד") || n.includes("ביחידה")) return UserCheck;
+  if (n.includes("חופשה") || n.includes("חופש")) return Sun;
+  if (n.includes("מחלה") || n.includes("גימל") || n.includes("ביקור רופא")) return Activity;
+  if (n.includes("קורס") || n.includes("הדרכה")) return GraduationCap;
+  if (n.includes("אבטחה") || n.includes("תורנות") || n.includes("תגבור") || n.includes("שמירה")) return Shield;
+  if (n.includes('חו"ל') || n.includes("טיסה") || n.includes("חול")) return Plane;
+  if (n.includes("יום יחידה") || n.includes("אירוע") || n.includes("משימה")) return Flag;
+  return Briefcase;
+};
+
 const StatusCard = ({
   type,
   onClick,
   isSub = false,
   large = false,
+  active = false,
 }: {
   type: any;
   onClick: () => void;
   isSub?: boolean;
   large?: boolean;
-}) => (
-  <button
-    onClick={onClick}
-    className={cn(
-      "flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl border-2 transition-all text-center h-full group relative bg-background hover:bg-muted/30 border-border/40 hover:border-primary/40",
-      isSub
-        ? "opacity-90 scale-[1.0] min-h-[72px] sm:min-h-[85px]"
-        : "min-h-[82px] sm:min-h-[95px]",
-      large &&
-        "col-span-3 flex-row gap-4 min-h-[60px] sm:min-h-[80px] px-4 sm:px-8 bg-slate-100/50 dark:bg-slate-800/50 border-primary/20",
-    )}
-  >
-    <div
+  active?: boolean;
+}) => {
+  const Icon = getStatusIcon(type.name);
+  const color = type.color || "#64748B";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
       className={cn(
-        "rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110",
+        "group relative flex flex-col items-center justify-center rounded-2xl border transition-all cursor-pointer select-none text-right overflow-hidden shadow-2xs hover:shadow-md",
         large
-          ? "w-10 h-10 sm:w-12 sm:h-12 bg-primary/10"
-          : "w-8 h-8 sm:w-10 sm:h-10 bg-muted/70 group-hover:bg-primary/5",
+          ? "col-span-full sm:col-span-2 flex-row gap-3.5 p-3.5 sm:p-4 bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/25 hover:border-emerald-500/40 text-emerald-950 dark:text-emerald-100"
+          : isSub
+          ? "p-2.5 sm:p-3 bg-muted/30 hover:bg-muted/60 border-border/50 hover:border-primary/40 text-foreground min-h-[70px] sm:min-h-[76px]"
+          : "p-2.5 sm:p-3.5 bg-card hover:bg-muted/40 border-border/60 hover:border-primary/40 text-foreground min-h-[78px] sm:min-h-[86px]",
+        active && "ring-2 ring-primary ring-offset-2 border-primary bg-primary/10 dark:bg-primary/20 shadow-sm"
       )}
     >
+      {active && (
+        <div className="absolute top-2 left-2 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-xs">
+          <Check className="w-3 h-3 stroke-[3]" />
+        </div>
+      )}
+
       <div
-        className={
-          large
-            ? "w-4 h-4 sm:w-5 sm:h-5 rounded-full"
-            : "w-3 h-3 sm:w-4 sm:h-4 rounded-full"
-        }
-        style={{
-          backgroundColor: type.color,
-          boxShadow: `0 0 10px ${type.color}40`,
-        }}
-      />
-    </div>
-    <div
-      className={cn(
-        "flex flex-col min-w-0",
-        large ? "items-start text-right" : "items-center",
-      )}
-    >
-      <span
         className={cn(
-          "font-black leading-tight tracking-tight px-1",
-          large ? "text-base sm:text-lg" : "text-[10px] sm:text-[11px]",
+          "rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105",
+          large
+            ? "w-11 h-11 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+            : isSub
+            ? "w-8 h-8 rounded-lg bg-background text-muted-foreground group-hover:text-primary border border-border/40"
+            : "w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-muted/60 text-foreground group-hover:text-primary"
         )}
-        style={{ color: type.color }}
+        style={!large && !isSub ? { backgroundColor: `${color}15`, color } : undefined}
       >
-        {type.name}
-      </span>
-      {isSub ? (
-        <span className="text-[7.5px] sm:text-[8px] text-muted-foreground/60 font-bold uppercase tracking-tighter">
-          (עבודה)
-        </span>
-      ) : large ? (
-        <span className="text-[9px] sm:text-[10px] text-muted-foreground font-bold opacity-60 uppercase tracking-widest">
-          עבודה מהמשרד
-        </span>
-      ) : null}
-    </div>
-  </button>
-);
+        <Icon className={cn(large ? "w-5 h-5" : isSub ? "w-4 h-4" : "w-4.5 h-4.5 sm:w-5 sm:h-5")} />
+      </div>
+
+      <div className={cn("flex flex-col min-w-0", large ? "flex-1 items-start" : "items-center text-center mt-1.5")}>
+        <div className="flex items-center gap-1.5">
+          <span
+            className={cn(
+              "font-bold leading-tight tracking-tight",
+              large ? "text-sm sm:text-base text-foreground font-extrabold" : "text-xs font-bold text-foreground"
+            )}
+          >
+            {type.name}
+          </span>
+          {large && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+              נוכחות רגילה
+            </span>
+          )}
+        </div>
+        {isSub ? (
+          <span className="text-[9px] text-muted-foreground font-medium mt-0.5">
+            עבודה בריחוק
+          </span>
+        ) : large ? (
+          <span className="text-[11px] text-muted-foreground font-medium mt-0.5">
+            הגעה ועבודה סדירה בבסיס/משרד
+          </span>
+        ) : null}
+      </div>
+    </button>
+  );
+};
 
 export default function RosterPage() {
   const { getRosterMatrix, getStatusTypes, getStructure, logBulkStatus } =
@@ -210,6 +247,7 @@ export default function RosterPage() {
   const [showOtherInput, setShowOtherInput] = useState(false);
   const [otherNote, setOtherNote] = useState("");
   const [targetOtherStatus, setTargetOtherStatus] = useState<any>(null);
+  const [selectedStatusId, setSelectedStatusId] = useState<number | null>(null);
 
   // Constants
   const today = startOfDay(new Date());
@@ -354,23 +392,22 @@ export default function RosterPage() {
     fetchMatrix();
   }, [weekStart, selectedDept, selectedSection, selectedTeam]);
 
-  const getLogForCell = (empId: number, date: Date) => {
+  const getLogForCell = (empId: any, date: Date) => {
+    const targetStr = format(date, "yyyy-MM-dd");
     return logs.find((l) => {
-      const start = startOfDay(new Date(l.start_datetime));
-      const end = l.end_datetime ? startOfDay(new Date(l.end_datetime)) : null;
-      const target = startOfDay(date);
+      if (String(l.employee_id) !== String(empId)) return false;
 
-      if (
-        l.employee_id === empId &&
-        target.getTime() >= start.getTime() &&
-        (!end || target.getTime() <= end.getTime())
-      ) {
+      const startStr = (l.start_datetime || "").slice(0, 10);
+      const endStr = (l.end_datetime || l.start_datetime || "").slice(0, 10);
+
+      if (targetStr >= startStr && targetStr <= endStr) {
         const dayOfW = getDay(date);
         const isFriSat = dayOfW === 5 || dayOfW === 6;
         if (isFriSat) {
           const typeName =
             statusTypes.find((t) => t.id === l.status_type_id)?.name ||
-            l.status_name;
+            l.status_name ||
+            "";
           if (!typeName.includes("תגבור") && !typeName.includes("אחר")) {
             return false;
           }
@@ -381,19 +418,79 @@ export default function RosterPage() {
     });
   };
 
-  const getStatusById = (id: number) => statusTypes.find((s) => s.id === id);
+  const getStatusById = (id: any) => statusTypes.find((s) => String(s.id) === String(id));
 
   // --- Actions ---
 
-  const handleCellClick = (empId: number, date: Date) => {
+  const handleCellClick = (empId: any, date: Date) => {
+    const existingLog = getLogForCell(empId, date);
     setSelectedCell({ empId, date });
+    if (existingLog) {
+      setSelectedStatusId(existingLog.status_type_id);
+      const st = getStatusById(existingLog.status_type_id);
+      if (st?.name === "אחר") {
+        setShowOtherInput(true);
+        setOtherNote(existingLog.notes || "");
+        setTargetOtherStatus(st);
+      } else {
+        setShowOtherInput(false);
+        setOtherNote("");
+        setTargetOtherStatus(null);
+      }
+    } else {
+      setSelectedStatusId(null);
+      setShowOtherInput(false);
+      setOtherNote("");
+      setTargetOtherStatus(null);
+    }
+    setRangeMode(false);
+    setRangeEndDate("");
     setIsDialogOpen(true);
-    return;
+  };
+
+  const handleSelectStatus = (status: any) => {
+    setSelectedStatusId(status.id);
+    if (status.name === "אחר") {
+      setTargetOtherStatus(status);
+      setShowOtherInput(true);
+    } else {
+      setShowOtherInput(false);
+      setTargetOtherStatus(null);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setRangeMode(false);
+    setRangeEndDate("");
+    setShowOtherInput(false);
+    setOtherNote("");
+    setTargetOtherStatus(null);
+    setSelectedStatusId(null);
+  };
+
+  const handleConfirmStatus = () => {
+    if (!selectedCell || !selectedStatusId) return;
+    const status = getStatusById(selectedStatusId);
+    if (!status) return;
+
+    if (status.name === "אחר" && !otherNote.trim()) {
+      toast.error("יש להזין פירוט עבור סטטוס אחר");
+      return;
+    }
+
+    addPendingUpdate(
+      selectedCell.empId,
+      selectedStatusId,
+      selectedCell.date,
+      rangeMode && rangeEndDate ? new Date(rangeEndDate) : undefined,
+      status.name === "אחר" ? otherNote.trim() : undefined,
+    );
   };
 
   const addPendingUpdate = (
-    empId: number,
-    statusId: number,
+    empId: any,
+    statusId: any,
     startDate: Date,
     endDate?: Date,
     note?: string,
@@ -430,23 +527,22 @@ export default function RosterPage() {
 
     const newLogs = [...logs];
     newUpdates.forEach((upd) => {
-      const targetDate = new Date(upd.start_date);
       const log = {
         employee_id: upd.employee_id,
         status_type_id: upd.status_type_id,
         status_name: upd.note || status.name,
         status_color: status.color,
         notes: upd.note,
-        start_datetime: targetDate.toISOString(),
-        end_datetime: new Date(targetDate.getTime() + 86399000).toISOString(),
+        start_datetime: `${upd.start_date}T00:00:00`,
+        end_datetime: `${upd.start_date}T23:59:59`,
         is_verified: true,
         is_pending: true,
       };
 
       const existingIdx = newLogs.findIndex(
         (l) =>
-          l.employee_id === upd.employee_id &&
-          isSameDay(new Date(l.start_datetime), targetDate),
+          String(l.employee_id) === String(upd.employee_id) &&
+          (l.start_datetime || "").slice(0, 10) === upd.start_date,
       );
 
       if (existingIdx >= 0) newLogs[existingIdx] = log;
@@ -475,6 +571,7 @@ export default function RosterPage() {
     setShowOtherInput(false);
     setOtherNote("");
     setTargetOtherStatus(null);
+    setSelectedStatusId(null);
   };
 
   const handleSaveAll = async () => {
@@ -1231,9 +1328,9 @@ export default function RosterPage() {
                                   <span
                                     className="text-[11px] font-black text-center leading-tight tracking-tight z-10 truncate px-1"
                                     style={{ color: log.status_color }}
-                                    title={log.status_name}
+                                    title={log.notes || log.status_name}
                                   >
-                                    {log.status_name}
+                                    {log.notes || log.status_name}
                                   </span>
                                   {isPending && (
                                     <div className="absolute top-1 left-1 w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
@@ -1349,7 +1446,7 @@ export default function RosterPage() {
                                 border: `1px solid ${log.status_color}30`,
                               }}
                             >
-                              {log.status_name}
+                              {log.notes || log.status_name}
                             </div>
                           ) : isWeekend && !mobileForceShowPlus ? (
                             <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
@@ -1373,158 +1470,166 @@ export default function RosterPage() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent
             id="tour-roster-dialog"
-            className="max-w-xl p-0 overflow-hidden bg-background border-border rounded-3xl sm:rounded-[2rem]"
+            className="w-full sm:w-[92vw] sm:max-w-2xl md:max-w-3xl lg:max-w-4xl max-h-[92dvh] sm:max-h-[85vh] p-0 rounded-t-3xl sm:rounded-2xl overflow-hidden border shadow-2xl flex flex-col justify-between bg-card text-foreground dir-rtl"
+            dir="rtl"
           >
-            <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border bg-muted/20">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                  <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+            {/* Header */}
+            <div className="p-4 sm:p-5 border-b border-border/60 bg-muted/20 flex items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-sm shrink-0">
+                  {selectedCell && employees.find((e) => e.id === selectedCell.empId) ? (
+                    `${employees.find((e) => e.id === selectedCell.empId).first_name[0]}${employees.find((e) => e.id === selectedCell.empId).last_name[0]}`
+                  ) : (
+                    <CalendarIcon className="w-5 h-5" />
+                  )}
                 </div>
-                <div className="flex flex-col text-right">
-                  <DialogTitle className="text-base sm:text-xl font-bold text-foreground">
+                <div className="flex flex-col min-w-0 text-right">
+                  <DialogTitle className="text-base sm:text-lg font-black tracking-tight text-foreground truncate">
                     {selectedCell
                       ? employees.find((e) => e.id === selectedCell.empId)
                         ? `${employees.find((e) => e.id === selectedCell.empId).first_name} ${employees.find((e) => e.id === selectedCell.empId).last_name}`
                         : "עדכון שיבוץ"
                       : "עדכון שיבוץ"}
                   </DialogTitle>
-                  <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground mt-0.5">
-                    {selectedCell &&
-                      format(selectedCell.date, "EEEE, dd בMMMM yyyy", {
-                        locale: he,
-                      })}
-                  </span>
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    <span className="text-xs text-muted-foreground font-medium">
+                      {selectedCell &&
+                        format(selectedCell.date, "EEEE, dd בMMMM yyyy", {
+                          locale: he,
+                        })}
+                    </span>
+                    {selectedCell && employees.find((e) => e.id === selectedCell.empId)?.team_name && (
+                      <>
+                        <span className="text-muted-foreground/40">•</span>
+                        <span className="text-[11px] font-bold text-primary/80 bg-primary/10 px-2 py-0.5 rounded-md">
+                          {employees.find((e) => e.id === selectedCell.empId).team_name}
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-            </DialogHeader>
+            </div>
 
-            <div className="px-4 sm:px-6 py-3 sm:py-4 space-y-4 sm:space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
-              <div className="flex items-center justify-between p-3 sm:p-4 bg-primary/5 dark:bg-white/5 rounded-xl sm:rounded-2xl border border-border/40 dark:border-white/10 transition-all hover:bg-primary/10 dark:hover:bg-white/10">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <CalendarRange className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-primary/70" />
-                  <span className="text-xs sm:text-sm font-bold text-foreground">
-                    טווח תאריכים
-                  </span>
+            {/* Scrollable Body */}
+            <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4 sm:space-y-5">
+              
+              {/* Date Range Selector Banner */}
+              <div className="p-3.5 sm:p-4 rounded-xl border border-border/60 bg-muted/25 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <CalendarRange className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs sm:text-sm font-bold text-foreground block">
+                      {rangeMode ? "החלת סטטוס על טווח תאריכים" : "עדכון לתאריך בודד"}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground font-medium">
+                      {rangeMode
+                        ? "בחר תאריך סיום כדי להחיל את הסטטוס על מספר ימים רצופים"
+                        : "לחץ כדי להרחיב למספר ימים (חופשה מרוכזת, קורס, מחלה וכו')"}
+                    </span>
+                  </div>
                 </div>
+
                 <Button
+                  type="button"
                   variant={rangeMode ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setRangeMode(!rangeMode)}
-                  className="h-8 px-4 text-[11px] font-bold rounded-lg transition-all"
+                  onClick={() => {
+                    setRangeMode(!rangeMode);
+                    if (!rangeMode && selectedCell) {
+                      setRangeEndDate(format(addDays(selectedCell.date, 1), "yyyy-MM-dd"));
+                    }
+                  }}
+                  className="h-8.5 px-3.5 text-xs font-bold rounded-lg cursor-pointer shrink-0"
                 >
-                  {rangeMode ? "ביטול " : "בחר טווח"}
+                  {rangeMode ? "ביטול טווח (יום בודד)" : "החל על טווח"}
                 </Button>
               </div>
 
-              {rangeMode && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-4 bg-primary/[0.02] border border-border/40 rounded-xl space-y-4"
-                >
-                  <div className="flex items-center gap-2 text-primary">
-                    <AlertCircle className="w-4 h-4" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">
-                      טווח תאריכים
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase mr-1">
-                        מתאריך
-                      </label>
-                      <div className="h-10 flex items-center px-4 bg-muted/40 rounded-xl border border-border text-xs font-bold text-foreground">
-                        {selectedCell &&
-                          format(selectedCell.date, "yyyy-MM-dd")}
+              {/* Range Inputs (When active) */}
+              <AnimatePresence>
+                {rangeMode && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="p-3.5 sm:p-4 bg-primary/[0.03] border border-primary/20 rounded-xl space-y-3 overflow-hidden shadow-2xs"
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1.5 text-right">
+                        <label className="text-xs font-bold text-muted-foreground">
+                          מתאריך התחלה
+                        </label>
+                        <div className="h-9.5 flex items-center px-3 bg-background rounded-lg border border-border text-xs font-bold text-foreground">
+                          {selectedCell && format(selectedCell.date, "dd/MM/yyyy")}
+                        </div>
+                      </div>
+                      <div className="space-y-1.5 text-right">
+                        <label className="text-xs font-bold text-muted-foreground">
+                          עד תאריך סיום
+                        </label>
+                        <Input
+                          type="date"
+                          value={rangeEndDate}
+                          min={selectedCell ? format(selectedCell.date, "yyyy-MM-dd") : ""}
+                          onChange={(e) => setRangeEndDate(e.target.value)}
+                          className="h-9.5 bg-background border-border text-xs font-bold rounded-lg focus:ring-primary/20"
+                        />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase mr-1">
-                        עד תאריך
-                      </label>
-                      <Input
-                        type="date"
-                        value={rangeEndDate}
-                        min={
-                          selectedCell
-                            ? format(selectedCell.date, "yyyy-MM-dd")
-                            : ""
-                        }
-                        onChange={(e) => setRangeEndDate(e.target.value)}
-                        className="h-10 bg-background dark:bg-slate-900 border-border dark:border-white/20 text-xs font-bold rounded-xl dark:text-white dark:placeholder:text-white/40 focus:ring-primary/20"
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-              <div className="space-y-6">
-                {(() => {
-                  const dayOfW = selectedCell ? getDay(selectedCell.date) : -1;
-                  const isWeekendDay = dayOfW === 5 || dayOfW === 6;
+              {/* Status Sections */}
+              {(() => {
+                const dayOfW = selectedCell ? getDay(selectedCell.date) : -1;
+                const isWeekendDay = dayOfW === 5 || dayOfW === 6;
 
-                  const officeParent = rosterParentStatuses.find(
-                    (p) => p.name === "משרד",
-                  );
-                  const otherParents = rosterParentStatuses.filter(
-                    (p) => p.name !== "משרד",
-                  );
-                  const subStatuses = officeParent
-                    ? rosterSubStatusMap[officeParent.id] || []
-                    : [];
+                const officeParent = rosterParentStatuses.find((p) => p.name === "משרד");
+                const otherParents = rosterParentStatuses.filter((p) => p.name !== "משרד");
+                const subStatuses = officeParent ? rosterSubStatusMap[officeParent.id] || [] : [];
 
-                  return (
-                    <>
-                      {/* Section 1: Office (Premium Large Style) */}
-                      {!isWeekendDay && officeParent && (
-                        <div className="space-y-2 sm:space-y-3">
-                          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                return (
+                  <div className="space-y-4">
+                    {/* Work / Office Section */}
+                    {!isWeekendDay && officeParent && (
+                      <div className="space-y-2 text-right">
+                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                          סטטוס נוכחות ועבודה
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+                          <StatusCard
+                            type={officeParent}
+                            large
+                            active={selectedStatusId === officeParent.id}
+                            onClick={() => handleSelectStatus(officeParent)}
+                          />
+                          {subStatuses.map((sub) => (
                             <StatusCard
-                              type={officeParent}
-                              large
-                              onClick={() =>
-                                addPendingUpdate(
-                                  selectedCell!.empId,
-                                  officeParent.id,
-                                  selectedCell!.date,
-                                  rangeMode && rangeEndDate
-                                    ? new Date(rangeEndDate)
-                                    : undefined,
-                                )
-                              }
+                              key={sub.id}
+                              type={sub}
+                              isSub
+                              active={selectedStatusId === sub.id}
+                              onClick={() => handleSelectStatus(sub)}
                             />
-                            {subStatuses.map((sub) => (
-                              <StatusCard
-                                key={sub.id}
-                                type={sub}
-                                isSub
-                                onClick={() =>
-                                  addPendingUpdate(
-                                    selectedCell!.empId,
-                                    sub.id,
-                                    selectedCell!.date,
-                                    rangeMode && rangeEndDate
-                                      ? new Date(rangeEndDate)
-                                      : undefined,
-                                  )
-                                }
-                              />
-                            ))}
-                          </div>
-
-                          <div className="h-px bg-border/40 mx-2" />
+                          ))}
                         </div>
-                      )}
+                      </div>
+                    )}
 
-                      {/* Section 2: Other Parents (3x3 Grid) */}
-                      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                    {/* Absences / Activities Section */}
+                    <div className="space-y-2 text-right">
+                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                        {isWeekendDay ? "סטטוסים לסוף שבוע (תורנות / תגבור / מיוחד)" : "סטטוס היעדרות ופעילויות"}
+                      </p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2.5">
                         {otherParents
                           .filter((p) => {
                             if (isWeekendDay) {
-                              return (
-                                p.name.includes("תגבור") ||
-                                p.name.includes("אחר")
-                              );
+                              return p.name.includes("תגבור") || p.name.includes("אחר") || p.name.includes("תורנות") || p.name.includes("משימה");
                             }
                             return true;
                           })
@@ -1532,103 +1637,88 @@ export default function RosterPage() {
                             <StatusCard
                               key={parent.id}
                               type={parent}
-                              onClick={() => {
-                                if (parent.name === "אחר") {
-                                  setTargetOtherStatus(parent);
-                                  setShowOtherInput(true);
-                                } else {
-                                  addPendingUpdate(
-                                    selectedCell!.empId,
-                                    parent.id,
-                                    selectedCell!.date,
-                                    rangeMode && rangeEndDate
-                                      ? new Date(rangeEndDate)
-                                      : undefined,
-                                  );
-                                }
-                              }}
+                              active={selectedStatusId === parent.id}
+                              onClick={() => handleSelectStatus(parent)}
                             />
                           ))}
                       </div>
+                    </div>
 
-                      {/* Section 3: Custom "Other" Input */}
-                      <AnimatePresence>
-                        {showOtherInput && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20 space-y-4">
-                              <div className="flex items-center gap-2">
-                                <Plus className="w-4 h-4 text-primary" />
-                                <span className="text-[10px] font-black text-primary uppercase tracking-widest">
-                                  פירוט סטטוס מותאם אישית (אחר)
-                                </span>
-                              </div>
-                              <div className="flex gap-2">
-                                <Input
-                                  autoFocus
-                                  placeholder="הזן תיאור סטטוס..."
-                                  value={otherNote}
-                                  onChange={(e) => setOtherNote(e.target.value)}
-                                  className="h-11 bg-white border-primary/20 rounded-xl text-sm font-bold placeholder:text-muted-foreground/40"
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter" && otherNote.trim()) {
-                                      addPendingUpdate(
-                                        selectedCell!.empId,
-                                        targetOtherStatus.id,
-                                        selectedCell!.date,
-                                        rangeMode && rangeEndDate
-                                          ? new Date(rangeEndDate)
-                                          : undefined,
-                                        otherNote.trim(),
-                                      );
-                                    }
-                                  }}
-                                />
-                                <Button
-                                  disabled={!otherNote.trim()}
-                                  onClick={() => {
-                                    addPendingUpdate(
-                                      selectedCell!.empId,
-                                      targetOtherStatus.id,
-                                      selectedCell!.date,
-                                      rangeMode && rangeEndDate
-                                        ? new Date(rangeEndDate)
-                                        : undefined,
-                                      otherNote.trim(),
-                                    );
-                                  }}
-                                  className="h-11 px-6 rounded-xl font-bold bg-primary hover:bg-primary/90"
-                                >
-                                  אישור
-                                </Button>
-                              </div>
+                    {/* Custom Status "Other" Slide-down */}
+                    <AnimatePresence>
+                      {showOtherInput && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="p-4 bg-muted/40 rounded-xl border border-border/80 space-y-3">
+                            <div className="flex items-center gap-2 text-primary font-bold text-xs">
+                              <Plus className="w-4 h-4" />
+                              <span>פירוט סטטוס מותאם אישית (אחר)</span>
                             </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </>
-                  );
-                })()}
-              </div>
+                            <div className="flex gap-2">
+                              <Input
+                                autoFocus
+                                placeholder="הזן תיאור סטטוס (למשל: יום עיון, בדיקות רפואיות...)"
+                                value={otherNote}
+                                onChange={(e) => setOtherNote(e.target.value)}
+                                className="h-10 bg-background border-border rounded-lg text-xs font-bold"
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" && otherNote.trim()) {
+                                    handleConfirmStatus();
+                                  }
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })()}
             </div>
 
-            <div className="p-4 bg-muted/20 border-t border-border flex justify-end">
+            {/* Footer */}
+            <div className="p-3.5 sm:p-4 border-t border-border/60 bg-muted/20 flex items-center justify-between gap-3 shrink-0">
               <Button
-                variant="ghost"
+                type="button"
+                variant="outline"
                 size="sm"
-                onClick={() => {
-                  setIsDialogOpen(false);
-                  setRangeMode(false);
-                  setRangeEndDate("");
-                }}
-                className="px-6 text-xs font-bold text-muted-foreground hover:text-foreground"
+                onClick={handleCloseDialog}
+                className="px-5 h-9 text-xs font-bold rounded-lg cursor-pointer"
               >
                 ביטול
               </Button>
+
+              <div className="flex items-center gap-3">
+                {selectedStatusId ? (
+                  <span className="text-xs font-bold text-primary hidden sm:inline-block">
+                    נבחר: {getStatusById(selectedStatusId)?.name}
+                    {rangeMode && rangeEndDate ? ` (עד ${format(new Date(rangeEndDate), "dd/MM/yyyy")})` : ""}
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground font-medium hidden sm:inline-block">
+                    בחר סטטוס מהרשימה ולחץ על אישור
+                  </span>
+                )}
+
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={
+                    !selectedStatusId ||
+                    (getStatusById(selectedStatusId)?.name === "אחר" && !otherNote.trim())
+                  }
+                  onClick={handleConfirmStatus}
+                  className="px-6 h-9 text-xs font-black rounded-lg gap-1.5 cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+                >
+                  <Check className="w-4 h-4" />
+                  אישור שיבוץ
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

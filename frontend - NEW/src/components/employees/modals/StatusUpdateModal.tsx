@@ -25,6 +25,7 @@ import {
   Home,
   Building2,
   MapPin,
+  Flag,
 } from "lucide-react";
 import { useEmployees } from "@/hooks/useEmployees";
 import type { Employee } from "@/types/employee.types";
@@ -65,6 +66,8 @@ const getStatusIcon = (name: string) => {
   if (n.includes("חוץ") || n.includes("נסיעה") || n.includes("בתפקיד"))
     return Car;
   if (n.includes('חו"ל') || n.includes("טיסה")) return Plane;
+  if (n.includes("יום יחידה") || n.includes("אירוע") || n.includes("משימה"))
+    return Flag;
   return Briefcase;
 };
 

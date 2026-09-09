@@ -6,9 +6,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Activity, Calendar } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   XAxis,
@@ -16,10 +15,11 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Area,
-  AreaChart,
+  BarChart,
+  Bar,
+  Cell,
 } from "recharts";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isSameDay } from "date-fns";
 import { toPng, toBlob } from "html-to-image";
 import { toast } from "sonner";
 
@@ -133,13 +133,16 @@ export const AttendanceTrendCard = forwardRef(
         ? data 
         : ((data as any)?.trend || (data as any)?.data || []);
 
+      const todayDate = new Date();
+
       return rawList.map((item: any) => {
         const rawDate = item.date || item.date_str || "";
         let formattedDate = rawDate;
+        let itemDate: Date | null = null;
         try {
           if (rawDate.includes("-")) {
-            const d = parseISO(rawDate);
-            formattedDate = format(d, "dd/MM");
+            itemDate = parseISO(rawDate);
+            formattedDate = format(itemDate, "dd/MM");
           }
         } catch {
           formattedDate = rawDate;
@@ -148,6 +151,8 @@ export const AttendanceTrendCard = forwardRef(
         const total = item.total_count ?? item.total_employees ?? totalEmployees ?? 0;
         const present = item.present_count ?? 0;
         const pct = item.percentage ?? (total > 0 ? Math.round((present / total) * 100) : 0);
+        const isToday = itemDate ? isSameDay(itemDate, todayDate) : false;
+        const isSelected = itemDate && selectedDate ? isSameDay(itemDate, selectedDate) : false;
 
         return {
           rawDate,
@@ -155,9 +160,11 @@ export const AttendanceTrendCard = forwardRef(
           present,
           total,
           percentage: pct,
+          isToday,
+          isSelected,
         };
       });
-    }, [data, totalEmployees]);
+    }, [data, totalEmployees, selectedDate]);
 
     const averagePct = useMemo(() => {
       if (!chartData.length) return 0;
@@ -168,7 +175,6 @@ export const AttendanceTrendCard = forwardRef(
     const ranges = [
       { label: "7 ימים", value: 7 },
       { label: "30 ימים", value: 30 },
-      { label: "90 ימים", value: 90 },
     ];
 
     return (
@@ -183,7 +189,7 @@ export const AttendanceTrendCard = forwardRef(
         {!hideHeader && (
           <CardHeader className="px-4 sm:px-6 py-3 sm:py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3">
             <div className="space-y-1 min-w-0 flex-1">
-              <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex items-center gap-2.5 min-w-0 flex-wrap">
                 <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                   <TrendingUp className="w-4 h-4" />
                 </div>
@@ -194,19 +200,19 @@ export const AttendanceTrendCard = forwardRef(
                   ממוצע {averagePct}%
                 </Badge>
               </div>
-              <CardDescription className="text-xs text-muted-foreground truncate">
-                {unitName} • {range} ימים אחרונים
+              <CardDescription className="text-xs text-muted-foreground truncate flex items-center gap-3">
+                <span>{unitName} • {range === 7 ? "שבועי (7 ימים)" : "חודשי (30 ימים)"}</span>
               </CardDescription>
             </div>
 
-            {/* Range Selector Pills (Hidden on Export) */}
+            {/* Range Selector Pills (7 / 30 Days) */}
             <div className="flex items-center gap-1 bg-muted/60 p-0.5 sm:p-1 rounded-xl border border-border/40 shrink-0 no-export">
               {ranges.map((r) => (
                 <button
                   key={r.value}
                   onClick={() => onRangeChange?.(r.value)}
                   className={cn(
-                    "px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all",
+                    "px-2.5 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all cursor-pointer",
                     range === r.value
                       ? "bg-card text-foreground shadow-xs"
                       : "text-muted-foreground hover:text-foreground"
@@ -231,10 +237,22 @@ export const AttendanceTrendCard = forwardRef(
             </div>
           ) : (
             <div className="w-full flex-1 min-h-[260px] sm:min-h-[290px] min-w-0 flex flex-col">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={260} initialDimension={{ width: 450, height: 290 }}>
-                <AreaChart
+              <div className="flex items-center justify-end gap-3 mb-2 px-2 text-[10px] sm:text-[11px] text-muted-foreground font-bold">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-[#60a5fa]" />
+                  <span>שגרה</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-[#f43f5e]" />
+                  <span>היום / נבחר</span>
+                </div>
+              </div>
+
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240} initialDimension={{ width: 450, height: 270 }}>
+                <BarChart
                   data={chartData}
                   margin={{ top: 16, right: 12, left: -20, bottom: 4 }}
+                  barCategoryGap={range === 7 ? "24%" : range === 30 ? "14%" : "6%"}
                   onClick={(e) => {
                     if (e && e.activePayload && e.activePayload.length && onDateSelect) {
                       const item = e.activePayload[0].payload;
@@ -246,25 +264,28 @@ export const AttendanceTrendCard = forwardRef(
                     }
                   }}
                 >
-                  <defs>
-                    <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--color-primary, #3b82f6)" stopOpacity={0.35} />
-                      <stop offset="95%" stopColor="var(--color-primary, #3b82f6)" stopOpacity={0.0} />
-                    </linearGradient>
-                  </defs>
-
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.15)" />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="rgba(148, 163, 184, 0.15)"
+                  />
 
                   <XAxis
                     dataKey="formattedDate"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 11, fill: "var(--color-muted-foreground, #94a3b8)", fontFamily: "Noto Sans Hebrew, sans-serif" }}
-                    dy={5}
+                    interval={range === 7 ? 0 : range === 30 ? 3 : 9}
+                    tick={{
+                      fontSize: 11,
+                      fill: "var(--color-muted-foreground, #94a3b8)",
+                      fontFamily: "Noto Sans Hebrew, sans-serif",
+                      fontWeight: 600,
+                    }}
+                    dy={6}
                   />
 
                   <YAxis
-                    width={34}
+                    width={36}
                     domain={[0, 100]}
                     axisLine={false}
                     tickLine={false}
@@ -280,35 +301,68 @@ export const AttendanceTrendCard = forwardRef(
                   />
 
                   <Tooltip
+                    cursor={{ fill: "rgba(148, 163, 184, 0.12)", radius: [6, 6, 0, 0] }}
                     content={({ active, payload }) => {
                       if (!active || !payload || !payload.length) return null;
                       const d = payload[0].payload;
+                      const isHighlight = d.isToday || d.isSelected;
                       return (
-                        <div className="bg-popover/95 backdrop-blur-md border border-border/60 shadow-lg rounded-xl p-3 text-right text-xs space-y-1" dir="rtl">
-                          <p className="font-bold text-foreground">{d.formattedDate}</p>
-                          <div className="flex items-center justify-between gap-4">
-                            <span className="text-muted-foreground">זמינות:</span>
-                            <span className="font-black text-primary">{d.percentage}%</span>
+                        <div
+                          className="bg-popover/95 backdrop-blur-md border border-border/70 shadow-xl rounded-xl p-3 text-right text-xs space-y-1.5 min-w-[140px]"
+                          dir="rtl"
+                        >
+                          <div className="flex items-center justify-between gap-3 border-b border-border/40 pb-1">
+                            <span className="font-extrabold text-foreground">{d.formattedDate}</span>
+                            {d.isToday ? (
+                              <span className="text-[9px] font-black bg-rose-500/15 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded-md">
+                                היום
+                              </span>
+                            ) : d.isSelected ? (
+                              <span className="text-[9px] font-black bg-primary/15 text-primary px-1.5 py-0.5 rounded-md">
+                                נבחר
+                              </span>
+                            ) : null}
                           </div>
                           <div className="flex items-center justify-between gap-4">
-                            <span className="text-muted-foreground">נוכחים:</span>
-                            <span className="font-bold text-foreground">{d.present} / {d.total}</span>
+                            <span className="text-muted-foreground font-medium">אחוז נוכחות:</span>
+                            <span
+                              className={cn(
+                                "font-black text-sm",
+                                isHighlight ? "text-rose-500" : "text-blue-500 dark:text-blue-400"
+                              )}
+                            >
+                              {d.percentage}%
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-muted-foreground font-medium">נוכחים בפועל:</span>
+                            <span className="font-bold text-foreground">
+                              {d.present} / {d.total}
+                            </span>
                           </div>
                         </div>
                       );
                     }}
                   />
 
-                  <Area
-                    type="monotone"
+                  <Bar
                     dataKey="percentage"
-                    stroke="var(--color-primary, #3b82f6)"
-                    strokeWidth={2.5}
-                    fillOpacity={1}
-                    fill="url(#trendGradient)"
-                    activeDot={{ r: 5, strokeWidth: 2, stroke: "#ffffff" }}
-                  />
-                </AreaChart>
+                    radius={[6, 6, 2, 2]}
+                    maxBarSize={36}
+                    animationDuration={800}
+                  >
+                    {chartData.map((entry: any, index: number) => {
+                      const isHighlight = entry.isToday || entry.isSelected;
+                      return (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={isHighlight ? "#f43f5e" : "#60a5fa"}
+                          className="transition-all duration-300 hover:opacity-85 cursor-pointer"
+                        />
+                      );
+                    })}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             </div>
           )}

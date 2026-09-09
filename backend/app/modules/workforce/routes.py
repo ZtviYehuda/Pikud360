@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, date
 import logging
 import json
 import re
+import uuid
 
 from app.database.connection import get_db_connection
 from app.modules.workforce.repositories import EmployeeRepository, EmployeeHistoryRepository
@@ -373,21 +374,22 @@ SYSTEM_ATTENDANCE_STATUS_TYPES = [
         "id": "OFFICE",
         "name": "משרד",
         "category": "PRESENT",
+        "is_presence": True,
         "is_default": True,
         "color": "#10B981",
         "sub_statuses": [
-            {"id": "HOME", "name": "מהבית (עבודה מרחוק)"},
-            {"id": "EXTERNAL_FACILITY", "name": "מתקן חיצוני"},
-            {"id": "FIELD", "name": "שטח"}
+            {"id": "HOME", "name": "מהבית (עבודה מרחוק)", "is_presence": True},
+            {"id": "EXTERNAL_FACILITY", "name": "מתקן חיצוני", "is_presence": True},
+            {"id": "FIELD", "name": "שטח", "is_presence": True}
         ]
     },
-    {"id": "VACATION", "name": "חופשה", "category": "ABSENCE", "color": "#F59E0B"},
-    {"id": "SICK", "name": "מחלה", "category": "ABSENCE", "color": "#6366F1"},
-    {"id": "COURSE", "name": "קורס", "category": "PRESENT", "color": "#8B5CF6"},
-    {"id": "REINFORCEMENT", "name": "תגבור", "category": "PRESENT", "color": "#3B82F6"},
-    {"id": "ABROAD", "name": "חו\"ל", "category": "ABSENCE", "color": "#EC4899"},
-    {"id": "UNIT_DAY", "name": "יום יחידה", "category": "EVENT", "color": "#14B8A6"},
-    {"id": "OTHER", "name": "אחר", "category": "OTHER", "color": "#64748B"}
+    {"id": "VACATION", "name": "חופשה", "category": "ABSENCE", "is_presence": False, "color": "#F59E0B"},
+    {"id": "SICK", "name": "מחלה", "category": "ABSENCE", "is_presence": False, "color": "#EF4444"},
+    {"id": "COURSE", "name": "קורס", "category": "PRESENT", "is_presence": True, "color": "#8B5CF6"},
+    {"id": "REINFORCEMENT", "name": "תגבור", "category": "PRESENT", "is_presence": True, "color": "#3B82F6"},
+    {"id": "ABROAD", "name": "חו\"ל", "category": "ABSENCE", "is_presence": False, "color": "#EC4899"},
+    {"id": "UNIT_DAY", "name": "יום יחידה", "category": "EVENT", "is_presence": True, "color": "#14B8A6"},
+    {"id": "OTHER", "name": "אחר", "category": "OTHER", "is_presence": False, "color": "#64748B"}
 ]
 
 
@@ -832,15 +834,18 @@ def get_attendance_stats():
                     st_id = daily_schedules.get(emp_id)
                     st_info = status_meta.get(st_id)
                     st_code = st_info["code"] if st_info else (emp[11] or "AVAILABLE")
-                    st_name = st_info["name"] if st_info else ("נוכח" if st_code in ('PRESENT', 'AVAILABLE', 'ACTIVE', 'נוכח') else "חופשה")
-                    st_color = st_info["color"] if st_info else ("#10B981" if st_code in ('PRESENT', 'AVAILABLE', 'ACTIVE', 'נוכח') else "#F59E0B")
+                    st_name = st_info["name"] if st_info else ("משרד" if st_code in ('PRESENT', 'AVAILABLE', 'ACTIVE', 'נוכח', 'OFFICE') else "חופשה")
+                    st_color = st_info["color"] if st_info else ("#10B981" if st_code in ('PRESENT', 'AVAILABLE', 'ACTIVE', 'נוכח', 'OFFICE') else "#F59E0B")
+                    st_cat = st_info.get("category", "PRESENT") if st_info else "PRESENT"
 
-                    if st_code in ('AVAILABLE', 'PRESENT', 'ACTIVE', 'OFFICE', 'נוכח'):
+                    is_pres = st_code in ('AVAILABLE', 'PRESENT', 'ACTIVE', 'OFFICE', 'נוכח', 'TRAINING', 'COURSE', 'REINFORCEMENT', 'MISSION', 'UNIT_DAY') or st_cat in ('AVAILABLE', 'PRESENT', 'EVENT', 'REINFORCEMENT', 'TRAINING')
+
+                    if is_pres:
                         present += 1
-                    elif st_code in ('SICK', 'מחלה'):
+                    elif st_code in ('SICK', 'מחלה') or st_cat == 'SICK':
                         sick += 1
                         absent += 1
-                    elif st_code in ('VACATION', 'חופשה'):
+                    elif st_code in ('VACATION', 'חופשה', 'ABROAD') or st_cat == 'VACATION':
                         vacation += 1
                         absent += 1
                     else:
@@ -1042,11 +1047,11 @@ def get_attendance_stats_trend():
                     cur_schedules = schedules_by_date.get(cur_d, [])
 
                     if cur_schedules:
-                        present_c = sum(1 for e_id, st_id in cur_schedules if status_code_map.get(st_id, 'AVAILABLE') in ('AVAILABLE', 'PRESENT', 'ACTIVE', 'OFFICE'))
+                        present_c = sum(1 for e_id, st_id in cur_schedules if status_code_map.get(st_id, 'AVAILABLE') in ('AVAILABLE', 'PRESENT', 'ACTIVE', 'OFFICE', 'TRAINING', 'COURSE', 'REINFORCEMENT', 'MISSION', 'UNIT_DAY'))
                         total_c = len(cur_schedules)
                     else:
                         # Fallback realistic baseline if no schedule row for that weekend/day
-                        present_c = int(total_in_scope * 0.65)
+                        present_c = int(total_in_scope * 0.75)
                         total_c = total_in_scope
 
                     absent_c = max(0, total_c - present_c)
@@ -1120,7 +1125,7 @@ def get_attendance_stats_comparison():
 
                     st_id = daily_schedules.get(emp_id)
                     st_code = status_code_map.get(st_id, emp[2] or "AVAILABLE")
-                    is_pres = st_code in ('AVAILABLE', 'PRESENT', 'ACTIVE', 'OFFICE', 'נוכח')
+                    is_pres = st_code in ('AVAILABLE', 'PRESENT', 'ACTIVE', 'OFFICE', 'נוכח', 'TRAINING', 'COURSE', 'REINFORCEMENT', 'MISSION', 'UNIT_DAY')
 
                     if assigned_team not in team_stats:
                         team_stats[assigned_team] = {"total": 0, "present": 0, "absent": 0}
@@ -1293,17 +1298,117 @@ def log_attendance_endpoint():
 @workforce_bp.route("/attendance/bulk-log", methods=["POST"])
 @jwt_required(optional=True)
 def bulk_log_attendance_endpoint():
-    """Logs bulk attendance status update for multiple employees."""
+    """Logs bulk attendance status update for multiple employees and persists to employee_daily_schedule."""
     data = request.get_json() or {}
+    updates = data.get("updates", [])
     employee_ids = data.get("employee_ids", [])
     status_type_id = data.get("status_type_id")
 
-    logger.info(f"Bulk attendance log updated for {len(employee_ids)} employees: status={status_type_id}")
-    return jsonify({
-        "success": True,
-        "message": f"הסטטוס עודכן בהצלחה עבור {len(employee_ids)} שוטרים",
-        "updated_count": len(employee_ids)
-    }), 200
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT id, code, name FROM workforce.schedule_statuses;")
+                status_rows = cur.fetchall()
+                status_id_by_code = {r[1]: str(r[0]) for r in status_rows}
+                status_id_by_name = {r[2]: str(r[0]) for r in status_rows}
+                all_status_ids = {str(r[0]): str(r[0]) for r in status_rows}
+                default_status_id = str(status_rows[0][0]) if status_rows else None
+
+                def resolve_status_uuid(st_val):
+                    if not st_val:
+                        return default_status_id
+                    st_str = str(st_val).strip()
+                    if st_str in all_status_ids:
+                        return st_str
+                    front_map = {
+                        "OFFICE": "AVAILABLE",
+                        "COURSE": "TRAINING",
+                        "UNIT_DAY": "MISSION",
+                        "HOME": "AVAILABLE",
+                        "EXTERNAL_FACILITY": "AVAILABLE",
+                        "FIELD": "AVAILABLE",
+                        "ABROAD": "UNAVAILABLE",
+                        "VACATION": "VACATION",
+                        "SICK": "SICK",
+                        "REINFORCEMENT": "REINFORCEMENT",
+                        "OTHER": "OTHER"
+                    }
+                    mapped_code = front_map.get(st_str, st_str)
+                    if mapped_code in status_id_by_code:
+                        return status_id_by_code[mapped_code]
+                    if st_str in status_id_by_name:
+                        return status_id_by_name[st_str]
+                    return default_status_id
+
+                cur.execute("SELECT id FROM core.tenants LIMIT 1;")
+                t_row = cur.fetchone()
+                tenant_id = str(t_row[0]) if t_row else str(uuid.uuid4())
+
+                updated_count = 0
+
+                # Case A: list of updates [{ employee_id, status_type_id, start_date, end_date, note }]
+                if updates:
+                    for upd in updates:
+                        emp_id = str(upd.get("employee_id"))
+                        st_uuid = resolve_status_uuid(upd.get("status_type_id"))
+                        start_d_str = upd.get("start_date") or upd.get("start_datetime")
+                        end_d_str = upd.get("end_date") or upd.get("end_datetime") or start_d_str
+                        note = upd.get("note") or upd.get("notes") or ""
+
+                        if not start_d_str:
+                            continue
+
+                        start_d = datetime.strptime(start_d_str[:10], "%Y-%m-%d").date()
+                        end_d = datetime.strptime(end_d_str[:10], "%Y-%m-%d").date()
+
+                        curr = start_d
+                        while curr <= end_d:
+                            sched_id = str(uuid.uuid4())
+                            cur.execute("""
+                                INSERT INTO workforce.employee_daily_schedule (
+                                    id, tenant_id, employee_id, organization_unit_id, schedule_date,
+                                    status_id, notes, created_at, updated_at
+                                ) VALUES (
+                                    %s, %s, %s, (SELECT org_unit_id FROM workforce.employees WHERE id = %s), %s, %s, %s, NOW(), NOW()
+                                )
+                                ON CONFLICT (employee_id, schedule_date) DO UPDATE SET
+                                    status_id = EXCLUDED.status_id,
+                                    notes = EXCLUDED.notes,
+                                    updated_at = NOW();
+                            """, (sched_id, tenant_id, emp_id, emp_id, curr, st_uuid, note))
+                            curr += timedelta(days=1)
+                            updated_count += 1
+
+                # Case B: employee_ids list with status_type_id
+                elif employee_ids and status_type_id:
+                    st_uuid = resolve_status_uuid(status_type_id)
+                    target_d = date.today()
+                    for emp_id in employee_ids:
+                        sched_id = str(uuid.uuid4())
+                        cur.execute("""
+                            INSERT INTO workforce.employee_daily_schedule (
+                                id, tenant_id, employee_id, organization_unit_id, schedule_date,
+                                status_id, created_at, updated_at
+                            ) VALUES (
+                                %s, %s, %s, (SELECT org_unit_id FROM workforce.employees WHERE id = %s), %s, %s, NOW(), NOW()
+                            )
+                            ON CONFLICT (employee_id, schedule_date) DO UPDATE SET
+                                status_id = EXCLUDED.status_id,
+                                updated_at = NOW();
+                        """, (sched_id, tenant_id, str(emp_id), str(emp_id), target_d, st_uuid))
+                        updated_count += 1
+
+                conn.commit()
+
+        return jsonify({
+            "success": True,
+            "message": f"הסטטוס עודכן בהצלחה עבור {updated_count} רשומות",
+            "updated_count": updated_count
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error in bulk log attendance: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @workforce_bp.route("/attendance/bulk-scope", methods=["POST"])
@@ -1354,11 +1459,164 @@ def get_attendance_calendar_endpoint():
 @workforce_bp.route("/attendance/roster-matrix", methods=["GET"])
 @jwt_required(optional=True)
 def get_roster_matrix_endpoint():
-    """Returns roster matrix overview."""
-    return jsonify({
-        "success": True,
-        "matrix": []
-    }), 200
+    """Returns roster matrix: list of employees in scope and their scheduled status logs."""
+    user_id = get_jwt_identity()
+    claims = get_jwt() or {}
+    scope = get_user_effective_scope(user_id, claims)
+
+    start_date_param = request.args.get("start_date")
+    end_date_param = request.args.get("end_date")
+
+    try:
+        start_date = datetime.strptime(start_date_param, "%Y-%m-%d").date() if start_date_param else (date.today() - timedelta(days=7))
+    except Exception:
+        start_date = date.today() - timedelta(days=7)
+
+    try:
+        end_date = datetime.strptime(end_date_param, "%Y-%m-%d").date() if end_date_param else (date.today() + timedelta(days=7))
+    except Exception:
+        end_date = date.today() + timedelta(days=7)
+
+    dept_id = request.args.get("department_id")
+    sect_id = request.args.get("section_id")
+    team_id = request.args.get("team_id")
+    dept_ids = [d.strip() for d in dept_id.split(",") if d.strip()] if dept_id and dept_id != "all" else []
+    sect_ids = [s.strip() for s in sect_id.split(",") if s.strip()] if sect_id and sect_id != "all" else []
+    team_ids = [t.strip() for t in team_id.split(",") if t.strip()] if team_id and team_id != "all" else []
+
+    allowed_depts = set(scope["allowed_dept_ids"]) if scope["allowed_dept_ids"] is not None else None
+    allowed_sects = set(scope["allowed_sect_ids"]) if scope["allowed_sect_ids"] is not None else None
+    allowed_teams = set(scope["allowed_team_ids"]) if scope["allowed_team_ids"] is not None else None
+
+    if allowed_depts is not None:
+        dept_ids = [d for d in dept_ids if d in allowed_depts] if dept_ids else list(allowed_depts)
+    if allowed_sects is not None:
+        sect_ids = [s for s in sect_ids if s in allowed_sects] if sect_ids else list(allowed_sects)
+    if allowed_teams is not None:
+        team_ids = [t for t in team_ids if t in allowed_teams] if team_ids else list(allowed_teams)
+
+    org_map = get_org_hierarchy_map()
+    all_team_keys = [str(t["id"]) for d in FULL_ORGANIZATION_STRUCTURE for s in d.get("sections", []) for t in s.get("teams", [])]
+
+    employees_res = []
+    matching_emp_ids = set()
+
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                # 1. Fetch matching employees
+                cur.execute("""
+                    SELECT id, employee_number, first_name, last_name, org_unit_id,
+                           rank, position, service_type, status, user_id
+                    FROM workforce.employees
+                    WHERE deleted_at IS NULL
+                      AND (position NOT IN ('מנהל מערכת', 'מנהלת מערכת', 'ADMIN') OR position IS NULL)
+                      AND (rank NOT IN ('מנהל מערכת', 'מנהלת מערכת') OR rank IS NULL)
+                      AND (service_type NOT IN ('מנהל מערכת', 'מנהלת מערכת') OR service_type IS NULL)
+                    ORDER BY first_name ASC, last_name ASC;
+                """)
+                rows = cur.fetchall()
+
+                for emp in rows:
+                    emp_id = str(emp[0])
+                    emp_org = str(emp[4]) if emp[4] else ""
+                    h_info = org_map.get(emp_org)
+                    if not h_info:
+                        assigned_team = all_team_keys[abs(hash(emp_id)) % len(all_team_keys)]
+                        h_info = org_map.get(assigned_team, {"dept_id": "1", "sect_id": "101", "team_id": "1001", "department_name": "טכנולוגיות", "section_name": "מערכות הסייבר", "team_name": "חברות תקשורת"})
+
+                    if dept_ids and str(h_info.get("dept_id")) not in dept_ids:
+                        continue
+                    if sect_ids and str(h_info.get("sect_id")) not in sect_ids:
+                        continue
+                    if team_ids and str(h_info.get("team_id")) not in team_ids:
+                        continue
+
+                    matching_emp_ids.add(emp_id)
+                    employees_res.append({
+                        "id": emp_id,
+                        "employee_id": emp_id,
+                        "personal_number": emp[1],
+                        "employee_number": emp[1],
+                        "first_name": emp[2],
+                        "last_name": emp[3],
+                        "department_id": h_info.get("dept_id"),
+                        "department_name": h_info.get("department_name", ""),
+                        "section_id": h_info.get("sect_id"),
+                        "section_name": h_info.get("section_name", ""),
+                        "team_id": h_info.get("team_id"),
+                        "team_name": h_info.get("team_name", ""),
+                        "rank": emp[5] or "רס\"ל",
+                        "position": emp[6] or "שוטר",
+                        "role": emp[6] or "שוטר",
+                        "service_type": emp[7] or "קבע",
+                        "status": emp[8] or "ACTIVE",
+                        "user_id": str(emp[9]) if emp[9] else None
+                    })
+
+                # 2. Fetch daily schedules
+                cur.execute("""
+                    SELECT eds.employee_id, eds.schedule_date, eds.status_id, ss.code, ss.name, ss.color, ss.category, eds.notes
+                    FROM workforce.employee_daily_schedule eds
+                    JOIN workforce.schedule_statuses ss ON ss.id = eds.status_id
+                    WHERE eds.schedule_date BETWEEN %s AND %s;
+                """, (start_date, end_date))
+                sched_rows = cur.fetchall()
+
+                # Status code mapping to system status id e.g. "OFFICE", "VACATION"
+                code_to_front_id = {
+                    "AVAILABLE": "OFFICE",
+                    "PRESENT": "OFFICE",
+                    "ACTIVE": "OFFICE",
+                    "OFFICE": "OFFICE",
+                    "VACATION": "VACATION",
+                    "SICK": "SICK",
+                    "TRAINING": "COURSE",
+                    "COURSE": "COURSE",
+                    "REINFORCEMENT": "REINFORCEMENT",
+                    "MISSION": "UNIT_DAY",
+                    "UNAVAILABLE": "OTHER",
+                    "OTHER": "OTHER"
+                }
+
+                logs_res = []
+                for sr in sched_rows:
+                    e_id = str(sr[0])
+                    if e_id not in matching_emp_ids:
+                        continue
+                    sched_d = sr[1].strftime("%Y-%m-%d")
+                    st_code = sr[3] or "AVAILABLE"
+                    front_id = code_to_front_id.get(st_code, st_code)
+
+                    notes_val = (sr[7] or "").strip()
+                    if notes_val and (st_code == "OTHER" or front_id == "OTHER" or sr[4] == "אחר"):
+                        st_name = notes_val
+                    elif st_code == "MISSION" or front_id == "UNIT_DAY" or sr[4] == "משימה":
+                        st_name = "יום יחידה"
+                    else:
+                        st_name = sr[4] or "משרד"
+
+                    logs_res.append({
+                        "employee_id": e_id,
+                        "status_type_id": front_id,
+                        "status_code": st_code,
+                        "status_name": st_name,
+                        "status_color": sr[5] or "#10B981",
+                        "notes": sr[7] or "",
+                        "start_datetime": f"{sched_d}T00:00:00",
+                        "end_datetime": f"{sched_d}T23:59:59",
+                        "is_verified": True
+                    })
+
+        return jsonify({
+            "success": True,
+            "employees": employees_res,
+            "logs": logs_res
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error querying roster matrix: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e), "employees": [], "logs": []}), 500
 
 
 @workforce_bp.route("/ai/query", methods=["POST"])
