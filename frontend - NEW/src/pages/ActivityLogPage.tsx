@@ -340,16 +340,15 @@ export default function ActivityLogPage() {
       </div>
 
       <main className="flex-1 overflow-y-auto custom-scrollbar px-2.5 sm:px-6 pb-6 space-y-4">
-        {/* Main Content Card */}
-        <Card className="rounded-2xl border-border/40 overflow-hidden flex flex-col min-h-[500px] bg-card/60 backdrop-blur-xl shadow-sm">
-          {/* Custom Tabs Bar - 2x2 grid on mobile, inline on desktop */}
-          <div className="grid grid-cols-2 sm:flex sm:flex-row bg-muted/40 p-2 sm:p-1.5 border-b border-border/40 gap-1.5 sm:gap-1">
+        {/* Custom Tabs Bar - Clean independent floating pill control */}
+        <div className="flex items-center justify-start">
+          <div className="grid grid-cols-2 sm:flex sm:flex-row items-center bg-card/80 dark:bg-card/50 p-1 rounded-2xl border border-border/60 shadow-2xs backdrop-blur-xs gap-1 w-full sm:w-auto">
              <button
                onClick={() => setActiveTab("my")}
                className={cn(
-                 "py-2.5 sm:py-2 px-3 text-xs font-semibold rounded-xl transition-all select-none text-center sm:flex-1",
+                 "py-2 px-3.5 text-xs font-semibold rounded-xl transition-all select-none text-center flex-1 sm:flex-initial cursor-pointer",
                  activeTab === "my"
-                   ? "bg-background text-foreground shadow-sm font-bold border border-border/50"
+                   ? "bg-background text-foreground shadow-xs font-bold border border-border/50"
                    : "text-muted-foreground hover:text-foreground hover:bg-background/40"
                )}
              >
@@ -363,9 +362,9 @@ export default function ActivityLogPage() {
                <button
                  onClick={() => setActiveTab("all")}
                  className={cn(
-                   "py-2.5 sm:py-2 px-3 text-xs font-semibold rounded-xl transition-all select-none text-center sm:flex-1",
+                   "py-2 px-3.5 text-xs font-semibold rounded-xl transition-all select-none text-center flex-1 sm:flex-initial cursor-pointer",
                    activeTab === "all"
-                     ? "bg-background text-foreground shadow-sm font-bold border border-border/50"
+                     ? "bg-background text-foreground shadow-xs font-bold border border-border/50"
                      : "text-muted-foreground hover:text-foreground hover:bg-background/40"
                  )}
                >
@@ -381,9 +380,9 @@ export default function ActivityLogPage() {
                  <button
                    onClick={() => setActiveTab("suspicious")}
                    className={cn(
-                     "py-2.5 sm:py-2 px-3 text-xs font-semibold rounded-xl transition-all select-none text-center sm:flex-1",
+                     "py-2 px-3.5 text-xs font-semibold rounded-xl transition-all select-none text-center flex-1 sm:flex-initial cursor-pointer",
                      activeTab === "suspicious"
-                       ? "bg-background text-destructive shadow-sm font-bold border border-border/50"
+                       ? "bg-background text-destructive shadow-xs font-bold border border-border/50"
                        : "text-muted-foreground hover:text-foreground hover:bg-background/40"
                    )}
                  >
@@ -395,9 +394,9 @@ export default function ActivityLogPage() {
                  <button
                    onClick={() => setActiveTab("archives")}
                    className={cn(
-                     "py-2.5 sm:py-2 px-3 text-xs font-semibold rounded-xl transition-all select-none text-center sm:flex-1",
+                     "py-2 px-3.5 text-xs font-semibold rounded-xl transition-all select-none text-center flex-1 sm:flex-initial cursor-pointer",
                      activeTab === "archives"
-                       ? "bg-background text-purple-600 shadow-sm font-bold border border-border/50"
+                       ? "bg-background text-purple-600 shadow-xs font-bold border border-border/50"
                        : "text-muted-foreground hover:text-foreground hover:bg-background/40"
                    )}
                  >
@@ -409,9 +408,10 @@ export default function ActivityLogPage() {
                </>
              )}
           </div>
+        </div>
 
-          {/* Toolbar & Advanced Filters */}
-          <div className="p-4 border-b border-border/40 space-y-3 bg-background/20">
+        {/* Toolbar & Advanced Filters - Clean directly on page background */}
+        <div className="space-y-3">
             <div className="flex flex-col lg:flex-row items-center gap-3">
                 <div className="relative w-full lg:flex-1">
                     <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
@@ -419,7 +419,7 @@ export default function ActivityLogPage() {
                         placeholder={activeTab === "archives" ? "חפש לפי תאריך ארכיון..." : "חיפוש חופשי (משתמש, IP, תיאור)..."} 
                         value={activeTab === "archives" ? archiveSearch : searchTerm}
                         onChange={(e) => activeTab === "archives" ? setArchiveSearch(e.target.value) : setSearchTerm(e.target.value)}
-                        className="pr-10 h-10 rounded-xl bg-background border-border/40 focus:ring-primary/20 transition-all font-bold text-sm"
+                        className="pr-10 h-10 rounded-xl bg-card/80 dark:bg-card/50 border-border/60 hover:border-border focus:bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-xs sm:text-sm text-right w-full shadow-2xs"
                     />
                 </div>
                 
@@ -428,8 +428,8 @@ export default function ActivityLogPage() {
                         variant="outline" 
                         onClick={() => setShowFilters(!showFilters)}
                         className={cn(
-                            "rounded-xl h-10 px-4 text-xs font-bold flex-1 lg:flex-none border-border/40",
-                            showFilters || hasActiveFilters ? "bg-primary/5 text-primary border-primary/20" : "bg-background"
+                            "rounded-xl h-10 px-4 text-xs font-bold flex-1 lg:flex-none border-border/60 shadow-2xs transition-all cursor-pointer",
+                            showFilters || hasActiveFilters ? "bg-primary/10 text-primary border-primary/30" : "bg-card/80 dark:bg-card/50 hover:bg-card text-foreground"
                         )}
                     >
                         <FilterIcon className="w-3.5 h-3.5 ml-2" />
@@ -438,14 +438,14 @@ export default function ActivityLogPage() {
                     </Button>
                     
                     {activeTab === "all" && (
-                        <div className="hidden sm:flex items-center bg-background border border-border/40 rounded-xl p-0.5">
+                        <div className="hidden sm:flex items-center bg-card/80 dark:bg-card/50 border border-border/60 rounded-xl p-0.5 shadow-2xs">
                             {[50, 100, 250].map((v) => (
                                 <button
                                     key={v}
                                     onClick={() => setLimit(v)}
                                     className={cn(
-                                        "px-3 py-1 rounded-lg text-[9px] font-black transition-all",
-                                        limit === v ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted"
+                                        "px-3 py-1 rounded-lg text-[9px] font-black transition-all cursor-pointer",
+                                        limit === v ? "bg-primary text-primary-foreground shadow-2xs" : "text-muted-foreground hover:bg-muted/60"
                                     )}
                                 >
                                     {v}
@@ -575,7 +575,9 @@ export default function ActivityLogPage() {
             </AnimatePresence>
           </div>
 
-          {/* List Content */}
+
+        {/* List Content Card */}
+        <Card className="rounded-2xl border border-border/60 overflow-hidden flex flex-col min-h-[450px] bg-card/80 dark:bg-card/50 backdrop-blur-xs shadow-2xs">
           <div className="flex-1 p-0 overflow-y-auto custom-scrollbar">
             {isLoading ? (
               <div className="h-full flex flex-col items-center justify-center py-24 gap-3 opacity-40">

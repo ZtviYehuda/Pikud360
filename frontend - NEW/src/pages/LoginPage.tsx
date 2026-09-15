@@ -1067,7 +1067,7 @@ export default function LoginPage() {
             </button>
 
             <p className="text-[10px] text-muted-foreground/70 font-medium font-mono uppercase tracking-[0.2em] leading-relaxed select-none">
-              © 2026 • THE OFFICE • v1.0.4
+              © 2026 • THE OFFICE • v1.1.3
             </p>
           </div>
         </motion.div>

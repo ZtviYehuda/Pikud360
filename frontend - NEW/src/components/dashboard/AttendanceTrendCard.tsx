@@ -290,7 +290,7 @@ export const AttendanceTrendCard = forwardRef(
                   />
 
                   <Tooltip
-                    cursor={{ fill: "rgba(148, 163, 184, 0.12)", radius: [6, 6, 0, 0] }}
+                    cursor={false}
                     content={({ active, payload }) => {
                       if (!active || !payload || !payload.length) return null;
                       const d = payload[0].payload;
@@ -346,7 +346,7 @@ export const AttendanceTrendCard = forwardRef(
                         <Cell
                           key={`cell-${index}`}
                           fill={isHighlight ? "#f43f5e" : "#60a5fa"}
-                          className="transition-all duration-300 hover:opacity-85 cursor-pointer"
+                          className="transition-all duration-200 hover:brightness-115 hover:opacity-95 cursor-pointer"
                         />
                       );
                     })}

@@ -120,7 +120,7 @@ export const LoadingScreen = () => {
       >
         <span>SECURE ENCRYPTED</span>
         <span>·</span>
-        <span>v2.0.4</span>
+        <span>v1.1.3</span>
       </motion.div>
     </div>
   );

@@ -455,15 +455,17 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
           </Button>
 
           <button
-            onClick={() =>
+            onClick={() => {
+              onOpenChange(false);
               openFeedback(
-                `פרופיל שוטר: ${employee.first_name} ${employee.last_name}`,
-              )
-            }
-            className="w-full text-[11px] text-muted-foreground hover:text-foreground transition-colors text-center py-0.5 cursor-pointer"
+                `כרטיס עובד: ${employee.first_name} ${employee.last_name}${employee.employee_number ? ` (${employee.employee_number})` : ""}`,
+                () => onOpenChange(true)
+              );
+            }}
+            className="w-full text-[11px] text-muted-foreground hover:text-primary transition-colors text-center py-1 cursor-pointer flex items-center justify-center gap-1 group"
           >
-            מצאת טעות? יש לך הצעה?{" "}
-            <span className="underline underline-offset-4 decoration-muted-foreground/40">
+            <span>מצאת טעות? יש לך הצעה?</span>
+            <span className="underline underline-offset-4 font-semibold group-hover:text-primary">
               דווח כאן
             </span>
           </button>

@@ -1,3 +1,4 @@
+import { useFeedback } from "@/context/FeedbackContext";
 import React, { useState, useEffect, useRef } from "react";
 import apiClient from "@/config/api.client";
 import {
@@ -1327,7 +1328,7 @@ export function GlobalAiSupport() {
                     transition={{ delay: 0 }}
                     onClick={() => {
                       setShowQuickMenu(false);
-                      navigate("/messaging?tab=send");
+                      openFeedback("תפריט עזרה וסיוע");
                     }}
                     className="flex items-center gap-3 w-full px-3.5 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-750 shadow-2xl hover:bg-slate-900 dark:hover:bg-slate-800 hover:border-red-500/60 transition-all group text-right active:scale-[0.98]"
                   >

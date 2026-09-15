@@ -6,6 +6,7 @@ import React, {
   useEffect,
 } from "react";
 import { useEmployees } from "@/hooks/useEmployees";
+import { useAuthContext } from "@/context/AuthContext";
 import type { Employee, DepartmentNode } from "@/types/employee.types";
 import { EmployeeDetailsModal } from "@/components/employees/modals/EmployeeDetailsModal";
 
@@ -26,6 +27,7 @@ const EmployeeContext = createContext<EmployeeContextType | undefined>(
 );
 
 export function EmployeeProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuthContext();
   const {
     employees,
     getStructure,
@@ -81,8 +83,11 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
   }, [getStructure, getStatusTypes, getRoles, getServiceTypes, fetchEmployees, fetchChatContacts]);
 
   useEffect(() => {
-    refreshReferenceData();
-  }, [refreshReferenceData]);
+    const token = localStorage.getItem("token");
+    if (user || token) {
+      refreshReferenceData();
+    }
+  }, [user, refreshReferenceData]);
 
   const openProfile = useCallback(
     async (employee: Employee | number | any) => {
@@ -139,12 +144,25 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+const defaultEmployeeContext: EmployeeContextType = {
+  structure: [],
+  statusTypes: [],
+  serviceTypes: [],
+  roles: [],
+  employees: [],
+  chatContacts: [],
+  loading: false,
+  openProfile: () => {},
+  refreshReferenceData: async () => {},
+};
+
 export function useEmployeeContext() {
   const context = useContext(EmployeeContext);
   if (context === undefined) {
-    throw new Error(
-      "useEmployeeContext must be used within an EmployeeProvider",
+    console.warn(
+      "useEmployeeContext was called outside of an EmployeeProvider. Returning safe fallback state.",
     );
+    return defaultEmployeeContext;
   }
   return context;
 }

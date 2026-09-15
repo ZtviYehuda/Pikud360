@@ -1,3 +1,4 @@
+import { useFeedback } from "@/context/FeedbackContext";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -29,6 +30,7 @@ import { useEmployees } from "@/hooks/useEmployees";
 import { useAuthContext } from "@/context/AuthContext";
 import { AttendanceTrendCard } from "@/components/dashboard/AttendanceTrendCard";
 import { StatsComparisonCard } from "@/components/dashboard/StatsComparisonCard";
+import { BirthdaysCard } from "@/components/dashboard/BirthdaysCard";
 import { EmployeesChart } from "@/components/dashboard/EmployeesChart";
 import { differenceInDays, format, isBefore } from "date-fns";
 import type { DateRange } from "react-day-picker";
@@ -84,6 +86,7 @@ export const ReportHub: React.FC<ReportHubProps> = ({
   const [renderCharts, setRenderCharts] = useState(false);
 
   const { user } = useAuthContext();
+  const { openFeedback } = useFeedback();
   const [activeTutorial, setActiveTutorial] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -132,6 +135,7 @@ export const ReportHub: React.FC<ReportHubProps> = ({
   const trendRef = useRef<any>(null);
   const comparisonRef = useRef<any>(null);
   const snapshotRef = useRef<any>(null);
+  const birthdaysRef = useRef<any>(null);
 
   const { getTrendStats, getComparisonStats, getDashboardStats } =
     useEmployees();
@@ -345,35 +349,27 @@ export const ReportHub: React.FC<ReportHubProps> = ({
 
           {previewType === null ? (
             <>
-              {/* Menu Header with Date Picker alongside Close Button */}
-              <div className="px-5 pt-4 pb-3 sm:px-7 sm:pt-6 sm:pb-3 text-right shrink-0 flex items-center justify-between gap-3">
+              {/* Menu Header */}
+              <div className="px-5 pt-5 pb-3 sm:px-7 sm:pt-6 sm:pb-3 text-right shrink-0 flex items-center justify-between gap-4">
                 <DialogHeader className="text-right flex-1 min-w-0">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-sm">
+                    <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-xs">
                       <FileText className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0 text-right">
-                      <DialogTitle className="text-lg font-black text-foreground tracking-tight leading-none mb-1">מרכז הפקת דוחות</DialogTitle>
-                      <DialogDescription className="text-xs font-medium text-muted-foreground/70 leading-none">הפקה ושיתוף נתונים מבצעיים</DialogDescription>
+                      <DialogTitle className="text-base sm:text-lg font-black text-foreground tracking-tight leading-snug">
+                        מרכז הפקת דוחות
+                      </DialogTitle>
+                      <DialogDescription className="text-xs font-medium text-muted-foreground/70 leading-tight mt-0.5">
+                        הפקה ושיתוף נתונים מבצעיים
+                      </DialogDescription>
                     </div>
                   </div>
                 </DialogHeader>
-
-                {/* Date Picker Button positioned adjacent to the Close (X) button */}
-                <div className="flex items-center gap-2 pl-11 sm:pl-12 shrink-0">
-                  <ReportDatePicker
-                    viewMode={localViewMode}
-                    date={localDate}
-                    onDateChange={setLocalDate}
-                    dateRange={dateRange}
-                    onDateRangeChange={setDateRange}
-                    maxDate={maxDate}
-                  />
-                </div>
               </div>
 
-              {/* Menu Toolbar (Clean Segmented Tabs only) */}
-              <div className="px-5 sm:px-7 pb-4 shrink-0 border-b border-border/10">
+              {/* Unified Controls Bar (Period Tabs + Date Picker) */}
+              <div className="px-5 sm:px-7 pb-4 shrink-0 border-b border-border/30">
                 <ReportToolbar
                   viewMode={localViewMode}
                   onViewModeChange={setLocalViewMode}
@@ -382,47 +378,58 @@ export const ReportHub: React.FC<ReportHubProps> = ({
                   dateRange={dateRange}
                   onDateRangeChange={setDateRange}
                   maxDate={maxDate}
-                  hideDatePicker={true}
+                  hideDatePicker={false}
                 />
               </div>
             </>
           ) : (
-            <div className="px-5 pt-4 pb-3 sm:px-7 sm:pt-5 sm:pb-4 border-b border-border/10 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3 text-right">
-              {/* Title & Back Button */}
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setPreviewType(null)}
-                  className="flex items-center justify-center w-8 h-8 rounded-xl text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 transition-all border border-border/20 shadow-sm active:scale-95 shrink-0"
-                  title="חזור לתפריט"
-                >
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-                <div className="w-[1px] h-6 bg-border/20 mx-1 shrink-0" />
-                <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shadow-sm shrink-0", 
-                  previewType === 'snapshot' ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" :
-                  previewType === 'trend' ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" :
-                  previewType === 'comparison' ? "bg-purple-500/10 text-purple-600 dark:text-purple-400" : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
-                )}>
-                  {previewType === 'snapshot' && <Users className="w-[18px] h-[18px]" />}
-                  {previewType === 'trend' && <TrendingUp className="w-[18px] h-[18px]" />}
-                  {previewType === 'comparison' && <BarChart2 className="w-[18px] h-[18px]" />}
-                  {previewType === 'birthdays' && <Gift className="w-[18px] h-[18px]" />}
-                </div>
-                <div className="text-right">
-                  <h4 className="text-sm sm:text-base font-black text-foreground tracking-tight leading-none mb-1">
-                    {previewType === 'snapshot' ? "מצבת כוח אדם" :
-                     previewType === 'trend' ? "מגמות וזמינות" :
-                     previewType === 'comparison' ? "השוואת תת-יחידות" : "חוגגי ימי הולדת"}
-                  </h4>
-                  <p className="text-[10px] sm:text-[11px] font-bold text-muted-foreground/50 leading-none">{filters.unitName}</p>
+            <>
+              {/* Preview Header */}
+              <div className="px-5 pt-5 pb-3 sm:px-7 sm:pt-6 sm:pb-3 text-right shrink-0 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <button
+                    onClick={() => setPreviewType(null)}
+                    className="flex items-center justify-center w-8 h-8 rounded-xl text-muted-foreground/70 hover:text-foreground hover:bg-muted/40 transition-all border border-border/40 shadow-xs active:scale-95 shrink-0 cursor-pointer"
+                    title="חזרה לתפריט הדוחות"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                  <div className="w-[1px] h-6 bg-border/30 mx-0.5 shrink-0" />
+                  <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center shadow-xs shrink-0", 
+                    previewType === 'snapshot' ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" :
+                    previewType === 'trend' ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" :
+                    previewType === 'comparison' ? "bg-purple-500/10 text-purple-600 dark:text-purple-400" : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                  )}>
+                    {previewType === 'snapshot' && <Users className="w-5 h-5" />}
+                    {previewType === 'trend' && <TrendingUp className="w-5 h-5" />}
+                    {previewType === 'comparison' && <BarChart2 className="w-5 h-5" />}
+                    {previewType === 'birthdays' && <Gift className="w-5 h-5" />}
+                  </div>
+                  <div className="text-right min-w-0">
+                    <h4 className="text-base sm:text-lg font-black text-foreground tracking-tight leading-snug truncate">
+                      {previewType === 'snapshot' ? "מצבת כוח אדם" :
+                       previewType === 'trend' ? "מגמות וזמינות" :
+                       previewType === 'comparison' ? "השוואת תת-יחידות" : "ריכוז ימי הולדת"}
+                    </h4>
+                    <p className="text-xs font-medium text-muted-foreground/70 leading-tight mt-0.5 truncate">{filters.unitName}</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Toolbar */}
-              <div className="w-full md:w-auto overflow-x-auto no-scrollbar scroll-smooth pl-10 sm:pl-12">
-                <ReportToolbar viewMode={localViewMode} onViewModeChange={setLocalViewMode} date={localDate} onDateChange={setLocalDate} dateRange={dateRange} onDateRangeChange={setDateRange} maxDate={maxDate} />
+              {/* Unified Controls Bar (Period Tabs + Date Picker) */}
+              <div className="px-5 sm:px-7 pb-4 shrink-0 border-b border-border/30">
+                <ReportToolbar
+                  viewMode={localViewMode}
+                  onViewModeChange={setLocalViewMode}
+                  date={localDate}
+                  onDateChange={setLocalDate}
+                  dateRange={dateRange}
+                  onDateRangeChange={setDateRange}
+                  maxDate={maxDate}
+                  hideDatePicker={false}
+                />
               </div>
-            </div>
+            </>
           )}
 
           <div className="px-4 sm:px-6 py-4 overflow-y-auto custom-scrollbar flex-1 min-h-0 relative">
@@ -481,7 +488,7 @@ export const ReportHub: React.FC<ReportHubProps> = ({
                   subtitle="חוגגים בתקופה הנבחרת" 
                   colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400" 
                   onClick={() => setPreviewType('birthdays')} 
-                  onDownload={() => downloadCard(snapshotRef)} 
+                  onDownload={() => downloadCard(birthdaysRef)} 
                   onWhatsApp={() => onShareBirthdays()} 
                 />
               </div>
@@ -514,26 +521,12 @@ export const ReportHub: React.FC<ReportHubProps> = ({
                           </div>
                         )}
                         {previewType === 'birthdays' && (
-                          <div className="flex-1 overflow-y-auto min-h-[300px] p-1">
-                            {birthdays.length === 0 ? (
-                              <div className="text-center py-10 sm:py-12"><Gift className="w-10 h-10 text-muted-foreground/15 mx-auto mb-3" /><p className="text-xs font-bold text-muted-foreground/50">אין חוגגים בטווח הנבחר</p></div>
-                            ) : (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                                {birthdays.map((emp, i) => (
-                                  <div key={i} className="flex items-center justify-between p-3.5 bg-slate-500/5 dark:bg-white/5 rounded-2xl border border-border/10 shadow-sm">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 text-white flex items-center justify-center font-bold text-[11px] shrink-0">{emp.first_name[0]}{emp.last_name[0]}</div>
-                                      <div><p className="font-bold text-[13px] text-foreground">{emp.first_name} {emp.last_name}</p><p className="text-[10px] font-medium text-muted-foreground/50">{emp.sub_unit || filters.unitName}</p></div>
-                                    </div>
-                                    <div className="text-left shrink-0"><p className="text-xs font-bold text-rose-500">{format(new Date(emp.birth_date), 'dd/MM')}</p></div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+                          <div className="w-full h-auto min-h-[300px] flex flex-col mt-2">
+                            <BirthdaysCard birthdays={birthdays} selectedDate={localDate} hideHeader={true} compact={true} />
                           </div>
                         )}
 
-                        {/* Non-jumping loading overlay — shows on date/mode change without re-mounting chart */}
+                        {/* Non-jumping loading overlay - shows on date/mode change without re-mounting chart */}
                         {loading && previewType !== 'birthdays' && (
                           <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/65 backdrop-blur-[2px] rounded-2xl">
                             <div className="flex flex-col items-center gap-2">
@@ -549,20 +542,19 @@ export const ReportHub: React.FC<ReportHubProps> = ({
                 
                 {/* Actions */}
                 <div className="mt-4 flex flex-row items-center gap-3 shrink-0 pt-3 border-t border-border/10">
-                  {(previewType !== 'birthdays') && (
-                    <Button 
-                      onClick={() => { 
-                        if (previewType === 'snapshot') downloadCard(snapshotRef); 
-                        if (previewType === 'trend') downloadCard(trendRef); 
-                        if (previewType === 'comparison') downloadCard(comparisonRef); 
-                      }} 
-                      disabled={loading} 
-                      className="h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm flex-1 gap-2 active:scale-[0.98] transition-all"
-                    >
-                      <Download className="w-5 h-5" />
-                      <span>הורדה למכשיר</span>
-                    </Button>
-                  )}
+                  <Button 
+                    onClick={() => { 
+                      if (previewType === 'snapshot') downloadCard(snapshotRef); 
+                      else if (previewType === 'trend') downloadCard(trendRef); 
+                      else if (previewType === 'comparison') downloadCard(comparisonRef); 
+                      else if (previewType === 'birthdays') downloadCard(birthdaysRef); 
+                    }} 
+                    disabled={loading} 
+                    className="h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm flex-1 gap-2 active:scale-[0.98] transition-all cursor-pointer"
+                  >
+                    <Download className="w-5 h-5" />
+                    <span>הורדה למכשיר</span>
+                  </Button>
                   <Button 
                     onClick={() => { 
                       if (previewType === 'birthdays') onShareBirthdays(); 
@@ -577,6 +569,22 @@ export const ReportHub: React.FC<ReportHubProps> = ({
                     <span>שיתוף מהיר</span>
                   </Button>
                 </div>
+                <div className="pt-2 pb-1 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false);
+                      openFeedback(
+                        `מרכז דוחות (${previewType ? `תצוגת ${previewType}` : "תפריט ראשי"})`,
+                        () => setIsOpen(true)
+                      );
+                    }}
+                    className="text-[11px] text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>מצאת שגיאה או אי-התאמה בנתונים?</span>
+                    <span className="underline underline-offset-4 font-semibold">דווח כאן</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -588,6 +596,7 @@ export const ReportHub: React.FC<ReportHubProps> = ({
           <div style={{ width: "750px", height: "480px" }}><EmployeesChart ref={snapshotRef} stats={snapshotStats} total={snapshotTotal} loading={loading} unitName={filters.unitName} selectedDate={localDate} /></div>
           <div style={{ width: "750px", height: "480px" }}><AttendanceTrendCard ref={trendRef} data={trendStats} loading={loading} range={activeDaysRange} unitName={filters.unitName} selectedDate={localDate} /></div>
           <div style={{ width: "750px", height: "480px" }}><StatsComparisonCard ref={comparisonRef} data={comparisonStats} loading={loading} days={activeDaysRange} unitName={filters.unitName} selectedDate={localDate} /></div>
+          <div style={{ width: "750px", height: "480px" }}><BirthdaysCard ref={birthdaysRef} birthdays={birthdays} selectedDate={localDate} /></div>
         </div>
       )}
 

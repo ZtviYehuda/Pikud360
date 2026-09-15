@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Popover,
   PopoverContent,
@@ -47,11 +46,11 @@ export function ReportDatePicker({
     return (
       <div
         className={cn(
-          "flex items-center gap-2 text-xs sm:text-sm font-bold px-3 py-1.5 rounded-xl bg-muted/60 dark:bg-muted/40 shrink-0 font-mono border border-border/50 text-foreground",
+          "flex items-center gap-2 text-xs font-bold px-3.5 py-1.5 rounded-xl bg-card dark:bg-card/70 shrink-0 font-mono border border-border/50 text-foreground shadow-xs whitespace-nowrap",
           className
         )}
       >
-        <CalendarIcon className="h-4 w-4 text-primary" />
+        <CalendarIcon className="h-3.5 w-3.5 text-primary shrink-0" />
         <span>שנת {format(date, "yyyy")}</span>
       </div>
     );
@@ -61,24 +60,24 @@ export function ReportDatePicker({
     <Popover>
       <PopoverTrigger asChild>
         <Button
-          variant="ghost"
+          variant="outline"
           className={cn(
-            "h-9 px-3.5 bg-muted/60 dark:bg-muted/40 hover:bg-muted dark:hover:bg-muted/80 border border-border/50 rounded-xl transition-all gap-2 text-xs sm:text-sm font-bold shadow-none text-foreground",
-            viewMode === "custom" && "bg-muted text-foreground border-primary/40",
+            "h-8 sm:h-9 px-3.5 bg-card dark:bg-card/80 hover:bg-accent/60 border border-border/50 rounded-xl transition-all gap-2 text-xs font-bold shadow-xs text-foreground shrink-0 whitespace-nowrap min-w-fit active:scale-95 cursor-pointer",
+            viewMode === "custom" && "border-primary/50 text-primary ring-1 ring-primary/20",
             className
           )}
         >
-          <CalendarIcon className="h-4 w-4 text-primary shrink-0" />
-          <span className="font-mono tracking-tight text-xs sm:text-sm">
+          <CalendarIcon className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span className="font-mono tracking-tight text-xs whitespace-nowrap">
             {viewMode === "monthly" ? (
-              format(date, "MM/yy")
+              format(date, "MM/yyyy")
             ) : viewMode === "custom" && dateRange?.from ? (
               <>
                 {format(dateRange.from, "dd/MM/yy")}
                 {dateRange.to ? ` - ${format(dateRange.to, "dd/MM/yy")}` : ""}
               </>
             ) : (
-              format(date, "dd/MM/yy")
+              format(date, "dd/MM/yyyy")
             )}
           </span>
         </Button>
@@ -131,6 +130,13 @@ interface ReportToolbarProps {
   hideDatePicker?: boolean;
 }
 
+const PERIODS = [
+  { id: "daily", label: "יומי" },
+  { id: "weekly", label: "שבועי" },
+  { id: "monthly", label: "חודשי" },
+  { id: "custom", label: "טווח" },
+] as const;
+
 export function ReportToolbar({
   viewMode,
   onViewModeChange,
@@ -142,10 +148,32 @@ export function ReportToolbar({
   hideDatePicker = false,
 }: ReportToolbarProps) {
   return (
-    <div className="w-full flex flex-col items-stretch gap-2.5">
-      {/* Optional Date Picker row if not placed in header */}
+    <div className="w-full flex items-center justify-between gap-3">
+      {/* Clean Segmented Pill Container */}
+      <div className="flex items-center bg-muted/60 dark:bg-muted/40 p-1 rounded-xl gap-1 shrink-0">
+        {PERIODS.map((tab) => {
+          const isActive = viewMode === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => onViewModeChange(tab.id as any)}
+              className={cn(
+                "px-3 sm:px-4 py-1.5 text-xs font-bold rounded-lg transition-all text-center cursor-pointer select-none whitespace-nowrap",
+                isActive
+                  ? "bg-card dark:bg-card text-foreground shadow-xs font-black"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/30"
+              )}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Date Picker Button */}
       {!hideDatePicker && (
-        <div className="w-full flex items-center justify-start">
+        <div className="shrink-0">
           <ReportDatePicker
             viewMode={viewMode}
             date={date}
@@ -156,35 +184,6 @@ export function ReportToolbar({
           />
         </div>
       )}
-
-      {/* Segmented control bar (יומי, שבועי, חודשי, טווח) */}
-      <Tabs
-        value={viewMode}
-        onValueChange={(val) => onViewModeChange(val as any)}
-        className="w-full"
-      >
-        <TabsList
-          dir="rtl"
-          className="grid grid-cols-4 w-full h-11 p-1 gap-1 bg-muted/60 dark:bg-muted/40 border border-border/50 rounded-2xl shadow-none"
-        >
-          {[
-            { id: "daily", label: "יומי" },
-            { id: "weekly", label: "שבועי" },
-            { id: "monthly", label: "חודשי" },
-            { id: "custom", label: "טווח" },
-          ].map((tab) => (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              className="rounded-xl py-2 text-xs sm:text-sm font-bold transition-all text-muted-foreground hover:text-foreground data-[state=active]:bg-card dark:data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs data-[state=active]:border data-[state=active]:border-border/60 cursor-pointer select-none"
-            >
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
     </div>
   );
 }
-
-

@@ -1,3 +1,4 @@
+import { useFeedback } from "@/context/FeedbackContext";
 import { useEffect, useState, useMemo } from "react";
 import {
   useParams,
@@ -35,6 +36,7 @@ import {
   MessageCircle,
   Building2,
   HeartHandshake,
+  MessageSquarePlus,
 } from "lucide-react";
 import { useAuthContext } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -698,6 +700,7 @@ export default function EmployeeViewPage() {
   const { pathname } = useLocation();
 
   const { user } = useAuthContext();
+  const { openFeedback } = useFeedback();
   const isSupportAdmin = Boolean(
     user?.is_admin &&
     !user?.is_impersonated &&
@@ -1788,6 +1791,21 @@ export default function EmployeeViewPage() {
                     <span>עריכת פרופיל</span>
                   </Button>
                 )}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    openFeedback(
+                      `פרופיל שוטר: ${employee?.first_name || ""} ${employee?.last_name || ""}${employee?.employee_number ? ` (${employee.employee_number})` : ""}`
+                    )
+                  }
+                  className="h-9 px-3 font-semibold gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground"
+                  title="מצאת טעות בפרטי השוטר? יש לך הצעה?"
+                >
+                  <MessageSquarePlus className="w-3.5 h-3.5 text-primary" />
+                  <span className="hidden sm:inline">דיווח על טעות / הצעה</span>
+                </Button>
 
                 {isSupportAdmin && employee.id !== user?.id && (
                   <Button

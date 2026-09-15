@@ -255,7 +255,7 @@ export const AgeDistributionChart = ({
                 />
 
                 <Tooltip
-                  cursor={{ fill: "rgba(148, 163, 184, 0.12)", radius: [6, 6, 0, 0] }}
+                  cursor={false}
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const displayRange =
@@ -305,7 +305,7 @@ export const AgeDistributionChart = ({
                       <Cell
                         key={`cell-${index}`}
                         className={cn(
-                          "transition-all duration-300 hover:opacity-85 outline-none",
+                          "transition-all duration-200 hover:brightness-115 hover:opacity-95 outline-none",
                           entry.count > 0 || isSelected
                             ? "cursor-pointer"
                             : "cursor-default"

@@ -207,8 +207,17 @@ const canCommanderEditUnit = (
 };
 
 export const WhatsAppBroadcastTab: React.FC = () => {
-  const { structure, employees } = useEmployeeContext();
+  const { structure: rawStructure, employees: rawEmployees, refreshReferenceData } = useEmployeeContext();
   const { user } = useAuthContext();
+
+  const structure = useMemo(() => (Array.isArray(rawStructure) ? rawStructure : []), [rawStructure]);
+  const employees = useMemo(() => (Array.isArray(rawEmployees) ? rawEmployees : []), [rawEmployees]);
+
+  useEffect(() => {
+    if ((!structure || structure.length === 0) && refreshReferenceData) {
+      refreshReferenceData();
+    }
+  }, [structure, refreshReferenceData]);
 
   // Mobile Picker Modal
   const [mobileTreeOpen, setMobileTreeOpen] = useState(false);

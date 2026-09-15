@@ -18,6 +18,10 @@ import { Calendar, Gift } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BirthdayGreetingsModal } from "./BirthdayGreetingsModal";
 import { WhatsAppButton } from "@/components/common/WhatsAppButton";
+import { toPng } from "html-to-image";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import { useRef } from "react";
 import { useEmployeeContext } from "@/context/EmployeeContext";
 
 interface BirthdayEmployee {
@@ -38,6 +42,8 @@ interface BirthdaysCardProps {
   unitName?: string;
   className?: string;
   filterTags?: string[];
+  hideHeader?: boolean;
+  compact?: boolean;
 }
 
 const MONTH_LABELS = [
@@ -47,14 +53,41 @@ const MONTH_LABELS = [
 
 export const BirthdaysCard = forwardRef(
   function BirthdaysCard(
-    { id, birthdays, selectedDate, className, filterTags = [] }: BirthdaysCardProps,
+    { id, birthdays, selectedDate, className, filterTags = [], hideHeader = false, compact = false }: BirthdaysCardProps,
     ref: any
   ) {
     const { openProfile } = useEmployeeContext();
+    const cardRef = useRef<HTMLDivElement>(null);
     const [isGreetingsModalOpen, setIsGreetingsModalOpen] = useState(false);
+
+    const handleDownload = async () => {
+      if (!cardRef.current) return;
+      try {
+        const dataUrl = await toPng(cardRef.current, {
+          backgroundColor: "#ffffff",
+          cacheBust: true,
+          quality: 0.95,
+          filter: (node) => {
+            if (node.classList && node.classList.contains("no-export")) {
+              return false;
+            }
+            return true;
+          },
+        });
+        const link = document.createElement("a");
+        link.download = `חוגגי_ימי_הולדת_${format(referenceDate, "yyyy-MM-dd")}.png`;
+        link.href = dataUrl;
+        link.click();
+        toast.success("התמונה הורדה בהצלחה!");
+      } catch (err) {
+        console.error("Failed to download image", err);
+        toast.error("שגיאה בהורדת התמונה");
+      }
+    };
 
     useImperativeHandle(ref, () => ({
       share: handleSendWhatsApp,
+      download: handleDownload,
     }));
 
     const referenceDate = selectedDate || new Date();
@@ -102,12 +135,14 @@ export const BirthdaysCard = forwardRef(
     return (
       <>
         <Card
+          ref={cardRef}
           id={id || "birthdays-card"}
           className={cn(
             "bg-card/70 dark:bg-card/50 backdrop-blur-md text-card-foreground rounded-2xl border border-border/60 shadow-xs flex flex-col overflow-hidden h-full relative transition-all",
             className
           )}
         >
+          {!hideHeader && (
           <CardHeader className="px-4 sm:px-6 py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3 shrink-0">
             <div className="space-y-1 min-w-0 flex-1">
               <div className="flex items-center gap-2 min-w-0">
@@ -161,6 +196,7 @@ export const BirthdaysCard = forwardRef(
               )}
             </div>
           </CardHeader>
+        )}
 
           <CardContent className="flex-1 p-3 sm:p-4 flex flex-col min-h-0 relative justify-between">
             {sortedBirthdays.length === 0 ? (

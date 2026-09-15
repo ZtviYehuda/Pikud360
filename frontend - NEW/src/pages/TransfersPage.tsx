@@ -438,7 +438,7 @@ export default function TransfersPage() {
       </div>
 
       {/* Main Search & Action Bar */}
-      <div className="flex items-center justify-between gap-2.5 sm:gap-3 bg-card border border-border/70 rounded-2xl p-2 sm:p-2.5 shadow-2xs">
+      <div className="flex items-center justify-between gap-2.5 sm:gap-3">
         {/* Search Input when in list mode */}
         {activeTab !== "new" ? (
           <div className="relative flex-1 min-w-0">

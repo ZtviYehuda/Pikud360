@@ -25,6 +25,8 @@ import {
   GitPullRequest,
   ArrowRight,
   RotateCcw,
+  Clock,
+  Calendar,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
@@ -32,6 +34,7 @@ import apiClient from "../config/api.client";
 import { toast } from "sonner";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 import { cn } from "../lib/utils";
 import { Card } from "../components/ui/card";
 import { useAuthContext } from "../context/AuthContext";
@@ -898,14 +901,14 @@ const FeedbackPage = () => {
         dir="rtl"
       >
         {/* Page Header with Integrated Desktop Segmented Tabs */}
-        <div className="hidden sm:block pt-6 pb-4 px-4 sm:px-6 shrink-0 border-b border-border/40 bg-background/95 backdrop-blur">
+        <div className="hidden sm:block pt-3 pb-2 px-3 sm:px-6 shrink-0">
           <PageHeader
             icon={MessageSquare}
             title="מרכז הודעות ותקשורת"
             className="mb-0"
             hideMobile={true}
             badge={
-              <div className="hidden md:flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border/50">
+              <div className="hidden md:flex items-center gap-1.5 bg-card/80 dark:bg-card/50 p-1 rounded-2xl border border-border/60 shadow-2xs backdrop-blur-xs">
                 <TabItem
                   icon={MessageSquare}
                   label="הודעות וצ'אט"
@@ -1019,13 +1022,13 @@ const FeedbackPage = () => {
                       key="admin-tab"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="space-y-4"
+                      className="space-y-4 sm:space-y-5"
                     >
-                      {/* ── Section 1: System Versions & Releases Management Card ── */}
-                      <Card className="p-4 sm:p-5 rounded-2xl bg-card/60 border border-border/40 shadow-sm space-y-3">
+                      {/* ── Section 1: System Releases Management Banner ── */}
+                      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/80 dark:bg-card/50 backdrop-blur-xs p-4 sm:p-4.5 shadow-2xs space-y-3.5">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20 shadow-2xs">
                               <GitPullRequest className="w-5 h-5" />
                             </div>
                             <div>
@@ -1034,7 +1037,7 @@ const FeedbackPage = () => {
                                   ניהול ושחרור גרסאות מערכת
                                 </h3>
                                 {systemUpdates.length > 0 && (
-                                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-2xs">
                                     גרסה פעילה: {systemUpdates[0].version}
                                   </span>
                                 )}
@@ -1050,7 +1053,7 @@ const FeedbackPage = () => {
                           <Button
                             onClick={() => setAddUpdateOpen(true)}
                             size="sm"
-                            className="h-10 px-4 rounded-xl text-xs font-semibold gap-1.5 shadow-sm w-full sm:w-auto"
+                            className="h-9.5 px-4 rounded-xl text-xs font-bold gap-1.5 shadow-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shrink-0"
                           >
                             <Plus className="w-4 h-4" />
                             פרסם עדכון גרסה חדש
@@ -1061,11 +1064,11 @@ const FeedbackPage = () => {
                         {systemUpdates.length > 0 && (
                           <div className="pt-3 border-t border-border/40 space-y-2">
                             <div className="flex items-center justify-between">
-                              <span className="text-[11px] font-semibold text-muted-foreground">
+                              <span className="text-[11px] font-bold text-muted-foreground">
                                 גרסאות שפורסמו במערכת ({systemUpdates.length}):
                               </span>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                               {systemUpdates
                                 .slice(0, 4)
                                 .map((upd: any, idx: number) => {
@@ -1083,7 +1086,7 @@ const FeedbackPage = () => {
                                   return (
                                     <div
                                       key={upd.id}
-                                      className="flex items-center justify-between p-2.5 rounded-xl border bg-background/50 text-xs"
+                                      className="flex items-center justify-between p-2.5 px-3 rounded-xl border border-border/50 bg-background/60 hover:bg-background transition-all shadow-2xs text-xs"
                                     >
                                       <div className="min-w-0 flex-1 pl-2">
                                         <div className="flex items-center gap-1.5">
@@ -1091,17 +1094,17 @@ const FeedbackPage = () => {
                                             {upd.version}
                                           </span>
                                           {idx === 0 ? (
-                                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 font-semibold">
+                                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20">
                                               פעילה
                                             </span>
                                           ) : null}
                                           {featuresCount > 0 && (
-                                            <span className="text-[10px] text-muted-foreground">
+                                            <span className="text-[10px] text-muted-foreground font-medium">
                                               ({featuresCount} שינויים)
                                             </span>
                                           )}
                                         </div>
-                                        <span className="text-[10px] text-muted-foreground block truncate">
+                                        <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
                                           {new Date(
                                             upd.release_date,
                                           ).toLocaleDateString("he-IL")}
@@ -1114,7 +1117,7 @@ const FeedbackPage = () => {
                                         onClick={() =>
                                           handleDeleteSystemUpdate(upd.id)
                                         }
-                                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg shrink-0"
+                                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg shrink-0 cursor-pointer"
                                         title="מחק גרסה"
                                       >
                                         <Trash2 className="w-3.5 h-3.5" />
@@ -1125,222 +1128,270 @@ const FeedbackPage = () => {
                             </div>
                           </div>
                         )}
-                      </Card>
+                      </div>
 
-                      {/* ── Section 2: Tickets & User Inquiries Management ── */}
-                      <Card className="p-4 sm:p-5 rounded-2xl bg-card/60 border border-border/40 shadow-xs space-y-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                          <div>
-                            <h3 className="text-sm font-bold text-foreground">
-                              פניות משתמשים ומשימות
-                            </h3>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              מעקב, טיפול וארכוב פניות משוב ותמיכה
-                            </p>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={fetchAdminTickets}
-                            disabled={isLoadingTickets}
-                            className="h-8 text-xs px-3 rounded-xl border-border/50 gap-1.5 bg-background shadow-none self-start sm:self-auto cursor-pointer"
-                          >
-                            <RefreshCw
-                              className={cn(
-                                "w-3.5 h-3.5",
-                                isLoadingTickets && "animate-spin",
-                              )}
-                            />
-                            <span>רענן פניות</span>
-                          </Button>
-                        </div>
-
-                        {/* Search & Category Filter */}
-                        <div className="space-y-3">
-                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                            {/* Search Bar */}
-                            <div className="relative flex-1">
-                              <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-                              <input
-                                type="text"
-                                placeholder="חיפוש לפי שם, תוכן או מחלקה..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full h-9.5 pr-10 pl-8 bg-background border border-border/50 rounded-xl text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground/50 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                              />
-                              {searchQuery && (
-                                <button
-                                  type="button"
-                                  onClick={() => setSearchQuery("")}
-                                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
-                                >
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              )}
+                      {/* ── Section 2: Metric KPI Cards ── */}
+                      <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+                        {/* Card 1: Pending */}
+                        <button
+                          type="button"
+                          onClick={() => setAdminFilter(adminFilter === "pending" ? "all" : "pending")}
+                          className={cn(
+                            "group relative overflow-hidden rounded-2xl border transition-all text-right w-full cursor-pointer select-none",
+                            "p-3.5 sm:p-4.5 bg-card/80 dark:bg-card/50 backdrop-blur-xs shadow-2xs hover:shadow-xs",
+                            adminFilter === "pending"
+                              ? "border-amber-500/60 ring-2 ring-amber-500/20 bg-amber-500/[0.04]"
+                              : "border-border/60 hover:border-border hover:bg-card",
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "absolute top-0 inset-x-0 h-1 transition-opacity",
+                              adminFilter === "pending"
+                                ? "opacity-100"
+                                : "opacity-0 group-hover:opacity-40",
+                            )}
+                            style={{ backgroundColor: "#f59e0b" }}
+                          />
+                          <div className="flex items-center justify-between gap-2.5 sm:gap-4">
+                            <div className="space-y-1 text-right min-w-0 flex-1">
+                              <span className="text-xs sm:text-sm font-semibold text-muted-foreground block truncate">
+                                ממתין לטיפול
+                              </span>
+                              <span className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-none">
+                                {pendingTicketsCount}
+                              </span>
                             </div>
+                            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl border flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/20 shadow-2xs">
+                              <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+                            </div>
+                          </div>
+                        </button>
 
-                            {/* Category Filter Popover Menu (shadcn) */}
-                            <Popover
-                              open={categoryPopoverOpen}
-                              onOpenChange={setCategoryPopoverOpen}
+                        {/* Card 2: Dismissed / Handled */}
+                        <button
+                          type="button"
+                          onClick={() => setAdminFilter(adminFilter === "dismissed" ? "all" : "dismissed")}
+                          className={cn(
+                            "group relative overflow-hidden rounded-2xl border transition-all text-right w-full cursor-pointer select-none",
+                            "p-3.5 sm:p-4.5 bg-card/80 dark:bg-card/50 backdrop-blur-xs shadow-2xs hover:shadow-xs",
+                            adminFilter === "dismissed"
+                              ? "border-emerald-500/60 ring-2 ring-emerald-500/20 bg-emerald-500/[0.04]"
+                              : "border-border/60 hover:border-border hover:bg-card",
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "absolute top-0 inset-x-0 h-1 transition-opacity",
+                              adminFilter === "dismissed"
+                                ? "opacity-100"
+                                : "opacity-0 group-hover:opacity-40",
+                            )}
+                            style={{ backgroundColor: "#10b981" }}
+                          />
+                          <div className="flex items-center justify-between gap-2.5 sm:gap-4">
+                            <div className="space-y-1 text-right min-w-0 flex-1">
+                              <span className="text-xs sm:text-sm font-semibold text-muted-foreground block truncate">
+                                טופלו / בארכיון
+                              </span>
+                              <span className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-none">
+                                {archivedTicketsCount}
+                              </span>
+                            </div>
+                            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl border flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 shadow-2xs">
+                              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                            </div>
+                          </div>
+                        </button>
+
+                        {/* Card 3: All Items */}
+                        <button
+                          type="button"
+                          onClick={() => setAdminFilter("all")}
+                          className={cn(
+                            "group relative overflow-hidden rounded-2xl border transition-all text-right w-full cursor-pointer select-none",
+                            "p-3.5 sm:p-4.5 bg-card/80 dark:bg-card/50 backdrop-blur-xs shadow-2xs hover:shadow-xs",
+                            adminFilter === "all"
+                              ? "border-primary/60 ring-2 ring-primary/20 bg-primary/[0.04]"
+                              : "border-border/60 hover:border-border hover:bg-card",
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "absolute top-0 inset-x-0 h-1 transition-opacity",
+                              adminFilter === "all"
+                                ? "opacity-100"
+                                : "opacity-0 group-hover:opacity-40",
+                            )}
+                            style={{ backgroundColor: "#3b82f6" }}
+                          />
+                          <div className="flex items-center justify-between gap-2.5 sm:gap-4">
+                            <div className="space-y-1 text-right min-w-0 flex-1">
+                              <span className="text-xs sm:text-sm font-semibold text-muted-foreground block truncate">
+                                כלל הפניות
+                              </span>
+                              <span className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-none">
+                                {allAdminItems.length}
+                              </span>
+                            </div>
+                            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl border flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 bg-primary/10 text-primary border-primary/20 shadow-2xs">
+                              <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+
+                      {/* ── Section 3: Toolbar (Search, Category Filter & Refresh) ── */}
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                        {/* Search Bar */}
+                        <div className="relative flex-1 min-w-0">
+                          <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none" />
+                          <Input
+                            placeholder="חיפוש לפי שם, תוכן או מחלקה..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pr-10 pl-9 h-10 bg-card/80 dark:bg-card/50 border-border/60 hover:border-border font-medium text-xs sm:text-sm rounded-xl focus:ring-2 focus:ring-primary/20 focus:bg-background focus:border-primary transition-all text-right w-full shadow-2xs"
+                          />
+                          {searchQuery && (
+                            <button
+                              type="button"
+                              onClick={() => setSearchQuery("")}
+                              className="absolute left-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground cursor-pointer"
                             >
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "h-9.5 px-3 justify-between text-xs font-semibold rounded-xl border shrink-0 bg-background min-w-[130px] sm:min-w-[150px] cursor-pointer",
-                                    adminCategoryFilter !== "all"
-                                      ? "border-primary/50 text-primary bg-primary/5"
-                                      : "border-border/50 text-foreground",
-                                  )}
-                                >
-                                  <div className="flex items-center gap-1.5 truncate">
-                                    <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                                    <span className="truncate">
-                                      {categoryOptions.find(
-                                        (c) => c.value === adminCategoryFilter,
-                                      )?.label || "כל הסוגים"}
-                                    </span>
-                                  </div>
-                                  <ChevronDown className="w-3 h-3 text-muted-foreground mr-1 opacity-60 shrink-0" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent
-                                align="end"
-                                className="w-48 p-1.5 rounded-xl shadow-lg border border-border/50 bg-popover text-right z-50"
-                                dir="rtl"
-                              >
-                                <div className="space-y-0.5">
-                                  {categoryOptions.map((opt) => {
-                                    const isSelected =
-                                      adminCategoryFilter === opt.value;
-                                    return (
-                                      <button
-                                        key={opt.value}
-                                        type="button"
-                                        onClick={() => {
-                                          setAdminCategoryFilter(opt.value);
-                                          setCategoryPopoverOpen(false);
-                                        }}
-                                        className={cn(
-                                          "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors text-right select-none cursor-pointer",
-                                          isSelected
-                                            ? "bg-primary/10 text-primary font-bold"
-                                            : "hover:bg-muted text-foreground",
-                                        )}
-                                      >
-                                        <span>{opt.label}</span>
-                                        {isSelected && (
-                                          <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
-                                        )}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-
-                          {/* Status Tabs: Enterprise Segmented Control */}
-                          <div className="grid grid-cols-3 bg-muted/60 p-1 rounded-xl border border-border/40 gap-1 text-center w-full">
-                            {(
-                              [
-                                {
-                                  value: "pending",
-                                  label: "ממתין לטיפול",
-                                  count: pendingTicketsCount,
-                                },
-                                {
-                                  value: "dismissed",
-                                  label: "ארכיון וטופלו",
-                                  count: archivedTicketsCount,
-                                },
-                                {
-                                  value: "all",
-                                  label: "כל הפניות",
-                                  count: allAdminItems.length,
-                                },
-                              ] as const
-                            ).map(({ value, label, count }) => (
-                              <button
-                                key={value}
-                                type="button"
-                                onClick={() => setAdminFilter(value)}
-                                className={cn(
-                                  "py-1.5 px-2 rounded-lg text-xs transition-all flex items-center justify-center gap-1.5 truncate select-none cursor-pointer",
-                                  adminFilter === value
-                                    ? "bg-card text-foreground shadow-xs border border-border/40 font-bold"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-background/40 font-medium",
-                                )}
-                              >
-                                <span className="truncate">{label}</span>
-                                <span
-                                  className={cn(
-                                    "px-1.5 py-0.2 rounded-full text-[10px] font-bold shrink-0",
-                                    adminFilter === value
-                                      ? "bg-primary/10 text-primary"
-                                      : "bg-muted text-muted-foreground",
-                                  )}
-                                >
-                                  {count}
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-
-                          {/* Active Custom Filter Reset Banner */}
-                          {(adminCategoryFilter !== "all" ||
-                            searchQuery.trim() !== "") && (
-                            <div className="flex items-center justify-between p-2 px-3 rounded-xl bg-muted/30 border border-border/40 text-xs transition-all animate-in fade-in duration-200">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <Filter className="w-3.5 h-3.5 text-primary shrink-0" />
-                                <div className="flex items-center gap-1.5 truncate">
-                                  <span className="text-muted-foreground font-medium">
-                                    סינון פעיל:
-                                  </span>
-                                  {adminCategoryFilter !== "all" && (
-                                    <span className="font-semibold text-foreground">
-                                      {
-                                        categoryOptions.find(
-                                          (c) =>
-                                            c.value === adminCategoryFilter,
-                                        )?.label
-                                      }
-                                    </span>
-                                  )}
-                                  {searchQuery.trim() && (
-                                    <span className="font-semibold text-foreground">
-                                      "{searchQuery}"
-                                    </span>
-                                  )}
-                                  <span className="text-muted-foreground font-normal">
-                                    ({filteredItems.length} תוצאות)
-                                  </span>
-                                </div>
-                              </div>
-
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setAdminCategoryFilter("all");
-                                  setSearchQuery("");
-                                }}
-                                className="h-6 px-2 text-xs font-semibold text-primary hover:text-primary hover:bg-primary/10 rounded-md flex items-center gap-1 shrink-0 cursor-pointer"
-                              >
-                                <RotateCcw className="w-3 h-3" />
-                                <span>איפוס סינון</span>
-                              </Button>
-                            </div>
+                              <X className="w-3.5 h-3.5" />
+                            </button>
                           )}
                         </div>
-                      </Card>
 
-                      {/* Stylized Cards List */}
+                        {/* Category Filter Popover Menu */}
+                        <Popover
+                          open={categoryPopoverOpen}
+                          onOpenChange={setCategoryPopoverOpen}
+                        >
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "h-10 px-3.5 justify-between text-xs font-bold rounded-xl border shrink-0 bg-card/80 dark:bg-card/50 hover:bg-card min-w-[130px] sm:min-w-[150px] cursor-pointer shadow-2xs transition-all",
+                                adminCategoryFilter !== "all"
+                                  ? "border-primary/50 text-primary bg-primary/5"
+                                  : "border-border/60 text-foreground",
+                              )}
+                            >
+                              <div className="flex items-center gap-1.5 truncate">
+                                <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                <span className="truncate">
+                                  {categoryOptions.find(
+                                    (c) => c.value === adminCategoryFilter,
+                                  )?.label || "כל הסוגים"}
+                                </span>
+                              </div>
+                              <ChevronDown className="w-3 h-3 text-muted-foreground mr-1 opacity-60 shrink-0" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            align="end"
+                            className="w-48 p-1.5 rounded-xl shadow-lg border border-border/50 bg-popover text-right z-50"
+                            dir="rtl"
+                          >
+                            <div className="space-y-0.5">
+                              {categoryOptions.map((opt) => {
+                                const isSelected =
+                                  adminCategoryFilter === opt.value;
+                                return (
+                                  <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => {
+                                      setAdminCategoryFilter(opt.value);
+                                      setCategoryPopoverOpen(false);
+                                    }}
+                                    className={cn(
+                                      "w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium transition-colors text-right select-none cursor-pointer",
+                                      isSelected
+                                        ? "bg-primary/10 text-primary font-bold"
+                                        : "hover:bg-muted text-foreground",
+                                    )}
+                                  >
+                                    <span>{opt.label}</span>
+                                    {isSelected && (
+                                      <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+
+                        {/* Refresh Button */}
+                        <Button
+                          variant="outline"
+                          onClick={fetchAdminTickets}
+                          disabled={isLoadingTickets}
+                          className="h-10 px-3.5 rounded-xl border border-border/60 bg-card/80 dark:bg-card/50 hover:bg-card text-foreground font-bold text-xs gap-1.5 shrink-0 shadow-2xs transition-all cursor-pointer"
+                        >
+                          <RefreshCw
+                            className={cn(
+                              "w-3.5 h-3.5",
+                              isLoadingTickets && "animate-spin text-primary",
+                            )}
+                          />
+                          <span>רענן פניות</span>
+                        </Button>
+                      </div>
+
+                      {/* Active Custom Filter Reset Banner */}
+                      {(adminCategoryFilter !== "all" ||
+                        searchQuery.trim() !== "") && (
+                        <div className="flex items-center justify-between p-2 px-3.5 rounded-xl bg-card/60 dark:bg-card/40 border border-border/50 text-xs transition-all animate-in fade-in duration-200 shadow-2xs">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Filter className="w-3.5 h-3.5 text-primary shrink-0" />
+                            <div className="flex items-center gap-1.5 truncate">
+                              <span className="text-muted-foreground font-medium">
+                                סינון פעיל:
+                              </span>
+                              {adminCategoryFilter !== "all" && (
+                                <span className="font-bold text-foreground">
+                                  {
+                                    categoryOptions.find(
+                                      (c) =>
+                                        c.value === adminCategoryFilter,
+                                    )?.label
+                                  }
+                                </span>
+                              )}
+                              {searchQuery.trim() && (
+                                <span className="font-bold text-foreground">
+                                  "{searchQuery}"
+                                </span>
+                              )}
+                              <span className="text-muted-foreground font-normal">
+                                ({filteredItems.length} תוצאות)
+                              </span>
+                            </div>
+                          </div>
+
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setAdminCategoryFilter("all");
+                              setSearchQuery("");
+                            }}
+                            className="h-7 px-2 text-xs font-bold text-primary hover:text-primary hover:bg-primary/10 rounded-lg flex items-center gap-1 shrink-0 cursor-pointer"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                            <span>איפוס סינון</span>
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* ── Section 4: Stylized Cards List ── */}
                       <div className="space-y-2.5">
                         {filteredItems.length === 0 ? (
-                          <div className="py-14 flex flex-col items-center justify-center text-center bg-card/40 rounded-2xl border border-dashed border-border/50">
+                          <div className="py-14 flex flex-col items-center justify-center text-center bg-card/40 rounded-2xl border border-dashed border-border/60">
                             <div className="w-12 h-12 mb-3 rounded-2xl bg-muted/50 flex items-center justify-center text-muted-foreground/50 border border-border/40">
                               <Archive className="w-6 h-6" />
                             </div>
@@ -1363,7 +1414,7 @@ const FeedbackPage = () => {
                                 .join("") || "U";
 
                             return (
-                              <Card
+                              <div
                                 key={`${item.type}-${item.id}`}
                                 onClick={() =>
                                   setSelectedItem({
@@ -1371,19 +1422,22 @@ const FeedbackPage = () => {
                                     type: item.type,
                                   })
                                 }
-                                className="group bg-card/60 border border-border/40 hover:border-border hover:bg-card hover:shadow-xs transition-all duration-150 rounded-2xl p-3.5 sm:p-4 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 select-none"
+                                className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/80 dark:bg-card/50 hover:bg-card hover:border-primary/40 hover:shadow-xs transition-all duration-150 p-3.5 sm:p-4 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 select-none backdrop-blur-xs shadow-2xs"
                               >
                                 <div className="flex items-start sm:items-center gap-3.5 flex-1 min-w-0">
-                                  <div className="w-10 h-10 rounded-xl bg-muted text-foreground border border-border/50 flex items-center justify-center font-bold text-xs sm:text-sm shrink-0">
+                                  {/* Avatar */}
+                                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-extrabold text-xs sm:text-sm shrink-0 shadow-2xs transition-transform group-hover:scale-105">
                                     {initials}
                                   </div>
+
+                                  {/* Details */}
                                   <div className="space-y-1 flex-1 min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
                                       <span className="font-bold text-sm text-foreground truncate">
                                         {authorName}
                                       </span>
                                       {item.department_name && (
-                                        <span className="text-[10px] text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded font-medium shrink-0">
+                                        <span className="text-[11px] font-semibold text-muted-foreground bg-muted/60 border border-border/40 px-2 py-0.5 rounded-lg shrink-0">
                                           {item.department_name}
                                         </span>
                                       )}
@@ -1392,31 +1446,36 @@ const FeedbackPage = () => {
                                         item.type,
                                       )}
                                       {item.screenshot_url && (
-                                        <span className="text-[10px] text-muted-foreground flex items-center gap-1 bg-muted/40 px-1.5 py-0.5 rounded border border-border/30 shrink-0">
-                                          <Eye className="w-3 h-3" />
+                                        <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5 bg-muted/40 px-2 py-0.5 rounded-lg border border-border/30 shrink-0">
+                                          <Eye className="w-3 h-3 text-primary" />
                                           צילום מסך
                                         </span>
                                       )}
-                                      <span className="text-[11px] text-muted-foreground mr-auto shrink-0">
-                                        {new Date(
-                                          item.created_at,
-                                        ).toLocaleDateString("he-IL", {
-                                          day: "numeric",
-                                          month: "numeric",
-                                          year: "numeric",
-                                        })}
-                                      </span>
                                     </div>
-                                    <p className="text-xs text-muted-foreground line-clamp-1 leading-relaxed">
+                                    <p className="text-xs text-muted-foreground line-clamp-1 leading-relaxed font-normal">
                                       {item.description}
                                     </p>
                                   </div>
                                 </div>
-                                <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/20">
+
+                                {/* Left Side: Date, Status & Chevron */}
+                                <div className="flex items-center justify-between sm:justify-end gap-3.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/20">
+                                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                                    <Calendar className="w-3.5 h-3.5 text-muted-foreground/60" />
+                                    <span>
+                                      {new Date(
+                                        item.created_at,
+                                      ).toLocaleDateString("he-IL", {
+                                        day: "numeric",
+                                        month: "numeric",
+                                        year: "numeric",
+                                      })}
+                                    </span>
+                                  </div>
                                   {getStatusBadge(item.status)}
-                                  <ChevronLeft className="w-4 h-4 text-muted-foreground/40 group-hover:text-foreground group-hover:-translate-x-0.5 transition-all" />
+                                  <ChevronLeft className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:-translate-x-1 transition-all" />
                                 </div>
-                              </Card>
+                              </div>
                             );
                           })
                         )}
@@ -2865,7 +2924,7 @@ const FeedbackPage = () => {
                         type="text"
                         value={newUpdateVersion}
                         onChange={(e) => setNewUpdateVersion(e.target.value)}
-                        placeholder="v2.4.1"
+                        placeholder="1.1.4"
                         className="w-full h-11 px-3 bg-background border border-border/50 rounded-xl text-sm font-bold text-foreground focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                         dir="ltr"
                       />
@@ -3090,8 +3149,8 @@ function TabItem({
       className={cn(
         "relative flex items-center gap-2 h-9 px-3.5 rounded-xl transition-all font-semibold text-xs whitespace-nowrap shrink-0 select-none cursor-pointer",
         active
-          ? "bg-background text-foreground font-bold"
-          : "text-muted-foreground hover:text-foreground",
+          ? "bg-card text-foreground font-bold shadow-xs border border-border/60"
+          : "text-muted-foreground hover:text-foreground hover:bg-background/50",
         className,
       )}
     >

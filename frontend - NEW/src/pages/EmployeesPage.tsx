@@ -26,15 +26,15 @@ export default function EmployeesPage() {
     return Object.keys(filters).length > 0 ? filters : undefined;
   }, [searchParams]);
 
-
   return (
     <div className="flex flex-col">
       <div className="hidden lg:block pt-6 pb-4 px-4 sm:px-6 shrink-0 transition-all">
         <PageHeader
           icon={Users}
-          title="ניהול מצבת כוח אדם"
+          title="ניהול כוח אדם"
           className="mb-0"
-          hideMobile={true}/>
+          hideMobile={true}
+        />
       </div>
 
       <div className="space-y-4 pb-6 pt-2 sm:pt-0">
@@ -48,4 +48,3 @@ export default function EmployeesPage() {
     </div>
   );
 }
-

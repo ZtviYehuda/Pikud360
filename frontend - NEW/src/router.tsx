@@ -2,7 +2,6 @@ import { useEffect, lazy, Suspense } from "react";
 import { useAuthContext } from "@/context/AuthContext";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import MainLayout from "@/components/layout/MainLayout";
-import { EmployeeProvider } from "@/context/EmployeeContext";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -123,11 +122,7 @@ const ProtectedRoute = () => {
   }
 
   if (location.pathname === "/change-password") {
-    return (
-      <EmployeeProvider>
-        <Outlet />
-      </EmployeeProvider>
-    );
+    return <Outlet />;
   }
 
   const managementRoutes = ["/employees", "/transfers"];
@@ -135,11 +130,7 @@ const ProtectedRoute = () => {
     return <Navigate to="/" replace />;
   }
 
-  return (
-    <EmployeeProvider>
-      <MainLayout />
-    </EmployeeProvider>
-  );
+  return <MainLayout />;
 };
 
 // ── Router ────────────────────────────────────────────────────────────────────

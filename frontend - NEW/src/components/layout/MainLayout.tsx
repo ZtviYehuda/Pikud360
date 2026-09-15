@@ -1,3 +1,4 @@
+import { useFeedback } from "@/context/FeedbackContext";
 import React from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/context/AuthContext";
@@ -22,6 +23,7 @@ import {
   Thermometer,
   MessageCircle,
   MessageSquare,
+  MessageSquarePlus,
   Megaphone,
   CalendarRange,
   Activity,
@@ -125,6 +127,7 @@ function getAlertConfig(alert: {
 
 export default function MainLayout() {
   const { user, logout } = useAuthContext();
+  const { openFeedback } = useFeedback();
   const { showAiSupport } = useTheme();
 
   const {
@@ -454,6 +457,31 @@ export default function MainLayout() {
             </div>
           )}
 
+          {/* Feedback & Suggestions Button in Sidebar */}
+          {isSidebarOpen ? (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.innerWidth < 1024) setIsSidebarOpen(false);
+                openFeedback("סרגל ניווט ראשי");
+              }}
+              className="w-full h-9 px-3 rounded-xl bg-primary/5 hover:bg-primary/10 border border-primary/20 text-primary text-xs font-bold flex items-center gap-2 transition-all cursor-pointer select-none active:scale-[0.98]"
+            >
+              <MessageSquarePlus className="w-4 h-4 shrink-0" />
+              <span className="truncate flex-1 text-right">משוב ודיווח באג</span>
+              <span className="text-[10px] font-black bg-primary/15 px-1.5 py-0.5 rounded-md">v1.1.3</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => openFeedback("סרגל ניווט ראשי")}
+              title="משוב ודיווח באג (v1.1.3)"
+              className="w-10 h-10 rounded-2xl flex items-center justify-center text-primary hover:bg-primary/10 transition-all border border-primary/20 bg-primary/5 active:scale-95 cursor-pointer"
+            >
+              <MessageSquarePlus className="w-4 h-4" />
+            </button>
+          )}
+
           {/* User Profile Area */}
           {isSidebarOpen ? (
             <div
@@ -725,6 +753,16 @@ export default function MainLayout() {
             <div className="h-4 sm:h-5 w-px bg-border hidden sm:block" />
 
             <div className="flex items-center gap-1.5 sm:gap-3">
+              {/* Feedback Center Button */}
+              <button
+                id="feedback-toggle-btn"
+                onClick={() => openFeedback()}
+                title="מרכז משוב, דיווח באגים והצעות"
+                className="hidden sm:flex w-8 h-8 sm:w-10 sm:h-10 items-center justify-center rounded-xl text-muted-foreground hover:bg-primary/5 hover:text-primary transition-all relative cursor-pointer"
+              >
+                <MessageSquarePlus className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+
               {/* Chat Button with Unread Badge - Hidden on mobile, visible on desktop */}
               <button
                 id="chat-toggle-btn"

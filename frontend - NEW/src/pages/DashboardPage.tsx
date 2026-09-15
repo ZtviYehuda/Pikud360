@@ -573,10 +573,8 @@ export default function DashboardPage() {
         : (value !== undefined && value !== null && value !== "" && value !== "all" ? [String(value)] : []);
       const deptId = deptIds.join(",");
       setSelectedDeptId(deptId);
-      if (!Array.isArray(value)) {
-        setSelectedSectionId("");
-        setSelectedTeamId("");
-      }
+      setSelectedSectionId("");
+      setSelectedTeamId("");
 
       if (comparisonTreeRef.current) {
         if (deptIds.length === 1 && comparisonTreeRef.current.sections?.[deptIds[0]]) {
@@ -591,9 +589,7 @@ export default function DashboardPage() {
         : (value !== undefined && value !== null && value !== "" && value !== "all" ? [String(value)] : []);
       const sectId = sectIds.join(",");
       setSelectedSectionId(sectId);
-      if (!Array.isArray(value)) {
-        setSelectedTeamId("");
-      }
+      setSelectedTeamId("");
 
       if (comparisonTreeRef.current) {
         if (sectIds.length === 1 && comparisonTreeRef.current.teams?.[sectIds[0]]) {
@@ -1188,6 +1184,13 @@ export default function DashboardPage() {
                     ? currentIds.filter((id) => id !== idStr)
                     : [...currentIds, idStr];
                   handleFilterChange(level as any, nextIds);
+
+                  setTimeout(() => {
+                    const tableEl = document.getElementById("status-details-table");
+                    if (tableEl) {
+                      tableEl.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }
+                  }, 120);
                 }}
               />
             </div>
@@ -1205,6 +1208,14 @@ export default function DashboardPage() {
                 teamId={cleanTeamId}
                 date={format(selectedDate, "yyyy-MM-dd")}
                 serviceTypes={selectedServiceTypes}
+                unitName={unitName}
+                onClose={() => {
+                  setSelectedStatusData(null);
+                  setSelectedStatusId(null);
+                  if (cleanTeamId) handleFilterChange("team", "");
+                  else if (cleanSectionId) handleFilterChange("section", "");
+                  else if (cleanDeptId) handleFilterChange("department", "");
+                }}
               />
             </div>
           )}

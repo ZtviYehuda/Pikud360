@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthContext } from "@/context/AuthContext";
 import {
@@ -17,6 +17,7 @@ import {
   ChevronRight,
   ChevronLeft,
   Filter,
+  RotateCcw,
   User,
   Plus,
   Pencil,
@@ -264,6 +265,28 @@ export const EmployeeTable = ({
     navigate(`/employees/${employee.id}`);
   };
 
+  const activeFilterCount = useMemo(() => {
+    return Object.keys(activeFilters).filter((k) => {
+      const val = activeFilters[k as keyof EmployeeFilters];
+      if (Array.isArray(val)) return val.length > 0;
+      if (typeof val === "boolean") return val;
+      if (k === "ageRange")
+        return val && ((val as any)[0] !== 18 || (val as any)[1] !== 67);
+      return Boolean(val);
+    }).length;
+  }, [activeFilters]);
+
+  const handleResetFilters = () => {
+    setActiveFilters({});
+    setSearchTerm("");
+    setCurrentPage(1);
+    localStorage.removeItem("employee_filters");
+    if (fetchEmployees) {
+      fetchEmployees("", undefined, false);
+    }
+    toast.success("הסינון אופס בהצלחה");
+  };
+
   const handleApplyFilters = (filters: EmployeeFilters) => {
     setActiveFilters(filters);
     setCurrentPage(1); // Reset to first page
@@ -353,33 +376,34 @@ export const EmployeeTable = ({
             variant="outline"
             className={cn(
               "h-9 px-3.5 rounded-xl border-border/60 bg-card/70 dark:bg-card/50 hover:bg-accent/60 text-foreground font-bold text-xs gap-1.5 shrink-0 shadow-xs transition-all relative",
-              Object.keys(activeFilters).length > 0
+              activeFilterCount > 0
                 ? "text-primary border-primary/40 bg-primary/5"
                 : "",
             )}
             onClick={() => setFilterModalOpen(true)}
-            title="סינון מתקדם"
+            title="סינון שוטרים"
           >
             <Filter className="w-3.5 h-3.5 text-primary shrink-0" />
             <span className="hidden sm:inline">סינון</span>
-            {Object.keys(activeFilters).filter(k => {
-              const val = activeFilters[k as keyof EmployeeFilters];
-              if (Array.isArray(val)) return val.length > 0;
-              if (typeof val === 'boolean') return val;
-              if (k === 'ageRange') return val && ((val as any)[0] !== 18 || (val as any)[1] !== 67);
-              return val;
-            }).length > 0 && (
+            {activeFilterCount > 0 && (
               <span className="absolute -top-1 -left-1 w-5 h-5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-background">
-                {Object.keys(activeFilters).filter(k => {
-                  const val = activeFilters[k as keyof EmployeeFilters];
-                  if (Array.isArray(val)) return val.length > 0;
-                  if (typeof val === 'boolean') return val;
-                  if (k === 'ageRange') return val && ((val as any)[0] !== 18 || (val as any)[1] !== 67);
-                  return val;
-                }).length}
+                {activeFilterCount}
               </span>
             )}
           </Button>
+
+          {(activeFilterCount > 0 || Boolean(searchTerm)) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleResetFilters}
+              className="h-9 px-2.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 border border-rose-500/20 gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer animate-in fade-in zoom-in-95 duration-200"
+              title="איפוס כל הסינונים"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">איפוס</span>
+            </Button>
+          )}
         </div>
 
         {/* Left side: Import & Add */}
