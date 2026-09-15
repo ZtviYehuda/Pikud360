@@ -51,6 +51,33 @@ const MONTH_LABELS = [
   "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר",
 ];
 
+
+const getEmpDay = (emp: any): number | null => {
+  if (emp?.day) return Number(emp.day);
+  if (emp?.raw_date) {
+    const d = new Date(emp.raw_date);
+    if (!isNaN(d.getTime())) return d.getDate();
+  }
+  if (emp?.date && typeof emp.date === "string" && emp.date.includes("/")) {
+    const d = Number(emp.date.split("/")[0]);
+    if (!isNaN(d)) return d;
+  }
+  return null;
+};
+
+const getEmpMonth = (emp: any): number | null => {
+  if (emp?.month) return Number(emp.month);
+  if (emp?.raw_date) {
+    const d = new Date(emp.raw_date);
+    if (!isNaN(d.getTime())) return d.getMonth() + 1;
+  }
+  if (emp?.date && typeof emp.date === "string" && emp.date.includes("/")) {
+    const m = Number(emp.date.split("/")[1]);
+    if (!isNaN(m)) return m;
+  }
+  return null;
+};
+
 export const BirthdaysCard = forwardRef(
   function BirthdaysCard(
     { id, birthdays, selectedDate, className, filterTags = [], hideHeader = false, compact = false }: BirthdaysCardProps,
@@ -102,13 +129,16 @@ export const BirthdaysCard = forwardRef(
       );
 
       return [...birthdays].sort((a, b) => {
-        const aDate = new Date(today.getFullYear(), a.month - 1, a.day);
-        const bDate = new Date(today.getFullYear(), b.month - 1, b.day);
-        // If date passed already this month and looking ahead
-        if (aDate < today && a.month === 1 && today.getMonth() === 11) {
+        const aDay = getEmpDay(a) || 1;
+        const aMonth = getEmpMonth(a) || 1;
+        const bDay = getEmpDay(b) || 1;
+        const bMonth = getEmpMonth(b) || 1;
+        const aDate = new Date(today.getFullYear(), aMonth - 1, aDay);
+        const bDate = new Date(today.getFullYear(), bMonth - 1, bDay);
+        if (aDate < today && aMonth === 1 && today.getMonth() === 11) {
           aDate.setFullYear(today.getFullYear() + 1);
         }
-        if (bDate < today && b.month === 1 && today.getMonth() === 11) {
+        if (bDate < today && bMonth === 1 && today.getMonth() === 11) {
           bDate.setFullYear(today.getFullYear() + 1);
         }
         return aDate.getTime() - bDate.getTime();
@@ -215,9 +245,11 @@ export const BirthdaysCard = forwardRef(
                     referenceDate.getMonth(),
                     referenceDate.getDate()
                   );
+                  const empDay = getEmpDay(employee);
+                  const empMonth = getEmpMonth(employee);
                   const isToday =
-                    employee.day === today.getDate() &&
-                    employee.month === today.getMonth() + 1;
+                    empDay === today.getDate() &&
+                    empMonth === today.getMonth() + 1;
 
                   const isTomorrow =
                     !isToday &&
@@ -225,19 +257,24 @@ export const BirthdaysCard = forwardRef(
                       const tomorrow = new Date(today);
                       tomorrow.setDate(today.getDate() + 1);
                       return (
-                        employee.day === tomorrow.getDate() &&
-                        employee.month === tomorrow.getMonth() + 1
+                        empDay === tomorrow.getDate() &&
+                        empMonth === tomorrow.getMonth() + 1
                       );
                     })();
 
-                  const bdayDate = new Date(
+                  const bdayDate = (empDay && empMonth) ? new Date(
                     referenceDate.getFullYear(),
-                    employee.month - 1,
-                    employee.day
-                  );
-                  const dayOfWeek = bdayDate.toLocaleDateString("he-IL", {
-                    weekday: "long",
-                  });
+                    empMonth - 1,
+                    empDay
+                  ) : null;
+                  const dayOfWeek = employee.day_of_week
+                    ? (employee.day_of_week.startsWith("יום ") ? employee.day_of_week : `יום ${employee.day_of_week}`)
+                    : (bdayDate && !isNaN(bdayDate.getTime()) ? bdayDate.toLocaleDateString("he-IL", {
+                        weekday: "long",
+                      }) : "");
+                  const dateText = (empDay && empMonth)
+                    ? `${empDay} ב${MONTH_LABELS[empMonth - 1]}`
+                    : (employee.date || "");
 
                   const initials = `${employee.first_name?.[0] || ""}${employee.last_name?.[0] || ""}`;
 
@@ -292,8 +329,7 @@ export const BirthdaysCard = forwardRef(
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
                             <Calendar className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />
                             <span className="truncate font-medium">
-                              {employee.day} ב{MONTH_LABELS[employee.month - 1]}
-                              {!isToday && !isTomorrow && ` • ${dayOfWeek}`}
+                              {dateText}{!isToday && !isTomorrow && dayOfWeek && ` • ${dayOfWeek}`}
                             </span>
                           </div>
                         </div>
@@ -317,7 +353,7 @@ export const BirthdaysCard = forwardRef(
                             variant="secondary"
                             className="text-[10.5px] px-2 py-0.5 font-bold text-muted-foreground border-0 bg-muted/70"
                           >
-                            {dayOfWeek}
+                            {dayOfWeek || dateText || "השבוע"}
                           </Badge>
                         )}
 

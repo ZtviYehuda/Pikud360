@@ -777,7 +777,8 @@ def get_attendance_stats():
                 cur.execute("""
                     SELECT id, employee_number, first_name, last_name, org_unit_id,
                            birthdate_ciphertext, birthdate_nonce, birthdate_tag,
-                           rank, position, service_type, status, city
+                           rank, position, service_type, status, city,
+                           phone_ciphertext, phone_nonce, phone_tag
                     FROM workforce.employees
                     WHERE deleted_at IS NULL
                       AND (position NOT IN ('מנהל מערכת', 'מנהלת מערכת', 'ADMIN') OR position IS NULL)
@@ -904,12 +905,17 @@ def get_attendance_stats():
                                 bday_dow = this_year_bday.weekday()
                                 bday_dow_israel = (bday_dow + 1) % 7 # 0=Sunday
                                 hebrew_days = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"]
+                                phone_val = decrypt_value(emp[13], emp[14], emp[15]) if len(emp) > 15 else ""
                                 birthdays.append({
                                     "id": emp_id,
                                     "first_name": emp[2],
                                     "last_name": emp[3],
                                     "date": this_year_bday.strftime("%d/%m"),
                                     "raw_date": this_year_bday.strftime("%Y-%m-%d"),
+                                    "day": this_year_bday.day,
+                                    "month": this_year_bday.month,
+                                    "phone_number": phone_val or "",
+                                    "phone": phone_val or "",
                                     "day_of_week": hebrew_days[bday_dow_israel],
                                     "department": h_info.get("department_name", "כללי"),
                                     "department_id": h_info.get("dept_id", 1),

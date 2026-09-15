@@ -11,6 +11,7 @@ import { Check, Send, Edit2, RotateCcw, Save, PartyPopper } from "lucide-react";
 import { useAuthContext } from "@/context/AuthContext";
 import { useEmployees } from "@/hooks/useEmployees";
 import { cn, getWhatsAppUrl } from "@/lib/utils";
+import { WhatsAppIcon } from "@/components/common/WhatsAppIcon";
 
 interface BirthdayEmployee {
   id: number;
@@ -53,6 +54,33 @@ const INITIAL_PRESETS: Preset[] = [
   },
 ];
 
+
+const getEmpDay = (emp: any): number | null => {
+  if (emp?.day) return Number(emp.day);
+  if (emp?.raw_date) {
+    const d = new Date(emp.raw_date);
+    if (!isNaN(d.getTime())) return d.getDate();
+  }
+  if (emp?.date && typeof emp.date === "string" && emp.date.includes("/")) {
+    const d = Number(emp.date.split("/")[0]);
+    if (!isNaN(d)) return d;
+  }
+  return null;
+};
+
+const getEmpMonth = (emp: any): number | null => {
+  if (emp?.month) return Number(emp.month);
+  if (emp?.raw_date) {
+    const d = new Date(emp.raw_date);
+    if (!isNaN(d.getTime())) return d.getMonth() + 1;
+  }
+  if (emp?.date && typeof emp.date === "string" && emp.date.includes("/")) {
+    const m = Number(emp.date.split("/")[1]);
+    if (!isNaN(m)) return m;
+  }
+  return null;
+};
+
 export const BirthdayGreetingsModal: React.FC<BirthdayGreetingsModalProps> = ({
   open,
   onOpenChange,
@@ -71,9 +99,11 @@ export const BirthdayGreetingsModal: React.FC<BirthdayGreetingsModalProps> = ({
   useEffect(() => {
     if (open && weeklyBirthdays && weeklyBirthdays.length > 0 && !targetEmployee) {
       const today = new Date();
-      const hasToday = weeklyBirthdays.some(
-        (emp) => emp.day === today.getDate() && emp.month === today.getMonth() + 1
-      );
+      const hasToday = weeklyBirthdays.some((emp) => {
+        const d = getEmpDay(emp);
+        const m = getEmpMonth(emp);
+        return d === today.getDate() && m === today.getMonth() + 1;
+      });
       setViewMode(hasToday ? "today" : "week");
     }
   }, [open, weeklyBirthdays, targetEmployee]);
@@ -86,9 +116,11 @@ export const BirthdayGreetingsModal: React.FC<BirthdayGreetingsModalProps> = ({
     employeesToday = [targetEmployee];
     displayedEmployees = [targetEmployee];
   } else {
+    const todayDate = new Date();
     employeesToday = (weeklyBirthdays || []).filter((emp: any) => {
-      const today = new Date();
-      return emp.day === today.getDate() && emp.month === today.getMonth() + 1;
+      const d = getEmpDay(emp);
+      const m = getEmpMonth(emp);
+      return d === todayDate.getDate() && m === todayDate.getMonth() + 1;
     });
     displayedEmployees =
       viewMode === "today" ? employeesToday : weeklyBirthdays;
@@ -116,13 +148,15 @@ export const BirthdayGreetingsModal: React.FC<BirthdayGreetingsModalProps> = ({
     }
   }, [storageKey]);
 
-  const handleSend = (emp: BirthdayEmployee) => {
-    if (!emp.phone_number) return;
+  const handleSend = (emp: any) => {
+    const phone = emp.phone_number || emp.phone;
+    if (!phone) return;
 
-    let message = template.replace("[שם]", emp.first_name);
+    const firstName = emp.first_name || (emp.full_name ? emp.full_name.split(" ")[0] : "יקר");
+    let message = template.replace("[שם]", firstName);
     message = message.replace("[שם_המפקד]", commanderName);
 
-    const whatsappUrl = getWhatsAppUrl(emp.phone_number, message);
+    const whatsappUrl = getWhatsAppUrl(phone, message);
     window.open(whatsappUrl, "_blank");
 
     if (!sentList.includes(emp.id)) {
@@ -155,24 +189,27 @@ export const BirthdayGreetingsModal: React.FC<BirthdayGreetingsModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-3xl lg:max-w-4xl p-0 border border-border/80 bg-card rounded-2xl sm:rounded-3xl shadow-xl flex flex-col max-h-[88vh] overflow-hidden"
+        className="w-[95vw] sm:w-[840px] sm:max-w-4xl p-0 overflow-hidden rounded-3xl border border-border/60 bg-background/95 backdrop-blur-xl shadow-2xl flex flex-col max-h-[90vh]"
         dir="rtl"
       >
         <DialogDragHandle />
-        <DialogHeader className="p-4 sm:p-5 border-b border-border/50 bg-muted/20 text-right shrink-0">
+        <DialogHeader className="p-5 sm:p-6 pb-4 border-b border-border/40 text-right shrink-0">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/10 border border-primary/20 rounded-xl text-primary flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 bg-gradient-to-br from-amber-500/20 to-primary/10 border border-amber-500/25 rounded-2xl text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-2xs">
                 <PartyPopper className="w-5 h-5" />
               </div>
               <div>
-                <DialogTitle className="text-base sm:text-lg font-bold text-foreground">
+                <DialogTitle className="text-base sm:text-lg font-black text-foreground tracking-tight leading-tight">
                   שליחת ברכות יום הולדת
                 </DialogTitle>
                 {!targetEmployee && (
-                  <p className="text-xs text-muted-foreground font-medium mt-0.5">
-                    היום חוגגים {employeesToday.length} שוטרים • השבוע{" "}
-                    {weeklyBirthdays.length} שוטרים
+                  <p className="text-xs text-muted-foreground font-medium mt-1 flex items-center gap-1.5">
+                    <span>היום חוגגים:</span>
+                    <span className="font-bold text-foreground">{employeesToday.length} שוטרים</span>
+                    <span className="text-muted-foreground/40">•</span>
+                    <span>השבוע:</span>
+                    <span className="font-bold text-foreground">{weeklyBirthdays.length} שוטרים</span>
                   </p>
                 )}
               </div>
@@ -181,242 +218,273 @@ export const BirthdayGreetingsModal: React.FC<BirthdayGreetingsModalProps> = ({
             {/* Quick action: Reset sent list if any */}
             {sentList.length > 0 && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={handleReset}
-                className="h-8 px-2.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/5 gap-1.5 cursor-pointer"
+                className="h-8 px-3 rounded-xl border-border/60 bg-card/60 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 text-xs font-bold text-muted-foreground gap-1.5 cursor-pointer shadow-2xs transition-all"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">איפוס רשימת שליחה</span>
+                <span className="hidden sm:inline">איפוס רשימה</span>
               </Button>
             )}
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-start">
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 custom-scrollbar">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-stretch">
             {/* Right Column (in RTL): Celebrants List (7 cols on md) */}
-            <div className="md:col-span-7 space-y-4">
-              {/* View Mode Selection (Tabs) */}
-              {!targetEmployee && (
-                <div className="flex p-1 bg-muted/40 rounded-xl border border-border/50">
+            <div className="md:col-span-7 flex flex-col space-y-3">
+              {/* Tier 1: View Mode Selection (Tabs) */}
+              {!targetEmployee ? (
+                <div className="flex p-1 bg-muted/50 dark:bg-muted/30 rounded-2xl gap-1 h-11 items-center">
                   <button
                     type="button"
                     onClick={() => setViewMode("today")}
                     className={cn(
-                      "flex-1 h-8 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                      "flex-1 h-9 rounded-xl text-xs font-bold transition-all cursor-pointer select-none flex items-center justify-center gap-1.5",
                       viewMode === "today"
-                        ? "bg-background text-foreground shadow-2xs border border-border/60 font-bold"
-                        : "text-muted-foreground hover:text-foreground",
+                        ? "bg-background text-foreground shadow-sm font-bold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-background/40",
                     )}
                   >
-                    חוגגים היום ({employeesToday.length})
+                    <span>חוגגים היום</span>
+                    <span
+                      className={cn(
+                        "px-1.5 py-0.5 rounded-full text-[10px] font-bold",
+                        viewMode === "today"
+                          ? "bg-primary/15 text-primary"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {employeesToday.length}
+                    </span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setViewMode("week")}
                     className={cn(
-                      "flex-1 h-8 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                      "flex-1 h-9 rounded-xl text-xs font-bold transition-all cursor-pointer select-none flex items-center justify-center gap-1.5",
                       viewMode === "week"
-                        ? "bg-background text-foreground shadow-2xs border border-border/60 font-bold"
-                        : "text-muted-foreground hover:text-foreground",
+                        ? "bg-background text-foreground shadow-sm font-bold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-background/40",
                     )}
                   >
-                    חוגגים השבוע ({weeklyBirthdays.length})
+                    <span>חוגגים השבוע</span>
+                    <span
+                      className={cn(
+                        "px-1.5 py-0.5 rounded-full text-[10px] font-bold",
+                        viewMode === "week"
+                          ? "bg-primary/15 text-primary"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {weeklyBirthdays.length}
+                    </span>
                   </button>
+                </div>
+              ) : (
+                <div className="h-11 flex items-center px-2 text-xs font-bold text-foreground">
+                  שליחת ברכה אישית
                 </div>
               )}
 
-              {/* Celebrants list */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    רשימת חוגגים ({displayedEmployees.length})
+              {/* Tier 2: Celebrants Header */}
+              <div className="flex items-center justify-between h-7 px-1">
+                <span className="text-xs font-bold text-foreground/80">
+                  רשימת חוגגים ({displayedEmployees.length})
+                </span>
+                {sentList.length > 0 && (
+                  <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full shadow-2xs">
+                    נשלחו ברכות ל-{sentList.length} שוטרים
                   </span>
-                  {sentList.length > 0 && (
-                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                      נשלחו ברכות ל-{sentList.length} שוטרים
-                    </span>
-                  )}
-                </div>
+                )}
+              </div>
 
-                <div className="space-y-2 max-h-[380px] overflow-y-auto custom-scrollbar pr-0.5">
-                  {displayedEmployees.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground bg-muted/20 rounded-2xl border border-dashed border-border/50">
-                      <PartyPopper className="w-8 h-8 opacity-30 mx-auto mb-2" />
-                      <p className="text-xs font-semibold">
-                        {viewMode === "today"
-                          ? "אין שוטרים שחוגגים יום הולדת היום"
-                          : "אין שוטרים שחוגגים יום הולדת השבוע"}
-                      </p>
-                    </div>
-                  ) : (
-                    displayedEmployees.map((emp) => {
-                      const isSent = sentList.includes(emp.id);
-                      const today = new Date();
-                      const isToday =
-                        emp.day === today.getDate() &&
-                        emp.month === today.getMonth() + 1;
+              {/* Tier 3: Celebrants List Container (fixed height 360px) */}
+              <div className="h-[360px] space-y-2 overflow-y-auto custom-scrollbar pr-0.5">
+                {displayedEmployees.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center p-6 text-muted-foreground bg-card/40 rounded-2xl border border-dashed border-border/60">
+                    <PartyPopper className="w-8 h-8 opacity-30 mb-2 text-primary" />
+                    <p className="text-sm font-bold">
+                      {viewMode === "today"
+                        ? "אין שוטרים שחוגגים יום הולדת היום"
+                        : "אין שוטרים שחוגגים יום הולדת השבוע"}
+                    </p>
+                    <p className="text-xs mt-1 text-muted-foreground/80">
+                      בדוק את הלשונית השנייה או חזור במועד מאוחר יותר
+                    </p>
+                  </div>
+                ) : (
+                  displayedEmployees.map((emp: any) => {
+                    const isSent = sentList.includes(emp.id);
+                    const todayNow = new Date();
+                    const d = getEmpDay(emp);
+                    const m = getEmpMonth(emp);
+                    const isToday = d === todayNow.getDate() && m === todayNow.getMonth() + 1;
+                    const fullName = emp.full_name || `${emp.first_name || ""} ${emp.last_name || ""}`.trim() || "שוטר";
+                    const initials = `${emp.first_name?.[0] || ""}${emp.last_name?.[0] || ""}` || fullName.substring(0, 2) || "🎂";
+                    const phone = emp.phone_number || emp.phone || "";
 
-                      return (
-                        <div
-                          key={emp.id}
-                          className={cn(
-                            "flex items-center justify-between p-3 sm:p-3.5 rounded-xl border transition-all bg-card/80 hover:bg-card shadow-2xs",
-                            isSent
-                              ? "border-emerald-500/30 bg-emerald-500/[0.02]"
-                              : isToday
-                                ? "border-primary/40 ring-1 ring-primary/20 bg-primary/[0.02]"
-                                : "border-border/60 hover:border-border",
-                          )}
-                        >
-                          {/* Right: Avatar + Name + Birthday */}
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div
-                              className={cn(
-                                "w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 border",
-                                isToday
-                                  ? "bg-primary/10 border-primary/20 text-primary"
-                                  : "bg-muted border-border/60 text-muted-foreground",
-                              )}
-                            >
-                              {emp.first_name[0]}
-                              {emp.last_name[0]}
-                            </div>
-                            <div className="flex flex-col min-w-0 text-right">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-bold text-foreground truncate">
-                                  {emp.first_name} {emp.last_name}
-                                </span>
-                                {isToday && (
-                                  <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-md font-bold shrink-0 animate-pulse">
-                                    היום! 🎉
-                                  </span>
-                                )}
-                              </div>
-                              <span
-                                className="text-xs text-muted-foreground"
-                                dir="ltr"
-                              >
-                                {emp.phone_number
-                                  ? emp.phone_number
-                                  : "ללא טלפון"}
-                              </span>
-                            </div>
+                    return (
+                      <div
+                        key={emp.id}
+                        className={cn(
+                          "flex items-center justify-between p-3 sm:p-3.5 rounded-2xl border transition-all shadow-2xs backdrop-blur-xs",
+                          isSent
+                            ? "bg-muted/30 border-border/40 opacity-70"
+                            : "bg-card/60 hover:bg-card border-border/50 hover:border-primary/30",
+                        )}
+                      >
+                        {/* Right: Avatar & Name */}
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 rounded-2xl bg-muted/80 text-foreground font-bold text-xs flex items-center justify-center shrink-0 border border-border/40 shadow-2xs">
+                            {initials}
                           </div>
-
-                          {/* Left: Send Button */}
-                          <Button
-                            size="sm"
-                            onClick={() => handleSend(emp)}
-                            disabled={!emp.phone_number}
-                            className={cn(
-                              "h-9 px-3.5 rounded-xl gap-1.5 text-xs font-semibold transition-all shrink-0 cursor-pointer shadow-xs",
-                              isSent
-                                ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 hover:bg-emerald-500/15"
-                                : "bg-primary text-primary-foreground hover:bg-primary/90",
-                            )}
-                            variant={isSent ? "outline" : "default"}
-                          >
-                            {isSent ? (
-                              <>
-                                <Check className="w-3.5 h-3.5" />
-                                <span>נשלח</span>
-                              </>
-                            ) : (
-                              <>
-                                <Send className="w-3.5 h-3.5" />
-                                <span>שלח בוואטסאפ</span>
-                              </>
-                            )}
-                          </Button>
+                          <div className="flex flex-col min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-bold text-foreground truncate">
+                                {fullName}
+                              </span>
+                              {isToday && (
+                                <span className="text-[10px] bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold shrink-0 animate-pulse">
+                                  היום! 🎉
+                                </span>
+                              )}
+                            </div>
+                            <span
+                              className={cn(
+                                "text-xs font-mono mt-0.5",
+                                phone ? "text-muted-foreground"
+                                  : "text-amber-600/80 dark:text-amber-400/80 font-sans text-[11px]",
+                              )}
+                              dir={phone ? "ltr" : "rtl"}
+                            >
+                              {phone ? phone : "ללא מספר טלפון"}
+                            </span>
+                          </div>
                         </div>
-                      );
-                    })
-                  )}
-                </div>
+
+                        {/* Left: WhatsApp Send Button */}
+                        <Button
+                          size="sm"
+                          onClick={() => handleSend(emp)}
+                          disabled={!phone}
+                          className={cn(
+                            "h-9 px-3.5 rounded-xl gap-2 text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs",
+                            isSent
+                              ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25"
+                              : !emp.phone_number
+                                ? "bg-muted/60 text-muted-foreground/60 border border-border/40 cursor-not-allowed"
+                                : "bg-[#25D366] hover:bg-[#20bd5a] text-white active:scale-95",
+                          )}
+                          variant={
+                            isSent || !phone ? "outline" : "default"
+                          }
+                        >
+                          {isSent ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                              <span>נשלח</span>
+                            </>
+                          ) : (
+                            <>
+                              <WhatsAppIcon className="w-3.5 h-3.5 shrink-0" />
+                              <span>שלח בוואטסאפ</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
 
             {/* Left Column (in RTL): Presets & Template Editor (5 cols on md) */}
-            <div className="md:col-span-5 space-y-4">
-              {/* Presets Segmented Control */}
-              <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-muted-foreground block text-right">
-                  בחר נוסח ברכה
-                </span>
-                <div className="grid grid-cols-3 gap-1.5 p-1 bg-muted/40 rounded-xl border border-border/50">
-                  {presets.map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => handleSelectPreset(p)}
-                      className={cn(
-                        "h-8 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center justify-center",
-                        activePresetId === p.id
-                          ? "bg-background text-foreground shadow-2xs border border-border/60 font-bold"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
+            <div className="md:col-span-5 flex flex-col space-y-3">
+              {/* Tier 1: Presets Segmented Control (matches Tier 1 on right) */}
+              <div className="grid grid-cols-3 gap-1 p-1 bg-muted/50 dark:bg-muted/30 rounded-2xl h-11 items-center">
+                {presets.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => handleSelectPreset(p)}
+                    className={cn(
+                      "h-9 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center select-none",
+                      activePresetId === p.id
+                        ? "bg-background text-foreground shadow-sm font-bold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-background/40",
+                    )}
+                  >
+                    {p.label}
+                  </button>
+                ))}
               </div>
 
-              {/* Template Editor Box */}
-              <div className="p-4 rounded-2xl border border-border/70 bg-card space-y-3 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                    <Edit2 className="w-3.5 h-3.5 text-primary" />
-                    <span>תוכן הברכה</span>
-                  </span>
+              {/* Tier 2: Template Header (matches Tier 2 on right) */}
+              <div className="flex items-center justify-between h-7 px-1">
+                <span className="text-xs font-bold text-foreground/80 flex items-center gap-1.5">
+                  <Edit2 className="w-3.5 h-3.5 text-primary" />
+                  <span>תוכן הברכה</span>
+                </span>
 
-                  {isEditing ? (
-                    <Button
-                      size="sm"
-                      onClick={handleSavePreset}
-                      className="h-7 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold gap-1 shadow-xs cursor-pointer"
-                    >
-                      <Save className="w-3 h-3" />
-                      <span>שמור</span>
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsEditing(true)}
-                      className="h-7 px-2 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg gap-1 cursor-pointer"
-                    >
-                      <Edit2 className="w-3 h-3" />
-                      <span>ערוך</span>
-                    </Button>
-                  )}
-                </div>
+                {isEditing ? (
+                  <Button
+                    size="sm"
+                    onClick={handleSavePreset}
+                    className="h-6.5 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold gap-1 shadow-xs cursor-pointer"
+                  >
+                    <Save className="w-3 h-3" />
+                    <span>שמור</span>
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                    className="h-6.5 px-2 text-xs font-bold text-primary hover:bg-primary/10 rounded-lg gap-1 cursor-pointer"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                    <span>ערוך</span>
+                  </Button>
+                )}
+              </div>
 
+              {/* Tier 3: Template Box Container (fixed height 360px, matches Tier 3 on right) */}
+              <div className="h-[360px] p-3.5 rounded-2xl border border-border/60 bg-card/80 dark:bg-card/50 backdrop-blur-xs flex flex-col justify-between shadow-2xs">
+                {/* Editor or Preview area */}
                 {isEditing ? (
                   <textarea
                     value={template}
                     onChange={(e) => setTemplate(e.target.value)}
-                    className="w-full bg-background border border-border/80 rounded-xl p-3 text-xs leading-relaxed focus:ring-2 focus:ring-primary/20 outline-none transition-all h-36 custom-scrollbar resize-none font-medium"
+                    className="w-full flex-1 bg-background border border-primary/40 rounded-xl p-3 text-xs leading-relaxed focus:ring-2 focus:ring-primary/20 outline-none transition-all custom-scrollbar resize-none font-medium mb-3"
                     placeholder="הכנס את נוסח הברכה... השתמש ב-[שם] וב-[שם_המפקד]"
                   />
                 ) : (
                   <div
                     onClick={() => setIsEditing(true)}
-                    className="w-full bg-muted/20 border border-border/50 rounded-xl p-3 text-xs leading-relaxed text-foreground cursor-text min-h-[140px] hover:border-primary/40 transition-colors whitespace-pre-wrap font-medium"
+                    className="w-full flex-1 bg-muted/20 hover:bg-muted/30 border border-border/40 rounded-xl p-3.5 text-xs leading-relaxed text-foreground cursor-text overflow-y-auto custom-scrollbar transition-colors whitespace-pre-wrap font-medium shadow-2xs mb-3"
                   >
                     {template}
                   </div>
                 )}
 
                 {/* Template Variables Legend */}
-                <div className="p-2.5 rounded-lg bg-muted/30 border border-border/40 text-[11px] text-muted-foreground leading-normal">
-                  <span>תגיות דינמיות: </span>
-                  <span className="font-semibold text-primary">[שם]</span> = שם
-                  השוטר |{" "}
-                  <span className="font-semibold text-primary">[שם_המפקד]</span>{" "}
-                  = {commanderName}
+                <div className="p-2.5 rounded-xl bg-muted/40 dark:bg-muted/20 border border-border/40 text-xs text-muted-foreground shrink-0 space-y-1.5">
+                  <span className="font-bold text-foreground block text-[11px]">
+                    תגיות דינמיות בשימוש:
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary font-bold text-[11px] border border-primary/20">
+                      [שם]
+                    </span>
+                    <span className="text-[11px]">= שם השוטר</span>
+                    <span className="text-muted-foreground/40 mx-1">•</span>
+                    <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary font-bold text-[11px] border border-primary/20">
+                      [שם_המפקד]
+                    </span>
+                    <span className="text-[11px]">= {commanderName}</span>
+                  </div>
                 </div>
               </div>
             </div>
