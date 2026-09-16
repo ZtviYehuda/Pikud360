@@ -153,8 +153,11 @@ export default function DashboardPage() {
     today.setHours(0, 0, 0, 0);
     const selected = new Date(selectedDate);
     selected.setHours(0, 0, 0, 0);
-    return selected < today;
-  }, [selectedDate]);
+    // Only treat as old historical data if outside the current trend window
+    const threshold = new Date(today);
+    threshold.setDate(today.getDate() - trendRange);
+    return selected < threshold;
+  }, [selectedDate, trendRange]);
 
   // Fetch Trend Stats
   useEffect(() => {
@@ -383,36 +386,7 @@ export default function DashboardPage() {
     selectedAgeRange,
   ]);
 
-  // Fetch Trend Stats
-  useEffect(() => {
-    const fetchTrend = async () => {
-      // Use today as reference for trend unless we are looking at older historical data
-      // This prevents the chart from "sliding" when clicking dates within the current month
-      const referenceDate = isOldDate ? selectedDate : new Date();
-      const formattedDate = format(referenceDate, "yyyy-MM-dd");
-      
-      const trendData = await getTrendStats(trendRange, formattedDate, {
-        department_id: selectedDeptId,
-        section_id: selectedSectionId,
-        status_id: (selectedStatusData?.id && selectedStatusData.id > 0) ? selectedStatusData.id.toString() : undefined,
-        serviceTypes: selectedServiceTypes.join(","),
-        min_age: selectedAgeRange.min,
-        max_age: selectedAgeRange.max,
-      });
-      setTrendStats(trendData);
-    };
-    fetchTrend();
-  }, [
-    getTrendStats,
-    isOldDate ? format(selectedDate, "yyyy-MM-dd") : "current",
-    trendRange,
-    selectedDeptId,
-    selectedSectionId,
-    selectedTeamId,
-    selectedStatusData?.id,
-    selectedServiceTypes,
-    selectedAgeRange,
-  ]);
+  
 
 
   // Fetch birthdays and unverified count - ALWAYS get full breakdown for the selected group

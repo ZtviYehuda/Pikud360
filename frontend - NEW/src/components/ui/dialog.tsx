@@ -54,6 +54,8 @@ function DialogDragHandle({ className }: { className?: string }) {
   return null;
 }
 
+let isProgrammaticModalClose = false;
+
 function DialogContent({
   className,
   children,
@@ -139,7 +141,17 @@ function DialogContent({
     const stateKey = "modal-" + Math.random().toString(36).substring(2, 11);
     window.history.pushState({ modalState: stateKey }, "");
 
-    const handlePopState = () => {
+    const handlePopState = (e: PopStateEvent) => {
+      // Ignore programmatic history.back() called during modal teardown to prevent closing newly opened modals
+      if (isProgrammaticModalClose) {
+        isProgrammaticModalClose = false;
+        return;
+      }
+      // Ignore if the state belongs to this modal itself
+      if (e.state && e.state.modalState === stateKey) {
+        return;
+      }
+
       // Dispatch Escape key down event to trigger Radix UI close handler
       const escapeEvent = new KeyboardEvent("keydown", {
         key: "Escape",
@@ -157,7 +169,11 @@ function DialogContent({
     return () => {
       window.removeEventListener("popstate", handlePopState);
       if (window.history.state && window.history.state.modalState === stateKey) {
+        isProgrammaticModalClose = true;
         window.history.back();
+        setTimeout(() => {
+          isProgrammaticModalClose = false;
+        }, 200);
       }
     };
   }, []);

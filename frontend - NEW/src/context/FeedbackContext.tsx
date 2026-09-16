@@ -16,7 +16,7 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
   const openFeedback = (page?: string, onReturn?: () => void) => {
     setContextPage(page || "");
     setOnReturnCallback(onReturn ? () => onReturn : null);
-    setIsOpen(true);
+    setTimeout(() => { setIsOpen(true); }, 60);
   };
 
   const closeFeedback = () => {

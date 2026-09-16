@@ -219,6 +219,10 @@ export const ReportHub: React.FC<ReportHubProps> = ({
             section_id: stableFilters.section_id,
             team_id: stableFilters.team_id,
             date: formattedDate,
+            view_mode: localViewMode,
+            start_date: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined,
+            end_date: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined,
+            days: activeDaysRange,
             serviceTypes: stableFilters.serviceTypes.join(","),
             status_id: stableFilters.status_id,
           })
@@ -236,9 +240,74 @@ export const ReportHub: React.FC<ReportHubProps> = ({
     };
 
     fetchData();
-  // activeDaysRange already encapsulates localViewMode + dateRange, so we don't list them separately
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, localDate, activeDaysRange, stableFilters]);
+  }, [isOpen, localDate, localViewMode, dateRange?.from, dateRange?.to, activeDaysRange, stableFilters]);
+
+  const filteredBirthdays = useMemo(() => {
+    if (!birthdays || !birthdays.length) return [];
+    const getEmpDay = (emp: any): number | null => {
+      if (emp?.day) return Number(emp.day);
+      if (emp?.raw_date) {
+        const d = new Date(emp.raw_date);
+        if (!isNaN(d.getTime())) return d.getDate();
+      }
+      if (emp?.date && typeof emp.date === "string" && emp.date.includes("/")) {
+        const d = Number(emp.date.split("/")[0]);
+        if (!isNaN(d)) return d;
+      }
+      return null;
+    };
+    const getEmpMonth = (emp: any): number | null => {
+      if (emp?.month) return Number(emp.month);
+      if (emp?.raw_date) {
+        const d = new Date(emp.raw_date);
+        if (!isNaN(d.getTime())) return d.getMonth() + 1;
+      }
+      if (emp?.date && typeof emp.date === "string" && emp.date.includes("/")) {
+        const m = Number(emp.date.split("/")[1]);
+        if (!isNaN(m)) return m;
+      }
+      return null;
+    };
+
+    return birthdays.filter((emp: any) => {
+      const d = getEmpDay(emp);
+      const m = getEmpMonth(emp);
+      if (!d || !m) return true;
+
+      if (localViewMode === "daily") {
+        return d === localDate.getDate() && m === localDate.getMonth() + 1;
+      }
+      if (localViewMode === "weekly") {
+        const targetDow = localDate.getDay();
+        const sunday = new Date(localDate);
+        sunday.setDate(localDate.getDate() - targetDow);
+        sunday.setHours(0, 0, 0, 0);
+        const saturday = new Date(sunday);
+        saturday.setDate(sunday.getDate() + 6);
+        saturday.setHours(23, 59, 59, 999);
+        for (const yr of [localDate.getFullYear(), localDate.getFullYear() - 1, localDate.getFullYear() + 1]) {
+          const cand = new Date(yr, m - 1, d);
+          if (cand >= sunday && cand <= saturday) return true;
+        }
+        return false;
+      }
+      if (localViewMode === "monthly") {
+        return m === localDate.getMonth() + 1;
+      }
+      if (localViewMode === "custom" && dateRange?.from && dateRange?.to) {
+        const from = new Date(dateRange.from);
+        from.setHours(0, 0, 0, 0);
+        const to = new Date(dateRange.to);
+        to.setHours(23, 59, 59, 999);
+        for (const yr of [from.getFullYear(), to.getFullYear(), localDate.getFullYear()]) {
+          const cand = new Date(yr, m - 1, d);
+          if (cand >= from && cand <= to) return true;
+        }
+        return false;
+      }
+      return true;
+    });
+  }, [birthdays, localViewMode, localDate, dateRange]);
 
   const downloadCard = async (ref: any) => {
     if (!ref?.current) {
@@ -340,8 +409,12 @@ export const ReportHub: React.FC<ReportHubProps> = ({
           </Button>
         </DialogTrigger>
 
-        <DialogContent className={cn(
-          "p-0 overflow-hidden border-0 bg-background/97 backdrop-blur-3xl rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col transition-all duration-300 shadow-2xl",
+        <DialogContent
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+          }}
+          className={cn(
+            "p-0 overflow-hidden border-0 bg-background/97 backdrop-blur-3xl rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col transition-all duration-300 shadow-2xl",
           "h-auto max-h-[82vh] sm:max-h-[88vh]",
           "sm:max-w-2xl w-full sm:w-[95vw] sm:mx-auto"
         )}>
@@ -512,7 +585,7 @@ export const ReportHub: React.FC<ReportHubProps> = ({
                         )}
                         {previewType === 'trend' && (
                           <div className="w-full h-[350px] sm:h-[420px] flex flex-col mt-2">
-                            <AttendanceTrendCard data={trendStats} range={activeDaysRange} unitName={filters.unitName} hideHeader={true} selectedDate={localDate} compact={true} />
+                            <AttendanceTrendCard data={trendStats} range={activeDaysRange} unitName={filters.unitName} hideHeader={true} selectedDate={localDate} compact={true} onDateSelect={setLocalDate} />
                           </div>
                         )}
                         {previewType === 'comparison' && (
@@ -522,7 +595,7 @@ export const ReportHub: React.FC<ReportHubProps> = ({
                         )}
                         {previewType === 'birthdays' && (
                           <div className="w-full h-auto min-h-[300px] flex flex-col mt-2">
-                            <BirthdaysCard birthdays={birthdays} selectedDate={localDate} hideHeader={true} compact={true} />
+                            <BirthdaysCard birthdays={filteredBirthdays} selectedDate={localDate} hideHeader={true} compact={true} />
                           </div>
                         )}
 
@@ -572,12 +645,16 @@ export const ReportHub: React.FC<ReportHubProps> = ({
                 <div className="pt-2 pb-1 text-center">
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       setIsOpen(false);
-                      openFeedback(
-                        `מרכז דוחות (${previewType ? `תצוגת ${previewType}` : "תפריט ראשי"})`,
-                        () => setIsOpen(true)
-                      );
+                      setTimeout(() => {
+                        openFeedback(
+                          `מרכז דוחות (${previewType ? `תצוגת ${previewType}` : "תפריט ראשי"})`,
+                          () => setIsOpen(true)
+                        );
+                      }, 80);
                     }}
                     className="text-[11px] text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 cursor-pointer"
                   >
@@ -596,7 +673,7 @@ export const ReportHub: React.FC<ReportHubProps> = ({
           <div style={{ width: "750px", height: "480px" }}><EmployeesChart ref={snapshotRef} stats={snapshotStats} total={snapshotTotal} loading={loading} unitName={filters.unitName} selectedDate={localDate} /></div>
           <div style={{ width: "750px", height: "480px" }}><AttendanceTrendCard ref={trendRef} data={trendStats} loading={loading} range={activeDaysRange} unitName={filters.unitName} selectedDate={localDate} /></div>
           <div style={{ width: "750px", height: "480px" }}><StatsComparisonCard ref={comparisonRef} data={comparisonStats} loading={loading} days={activeDaysRange} unitName={filters.unitName} selectedDate={localDate} /></div>
-          <div style={{ width: "750px", height: "480px" }}><BirthdaysCard ref={birthdaysRef} birthdays={birthdays} selectedDate={localDate} /></div>
+          <div style={{ width: "750px", height: "480px" }}><BirthdaysCard ref={birthdaysRef} birthdays={filteredBirthdays} selectedDate={localDate} /></div>
         </div>
       )}
 

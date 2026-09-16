@@ -134,7 +134,7 @@ const ProtectedRoute = () => {
 };
 
 // ── Router ────────────────────────────────────────────────────────────────────
-const router = createBrowserRouter([
+export const router = createBrowserRouter([
   {
     errorElement: <DefaultErrorBoundary />,
     children: [

@@ -1,4 +1,4 @@
-import { useRef, useMemo, forwardRef, useImperativeHandle } from "react";
+import { useRef, useMemo, useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import {
   Card,
   CardContent,
@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   XAxis,
@@ -172,6 +172,133 @@ export const AttendanceTrendCard = forwardRef(
       return Math.round(sum / chartData.length);
     }, [chartData]);
 
+    const handleBarClick = (entry: any) => {
+      if (!onDateSelect || !entry) return;
+      const rawDate = entry.rawDate || entry.date || entry.date_str;
+      if (!rawDate) return;
+
+      try {
+        let targetDate: Date;
+        if (typeof rawDate === "string" && rawDate.includes("-")) {
+          const parts = rawDate.split("T")[0].split("-").map(Number);
+          targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
+        } else {
+          targetDate = parseISO(rawDate);
+        }
+
+        const today = new Date();
+        if (entry.isSelected && !isSameDay(targetDate, today)) {
+          onDateSelect(today);
+        } else {
+          onDateSelect(targetDate);
+        }
+      } catch (err) {
+        console.error("Error selecting date from trend chart:", err);
+      }
+    };
+
+    const [containerWidth, setContainerWidth] = useState<number>(600);
+
+    useEffect(() => {
+      if (!cardRef.current) return;
+      const updateWidth = () => {
+        if (cardRef.current) {
+          const w = cardRef.current.clientWidth;
+          if (w > 0) setContainerWidth(w);
+        }
+      };
+      updateWidth();
+
+      const observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.contentRect.width > 0) {
+            setContainerWidth(entry.contentRect.width);
+          }
+        }
+      });
+
+      observer.observe(cardRef.current);
+      return () => observer.disconnect();
+    }, []);
+
+    // Responsive columns: on mobile, sample columns (every ~4 days) so all fit on ONE screen with generous gaps
+    const displayedData = useMemo(() => {
+      if (!chartData.length) return [];
+      const total = chartData.length;
+
+      // On desktop (width >= 600px) or if total <= 8 (weekly 7 days), show all columns
+      if (containerWidth >= 600 || total <= 8) {
+        return chartData;
+      }
+
+      // On mobile / narrow screens:
+      // Show ~7-8 columns that fit comfortably with generous gaps (~35px per column slot)
+      const effectiveWidth = Math.max(260, containerWidth - 45);
+      const targetColumns = Math.max(6, Math.min(9, Math.floor(effectiveWidth / 35)));
+      const step = Math.max(2, Math.round((total - 1) / (targetColumns - 1)));
+
+      const indices = new Set<number>();
+      // 1. Current date (today) is ALWAYS the primary anchor on the right
+      indices.add(total - 1);
+
+      // 2. Step backwards (e.g. every 4 days)
+      let curr = total - 1 - step;
+      while (curr >= 0) {
+        indices.add(curr);
+        curr -= step;
+      }
+
+      // 3. Include start date if not too close
+      const earliest = Math.min(...Array.from(indices));
+      if (earliest >= Math.floor(step * 0.75)) {
+        indices.add(0);
+      }
+
+      // 4. Ensure currently selected date is always visible
+      const selectedIndex = chartData.findIndex((d: any) => d.isSelected);
+      if (selectedIndex !== -1) {
+        indices.add(selectedIndex);
+      }
+
+      const sortedIndices = Array.from(indices).sort((a, b) => a - b);
+      return sortedIndices.map((i) => chartData[i]).filter(Boolean);
+    }, [chartData, containerWidth]);
+
+    // Responsive ticks: for mobile sampled view (<= 8 columns), show date on each column
+    const visibleTicks = useMemo(() => {
+      if (!displayedData.length) return [];
+      // On mobile / sampled view (8 or fewer columns), display date for all of them
+      if (displayedData.length <= 8) {
+        return displayedData.map((d: any) => d.formattedDate);
+      }
+
+      // On desktop with full columns:
+      const effectiveWidth = Math.max(260, containerWidth - 60);
+      const maxLabels = Math.max(4, Math.min(10, Math.floor(effectiveWidth / 65)));
+      const idealStep = Math.max(2, Math.round((displayedData.length - 1) / (maxLabels - 1)));
+
+      const tickIndices = new Set<number>();
+      tickIndices.add(displayedData.length - 1); // Rightmost item always labeled (Today)
+
+      let curr = displayedData.length - 1 - idealStep;
+      while (curr >= 0) {
+        tickIndices.add(curr);
+        curr -= idealStep;
+      }
+
+      const firstTick = Math.min(...Array.from(tickIndices));
+      if (firstTick >= Math.floor(idealStep * 0.75)) {
+        tickIndices.add(0);
+      }
+
+      const sorted = Array.from(tickIndices).sort((a, b) => a - b);
+      return sorted.map((idx) => displayedData[idx]?.formattedDate).filter(Boolean);
+    }, [displayedData, containerWidth]);
+
+    const hasCustomSelection = useMemo(() => {
+      return chartData.some((d: any) => d.isSelected && !d.isToday);
+    }, [chartData]);
+
     const ranges = [
       { label: "7 ימים", value: 7 },
       { label: "30 ימים", value: 30 },
@@ -187,40 +314,65 @@ export const AttendanceTrendCard = forwardRef(
         )}
       >
         {!hideHeader && (
-          <CardHeader className="px-4 sm:px-6 py-3 sm:py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3">
-            <div className="space-y-1 min-w-0 flex-1">
-              <div className="flex items-center gap-2.5 min-w-0 flex-wrap">
+          <CardHeader className="px-4 sm:px-6 py-3 sm:py-4 border-b border-border/40 space-y-1.5 sm:space-y-2">
+            {/* Top Row: Title + Icon on right, Range Selector Pills on left */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                   <TrendingUp className="w-4 h-4" />
                 </div>
-                <CardTitle className="text-sm sm:text-base font-bold text-foreground tracking-tight whitespace-nowrap shrink-0">
+                <CardTitle className="text-sm sm:text-base font-bold text-foreground tracking-tight truncate">
                   מגמת נוכחות וזמינות
                 </CardTitle>
-                <Badge variant="secondary" className="text-[11px] font-bold bg-primary/10 text-primary border border-primary/20 shrink-0">
-                  ממוצע {averagePct}%
-                </Badge>
               </div>
-              <CardDescription className="text-xs text-muted-foreground truncate flex items-center gap-3">
-                <span>{unitName} • {range === 7 ? "שבועי (7 ימים)" : "חודשי (30 ימים)"}</span>
-              </CardDescription>
+
+              {/* Range Selector Pills (7 / 30 Days) */}
+              <div className="flex items-center gap-1 bg-muted/60 p-0.5 sm:p-1 rounded-xl border border-border/40 shrink-0 no-export">
+                {ranges.map((r) => (
+                  <button
+                    key={r.value}
+                    onClick={() => onRangeChange?.(r.value)}
+                    className={cn(
+                      "px-2.5 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all cursor-pointer",
+                      range === r.value
+                        ? "bg-card text-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Range Selector Pills (7 / 30 Days) */}
-            <div className="flex items-center gap-1 bg-muted/60 p-0.5 sm:p-1 rounded-xl border border-border/40 shrink-0 no-export">
-              {ranges.map((r) => (
-                <button
-                  key={r.value}
-                  onClick={() => onRangeChange?.(r.value)}
-                  className={cn(
-                    "px-2.5 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all cursor-pointer",
-                    range === r.value
-                      ? "bg-card text-foreground shadow-xs"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
+            {/* Bottom Row: Subtitle on right, Average Badge on left */}
+            <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+              <span className="truncate">
+                {unitName} • {range === 7 ? "שבועי (7 ימים)" : "חודשי (30 ימים)"}
+              </span>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Badge
+                  variant="secondary"
+                  className="text-[11px] font-bold bg-primary/10 text-primary border border-primary/20 shrink-0"
                 >
-                  {r.label}
-                </button>
-              ))}
+                  ממוצע {averagePct}%
+                </Badge>
+                {selectedDate && !isSameDay(selectedDate, new Date()) && (
+                  <Badge
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDateSelect?.(new Date());
+                    }}
+                    className="text-[10px] font-bold bg-primary/10 text-primary border-primary/30 flex items-center gap-1 cursor-pointer hover:bg-primary/20 transition-all shrink-0 no-export"
+                    title="לחץ לאיפוס לתאריך היום"
+                  >
+                    <span>תאריך: {format(selectedDate, "dd/MM")}</span>
+                    <X className="w-3 h-3" />
+                  </Badge>
+                )}
+              </div>
             </div>
           </CardHeader>
         )}
@@ -239,20 +391,28 @@ export const AttendanceTrendCard = forwardRef(
             <div className="w-full flex-1 min-h-[260px] sm:min-h-[290px] min-w-0 flex flex-col">
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240} initialDimension={{ width: 450, height: 270 }}>
                 <BarChart
-                  data={chartData}
-                  margin={{ top: 16, right: 16, left: -10, bottom: 4 }}
-                  barCategoryGap={range === 7 ? "24%" : range === 30 ? "14%" : "6%"}
+                  data={displayedData}
+                  margin={{ top: 16, right: 16, left: -10, bottom: 6 }}
+                  barCategoryGap={displayedData.length <= 8 ? "28%" : displayedData.length <= 16 ? "20%" : "12%"}
                   onClick={(e) => {
-                    if (e && e.activePayload && e.activePayload.length && onDateSelect) {
-                      const item = e.activePayload[0].payload;
-                      if (item.rawDate) {
-                        try {
-                          onDateSelect(parseISO(item.rawDate));
-                        } catch {}
-                      }
+                    if (e && e.activePayload && e.activePayload.length) {
+                      handleBarClick(e.activePayload[0].payload);
                     }
                   }}
                 >
+                  <defs>
+                    {/* Pattern for the current day: diagonal stripes in the same blue palette */}
+                    <pattern
+                      id="todayPattern"
+                      patternUnits="userSpaceOnUse"
+                      width="8"
+                      height="8"
+                      patternTransform="rotate(45)"
+                    >
+                      <rect width="8" height="8" fill="#60a5fa" />
+                      <line x1="0" y1="0" x2="0" y2="8" stroke="#2563eb" strokeWidth="2.5" />
+                    </pattern>
+                  </defs>
                   <CartesianGrid
                     strokeDasharray="3 3"
                     vertical={false}
@@ -261,16 +421,40 @@ export const AttendanceTrendCard = forwardRef(
 
                   <XAxis
                     dataKey="formattedDate"
+                    ticks={visibleTicks}
+                    interval={0}
                     axisLine={false}
                     tickLine={false}
-                    interval={range === 7 ? 0 : range === 30 ? 3 : 9}
-                    tick={{
-                      fontSize: 11,
-                      fill: "var(--color-muted-foreground, #94a3b8)",
-                      fontFamily: "Noto Sans Hebrew, sans-serif",
-                      fontWeight: 600,
+                    tick={(props: any) => {
+                      const { x, y, payload } = props;
+                      const entry = displayedData.find((d: any) => d.formattedDate === payload.value);
+                      const isToday = entry?.isToday;
+                      const isSelected = Boolean(entry?.isSelected);
+                      const isCustomSelected = isSelected && hasCustomSelection;
+
+                      return (
+                        <g transform={`translate(${x},${y})`}>
+                          <text
+                            x={0}
+                            y={0}
+                            dy={14}
+                            textAnchor="middle"
+                            fontSize={11}
+                            fontWeight={isToday || isCustomSelected ? 800 : 600}
+                            fill={
+                              isCustomSelected
+                                ? "#2563eb"
+                                : isToday
+                                ? "#2563eb"
+                                : "var(--color-muted-foreground, #94a3b8)"
+                            }
+                            fontFamily="Noto Sans Hebrew, sans-serif"
+                          >
+                            {payload.value}
+                          </text>
+                        </g>
+                      );
                     }}
-                    dy={6}
                   />
 
                   <YAxis
@@ -303,7 +487,7 @@ export const AttendanceTrendCard = forwardRef(
                           <div className="flex items-center justify-between gap-3 border-b border-border/40 pb-1">
                             <span className="font-extrabold text-foreground">{d.formattedDate}</span>
                             {d.isToday ? (
-                              <span className="text-[9px] font-black bg-rose-500/15 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded-md">
+                              <span className="text-[9px] font-black bg-blue-500/15 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-md">
                                 היום
                               </span>
                             ) : d.isSelected ? (
@@ -317,7 +501,7 @@ export const AttendanceTrendCard = forwardRef(
                             <span
                               className={cn(
                                 "font-black text-sm",
-                                isHighlight ? "text-rose-500" : "text-blue-500 dark:text-blue-400"
+                                "text-blue-500 dark:text-blue-400"
                               )}
                             >
                               {d.percentage}%
@@ -337,16 +521,55 @@ export const AttendanceTrendCard = forwardRef(
                   <Bar
                     dataKey="percentage"
                     radius={[6, 6, 2, 2]}
-                    maxBarSize={36}
-                    animationDuration={800}
+                    maxBarSize={30}
+                    isAnimationActive={false}
+                    onClick={(entry: any) => {
+                      if (entry && (entry.rawDate || entry.formattedDate)) {
+                        handleBarClick(entry);
+                      }
+                    }}
                   >
-                    {chartData.map((entry: any, index: number) => {
-                      const isHighlight = entry.isToday || entry.isSelected;
+                    {displayedData.map((entry: any, index: number) => {
+                      const isCustomSelected = entry.isSelected && hasCustomSelection;
+                      const isToday = entry.isToday;
+
+                      // Fill color:
+                      // Selected: rich primary blue
+                      // Today: subtle striped blue
+                      // Default: clean soft blue
+                      const fill = isCustomSelected
+                        ? "#3b82f6"
+                        : isToday
+                        ? "url(#todayPattern)"
+                        : "#60a5fa";
+
+                      // Stroke:
+                      // Selected: clean, refined single dashed border
+                      // Today: solid accent border
+                      // Others: none
+                      const stroke = isCustomSelected
+                        ? "#2563eb"
+                        : isToday
+                        ? "#2563eb"
+                        : "transparent";
+
+                      const strokeWidth = isCustomSelected ? 2 : isToday ? 1.5 : 0;
+                      const strokeDasharray = isCustomSelected ? "4 3" : undefined;
+
+                      const opacity = hasCustomSelection
+                        ? (entry.isSelected ? 1 : 0.35)
+                        : 1;
+
                       return (
                         <Cell
                           key={`cell-${index}`}
-                          fill={isHighlight ? "#f43f5e" : "#60a5fa"}
-                          className="transition-all duration-200 hover:brightness-115 hover:opacity-95 cursor-pointer"
+                          fill={fill}
+                          stroke={stroke}
+                          strokeWidth={strokeWidth}
+                          strokeDasharray={strokeDasharray}
+                          fillOpacity={opacity}
+                          className="transition-all duration-200 hover:brightness-115 hover:opacity-100 cursor-pointer outline-none"
+                          onClick={() => handleBarClick(entry)}
                         />
                       );
                     })}

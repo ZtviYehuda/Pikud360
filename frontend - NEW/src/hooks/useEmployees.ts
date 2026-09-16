@@ -244,6 +244,11 @@ export const useEmployees = () => {
       serviceTypes?: string;
       min_age?: number;
       max_age?: number;
+      age_ranges?: string;
+      view_mode?: string;
+      start_date?: string;
+      end_date?: string;
+      days?: number;
     }) => {
       try {
         const params = new URLSearchParams();
@@ -260,6 +265,16 @@ export const useEmployees = () => {
           params.append("min_age", filters.min_age.toString());
         if (filters?.max_age)
           params.append("max_age", filters.max_age.toString());
+        if (filters?.age_ranges)
+          params.append("age_ranges", filters.age_ranges);
+        if (filters?.view_mode)
+          params.append("view_mode", filters.view_mode);
+        if (filters?.start_date)
+          params.append("start_date", filters.start_date);
+        if (filters?.end_date)
+          params.append("end_date", filters.end_date);
+        if (filters?.days)
+          params.append("days", filters.days.toString());
 
         const { data } = await apiClient.get(
           `${attEndpoints.ATTENDANCE_STATS_ENDPOINT}?${params}`,
@@ -413,6 +428,7 @@ export const useEmployees = () => {
           serviceTypes?: string;
           min_age?: number;
           max_age?: number;
+          age_ranges?: string;
         },
       ) => {
         try {
@@ -431,6 +447,8 @@ export const useEmployees = () => {
             params.append("min_age", filters.min_age.toString());
           if (filters?.max_age)
             params.append("max_age", filters.max_age.toString());
+          if (filters?.age_ranges)
+            params.append("age_ranges", filters.age_ranges);
 
           const { data } = await apiClient.get(
             `${attEndpoints.ATTENDANCE_STATS_ENDPOINT}/comparison?${params}`,
@@ -459,6 +477,7 @@ export const useEmployees = () => {
           serviceTypes?: string;
           min_age?: number;
           max_age?: number;
+          age_ranges?: string;
         },
       ) => {
         try {
@@ -477,6 +496,8 @@ export const useEmployees = () => {
             params.append("min_age", filters.min_age.toString());
           if (filters?.max_age)
             params.append("max_age", filters.max_age.toString());
+          if (filters?.age_ranges)
+            params.append("age_ranges", filters.age_ranges);
 
           const { data } = await apiClient.get(
             `${attEndpoints.ATTENDANCE_STATS_ENDPOINT}/trend?${params}`,

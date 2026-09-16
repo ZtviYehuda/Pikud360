@@ -148,13 +148,26 @@ export const StatsComparisonCard = forwardRef(function StatsComparisonCard(
       {!hideHeader && (
         <CardHeader className="px-4 sm:px-6 py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3">
           <div className="space-y-1 min-w-0 flex-1">
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-2 min-w-0 flex-wrap">
               <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                 <Layers className="w-4 h-4" />
               </div>
-              <CardTitle className="text-sm sm:text-base font-bold text-foreground tracking-tight truncate">
+              <CardTitle className="text-sm sm:text-base font-bold text-foreground tracking-tight truncate shrink-0">
                 השוואת כוח אדם
               </CardTitle>
+              {filterTags.length > 0 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                  {filterTags.map((tag, idx) => (
+                    <Badge
+                      key={idx}
+                      variant="outline"
+                      className="text-[9px] h-5 px-2 font-bold bg-primary/10 text-primary border-primary/20 backdrop-blur-sm whitespace-nowrap rounded-md"
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
               <TooltipProvider>
                 <Tooltip delayDuration={300}>
                   <TooltipTrigger asChild>

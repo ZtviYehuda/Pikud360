@@ -21,7 +21,7 @@ import {
   Network,
   Shield,
 } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { router } from "@/router";
 import { WhatsAppIcon } from "@/components/common/WhatsAppIcon";
 import { useAuthContext } from "@/context/AuthContext";
 import { useFeedback } from "@/context/FeedbackContext";
@@ -455,12 +455,17 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
           </Button>
 
           <button
-            onClick={() => {
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               onOpenChange(false);
-              openFeedback(
-                `כרטיס עובד: ${employee.first_name} ${employee.last_name}${employee.employee_number ? ` (${employee.employee_number})` : ""}`,
-                () => onOpenChange(true)
-              );
+              setTimeout(() => {
+                openFeedback(
+                  `כרטיס עובד: ${employee.first_name} ${employee.last_name}${employee.employee_number ? ` (${employee.employee_number})` : ""}`,
+                  () => onOpenChange(true)
+                );
+              }, 80);
             }}
             className="w-full text-[11px] text-muted-foreground hover:text-primary transition-colors text-center py-1 cursor-pointer flex items-center justify-center gap-1 group"
           >

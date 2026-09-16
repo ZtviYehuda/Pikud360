@@ -18,7 +18,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users } from "lucide-react";
+import { Users, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AgeDistributionChartProps {
@@ -81,7 +81,15 @@ export const AgeDistributionChart = ({
         }
       });
 
-      return defaultDesktop;
+      const parseMinAge = (r: string) => {
+        const match = r.match(/\d+/);
+        return match ? parseInt(match[0], 10) : 0;
+      };
+
+      // Only display age groups that actually have employees
+      const filtered = defaultDesktop.filter((d) => d.count > 0);
+      filtered.sort((a, b) => parseMinAge(a.range) - parseMinAge(b.range));
+      return filtered;
     }
 
     // Group ranges for mobile: 18-25, 26-35, 36-99 (displayed as 36+)
@@ -116,7 +124,8 @@ export const AgeDistributionChart = ({
       }
     });
 
-    return grouped;
+    // Only display age groups that actually have employees
+    return grouped.filter((d) => d.count > 0);
   }, [data, isMobile]);
 
   const isAnyFilterActive = useMemo(() => {
@@ -129,6 +138,10 @@ export const AgeDistributionChart = ({
     if (selectedRange && selectedRange !== "all") return [selectedRange];
     return [];
   }, [selectedRange, selectedRanges]);
+
+  const hasSelection = useMemo(() => {
+    return isAnyFilterActive && activeRangesList.length > 0;
+  }, [isAnyFilterActive, activeRangesList]);
 
   const isSelectedRange = useMemo(() => {
     if (!isAnyFilterActive || activeRangesList.length === 0) return () => false;
@@ -184,15 +197,29 @@ export const AgeDistributionChart = ({
             </Badge>
             {filterTags.length > 0 && (
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                {filterTags.map((tag, idx) => (
-                  <Badge
-                    key={idx}
-                    variant="outline"
-                    className="text-[9px] h-5 px-2 font-bold bg-background/25 text-primary border-primary/20 backdrop-blur-sm whitespace-nowrap rounded-md"
-                  >
-                    {tag}
-                  </Badge>
-                ))}
+                {filterTags.map((tag, idx) => {
+                  const isAgeTag = tag.startsWith("גילאי") || activeRangesList.some(r => tag.includes(r));
+                  return (
+                    <Badge
+                      key={idx}
+                      variant="outline"
+                      onClick={(e) => {
+                        if (isAgeTag && activeRangesList.length > 0) {
+                          e.stopPropagation();
+                          onRangeSelect?.(activeRangesList[0]);
+                        }
+                      }}
+                      className={cn(
+                        "text-[10px] font-bold bg-primary/10 text-primary border-primary/30 flex items-center gap-1 shrink-0 whitespace-nowrap rounded-md transition-all",
+                        isAgeTag && activeRangesList.length > 0 && "cursor-pointer hover:bg-primary/20"
+                      )}
+                      title={isAgeTag && activeRangesList.length > 0 ? "לחץ לביטול הסינון" : undefined}
+                    >
+                      <span>{tag}</span>
+                      {isAgeTag && activeRangesList.length > 0 && <X className="w-3 h-3" />}
+                    </Badge>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -233,16 +260,40 @@ export const AgeDistributionChart = ({
                   axisLine={false}
                   tickLine={false}
                   interval={0}
-                  tick={{
-                    fontSize: 11,
-                    fill: "var(--color-muted-foreground, #94a3b8)",
-                    fontFamily: "Noto Sans Hebrew, sans-serif",
-                    fontWeight: 600,
+                  tick={(props: any) => {
+                    const { x, y, payload } = props;
+                    const isSelected = isSelectedRange(payload.value);
+                    const formattedTick =
+                      payload.value === "36-99"
+                        ? "36+"
+                        : payload.value === "50+"
+                        ? "+50"
+                        : payload.value;
+
+                    return (
+                      <g transform={`translate(${x},${y})`}>
+                        <text
+                          x={0}
+                          y={0}
+                          dy={14}
+                          textAnchor="middle"
+                          fontSize={11}
+                          fontWeight={isSelected ? 800 : 600}
+                          fill={
+                            isSelected
+                              ? "#2563eb"
+                              : "var(--color-muted-foreground, #94a3b8)"
+                          }
+                          fontFamily="Noto Sans Hebrew, sans-serif"
+                          style={{
+                            opacity: hasSelection ? (isSelected ? 1 : 0.6) : 1,
+                          }}
+                        >
+                          {formattedTick}
+                        </text>
+                      </g>
+                    );
                   }}
-                  dy={6}
-                  tickFormatter={(tick) =>
-                    tick === "36-99" ? "36+" : tick === "50+" ? "+50" : tick
-                  }
                 />
 
                 <YAxis
@@ -295,17 +346,43 @@ export const AgeDistributionChart = ({
                   dataKey="count"
                   radius={[6, 6, 2, 2]}
                   maxBarSize={36}
-                  animationDuration={800}
+                  isAnimationActive={false}
+                  onClick={(entry: any) => {
+                    if (entry && (entry.count > 0 || isSelectedRange(entry.range))) {
+                      onRangeSelect?.(entry.range);
+                    }
+                  }}
                 >
                   {chartData.map((entry, index) => {
                     const isSelected = isSelectedRange(entry.range);
-                    const fill = isSelected ? "#f43f5e" : "#60a5fa";
+
+                    // Fill color matching AttendanceTrendCard:
+                    // Selected: rich primary blue (#3b82f6)
+                    // Default: clean soft blue (#60a5fa)
+                    const fill = isSelected ? "#3b82f6" : "#60a5fa";
+
+                    // Stroke matching AttendanceTrendCard:
+                    // Selected: refined single dashed border
+                    // Default: transparent
+                    const stroke = isSelected ? "#2563eb" : "transparent";
+                    const strokeWidth = isSelected ? 2 : 0;
+                    const strokeDasharray = isSelected ? "4 3" : undefined;
+
+                    // Opacity dimming matching AttendanceTrendCard:
+                    const opacity = hasSelection
+                      ? (isSelected ? 1 : 0.35)
+                      : 1;
 
                     return (
                       <Cell
                         key={`cell-${index}`}
+                        fill={fill}
+                        stroke={stroke}
+                        strokeWidth={strokeWidth}
+                        strokeDasharray={strokeDasharray}
+                        fillOpacity={opacity}
                         className={cn(
-                          "transition-all duration-200 hover:brightness-115 hover:opacity-95 outline-none",
+                          "transition-all duration-200 hover:brightness-115 hover:opacity-100 outline-none",
                           entry.count > 0 || isSelected
                             ? "cursor-pointer"
                             : "cursor-default"
@@ -315,7 +392,6 @@ export const AgeDistributionChart = ({
                             onRangeSelect?.(entry.range);
                           }
                         }}
-                        fill={fill}
                       />
                     );
                   })}
@@ -323,16 +399,26 @@ export const AgeDistributionChart = ({
                     dataKey="count"
                     position="top"
                     content={(props: any) => {
-                      const { x, y, width, value } = props;
+                      const { x, y, width, value, index } = props;
                       if (value === undefined || value === null || value === 0)
                         return null;
+                      const entry = chartData[index];
+                      const isSelected = entry ? isSelectedRange(entry.range) : false;
                       return (
                         <text
                           x={x + width / 2}
                           y={y - 6}
                           textAnchor="middle"
-                          className="text-[11px] font-bold fill-foreground"
-                          style={{ fontFamily: "Noto Sans Hebrew, sans-serif" }}
+                          className={cn(
+                            "text-[11px] font-bold",
+                            isSelected
+                              ? "fill-blue-600 dark:fill-blue-400 font-extrabold"
+                              : "fill-foreground"
+                          )}
+                          style={{
+                            fontFamily: "Noto Sans Hebrew, sans-serif",
+                            opacity: hasSelection ? (isSelected ? 1 : 0.45) : 1,
+                          }}
                         >
                           {value}
                         </text>

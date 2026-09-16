@@ -171,6 +171,13 @@ export function FeedbackCenter({
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const openTimestampRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (isOpen) {
+      openTimestampRef.current = Date.now();
+    }
+  }, [isOpen]);
 
   const fetchSystemUpdates = async () => {
     setIsLoadingUpdates(true);
@@ -296,6 +303,21 @@ export function FeedbackCenter({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
+        onPointerDownOutside={(e) => {
+          if (Date.now() - openTimestampRef.current < 400) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          if (Date.now() - openTimestampRef.current < 400) {
+            e.preventDefault();
+          }
+        }}
+        onCloseAutoFocus={(e) => {
+          if (onBack) {
+            e.preventDefault();
+          }
+        }}
         className="w-[95vw] sm:w-[720px] sm:max-w-2xl p-0 overflow-hidden rounded-3xl border border-border/60 bg-background/95 backdrop-blur-xl shadow-2xl flex flex-col"
         style={{
           maxWidth: "720px",

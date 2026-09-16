@@ -698,6 +698,43 @@ def get_attendance_status_types():
     return jsonify(get_configured_attendance_status_types()), 200
 
 
+def _matches_age_filter(age, min_a, max_a, a_ranges):
+    if age is None:
+        return False
+    if min_a is not None and age < min_a:
+        return False
+    if max_a is not None and age > max_a:
+        return False
+    if a_ranges:
+        matched = False
+        for r in a_ranges:
+            r = r.strip()
+            if r.endswith("+"):
+                try:
+                    if age >= int(r[:-1]):
+                        matched = True
+                        break
+                except ValueError:
+                    pass
+            elif "-" in r:
+                parts = r.split("-")
+                try:
+                    if int(parts[0]) <= age <= int(parts[1]):
+                        matched = True
+                        break
+                except ValueError:
+                    pass
+            else:
+                try:
+                    if age == int(r):
+                        matched = True
+                        break
+                except ValueError:
+                    pass
+        if not matched:
+            return False
+    return True
+
 _get_org_hierarchy_map = get_org_hierarchy_map
 
 
@@ -719,6 +756,14 @@ def get_attendance_stats():
     team_ids = [t.strip() for t in team_id.split(",") if t.strip()] if team_id else []
     status_id_param = request.args.get("status_id")
     service_types_param = request.args.get("serviceTypes")
+    min_age_param = request.args.get("min_age")
+    max_age_param = request.args.get("max_age")
+    age_ranges_param = request.args.get("age_ranges")
+
+    min_age = int(min_age_param) if min_age_param and min_age_param.isdigit() else None
+    max_age = int(max_age_param) if max_age_param and max_age_param.isdigit() else None
+    age_ranges = [r.strip() for r in age_ranges_param.split(",") if r.strip()] if age_ranges_param else []
+    has_age_filter = min_age is not None or max_age is not None or len(age_ranges) > 0
 
     # CRITICAL SERVER-SIDE AUTHORIZATION: Intersect requested filters with user's allowed scope
     allowed_depts = set(scope["allowed_dept_ids"]) if scope["allowed_dept_ids"] is not None else None
@@ -769,6 +814,21 @@ def get_attendance_stats():
     }
     ages = []
     birthdays = []
+
+    start_date_param = request.args.get("start_date")
+    end_date_param = request.args.get("end_date")
+    if start_date_param and end_date_param:
+        try:
+            bday_range_start = datetime.strptime(start_date_param, "%Y-%m-%d").date()
+            bday_range_end = datetime.strptime(end_date_param, "%Y-%m-%d").date()
+        except Exception:
+            dow = (target_date.weekday() + 1) % 7
+            bday_range_start = target_date - timedelta(days=dow)
+            bday_range_end = bday_range_start + timedelta(days=6)
+    else:
+        dow = (target_date.weekday() + 1) % 7
+        bday_range_start = target_date - timedelta(days=dow)
+        bday_range_end = bday_range_start + timedelta(days=6)
 
     try:
         with get_db_connection() as conn:
@@ -829,11 +889,82 @@ def get_attendance_stats():
                         if emp[10] not in allowed_types:
                             continue
 
-                    total += 1
+                    # Decrypt birthdate for age calculation (calculated for all matching department/service to preserve full distribution)
+                    emp_age = None
+                    bd_str = decrypt_value(emp[5], emp[6], emp[7])
+                    if bd_str:
+                        try:
+                            bd = datetime.strptime(bd_str[:10], "%Y-%m-%d").date()
+                            emp_age = target_date.year - bd.year - ((target_date.month, target_date.day) < (bd.month, bd.day))
+                            ages.append(emp_age)
+
+                            if emp_age <= 21:
+                                age_buckets["18-21"] += 1
+                            elif emp_age <= 25:
+                                age_buckets["22-25"] += 1
+                            elif emp_age <= 30:
+                                age_buckets["26-30"] += 1
+                            elif emp_age <= 35:
+                                age_buckets["31-35"] += 1
+                            elif emp_age <= 40:
+                                age_buckets["36-40"] += 1
+                            elif emp_age <= 50:
+                                age_buckets["41-50"] += 1
+                            else:
+                                age_buckets["50+"] += 1
+
+                            # Check birthday in selected range (daily, weekly, monthly, custom)
+                            in_range = False
+                            matched_bday = None
+                            for yr in (target_date.year, bday_range_start.year, bday_range_end.year, target_date.year - 1, target_date.year + 1):
+                                try:
+                                    cand_bday = bd.replace(year=yr)
+                                    if bday_range_start <= cand_bday <= bday_range_end:
+                                        in_range = True
+                                        matched_bday = cand_bday
+                                        break
+                                except ValueError:
+                                    pass
+
+                            if in_range and matched_bday:
+                                bday_dow = matched_bday.weekday()
+                                bday_dow_israel = (bday_dow + 1) % 7 # 0=Sunday
+                                hebrew_days = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"]
+                                phone_val = decrypt_value(emp[13], emp[14], emp[15]) if len(emp) > 15 else ""
+                                birthdays.append({
+                                    "id": emp_id,
+                                    "first_name": emp[2],
+                                    "last_name": emp[3],
+                                    "date": matched_bday.strftime("%d/%m"),
+                                    "raw_date": matched_bday.strftime("%Y-%m-%d"),
+                                    "day": matched_bday.day,
+                                    "month": matched_bday.month,
+                                    "phone_number": phone_val or "",
+                                    "phone": phone_val or "",
+                                    "day_of_week": hebrew_days[bday_dow_israel],
+                                    "department": h_info.get("department_name", "כללי"),
+                                    "department_id": h_info.get("dept_id", 1),
+                                    "unit": h_info.get("section_name") or h_info.get("team_name") or "כללי",
+                                    "role": emp[9] or "עובד",
+                                    "age": emp_age + 1
+                                })
+                        except Exception as e:
+                            logger.debug(f"Error parsing birthdate for {emp_id}: {e}")
+
+                    # If age filter is active, only include matching employees in presence/status counts
+                    if has_age_filter and not _matches_age_filter(emp_age, min_age, max_age, age_ranges):
+                        continue
 
                     # Determine employee status for this date
                     sched_entry = daily_schedules.get(emp_id)
                     st_id = sched_entry[0] if sched_entry else None
+
+                    # If status filter is active, only include matching employees
+                    if status_id_param and str(st_id) != str(status_id_param):
+                        continue
+
+                    total += 1
+
                     st_note = sched_entry[1] if sched_entry else ""
                     st_info = status_meta.get(st_id)
                     st_code = st_info["code"] if st_info else (emp[11] or "AVAILABLE")
@@ -870,61 +1001,6 @@ def get_attendance_stats():
                             "color": st_color
                         }
                     status_counts[st_name]["count"] += 1
-
-                    # Decrypt birthdate for age calculation
-                    bd_str = decrypt_value(emp[5], emp[6], emp[7])
-                    if bd_str:
-                        try:
-                            bd = datetime.strptime(bd_str[:10], "%Y-%m-%d").date()
-                            age = target_date.year - bd.year - ((target_date.month, target_date.day) < (bd.month, bd.day))
-                            ages.append(age)
-
-                            if age <= 21:
-                                age_buckets["18-21"] += 1
-                            elif age <= 25:
-                                age_buckets["22-25"] += 1
-                            elif age <= 30:
-                                age_buckets["26-30"] += 1
-                            elif age <= 35:
-                                age_buckets["31-35"] += 1
-                            elif age <= 40:
-                                age_buckets["36-40"] += 1
-                            elif age <= 50:
-                                age_buckets["41-50"] += 1
-                            else:
-                                age_buckets["50+"] += 1
-
-                            # Check birthday this week
-                            target_dow = target_date.weekday() # 0=Mon, 6=Sun
-                            days_from_sun = (target_dow + 1) % 7
-                            sunday_of_week = target_date - timedelta(days=days_from_sun)
-                            saturday_of_week = sunday_of_week + timedelta(days=6)
-
-                            this_year_bday = bd.replace(year=target_date.year)
-                            if sunday_of_week <= this_year_bday <= saturday_of_week:
-                                bday_dow = this_year_bday.weekday()
-                                bday_dow_israel = (bday_dow + 1) % 7 # 0=Sunday
-                                hebrew_days = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"]
-                                phone_val = decrypt_value(emp[13], emp[14], emp[15]) if len(emp) > 15 else ""
-                                birthdays.append({
-                                    "id": emp_id,
-                                    "first_name": emp[2],
-                                    "last_name": emp[3],
-                                    "date": this_year_bday.strftime("%d/%m"),
-                                    "raw_date": this_year_bday.strftime("%Y-%m-%d"),
-                                    "day": this_year_bday.day,
-                                    "month": this_year_bday.month,
-                                    "phone_number": phone_val or "",
-                                    "phone": phone_val or "",
-                                    "day_of_week": hebrew_days[bday_dow_israel],
-                                    "department": h_info.get("department_name", "כללי"),
-                                    "department_id": h_info.get("dept_id", 1),
-                                    "unit": h_info.get("section_name") or h_info.get("team_name") or "כללי",
-                                    "role": emp[9] or "עובד",
-                                    "age": age + 1
-                                })
-                        except Exception as e:
-                            logger.debug(f"Error parsing birthdate for {emp_id}: {e}")
 
     except Exception as e:
         logger.error(f"Error querying attendance stats: {e}", exc_info=True)
@@ -969,6 +1045,16 @@ def get_attendance_stats_trend():
     dept_ids = [d.strip() for d in dept_id.split(",") if d.strip()] if dept_id else []
     sect_ids = [s.strip() for s in sect_id.split(",") if s.strip()] if sect_id else []
     team_ids = [t.strip() for t in team_id.split(",") if t.strip()] if team_id else []
+    service_types_param = request.args.get("serviceTypes")
+    min_age_param = request.args.get("min_age")
+    max_age_param = request.args.get("max_age")
+    age_ranges_param = request.args.get("age_ranges")
+
+    min_age = int(min_age_param) if min_age_param and min_age_param.isdigit() else None
+    max_age = int(max_age_param) if max_age_param and max_age_param.isdigit() else None
+    age_ranges = [r.strip() for r in age_ranges_param.split(",") if r.strip()] if age_ranges_param else []
+    allowed_service_types = [st.strip() for st in service_types_param.split(",") if st.strip()] if service_types_param else []
+    has_age_filter = min_age is not None or max_age is not None or len(age_ranges) > 0
 
     # CRITICAL SERVER-SIDE AUTHORIZATION: Intersect requested filters with user's allowed scope
     allowed_depts = set(scope["allowed_dept_ids"]) if scope["allowed_dept_ids"] is not None else None
@@ -1010,7 +1096,9 @@ def get_attendance_stats_trend():
             with conn.cursor() as cur:
                 # 1. Fetch matching employees
                 cur.execute("""
-                    SELECT id, org_unit_id, status
+                    SELECT id, org_unit_id, status,
+                           birthdate_ciphertext, birthdate_nonce, birthdate_tag,
+                           service_type
                     FROM workforce.employees
                     WHERE deleted_at IS NULL
                       AND (position NOT IN ('מנהל מערכת', 'מנהלת מערכת', 'ADMIN') OR position IS NULL)
@@ -1023,6 +1111,24 @@ def get_attendance_stats_trend():
                 for emp in all_emp:
                     emp_id = str(emp[0])
                     emp_org = str(emp[1])
+                    b_ct, b_nonce, b_tag = emp[3], emp[4], emp[5]
+                    s_type = emp[6]
+
+                    if allowed_service_types and (not s_type or s_type not in allowed_service_types):
+                        continue
+
+                    if has_age_filter:
+                        bd_str = decrypt_value(b_ct, b_nonce, b_tag)
+                        if not bd_str:
+                            continue
+                        try:
+                            bd = datetime.strptime(bd_str[:10], "%Y-%m-%d").date()
+                            age = ref_date.year - bd.year - ((ref_date.month, ref_date.day) < (bd.month, bd.day))
+                        except Exception:
+                            continue
+                        if not _matches_age_filter(age, min_age, max_age, age_ranges):
+                            continue
+
                     h_info = org_map.get(emp_org)
                     if not h_info:
                         assigned_team = all_team_keys[abs(hash(emp_id)) % len(all_team_keys)]
@@ -1099,6 +1205,18 @@ def get_attendance_stats_comparison():
     date_param = request.args.get("date")
     target_date = datetime.strptime(date_param, "%Y-%m-%d").date() if date_param else date.today()
 
+    status_id_param = request.args.get("status_id")
+    service_types_param = request.args.get("serviceTypes")
+    min_age_param = request.args.get("min_age")
+    max_age_param = request.args.get("max_age")
+    age_ranges_param = request.args.get("age_ranges")
+
+    min_age = int(min_age_param) if min_age_param and min_age_param.isdigit() else None
+    max_age = int(max_age_param) if max_age_param and max_age_param.isdigit() else None
+    age_ranges = [r.strip() for r in age_ranges_param.split(",") if r.strip()] if age_ranges_param else []
+    allowed_service_types = [st.strip() for st in service_types_param.split(",") if st.strip()] if service_types_param else []
+    has_age_filter = min_age is not None or max_age is not None or len(age_ranges) > 0
+
     org_map = get_org_hierarchy_map()
     all_team_keys = [str(t["id"]) for d in FULL_ORGANIZATION_STRUCTURE for s in d.get("sections", []) for t in s.get("teams", [])]
 
@@ -1109,7 +1227,9 @@ def get_attendance_stats_comparison():
             with conn.cursor() as cur:
                 # 1. Fetch employees
                 cur.execute("""
-                    SELECT id, org_unit_id, status
+                    SELECT id, org_unit_id, status,
+                           birthdate_ciphertext, birthdate_nonce, birthdate_tag,
+                           service_type
                     FROM workforce.employees
                     WHERE deleted_at IS NULL
                       AND (position NOT IN ('מנהל מערכת', 'מנהלת מערכת', 'ADMIN') OR position IS NULL)
@@ -1133,14 +1253,41 @@ def get_attendance_stats_comparison():
                 for emp in all_emp:
                     emp_id = str(emp[0])
                     emp_org = str(emp[1])
+                    st_fallback = emp[2] or "AVAILABLE"
+                    b_ct, b_nonce, b_tag = emp[3], emp[4], emp[5]
+                    s_type = emp[6]
+
+                    # Filter by service type if requested
+                    if allowed_service_types and (not s_type or s_type not in allowed_service_types):
+                        continue
+
+                    # Filter by age if requested
+                    if has_age_filter:
+                        bd_str = decrypt_value(b_ct, b_nonce, b_tag)
+                        if not bd_str:
+                            continue
+                        try:
+                            bd = datetime.strptime(bd_str[:10], "%Y-%m-%d").date()
+                            age = target_date.year - bd.year - ((target_date.month, target_date.day) < (bd.month, bd.day))
+                        except Exception:
+                            continue
+
+                        if not _matches_age_filter(age, min_age, max_age, age_ranges):
+                            continue
+
+                    st_id = daily_schedules.get(emp_id)
+
+                    # Filter by status if requested
+                    if status_id_param and str(st_id) != str(status_id_param):
+                        continue
+
                     h_info = org_map.get(emp_org)
                     if not h_info or not h_info.get("team_id"):
                         assigned_team = all_team_keys[abs(hash(emp_id)) % len(all_team_keys)]
                     else:
                         assigned_team = str(h_info["team_id"])
 
-                    st_id = daily_schedules.get(emp_id)
-                    st_code = status_code_map.get(st_id, emp[2] or "AVAILABLE")
+                    st_code = status_code_map.get(st_id, st_fallback)
                     is_pres = st_code in ('AVAILABLE', 'PRESENT', 'ACTIVE', 'OFFICE', 'נוכח', 'TRAINING', 'COURSE', 'REINFORCEMENT', 'MISSION', 'UNIT_DAY')
 
                     if assigned_team not in team_stats:
