@@ -461,7 +461,12 @@ export const ReportHub: React.FC<ReportHubProps> = ({
               <div className="px-5 pt-5 pb-3 sm:px-7 sm:pt-6 sm:pb-3 text-right shrink-0 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <button
-                    onClick={() => setPreviewType(null)}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setPreviewType(null);
+                    }}
                     className="flex items-center justify-center w-8 h-8 rounded-xl text-muted-foreground/70 hover:text-foreground hover:bg-muted/40 transition-all border border-border/40 shadow-xs active:scale-95 shrink-0 cursor-pointer"
                     title="חזרה לתפריט הדוחות"
                   >

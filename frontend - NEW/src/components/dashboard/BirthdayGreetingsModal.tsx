@@ -87,6 +87,7 @@ export const BirthdayGreetingsModal: React.FC<BirthdayGreetingsModalProps> = ({
   weeklyBirthdays = [],
   targetEmployee,
 }) => {
+  if (!open) return null;
   const { user } = useAuthContext();
   const { markBirthdaySent } = useEmployees();
   const [presets, setPresets] = useState<Preset[]>(INITIAL_PRESETS);

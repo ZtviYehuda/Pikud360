@@ -214,6 +214,10 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
       toast.error("נא לבחור יחידה לביצוע הפעולה");
       return;
     }
+    if (startDate && endDate && endDate < startDate) {
+      toast.error("תאריך הסיום לא יכול להיות לפני תאריך ההתחלה");
+      return;
+    }
     const success = await logScopeStatus(
       activeTarget.scope,
       parseInt(activeTarget.targetId),
@@ -488,7 +492,13 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
               <Input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => {
+                  const newStart = e.target.value;
+                  setStartDate(newStart);
+                  if (newStart && (!endDate || endDate < newStart)) {
+                    setEndDate(newStart);
+                  }
+                }}
                 className="bg-background border-border/60 h-10 rounded-xl font-bold px-3 text-xs w-full block text-center shadow-xs"
               />
             </div>
@@ -497,7 +507,15 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
               <Input
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate || undefined}
+                onChange={(e) => {
+                  const newEnd = e.target.value;
+                  if (startDate && newEnd && newEnd < startDate) {
+                    setEndDate(startDate);
+                  } else {
+                    setEndDate(newEnd);
+                  }
+                }}
                 className="bg-background border-border/60 h-10 rounded-xl font-bold px-3 text-xs w-full block text-center shadow-xs"
               />
             </div>

@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { TrendingUp, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -19,7 +18,12 @@ import {
   Bar,
   Cell,
 } from "recharts";
-import { format, parseISO, isSameDay } from "date-fns";
+import { format, parseISO, isSameDay, getMonth } from "date-fns";
+
+const HEBREW_MONTHS = [
+  "ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני",
+  "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר",
+];
 import { toPng, toBlob } from "html-to-image";
 import { toast } from "sonner";
 
@@ -300,8 +304,8 @@ export const AttendanceTrendCard = forwardRef(
     }, [chartData]);
 
     const ranges = [
-      { label: "7 ימים", value: 7 },
-      { label: "30 ימים", value: 30 },
+      { label: "שבועי", value: 7 },
+      { label: "חודשי", value: 30 },
     ];
 
     return (
@@ -314,10 +318,10 @@ export const AttendanceTrendCard = forwardRef(
         )}
       >
         {!hideHeader && (
-          <CardHeader className="px-4 sm:px-6 py-3 sm:py-4 border-b border-border/40 space-y-1.5 sm:space-y-2">
-            {/* Top Row: Title + Icon on right, Range Selector Pills on left */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
+          <CardHeader className="px-4 sm:px-6 py-3 sm:py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3 shrink-0">
+            {/* Right side: Icon + Title + Subtitle */}
+            <div className="space-y-1 min-w-0 flex-1">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                   <TrendingUp className="w-4 h-4" />
                 </div>
@@ -325,53 +329,50 @@ export const AttendanceTrendCard = forwardRef(
                   מגמת נוכחות וזמינות
                 </CardTitle>
               </div>
+              <CardDescription className="text-xs text-muted-foreground truncate">
+                {unitName} • {range === 7 ? "שבועי" : HEBREW_MONTHS[getMonth(selectedDate ?? new Date())]}
+              </CardDescription>
+            </div>
 
-              {/* Range Selector Pills (7 / 30 Days) */}
-              <div className="flex items-center gap-1 bg-muted/60 p-0.5 sm:p-1 rounded-xl border border-border/40 shrink-0 no-export">
+            {/* Left side: Clean Average + Range Selector Pills */}
+            <div className="flex items-center gap-3 shrink-0">
+              {/* Average display */}
+              <div className="flex items-baseline gap-1 sm:gap-1.5 shrink-0 select-none">
+                <span className="text-[11px] sm:text-xs text-muted-foreground font-medium">ממוצע:</span>
+                <span className="text-xs sm:text-sm font-black text-foreground tracking-tight">{averagePct}%</span>
+                {selectedDate && !isSameDay(selectedDate, new Date()) && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDateSelect?.(new Date());
+                    }}
+                    className="mr-1.5 text-[10px] font-bold text-primary hover:text-primary/80 flex items-center gap-0.5 cursor-pointer transition-all no-export"
+                    title="לחץ לאיפוס לתאריך היום"
+                  >
+                    <span>({format(selectedDate, "dd/MM")})</span>
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Range Selector: Clean segmented control (שבועי / חודשי) */}
+              <div className="inline-flex items-center p-0.5 rounded-lg bg-muted/60 border border-border/40 shrink-0 no-export">
                 {ranges.map((r) => (
                   <button
                     key={r.value}
+                    type="button"
                     onClick={() => onRangeChange?.(r.value)}
                     className={cn(
-                      "px-2.5 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all cursor-pointer",
+                      "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all cursor-pointer select-none",
                       range === r.value
-                        ? "bg-card text-foreground shadow-xs"
+                        ? "bg-background text-foreground shadow-xs font-bold"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
                     {r.label}
                   </button>
                 ))}
-              </div>
-            </div>
-
-            {/* Bottom Row: Subtitle on right, Average Badge on left */}
-            <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-              <span className="truncate">
-                {unitName} • {range === 7 ? "שבועי (7 ימים)" : "חודשי (30 ימים)"}
-              </span>
-
-              <div className="flex items-center gap-1.5 shrink-0">
-                <Badge
-                  variant="secondary"
-                  className="text-[11px] font-bold bg-primary/10 text-primary border border-primary/20 shrink-0"
-                >
-                  ממוצע {averagePct}%
-                </Badge>
-                {selectedDate && !isSameDay(selectedDate, new Date()) && (
-                  <Badge
-                    variant="outline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDateSelect?.(new Date());
-                    }}
-                    className="text-[10px] font-bold bg-primary/10 text-primary border-primary/30 flex items-center gap-1 cursor-pointer hover:bg-primary/20 transition-all shrink-0 no-export"
-                    title="לחץ לאיפוס לתאריך היום"
-                  >
-                    <span>תאריך: {format(selectedDate, "dd/MM")}</span>
-                    <X className="w-3 h-3" />
-                  </Badge>
-                )}
               </div>
             </div>
           </CardHeader>

@@ -311,10 +311,23 @@ export const BulkStatusUpdateModal: React.FC<BulkStatusUpdateModalProps> = ({
     field: "start_date" | "end_date",
     value: string,
   ) => {
-    setBulkUpdates((prev) => ({
-      ...prev,
-      [empId]: { ...prev[empId], [field]: value, touched: true },
-    }));
+    setBulkUpdates((prev) => {
+      const current = prev[empId] || {};
+      const nextItem = { ...current, [field]: value, touched: true };
+
+      if (field === "start_date" && value) {
+        if (!nextItem.end_date || nextItem.end_date < value) {
+          nextItem.end_date = value;
+        }
+      } else if (field === "end_date" && value && nextItem.start_date && value < nextItem.start_date) {
+        nextItem.end_date = nextItem.start_date;
+      }
+
+      return {
+        ...prev,
+        [empId]: nextItem,
+      };
+    });
   };
 
   const handleNoteChange = (empId: number, note: string) => {
@@ -379,11 +392,15 @@ export const BulkStatusUpdateModal: React.FC<BulkStatusUpdateModalProps> = ({
     setBulkUpdates((prev) => {
       const next = { ...prev };
       selectedIds.forEach((id) => {
-        next[id] = {
-          ...next[id],
-          [field]: value,
-          touched: true,
-        };
+        const item = { ...next[id], [field]: value, touched: true };
+        if (field === "start_date" && value) {
+          if (!item.end_date || item.end_date < value) {
+            item.end_date = value;
+          }
+        } else if (field === "end_date" && value && item.start_date && value < item.start_date) {
+          item.end_date = item.start_date;
+        }
+        next[id] = item;
       });
       return next;
     });
@@ -887,6 +904,7 @@ export const BulkStatusUpdateModal: React.FC<BulkStatusUpdateModalProps> = ({
                                       <input
                                         type="date"
                                         value={current.end_date || ""}
+                                        min={current.start_date || undefined}
                                         onChange={(e) =>
                                           handleDateChange(
                                             emp.id,
@@ -1199,6 +1217,7 @@ export const BulkStatusUpdateModal: React.FC<BulkStatusUpdateModalProps> = ({
                                 <input
                                   type="date"
                                   value={current.end_date || ""}
+                                  min={current.start_date || undefined}
                                   onChange={(e) =>
                                     handleDateChange(
                                       emp.id,

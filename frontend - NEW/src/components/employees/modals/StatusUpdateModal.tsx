@@ -599,12 +599,17 @@ export const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
                           <Input
                             type="date"
                             value={formData.start_date}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                              const newStart = e.target.value;
                               setFormData((p) => ({
                                 ...p,
-                                start_date: e.target.value,
-                              }))
-                            }
+                                start_date: newStart,
+                                end_date:
+                                  newStart && (!p.end_date || p.end_date < newStart)
+                                    ? newStart
+                                    : p.end_date,
+                              }));
+                            }}
                             className="h-8 sm:h-9.5 bg-muted/20 border border-border/40 rounded-lg text-right pr-8 pl-2.5 text-[11px] sm:text-xs font-bold text-foreground focus:bg-background focus:ring-4 focus:ring-primary/5 focus:border-primary/45 outline-none transition-all w-full dark:bg-white/5 dark:border-white/10 dark:text-white"
                           />
                         </div>
@@ -618,12 +623,17 @@ export const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
                           <Input
                             type="date"
                             value={formData.end_date}
-                            onChange={(e) =>
+                            min={formData.start_date || undefined}
+                            onChange={(e) => {
+                              const newEnd = e.target.value;
                               setFormData((p) => ({
                                 ...p,
-                                end_date: e.target.value,
-                              }))
-                            }
+                                end_date:
+                                  p.start_date && newEnd && newEnd < p.start_date
+                                    ? p.start_date
+                                    : newEnd,
+                              }));
+                            }}
                             className="h-8 sm:h-9.5 bg-muted/20 border border-border/40 rounded-lg text-right pr-8 pl-2.5 text-[11px] sm:text-xs font-bold text-foreground focus:bg-background focus:ring-4 focus:ring-primary/5 focus:border-primary/45 outline-none transition-all w-full dark:bg-white/5 dark:border-white/10 dark:text-white"
                           />
                         </div>

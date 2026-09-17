@@ -37,12 +37,10 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
   onOpenChange,
   employee,
 }) => {
-  const navigate = useNavigate();
   const { user } = useAuthContext();
   const { openFeedback } = useFeedback();
-  const [searchParams] = useSearchParams();
 
-  if (!employee) return null;
+  if (!open || !employee) return null;
 
   const getProfessionalTitle = (emp: Employee) => {
     if (emp.is_admin && emp.is_commander) return "מנהל מערכת בכיר";
@@ -446,7 +444,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
             variant="default"
             className="w-full h-10 rounded-xl font-semibold text-xs gap-2 shadow-xs cursor-pointer"
             onClick={() => {
-              navigate(`/employees/${employee.id}`);
+              router.navigate(`/employees/${employee.id}`);
               onOpenChange(false);
             }}
           >

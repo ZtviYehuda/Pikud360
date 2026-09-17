@@ -1216,7 +1216,7 @@ export default function DashboardPage() {
 
         {/* Mobile Filter Dialog */}
         <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
-          <DialogContent className="p-0 border-none sm:max-w-lg">
+          <DialogContent className="p-0 sm:p-0 border-none sm:border sm:border-border/60 dark:sm:border-white/10 rounded-t-[2.2rem] rounded-b-none sm:rounded-2xl shadow-2xl max-h-[92dvh] sm:max-h-[85vh] sm:max-w-lg">
             <DashboardFilters
               structure={structure}
               statuses={allStatusTypes.map((s: any) => ({ status_id: s.id, status_name: s.name, color: s.color }))}
