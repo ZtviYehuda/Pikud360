@@ -1,9 +1,12 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
-interface ChatRecipient {
-  id: number;
+export interface ChatRecipient {
+  id: number | string;
   name: string;
   role?: string;
+  is_admin?: boolean;
+  user_id?: string;
+  employee_number?: string;
 }
 
 interface ChatContextType {

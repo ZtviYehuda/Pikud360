@@ -201,7 +201,54 @@ def create_feedback():
         }), 201
     except Exception as e:
         logger.error(f"Error creating feedback report: {e}", exc_info=True)
-        return jsonify({"error": f"Failed to submit feedback: {str(e)}"}), 500
+
+@feedback_bp.route("/archive/restore-request", methods=["POST"])
+@feedback_bp.route("/api/archive/restore-request", methods=["POST"])
+@jwt_required(optional=True)
+def create_archive_restore_request():
+    """Handles requests to restore/view archived data (older than 3 months)."""
+    try:
+        raw_user_id = get_jwt_identity() or "admin"
+        user_uuid = _resolve_user_id(raw_user_id)
+        data = request.get_json() or {}
+
+        start_date = data.get("start_date") or ""
+        end_date = data.get("end_date") or start_date
+        reason = (data.get("reason") or "").strip()
+
+        if not reason:
+            return jsonify({"error": "Reason is required"}), 400
+
+        ticket_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc)
+        title = f"בקשת שחזור מהארכיון: {start_date}"
+        description = f"בקשת שחזור נתוני ארכיון (מעל 3 חודשים).\nתאריך מבוקש: {start_date} - {end_date}\nסיבת הבקשה: {reason}"
+
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO support.feedback_reports (
+                        id, user_id, category, title, description,
+                        priority, status, created_at, updated_at,
+                        created_by, updated_by, context_page
+                    ) VALUES (
+                        %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s,
+                        %s, %s, %s
+                    )
+                    RETURNING id;
+                """, (
+                    ticket_id, user_uuid, "archive_restore", title, description,
+                    "high", "received", now, now,
+                    user_uuid, user_uuid, "archive"
+                ))
+                conn.commit()
+
+        return jsonify({"success": True, "ticket_id": ticket_id, "message": "Archive restore request submitted successfully"}), 201
+    except Exception as e:
+        logger.error(f"Error creating archive restore request: {e}", exc_info=True)
+        return jsonify({"error": f"Failed to submit restore request: {str(e)}"}), 500
+
 
 
 @feedback_bp.route("/feedback/my", methods=["GET"])

@@ -587,6 +587,9 @@ def get_employees_chat_contacts():
                     if "ravit" in u_uname_str:
                         first_name = "רווית"
                         last_name = "שחריאן"
+                    elif "admin" in u_uname_str:
+                        first_name = "צוות"
+                        last_name = "תמיכה"
                     elif raw_first:
                         first_name = raw_first
                         last_name = raw_last or ("(אדמין)" if u_role == "ADMIN" else "")
@@ -632,6 +635,50 @@ def get_employees_chat_contacts():
                     "chat_status": "online"
                 }
                 contacts.insert(0, support_contact)
+
+        # Attach last_message_at and unread_messages_count for each contact relative to current user
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT 
+                            CASE 
+                                WHEN LOWER(sender_id) IN %s THEN LOWER(recipient_id) 
+                                ELSE LOWER(sender_id) 
+                            END AS partner_id,
+                            MAX(created_at) AS last_msg_at,
+                            COUNT(CASE WHEN LOWER(recipient_id) IN %s AND read_at IS NULL THEN 1 END) AS unread_count
+                        FROM core.chat_messages
+                        WHERE LOWER(sender_id) IN %s OR LOWER(recipient_id) IN %s
+                        GROUP BY 1;
+                    """, (tuple(user_aliases), tuple(user_aliases), tuple(user_aliases), tuple(user_aliases)))
+                    partner_map = {}
+                    for row in cur.fetchall():
+                        pid, l_at, u_cnt = row
+                        l_iso = l_at.isoformat() if hasattr(l_at, "isoformat") else str(l_at) if l_at else None
+                        partner_map[str(pid).lower()] = {
+                            "last_message_at": l_iso,
+                            "unread_count": u_cnt or 0
+                        }
+
+                    for c in contacts:
+                        c_id = str(c.get("id", "")).lower()
+                        c_uid = str(c.get("user_id", "")).lower()
+                        c_enum = str(c.get("employee_number", "")).lower()
+                        is_c_admin = bool(c.get("is_admin"))
+
+                        matched = partner_map.get(c_id) or partner_map.get(c_uid) or partner_map.get(c_enum)
+                        if not matched and is_c_admin:
+                            matched = partner_map.get("admin") or partner_map.get("1") or partner_map.get("691b0694-1c0f-49de-9213-1f4ed4ea2936") or partner_map.get("admin-support")
+
+                        if matched:
+                            c["last_message_at"] = matched["last_message_at"]
+                            c["unread_messages_count"] = matched["unread_count"]
+                        else:
+                            c["last_message_at"] = None
+                            c["unread_messages_count"] = 0
+        except Exception as e:
+            logger.warning(f"Could not compute chat contact stats: {e}")
             
         return jsonify(contacts), 200
     except Exception as e:
@@ -642,31 +689,303 @@ def get_employees_chat_contacts():
 @workforce_bp.route("/support/tickets/pending-count", methods=["GET"])
 @jwt_required(optional=True)
 def support_tickets_pending_count_api():
-    return jsonify({"success": True, "pending_count": 0, "count": 0}), 200
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT COUNT(*) 
+                    FROM support.feedback_reports 
+                    WHERE deleted_at IS NULL 
+                      AND status IN ('received', 'open', 'pending');
+                """)
+                row = cur.fetchone()
+                cnt = row[0] if row else 0
+                return jsonify({"success": True, "pending_count": cnt, "count": cnt}), 200
+    except Exception as e:
+        logger.error(f"Error in support_tickets_pending_count_api: {e}")
+        return jsonify({"success": True, "pending_count": 0, "count": 0}), 200
 
 
 @workforce_bp.route("/transfers/pending-count", methods=["GET"])
 @jwt_required(optional=True)
 def transfers_pending_count_api():
-    return jsonify({"success": True, "pending_count": 0, "count": 0}), 200
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT COUNT(*) 
+                    FROM information_schema.tables 
+                    WHERE table_schema='core' AND table_name='employee_transfers';
+                """)
+                has_transfers = cur.fetchone()[0] > 0
+                cnt = 0
+                if has_transfers:
+                    cur.execute("SELECT COUNT(*) FROM core.employee_transfers WHERE status = 'PENDING';")
+                    row = cur.fetchone()
+                    cnt = row[0] if row else 0
+                return jsonify({"success": True, "pending_count": cnt, "count": cnt}), 200
+    except Exception as e:
+        return jsonify({"success": True, "pending_count": 0, "count": 0}), 200
 
 
 @workforce_bp.route("/notifications/alerts", methods=["GET"])
 @jwt_required(optional=True)
 def get_notifications_alerts():
-    return jsonify([]), 200
+    user_id = get_jwt_identity() or "admin"
+    claims = get_jwt() or {}
+    is_admin = bool(claims.get("is_admin")) or str(user_id) in ["admin", "1", "691b0694-1c0f-49de-9213-1f4ed4ea2936"]
+
+    alerts = []
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS support.alert_reads (
+                        user_id text,
+                        alert_id text,
+                        read_at timestamptz DEFAULT now(),
+                        PRIMARY KEY (user_id, alert_id)
+                    );
+                """)
+
+                # 1. Fetch unread support & archive restore tickets
+                if is_admin:
+                    cur.execute("""
+                        SELECT 
+                            f.id, f.category, f.title, f.description, f.priority,
+                            f.status, f.created_at,
+                            COALESCE(e.first_name, u.username, 'משתמש') AS sender_first,
+                            COALESCE(e.last_name, '') AS sender_last,
+                            COALESCE(ou.name, '') AS org_name
+                        FROM support.feedback_reports f
+                        LEFT JOIN security.users u ON u.id = f.user_id
+                        LEFT JOIN workforce.employees e ON e.user_id = u.id OR e.employee_number::text = u.username
+                        LEFT JOIN core.organization_units ou ON ou.id = e.org_unit_id
+                        LEFT JOIN support.alert_reads r ON r.alert_id = ('restore-' || f.id::text) AND r.user_id = %s
+                        LEFT JOIN support.alert_reads r2 ON r2.alert_id = ('ticket-' || f.id::text) AND r2.user_id = %s
+                        WHERE f.deleted_at IS NULL
+                          AND f.status IN ('received', 'open', 'pending')
+                          AND r.read_at IS NULL
+                          AND r2.read_at IS NULL
+                        ORDER BY f.created_at DESC;
+                    """, (str(user_id), str(user_id)))
+                    rows = cur.fetchall()
+
+                    for r in rows:
+                        fid, category, title, desc, priority, status, created_at, first, last, org = r
+                        sender_name = f"{first} {last}".strip()
+                        org_info = f" ({org})" if org else ""
+                        created_iso = created_at.isoformat() if hasattr(created_at, "isoformat") else str(created_at)
+
+                        if category == "archive_restore":
+                            alerts.append({
+                                "id": f"restore-{fid}",
+                                "type": "warning",
+                                "title": f"בקשת שחזור מהארכיון - {sender_name}{org_info}",
+                                "description": desc or title or "בקשת שחזור נתוני ארכיון",
+                                "link": "/feedback?tab=admin-view",
+                                "created_at": created_iso,
+                                "data": {
+                                    "ticket_id": str(fid),
+                                    "category": "archive_restore",
+                                    "sender": sender_name,
+                                    "priority": priority
+                                }
+                            })
+                        else:
+                            alerts.append({
+                                "id": f"ticket-{fid}",
+                                "type": "info" if priority != "high" else "danger",
+                                "title": f"פניית תמיכה: {title}",
+                                "description": f"{sender_name}: {desc}",
+                                "link": "/feedback?tab=admin-view",
+                                "created_at": created_iso,
+                                "data": {
+                                    "ticket_id": str(fid),
+                                    "category": category,
+                                    "priority": priority
+                                }
+                            })
+                else:
+                    cur.execute("""
+                        SELECT 
+                            f.id, f.category, f.title, f.description, f.status, f.resolution_comment, f.updated_at
+                        FROM support.feedback_reports f
+                        LEFT JOIN support.alert_reads r ON r.alert_id = ('ticket-reply-' || f.id::text) AND r.user_id = %s
+                        WHERE f.deleted_at IS NULL
+                          AND (f.user_id::text = %s OR f.created_by::text = %s)
+                          AND f.status IN ('in_progress', 'resolved', 'closed')
+                          AND f.updated_at > f.created_at
+                          AND r.read_at IS NULL
+                        ORDER BY f.updated_at DESC LIMIT 10;
+                    """, (str(user_id), str(user_id), str(user_id)))
+                    for r in cur.fetchall():
+                        fid, category, title, desc, status, comment, updated_at = r
+                        upd_iso = updated_at.isoformat() if hasattr(updated_at, "isoformat") else str(updated_at)
+                        status_he = "אושרה/טופלה" if status == "resolved" else "בטיפול" if status == "in_progress" else status
+                        alerts.append({
+                            "id": f"ticket-reply-{fid}",
+                            "type": "info",
+                            "title": f"עדכון בקשה: {title} ({status_he})",
+                            "description": f"תגובת התמיכה: {comment}" if comment else f"סטטוס עודכן ל-{status_he}",
+                            "link": "/feedback?tab=my-tickets",
+                            "created_at": upd_iso,
+                            "data": {"ticket_id": str(fid), "status": status}
+                        })
+
+                # 2. Check unread chat messages for this user
+                from app.modules.notifications.routes import _get_aliases
+                user_aliases = _get_aliases(user_id)
+                cur.execute("""
+                    SELECT 
+                        m.id, m.sender_id, m.sender_first, m.sender_last, m.title, m.description, m.created_at,
+                        e.id AS emp_id,
+                        e.user_id AS emp_user_id,
+                        e.employee_number AS emp_num
+                    FROM core.chat_messages m
+                    LEFT JOIN workforce.employees e ON (
+                        e.user_id::text = m.sender_id 
+                        OR e.employee_number::text = m.sender_id 
+                        OR e.id::text = m.sender_id
+                    )
+                    WHERE LOWER(m.recipient_id) IN %s
+                      AND m.read_at IS NULL
+                    ORDER BY m.created_at DESC LIMIT 50;
+                """, (tuple(user_aliases),))
+                for m in cur.fetchall():
+                    mid, s_id, s_first, s_last, m_title, m_desc, m_created, emp_id, emp_user_id, emp_num = m
+                    m_created_iso = m_created.isoformat() if hasattr(m_created, "isoformat") else str(m_created)
+                    is_sender_support = str(s_id).lower() in ["admin", "1", "admin-support", "691b0694-1c0f-49de-9213-1f4ed4ea2936"]
+                    alerts.append({
+                        "id": f"msg-{mid}",
+                        "type": "info",
+                        "title": m_title or f"הודעה מאת {s_first} {s_last}".strip(),
+                        "description": m_desc or "",
+                        "link": "/feedback?tab=messages",
+                        "created_at": m_created_iso,
+                        "data": {
+                            "message_id": mid,
+                            "sender_id": str(emp_id) if emp_id else ("1" if is_sender_support else str(s_id)),
+                            "sender_user_id": str(emp_user_id or ""),
+                            "sender_emp_num": str(emp_num or ""),
+                            "raw_sender_id": str(s_id),
+                            "is_support": is_sender_support,
+                            "sender_first": s_first or "",
+                            "sender_last": s_last or ""
+                        }
+                    })
+
+    except Exception as e:
+        logger.error(f"Error fetching notifications alerts: {e}", exc_info=True)
+
+    return jsonify(alerts), 200
 
 
 @workforce_bp.route("/notifications/alerts/history", methods=["GET"])
 @jwt_required(optional=True)
 def get_notifications_alerts_history():
-    return jsonify([]), 200
+    user_id = get_jwt_identity() or "admin"
+    history = []
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT 
+                        f.id, f.category, f.title, f.description, f.status, f.created_at, f.updated_at,
+                        COALESCE(e.first_name, u.username, 'משתמש') AS sender_first,
+                        COALESCE(e.last_name, '') AS sender_last
+                    FROM support.feedback_reports f
+                    LEFT JOIN security.users u ON u.id = f.user_id
+                    LEFT JOIN workforce.employees e ON e.user_id = u.id OR e.employee_number::text = u.username
+                    LEFT JOIN support.alert_reads r ON (r.alert_id = ('restore-' || f.id::text) OR r.alert_id = ('ticket-' || f.id::text)) AND r.user_id = %s
+                    WHERE f.deleted_at IS NULL
+                      AND (f.status IN ('resolved', 'closed', 'rejected') OR r.read_at IS NOT NULL)
+                    ORDER BY COALESCE(f.updated_at, f.created_at) DESC LIMIT 40;
+                """, (str(user_id),))
+                for r in cur.fetchall():
+                    fid, category, title, desc, status, created_at, updated_at, first, last = r
+                    sender_name = f"{first} {last}".strip()
+                    date_val = updated_at or created_at
+                    date_iso = date_val.isoformat() if hasattr(date_val, "isoformat") else str(date_val)
+                    is_archive = (category == "archive_restore")
+                    history.append({
+                        "id": f"hist-{fid}",
+                        "type": "info",
+                        "title": f"בקשת שחזור מהארכיון - {sender_name}" if is_archive else (title or "פניית תמיכה"),
+                        "description": desc or title or "",
+                        "link": "/feedback?tab=admin-view",
+                        "created_at": date_iso,
+                        "data": {"ticket_id": str(fid), "status": status}
+                    })
+    except Exception as e:
+        logger.error(f"Error fetching notification history: {e}", exc_info=True)
+
+    return jsonify(history), 200
 
 
 @workforce_bp.route("/notifications/alerts/<alert_id>/read", methods=["POST"])
 @jwt_required(optional=True)
 def mark_notification_alert_read(alert_id):
-    return jsonify({"success": True}), 200
+    user_id = get_jwt_identity() or "admin"
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO support.alert_reads (user_id, alert_id, read_at)
+                    VALUES (%s, %s, NOW())
+                    ON CONFLICT (user_id, alert_id) DO UPDATE SET read_at = NOW();
+                """, (str(user_id), str(alert_id)))
+
+                if str(alert_id).startswith("msg-"):
+                    mid = str(alert_id).replace("msg-", "")
+                    cur.execute("UPDATE core.chat_messages SET read_at = NOW() WHERE id::text = %s;", (mid,))
+                conn.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        logger.error(f"Error marking alert read: {e}")
+        return jsonify({"success": True}), 200
+
+
+@workforce_bp.route("/notifications/alerts/<alert_id>/read", methods=["DELETE"])
+@jwt_required(optional=True)
+def unmark_notification_alert_read(alert_id):
+    user_id = get_jwt_identity() or "admin"
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    DELETE FROM support.alert_reads
+                    WHERE user_id = %s AND alert_id = %s;
+                """, (str(user_id), str(alert_id)))
+                conn.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        logger.error(f"Error unmarking alert read: {e}")
+        return jsonify({"success": True}), 200
+
+
+@workforce_bp.route("/notifications/alerts/read-all", methods=["POST"])
+@jwt_required(optional=True)
+def mark_all_notification_alerts_read():
+    user_id = get_jwt_identity() or "admin"
+    payload = request.get_json() or []
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                if isinstance(payload, list):
+                    for item in payload:
+                        aid = item.get("id") if isinstance(item, dict) else str(item)
+                        if aid:
+                            cur.execute("""
+                                INSERT INTO support.alert_reads (user_id, alert_id, read_at)
+                                VALUES (%s, %s, NOW())
+                                ON CONFLICT (user_id, alert_id) DO NOTHING;
+                            """, (str(user_id), str(aid)))
+                conn.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        logger.error(f"Error marking all alerts read: {e}")
+        return jsonify({"success": True}), 200
 
 
 @workforce_bp.route("/employees/preferences", methods=["GET", "PUT"])

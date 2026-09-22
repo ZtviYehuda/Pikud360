@@ -696,7 +696,20 @@ def change_password():
 @security_bp.route("/support/tickets/pending-count", methods=["GET"])
 @jwt_required(optional=True)
 def support_tickets_pending_count():
-    return jsonify({"success": True, "pending_count": 0, "count": 0}), 200
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT COUNT(*) 
+                    FROM support.feedback_reports 
+                    WHERE deleted_at IS NULL 
+                      AND status IN ('received', 'open', 'pending');
+                """)
+                row = cur.fetchone()
+                cnt = row[0] if row else 0
+                return jsonify({"success": True, "pending_count": cnt, "count": cnt}), 200
+    except Exception as e:
+        return jsonify({"success": True, "pending_count": 0, "count": 0}), 200
 
 
 @security_bp.route("/forgot-password", methods=["POST"])

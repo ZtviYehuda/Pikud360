@@ -128,8 +128,8 @@ export const ReportHub: React.FC<ReportHubProps> = ({
   const isOldDate = useMemo(() => {
     if (user?.is_admin) return false;
     const today = new Date();
-    const startOfPrevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    return isBefore(localDate, startOfPrevMonth);
+    const threeMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate());
+    return isBefore(localDate, threeMonthsAgo);
   }, [localDate, user]);
 
   const trendRef = useRef<any>(null);

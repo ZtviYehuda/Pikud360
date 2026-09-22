@@ -32,15 +32,45 @@ import {
 import { toast } from "sonner";
 
 interface Message {
-  id: number;
-  sender_id: number;
-  recipient_id: number;
+  id: number | string;
+  sender_id: number | string;
+  recipient_id: number | string;
   title: string;
   description: string;
   created_at: string;
   sender_first: string;
   sender_last: string;
 }
+
+const isAlertForContact = (alert: any, emp: any) => {
+  if (!alert || !alert.id?.startsWith("msg-")) return false;
+
+  // Support / Admin check
+  if (emp.is_admin) {
+    if (alert.data?.is_support) return true;
+    const raw = String(alert.data?.raw_sender_id || "").toLowerCase();
+    const sid = String(alert.data?.sender_id || "").toLowerCase();
+    return raw === "admin" || raw === "1" || raw === "admin-support" || sid === "1" || sid === "admin";
+  }
+
+  const sEmpId = alert.data?.sender_id ? String(alert.data.sender_id).toLowerCase() : "";
+  const sUserId = alert.data?.sender_user_id ? String(alert.data.sender_user_id).toLowerCase() : "";
+  const sEmpNum = alert.data?.sender_emp_num ? String(alert.data.sender_emp_num).toLowerCase() : "";
+  const rawId = alert.data?.raw_sender_id ? String(alert.data.raw_sender_id).toLowerCase() : "";
+
+  const empId = emp.id ? String(emp.id).toLowerCase() : "";
+  const empUserId = emp.user_id ? String(emp.user_id).toLowerCase() : "";
+  const empNum = emp.employee_number ? String(emp.employee_number).toLowerCase() : "";
+
+  return (
+    (sEmpId && empId && sEmpId === empId) ||
+    (sUserId && empUserId && sUserId === empUserId) ||
+    (sEmpNum && empNum && sEmpNum === empNum) ||
+    (rawId && empId && rawId === empId) ||
+    (rawId && empUserId && rawId === empUserId) ||
+    (rawId && empNum && rawId === empNum)
+  );
+};
 
 export const ChatSidebar: React.FC = () => {
   const { isChatOpen, selectedRecipient, closeChat, openChat, openGroupModal } = useChat();
@@ -136,35 +166,12 @@ export const ChatSidebar: React.FC = () => {
   useEffect(() => {
     if (isChatOpen && selectedRecipient && alerts.length > 0) {
       alerts.forEach(alert => {
-        if (alert.id?.startsWith("msg-") && Number(alert.data?.sender_id) === Number(selectedRecipient.id)) {
+        if (isAlertForContact(alert, selectedRecipient)) {
           markAsRead(alert.id);
         }
       });
     }
   }, [isChatOpen, selectedRecipient, alerts, markAsRead]);
-
-  // Auto-open conversation if there is an unread message from a contact and we just opened the chat
-  useEffect(() => {
-    if (isChatOpen && !selectedRecipient && !autoOpenAttemptedRef.current && alerts.length > 0 && chatContacts.length > 0) {
-      const msgAlerts = alerts.filter(a => a.id?.startsWith("msg-"));
-      if (msgAlerts.length > 0) {
-        const firstAlert = msgAlerts[0];
-        const senderId = Number(firstAlert.data?.sender_id);
-        if (senderId) {
-          const contact = chatContacts.find((c: any) => Number(c.id) === senderId) || 
-                          employees.find((e: any) => Number(e.id) === senderId);
-          if (contact) {
-            autoOpenAttemptedRef.current = true;
-            openChat({
-              id: contact.id,
-              name: contact.is_admin ? "צוות תמיכה" : `${contact.first_name} ${contact.last_name}`,
-              role: contact.is_admin ? "ניהול מערכת" : "מפקד"
-            });
-          }
-        }
-      }
-    }
-  }, [isChatOpen, selectedRecipient, alerts, chatContacts, employees, openChat]);
 
   // Poll for messages
   useEffect(() => {
@@ -331,14 +338,46 @@ export const ChatSidebar: React.FC = () => {
         return !contactSearch || displayName.toLowerCase().includes(contactSearch.toLowerCase());
       })
       .sort((a: any, b: any) => {
-        const aAlerts = alerts.filter(al => al.id?.startsWith("msg-") && Number(al.data?.sender_id) === Number(a.id));
-        const bAlerts = alerts.filter(al => al.id?.startsWith("msg-") && Number(al.data?.sender_id) === Number(b.id));
-        if (aAlerts.length > 0 && bAlerts.length === 0) return -1;
-        if (aAlerts.length === 0 && bAlerts.length > 0) return 1;
-
+        // 1. "צוות תמיכה" is ALWAYS first (#1) pinned at the top for all users
         if (a.is_admin && !b.is_admin) return -1;
         if (!a.is_admin && b.is_admin) return 1;
 
+        // 2. Identify alerts and message activity for a and b
+        const aAlerts = alerts.filter(al => isAlertForContact(al, a));
+        const bAlerts = alerts.filter(al => isAlertForContact(al, b));
+
+        const aHasUnread = aAlerts.length > 0 || (Number(a.unread_messages_count) > 0);
+        const bHasUnread = bAlerts.length > 0 || (Number(b.unread_messages_count) > 0);
+
+        if (aHasUnread && !bHasUnread) return -1;
+        if (!aHasUnread && bHasUnread) return 1;
+
+        // 3. Compare latest message timestamps (from alerts or backend last_message_at)
+        const getContactLatestTime = (contact: any, contactAlerts: any[]) => {
+          let latest = 0;
+          if (contact.last_message_at) {
+            const t = new Date(contact.last_message_at).getTime();
+            if (!isNaN(t) && t > latest) latest = t;
+          }
+          contactAlerts.forEach(al => {
+            if (al.created_at) {
+              const t = new Date(al.created_at).getTime();
+              if (!isNaN(t) && t > latest) latest = t;
+            }
+          });
+          return latest;
+        };
+
+        const aTime = getContactLatestTime(a, aAlerts);
+        const bTime = getContactLatestTime(b, bAlerts);
+
+        if (aTime > 0 || bTime > 0) {
+          if (aTime !== bTime) {
+            return bTime - aTime;
+          }
+        }
+
+        // 4. Default alphabetical ordering in Hebrew
         const isGenericSupportA = a.is_admin && (!a.first_name || a.first_name === "צוות");
         const isGenericSupportB = b.is_admin && (!b.first_name || b.first_name === "צוות");
         const displayNameA = isGenericSupportA ? "צוות תמיכה" : `${a.first_name || ""} ${a.last_name || ""}`.trim();
@@ -689,14 +728,21 @@ export const ChatSidebar: React.FC = () => {
                 {/* Contacts List */}
                 <div className="flex-grow overflow-y-auto p-3 space-y-1 custom-scrollbar">
                   {contactsToDisplay.map((emp: any) => {
-                    const contactAlerts = alerts.filter(a => a.id?.startsWith("msg-") && Number(a.data?.sender_id) === Number(emp.id));
-                    const unreadCount = contactAlerts.length;
+                    const contactAlerts = alerts.filter(a => isAlertForContact(a, emp));
+                    const unreadCount = Math.max(contactAlerts.length, Number(emp.unread_messages_count || 0));
                     const hasUnread = unreadCount > 0;
 
                     return (
                       <button
                         key={emp.id}
-                        onClick={() => openChat({ id: emp.id, name: emp.is_admin ? "צוות תמיכה" : `${emp.first_name} ${emp.last_name}` })}
+                        onClick={() => openChat({
+                          id: emp.id,
+                          name: emp.is_admin ? "צוות תמיכה" : `${emp.first_name} ${emp.last_name}`,
+                          role: emp.is_admin ? "ניהול מערכת" : (emp.section_name || emp.department_name || "מפקד"),
+                          is_admin: emp.is_admin,
+                          user_id: emp.user_id,
+                          employee_number: emp.employee_number
+                        })}
                         className={cn(
                           "w-full flex items-center gap-4 p-3 rounded-2xl transition-all text-right group border border-transparent",
                           hasUnread 
@@ -732,6 +778,11 @@ export const ChatSidebar: React.FC = () => {
                                   {unreadCount}
                                 </span>
                               )}
+                              {emp.last_message_at && (
+                                <span className="text-[10px] text-muted-foreground/80 font-medium">
+                                  {format(new Date(emp.last_message_at), "HH:mm")}
+                                </span>
+                              )}
                               {emp.is_online && (
                                 <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-1.5 py-0.5 rounded">
                                     פעיל/ה
@@ -741,7 +792,7 @@ export const ChatSidebar: React.FC = () => {
                           </div>
                           {hasUnread ? (
                             <p className="text-xs text-primary font-semibold truncate max-w-[200px] leading-relaxed mt-0.5">
-                              {contactAlerts[contactAlerts.length - 1].description}
+                              {contactAlerts[contactAlerts.length - 1]?.description || contactAlerts[0]?.description || "הודעה חדשה בצ'אט"}
                             </p>
                           ) : emp.chat_status_custom ? (
                             <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-lg truncate max-w-[185px] inline-block mt-0.5">

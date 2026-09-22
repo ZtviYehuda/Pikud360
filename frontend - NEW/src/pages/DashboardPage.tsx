@@ -13,7 +13,7 @@ import { useEmployees } from "@/hooks/useEmployees";
 import { useDateContext } from "@/context/DateContext";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { LayoutDashboard } from "lucide-react";
-import { format } from "date-fns";
+import { format, getDaysInMonth, endOfMonth, subMonths, startOfDay, isBefore, isSameMonth } from "date-fns";
 import { he } from "date-fns/locale";
 import { StatCards } from "@/components/dashboard/StatCards";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { ReportHub } from "@/components/dashboard/ReportHub";
 import { RestorationRequestDialog } from "@/components/dashboard/RestorationRequestDialog";
 import { WhatsAppBroadcastModal } from "@/components/employees/modals/WhatsAppBroadcastModal";
-import { MessageSquare, Filter, Calendar } from "lucide-react";
+import { MessageSquare, Filter, Calendar, Lock, Archive } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { GlobalEventModal } from "@/components/employees/modals/GlobalEventModal";
 import { getJewishHoliday } from "@/lib/hebrewDate";
@@ -147,6 +147,11 @@ export default function DashboardPage() {
   const [globalEventOpen, setGlobalEventOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
+  const [trendMode, setTrendMode] = useState<"rolling" | "month">("rolling");
+  const [trendMonth, setTrendMonth] = useState<Date>(new Date());
+
+  const threeMonthsAgo = useMemo(() => subMonths(startOfDay(new Date()), 3), []);
+  const isArchivedDate = useMemo(() => isBefore(selectedDate, threeMonthsAgo), [selectedDate, threeMonthsAgo]);
 
   const isOldDate = useMemo(() => {
     const today = new Date();
@@ -164,10 +169,29 @@ export default function DashboardPage() {
     const fetchTrend = async () => {
       setTrendLoading(true);
       try {
-        const referenceDate = isOldDate ? selectedDate : new Date();
-        const formattedDate = format(referenceDate, "yyyy-MM-dd");
-        
-        const trendData = await getTrendStats(trendRange, formattedDate, {
+        let apiDays: number;
+        let apiDate: Date;
+
+        if (trendMode === "month") {
+          const today = new Date();
+          if (isSameMonth(trendMonth, today)) {
+            // Current month: 1st of month up to today
+            apiDate = today;
+            apiDays = today.getDate();
+          } else {
+            // Full calendar month
+            apiDate = endOfMonth(trendMonth);
+            apiDays = getDaysInMonth(trendMonth);
+          }
+        } else {
+          // Rolling mode (7 or 30 days)
+          apiDate = isOldDate ? selectedDate : new Date();
+          apiDays = trendRange;
+        }
+
+        const formattedDate = format(apiDate, "yyyy-MM-dd");
+
+        const trendData = await getTrendStats(apiDays, formattedDate, {
           department_id: selectedDeptId,
           section_id: selectedSectionId,
           status_id: (selectedStatusData?.id && selectedStatusData.id > 0) ? selectedStatusData.id.toString() : undefined,
@@ -186,7 +210,8 @@ export default function DashboardPage() {
     fetchTrend();
   }, [
     getTrendStats,
-    isOldDate ? format(selectedDate, "yyyy-MM-dd") : "current",
+    trendMode,
+    trendMode === "month" ? format(trendMonth, "yyyy-MM") : format(selectedDate, "yyyy-MM-dd"),
     trendRange,
     selectedDeptId,
     selectedSectionId,
@@ -1036,6 +1061,40 @@ export default function DashboardPage() {
 
         <div className="space-y-3 sm:space-y-5 transition-all mt-1 relative">
 
+          {/* Archive Lock Banner - shown when navigating to date older than 3 months */}
+          {isArchivedDate && (
+            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 dark:bg-amber-500/15 p-5 sm:p-7 text-center space-y-3.5 shadow-sm backdrop-blur-md animate-in fade-in duration-300">
+              <div className="w-12 h-12 mx-auto bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center">
+                <Lock className="w-6 h-6" />
+              </div>
+              <div className="space-y-1 max-w-md mx-auto">
+                <h3 className="text-base sm:text-lg font-bold text-foreground">
+                  נתוני ארכיון חסומים (מעל 3 חודשים)
+                </h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  הנתונים לתאריך <span className="font-bold text-foreground">{format(selectedDate, "dd/MM/yyyy")}</span> הועברו לארכיון המערכת.
+                  המערכת מציגה נתונים שוטפים עד 3 חודשים אחורה. לצפייה בנתונים היסטוריים יש להגיש בקשת שחזור לצוות התמיכה.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
+                <Button
+                  onClick={() => setRestoreDialogOpen(true)}
+                  className="rounded-xl font-bold gap-2 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer text-xs sm:text-sm h-10 px-4"
+                >
+                  <Archive className="w-4 h-4" />
+                  הגש בקשת שחזור מהארכיון
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedDate(new Date())}
+                  className="rounded-xl font-semibold cursor-pointer text-xs sm:text-sm h-10 px-4"
+                >
+                  חזרה להיום
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Stat Cards - New Redesigned Component */}
           <StatCards 
             stats={stats} 
@@ -1071,6 +1130,14 @@ export default function DashboardPage() {
                 selectedDate={selectedDate}
                 onDateSelect={setSelectedDate}
                 onRangeChange={setTrendRange}
+                trendMode={trendMode}
+                onTrendModeChange={setTrendMode}
+                selectedMonth={trendMonth}
+                onMonthSelect={setTrendMonth}
+                onRequestRestore={(date) => {
+                  setSelectedDate(date);
+                  setRestoreDialogOpen(true);
+                }}
                 totalEmployees={totalEmployees}
               />
             </div>

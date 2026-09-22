@@ -29,6 +29,7 @@ import {
   Activity,
   ArrowLeft,
   ShieldAlert,
+  Archive,
 } from "lucide-react";
 import { cn, getWhatsAppUrl } from "@/lib/utils";
 import {
@@ -73,6 +74,16 @@ function getAlertConfig(alert: {
   const isMessage = alert.id.startsWith("msg-");
   const isMorningReport =
     alert.id.includes("missing-reports") || text.includes("דיווח בוקר");
+  const isArchive =
+    alert.id.includes("restore") || alert.id.includes("archive") || text.includes("ארכיון");
+
+  if (isArchive) {
+    return {
+      icon: Archive,
+      bg: "rgba(245, 158, 11, 0.12)",
+      color: "rgb(217, 119, 6)", // Amber-600
+    };
+  }
 
   if (isMorningReport) {
     return {

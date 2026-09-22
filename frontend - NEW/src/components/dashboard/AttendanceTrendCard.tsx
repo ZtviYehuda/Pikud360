@@ -2,11 +2,11 @@ import { useRef, useMemo, useState, useEffect, forwardRef, useImperativeHandle }
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { TrendingUp, X } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { TrendingUp, ChevronRight, ChevronLeft, CalendarIcon, Archive, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   XAxis,
@@ -18,14 +18,30 @@ import {
   Bar,
   Cell,
 } from "recharts";
-import { format, parseISO, isSameDay, getMonth } from "date-fns";
+import {
+  format,
+  parseISO,
+  isSameDay,
+  getMonth,
+  addDays,
+  startOfDay,
+  subMonths,
+  addMonths,
+  isSameMonth,
+  isBefore,
+} from "date-fns";
+import { toPng, toBlob } from "html-to-image";
+import { toast } from "sonner";
 
 const HEBREW_MONTHS = [
   "ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני",
   "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר",
 ];
-import { toPng, toBlob } from "html-to-image";
-import { toast } from "sonner";
+
+const HEBREW_MONTHS_SHORT = [
+  "ינו'", "פבר'", "מרץ", "אפר'", "מאי", "יוני",
+  "יולי", "אוג'", "ספט'", "אוק'", "נוב'", "דצמ'",
+];
 
 interface TrendData {
   date?: string;
@@ -47,6 +63,11 @@ interface AttendanceTrendCardProps {
   selectedDate?: Date;
   onDateSelect?: (date: Date) => void;
   onRangeChange?: (range: number) => void;
+  trendMode?: "rolling" | "month";
+  onTrendModeChange?: (mode: "rolling" | "month") => void;
+  selectedMonth?: Date;
+  onMonthSelect?: (month: Date) => void;
+  onRequestRestore?: (date: Date) => void;
   filterTags?: string[];
   hideHeader?: boolean;
   compact?: boolean;
@@ -64,6 +85,11 @@ export const AttendanceTrendCard = forwardRef(
       selectedDate = new Date(),
       onDateSelect,
       onRangeChange,
+      trendMode,
+      onTrendModeChange,
+      selectedMonth,
+      onMonthSelect,
+      onRequestRestore,
       hideHeader = false,
       totalEmployees = 0,
     }: AttendanceTrendCardProps,
@@ -202,6 +228,7 @@ export const AttendanceTrendCard = forwardRef(
     };
 
     const [containerWidth, setContainerWidth] = useState<number>(600);
+    const [calendarOpen, setCalendarOpen] = useState(false);
 
     useEffect(() => {
       if (!cardRef.current) return;
@@ -308,6 +335,124 @@ export const AttendanceTrendCard = forwardRef(
       { label: "חודשי", value: 30 },
     ];
 
+    // ── Mode and Period state ─────────────────────────────────────────
+    const [internalMode, setInternalMode] = useState<"rolling" | "month">("rolling");
+    const [internalMonth, setInternalMonth] = useState<Date>(selectedDate || new Date());
+
+    const currentMode = trendMode ?? internalMode;
+    const currentMonth = selectedMonth ?? internalMonth;
+
+    const effectiveDate = selectedDate ?? new Date();
+    const today = startOfDay(new Date());
+    const threeMonthsAgo = useMemo(() => subMonths(today, 3), [today]);
+
+    // Check if at current period
+    const isAtCurrentPeriod = useMemo(() => {
+      if (currentMode === "month") {
+        return isSameMonth(currentMonth, today);
+      }
+      return startOfDay(effectiveDate) >= today;
+    }, [currentMode, currentMonth, effectiveDate, today]);
+
+    // Months available for full calendar view (last 4 months accessible, 5th+ archived)
+    const availableMonths = useMemo(() => {
+      const months = [];
+      for (let i = 0; i <= 5; i++) {
+        const d = subMonths(today, i);
+        const isArchived = i > 3; // > 3 months is archived
+        months.push({
+          date: d,
+          monthIndex: getMonth(d),
+          year: d.getFullYear(),
+          name: HEBREW_MONTHS[getMonth(d)],
+          shortName: HEBREW_MONTHS_SHORT[getMonth(d)],
+          isArchived,
+          offset: i,
+        });
+      }
+      return months;
+    }, [today]);
+
+    // Rolling 30 label calculation (e.g. ספט' / אוג')
+    const periodLabelFor30 = useMemo(() => {
+      const rollingEnd = effectiveDate;
+      const rollingStart = addDays(effectiveDate, -29);
+      const endM = getMonth(rollingEnd);
+      const startM = getMonth(rollingStart);
+      if (endM !== startM) {
+        return `${HEBREW_MONTHS_SHORT[endM]} / ${HEBREW_MONTHS_SHORT[startM]}`;
+      }
+      return HEBREW_MONTHS[endM];
+    }, [effectiveDate]);
+
+    const periodLabel = useMemo(() => {
+      if (range === 7) {
+        // Weekly: show date span
+        const weekEnd = effectiveDate;
+        const weekStart = addDays(effectiveDate, -(range - 1));
+        return `${format(weekStart, "dd/MM")} – ${format(weekEnd, "dd/MM")}`;
+      }
+
+      if (currentMode === "month") {
+        // Calendar month: show month name + year
+        const mName = HEBREW_MONTHS[getMonth(currentMonth)];
+        const currentYear = new Date().getFullYear();
+        return currentMonth.getFullYear() !== currentYear
+          ? `${mName} ${currentMonth.getFullYear()}`
+          : mName;
+      }
+
+      // Rolling 30 days
+      return periodLabelFor30;
+    }, [effectiveDate, range, currentMode, currentMonth, periodLabelFor30]);
+
+    const handleNavPrev = () => {
+      if (currentMode === "month") {
+        const prevMonth = subMonths(currentMonth, 1);
+        if (isBefore(prevMonth, threeMonthsAgo)) {
+          if (onRequestRestore) {
+            onRequestRestore(prevMonth);
+          } else {
+            toast.error("חודש זה נמצא בארכיון (מעל 3 חודשים אחורה)");
+          }
+          return;
+        }
+        setInternalMonth(prevMonth);
+        onMonthSelect?.(prevMonth);
+        return;
+      }
+
+      // Rolling mode
+      const newDate = addDays(effectiveDate, -range);
+      if (isBefore(newDate, threeMonthsAgo)) {
+        if (onRequestRestore) {
+          onRequestRestore(newDate);
+        } else {
+          toast.error("תאריך זה נמצא בארכיון (מעל 3 חודשים אחורה)");
+        }
+        return;
+      }
+      onDateSelect?.(newDate);
+    };
+
+    const handleNavNext = () => {
+      if (isAtCurrentPeriod) return;
+
+      if (currentMode === "month") {
+        const nextMonth = addMonths(currentMonth, 1);
+        const target = nextMonth > today ? today : nextMonth;
+        setInternalMonth(target);
+        onMonthSelect?.(target);
+        return;
+      }
+
+      // Rolling mode
+      const candidate = addDays(effectiveDate, range);
+      const next = candidate > today ? today : candidate;
+      onDateSelect?.(next);
+    };
+    // ─────────────────────────────────────────────────────────────────
+
     return (
       <Card
         ref={cardRef}
@@ -318,9 +463,9 @@ export const AttendanceTrendCard = forwardRef(
         )}
       >
         {!hideHeader && (
-          <CardHeader className="px-4 sm:px-6 py-3 sm:py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3 shrink-0">
-            {/* Right side: Icon + Title + Subtitle */}
-            <div className="space-y-1 min-w-0 flex-1">
+          <CardHeader className="px-4 sm:px-6 py-3 sm:py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-4 shrink-0">
+            {/* ── RIGHT: Icon + Title + Period nav pill ── */}
+            <div className="flex flex-col gap-1.5 min-w-0 flex-1">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                   <TrendingUp className="w-4 h-4" />
@@ -329,40 +474,233 @@ export const AttendanceTrendCard = forwardRef(
                   מגמת נוכחות וזמינות
                 </CardTitle>
               </div>
-              <CardDescription className="text-xs text-muted-foreground truncate">
-                {unitName} • {range === 7 ? "שבועי" : HEBREW_MONTHS[getMonth(selectedDate ?? new Date())]}
-              </CardDescription>
-            </div>
 
-            {/* Left side: Clean Average + Range Selector Pills */}
-            <div className="flex items-center gap-3 shrink-0">
-              {/* Average display */}
-              <div className="flex items-baseline gap-1 sm:gap-1.5 shrink-0 select-none">
-                <span className="text-[11px] sm:text-xs text-muted-foreground font-medium">ממוצע:</span>
-                <span className="text-xs sm:text-sm font-black text-foreground tracking-tight">{averagePct}%</span>
-                {selectedDate && !isSameDay(selectedDate, new Date()) && (
+              {/* Segmented period pill: ← [📅 date] → */}
+              <div className="flex items-center gap-2 no-export">
+                <div className="inline-flex items-center rounded-md border border-border/50 overflow-hidden">
+                  {/* ← (visually right in RTL) → Next */}
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    onClick={handleNavNext}
+                    disabled={isAtCurrentPeriod}
+                    className={cn(
+                      "w-6 h-6 flex items-center justify-center bg-muted/40 transition-colors cursor-pointer border-l border-border/40",
+                      isAtCurrentPeriod
+                        ? "text-muted-foreground/25 cursor-default"
+                        : "hover:bg-muted/70 text-muted-foreground hover:text-foreground cursor-pointer"
+                    )}
+                    title="תקופה הבאה"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+
+                  {/* Clickable date label → opens popover */}
+                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          "inline-flex items-center gap-1.5 px-2.5 h-6 text-xs font-medium transition-colors cursor-pointer select-none bg-muted/20 hover:bg-muted/50",
+                          calendarOpen ? "text-foreground bg-muted/50" : "text-muted-foreground hover:text-foreground"
+                        )}
+                        title="בחר תקופה או חודש ספציפי"
+                      >
+                        <CalendarIcon className="w-3 h-3 opacity-50" />
+                        <span className="font-semibold">{periodLabel}</span>
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-80 p-0 shadow-xl border border-border/60 rounded-2xl overflow-hidden"
+                      align="start"
+                      side="bottom"
+                      sideOffset={6}
+                    >
+                      {/* Header */}
+                      <div className="px-3.5 py-2.5 border-b border-border/40 bg-muted/20 flex items-center justify-between">
+                        <span className="text-xs font-bold text-foreground">בחירת טווח ותקופה</span>
+                        <span className="text-[10px] text-muted-foreground">עד 3 חודשים אחורה</span>
+                      </div>
+
+                      <div className="p-3 space-y-3">
+                        {/* Quick options */}
+                        <div className="space-y-1.5">
+                          <span className="text-[11px] font-semibold text-muted-foreground block pr-1">תצוגה שוטפת</span>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onRangeChange?.(30);
+                                onTrendModeChange?.("rolling");
+                                setInternalMode("rolling");
+                                onDateSelect?.(new Date());
+                                setCalendarOpen(false);
+                              }}
+                              className={cn(
+                                "flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer",
+                                range === 30 && currentMode === "rolling"
+                                  ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                                  : "bg-muted/40 hover:bg-muted/80 text-foreground border-border/50"
+                              )}
+                            >
+                              <span>30 יום</span>
+                              <span className="text-[10px] opacity-80">({periodLabelFor30})</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onRangeChange?.(7);
+                                onTrendModeChange?.("rolling");
+                                setInternalMode("rolling");
+                                onDateSelect?.(new Date());
+                                setCalendarOpen(false);
+                              }}
+                              className={cn(
+                                "flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer",
+                                range === 7 && currentMode === "rolling"
+                                  ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                                  : "bg-muted/40 hover:bg-muted/80 text-foreground border-border/50"
+                              )}
+                            >
+                              <span>7 ימים</span>
+                              <span className="text-[10px] opacity-80">שבועי</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Calendar Months */}
+                        <div className="space-y-1.5">
+                          <span className="text-[11px] font-semibold text-muted-foreground block pr-1">לפי חודש קלנדרי (מלא)</span>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {availableMonths.map((m) => {
+                              const isSelected = currentMode === "month" && isSameMonth(currentMonth, m.date);
+                              if (m.isArchived) {
+                                return (
+                                  <button
+                                    key={m.name + m.year}
+                                    type="button"
+                                    onClick={() => {
+                                      onRequestRestore?.(m.date);
+                                      setCalendarOpen(false);
+                                    }}
+                                    className="flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium border border-dashed border-border/60 bg-muted/20 text-muted-foreground hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 hover:border-amber-500/40 transition-all cursor-pointer"
+                                    title="חודש זה בארכיון - לחץ להגשת בקשת שחזור"
+                                  >
+                                    <span className="truncate">{m.name}</span>
+                                    <span className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400">
+                                      <Lock className="w-2.5 h-2.5" />
+                                      ארכיון
+                                    </span>
+                                  </button>
+                                );
+                              }
+
+                              return (
+                                <button
+                                  key={m.name + m.year}
+                                  type="button"
+                                  onClick={() => {
+                                    onTrendModeChange?.("month");
+                                    setInternalMode("month");
+                                    onMonthSelect?.(m.date);
+                                    setInternalMonth(m.date);
+                                    onRangeChange?.(30);
+                                    setCalendarOpen(false);
+                                  }}
+                                  className={cn(
+                                    "flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer",
+                                    isSelected
+                                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                                      : "bg-muted/40 hover:bg-muted/80 text-foreground border-border/50"
+                                  )}
+                                >
+                                  <span>{m.name}</span>
+                                  {m.offset === 0 ? (
+                                    <span className="text-[9px] px-1 py-0.2 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-bold">נוכחי</span>
+                                  ) : (
+                                    <span className="text-[10px] opacity-70">{m.year}</span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer */}
+                      <div className="p-2.5 border-t border-border/30 bg-muted/20 flex items-center justify-between text-[11px]">
+                        <span className="text-muted-foreground flex items-center gap-1">
+                          <Archive className="w-3 h-3 text-amber-500" />
+                          מעל 3 חודשים בארכיון
+                        </span>
+                        {(!isAtCurrentPeriod || currentMode === "month") && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onTrendModeChange?.("rolling");
+                              setInternalMode("rolling");
+                              onRangeChange?.(30);
+                              onDateSelect?.(new Date());
+                              setCalendarOpen(false);
+                            }}
+                            className="font-bold text-primary hover:underline cursor-pointer"
+                          >
+                            חזרה להיום
+                          </button>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
+                  {/* → (visually left in RTL) → Prev */}
+                  <button
+                    type="button"
+                    onClick={handleNavPrev}
+                    className="w-6 h-6 flex items-center justify-center bg-muted/40 hover:bg-muted/70 text-muted-foreground hover:text-foreground transition-colors cursor-pointer border-r border-border/40"
+                    title="תקופה קודמת"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Jump to today (only when not on current period) */}
+                {(!isAtCurrentPeriod || currentMode === "month") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onTrendModeChange?.("rolling");
+                      setInternalMode("rolling");
+                      onRangeChange?.(30);
                       onDateSelect?.(new Date());
                     }}
-                    className="mr-1.5 text-[10px] font-bold text-primary hover:text-primary/80 flex items-center gap-0.5 cursor-pointer transition-all no-export"
-                    title="לחץ לאיפוס לתאריך היום"
+                    className="text-[11px] font-medium text-primary/70 hover:text-primary cursor-pointer transition-colors"
                   >
-                    <span>({format(selectedDate, "dd/MM")})</span>
-                    <X className="w-2.5 h-2.5" />
+                    היום
                   </button>
                 )}
               </div>
+            </div>
 
-              {/* Range Selector: Clean segmented control (שבועי / חודשי) */}
+            {/* ── LEFT: Average + Range toggle ── */}
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-baseline gap-1 select-none">
+                <span className="text-xs text-muted-foreground font-medium">ממוצע:</span>
+                <span className="text-sm font-black text-foreground tracking-tight">{averagePct}%</span>
+              </div>
+              {/* Range toggle — always visible */}
               <div className="inline-flex items-center p-0.5 rounded-lg bg-muted/60 border border-border/40 shrink-0 no-export">
                 {ranges.map((r) => (
                   <button
                     key={r.value}
                     type="button"
-                    onClick={() => onRangeChange?.(r.value)}
+                    onClick={() => {
+                      onRangeChange?.(r.value);
+                      if (r.value === 7) {
+                        onTrendModeChange?.("rolling");
+                        setInternalMode("rolling");
+                      }
+                      onDateSelect?.(new Date());
+                    }}
                     className={cn(
                       "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all cursor-pointer select-none",
                       range === r.value
