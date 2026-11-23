@@ -146,7 +146,7 @@ export const StatsComparisonCard = forwardRef(function StatsComparisonCard(
       )}
     >
       {!hideHeader && (
-        <CardHeader className="px-4 sm:px-6 py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3">
+        <CardHeader className="px-4 sm:px-6 py-3 sm:py-0 sm:h-[70px] flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3">
           <div className="space-y-1 min-w-0 flex-1">
             <div className="flex items-center gap-2 min-w-0 flex-wrap">
               <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">

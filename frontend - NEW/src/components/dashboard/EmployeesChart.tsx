@@ -279,7 +279,7 @@ const EmployeesChartComponent = (
     >
         {/* Standardized Header */}
         {!hideHeader ? (
-          <CardHeader className="px-4 sm:px-6 py-3 sm:py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3">
+          <CardHeader className="px-4 sm:px-6 py-3 sm:py-0 sm:h-[70px] flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3">
             <div className="space-y-0.5 min-w-0 flex-1">
               <div className="flex items-center gap-2 min-w-0">
                 {isOfficeSelected && (

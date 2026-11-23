@@ -1,11 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDragHandle,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
+import { AppModalContent, AppModalHeader, AppModalBody, AppModalFooter } from "@/components/common/AppModal";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import {
   Select,
@@ -216,29 +211,62 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
     }
   }, [user]);
 
+  // Reset note when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setNote("");
+    }
+  }, [isOpen]);
+
+  const hasCommandPower =
+    isAdmin ||
+    user?.is_commander ||
+    user?.commands_department_id ||
+    user?.commands_section_id ||
+    user?.commands_team_id;
+
+  const isContentValid = note.trim().length > 0;
+  const isDateRangeValid = !!startDate && !!endDate && endDate >= startDate;
+  const canSubmit =
+    !isUpdatingScope &&
+    !!hasCommandPower &&
+    !!activeTarget &&
+    isContentValid &&
+    isDateRangeValid;
+
   const handleSubmit = async () => {
-    if (!unitDayStatus) {
-      toast.error("סטטוס יום יחידה לא נמצא במערכת");
+    if (!hasCommandPower) {
+      toast.error("אין לך הרשאה לקבוע אירוע יחידה");
       return;
     }
     if (!activeTarget) {
       toast.error("נא לבחור יחידה לביצוע הפעולה");
       return;
     }
-    if (startDate && endDate && endDate < startDate) {
+    if (!note.trim()) {
+      toast.error("חובה להזין את תוכן האירוע לפני השמירה");
+      return;
+    }
+    if (!startDate || !endDate) {
+      toast.error("נא לבחור תאריכי התחלה וסיום");
+      return;
+    }
+    if (endDate < startDate) {
       toast.error("תאריך הסיום לא יכול להיות לפני תאריך ההתחלה");
       return;
     }
+
     const success = await logScopeStatus(
       activeTarget.scope,
       parseInt(activeTarget.targetId),
-      unitDayStatus.id,
+      unitDayStatus?.id || 1,
       startDate,
       endDate,
-      note,
+      note.trim(),
     );
     if (success) {
       toast.success(`אירוע יחידה עודכן בהצלחה ${activeTarget.toLabel}`);
+      setNote("");
       onClose();
     } else {
       toast.error("שגיאה בעדכון אירוע היחידה");
@@ -251,37 +279,19 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
     setSelectedTeamId("");
   };
 
-  const hasCommandPower =
-    isAdmin ||
-    user?.is_commander ||
-    user?.commands_department_id ||
-    user?.commands_section_id ||
-    user?.commands_team_id;
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl md:max-w-3xl w-full p-0 overflow-hidden bg-background border-border/40 flex flex-col">
-        <DialogDragHandle />
-
+      <AppModalContent size="lg">
         {/* ── Header ── */}
-        <div className="px-6 sm:px-8 py-5 sm:py-6 border-b border-border/40 bg-muted/20 text-right shrink-0">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-              <Calendar className="w-5.5 h-5.5 text-primary" />
-            </div>
-            <div className="space-y-0.5 text-right">
-              <DialogTitle className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
-                הוספת אירוע יחידה
-              </DialogTitle>
-              <DialogDescription className="text-xs sm:text-sm font-normal text-muted-foreground">
-                קביעת יום מחלקה, מדור או חוליה
-              </DialogDescription>
-            </div>
-          </div>
-        </div>
+        <AppModalHeader
+          icon={Calendar}
+          iconVariant="primary"
+          title="הוספת אירוע יחידה"
+          subtitle="קביעת יום מחלקה, מדור או חוליה"
+        />
 
         {/* ── Body ── */}
-        <div className="flex-1 flex flex-col px-6 sm:px-8 py-5 sm:py-6 space-y-5 sm:space-y-6 overflow-y-auto custom-scrollbar">
+        <AppModalBody className="p-5 sm:p-7 space-y-5 sm:space-y-6">
           {hasCommandPower ? (
             <>
               {/* ── Hierarchical Unit Selector ── */}
@@ -623,27 +633,35 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
 
           {/* Note */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
-              תוכן האירוע
-              <span className="text-xs text-muted-foreground/60 font-normal">
-                (יופיע ביומן)
-              </span>
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <span>תוכן האירוע</span>
+                <span className="text-destructive font-bold">*</span>
+                <span className="text-xs text-muted-foreground/60 font-normal">
+                  (יופיע ביומן)
+                </span>
+              </Label>
+              {!isContentValid && (
+                <span className="text-[11px] font-semibold text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                  חובה להזין תוכן
+                </span>
+              )}
+            </div>
             <Textarea
-              placeholder="יום מחלקה, גיבוש, תרגיל..."
+              placeholder="חובה להזין תוכן: יום מחלקה, גיבוש, תרגיל, כנס..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="resize-none min-h-[90px] bg-background border-border/60 rounded-xl p-3.5 text-sm leading-relaxed shadow-xs"
+              className="resize-none min-h-[90px] bg-background border-border/60 rounded-xl p-3.5 text-sm leading-relaxed shadow-xs focus-visible:border-primary"
             />
           </div>
-        </div>
+        </AppModalBody>
 
         {/* ── Footer ── */}
-        <div className="px-6 sm:px-8 py-4 sm:py-5 border-t border-border/40 bg-muted/20 shrink-0 space-y-2.5">
+        <AppModalFooter className="flex-col gap-2">
           <Button
-            className="w-full rounded-xl h-11 sm:h-12 font-bold text-xs sm:text-sm transition-all active:scale-[0.98] shadow-xs bg-primary text-primary-foreground hover:bg-primary/90"
+            className="w-full rounded-xl h-11 sm:h-12 font-bold text-xs sm:text-sm transition-all active:scale-[0.98] shadow-xs bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={handleSubmit}
-            disabled={isUpdatingScope || !hasCommandPower || !activeTarget}
+            disabled={!canSubmit}
           >
             {isUpdatingScope ? (
               <span className="flex items-center gap-2">
@@ -657,12 +675,12 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="w-full text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-1 text-center"
+            className="w-full text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-1 text-center cursor-pointer"
           >
             ביטול
           </button>
-        </div>
-      </DialogContent>
+        </AppModalFooter>
+      </AppModalContent>
     </Dialog>
   );
 };

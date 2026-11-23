@@ -20,10 +20,11 @@ import { StatCards } from "@/components/dashboard/StatCards";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { AgeDistributionChart } from "@/components/dashboard/AgeDistributionChart";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ReportHub } from "@/components/dashboard/ReportHub";
 import { RestorationRequestDialog } from "@/components/dashboard/RestorationRequestDialog";
 import { WhatsAppBroadcastModal } from "@/components/employees/modals/WhatsAppBroadcastModal";
-import { MessageSquare, Filter, Calendar, Lock, Archive } from "lucide-react";
+import { MessageSquare, Filter, Calendar, Lock, Archive, ChevronDown, FileText, X } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { GlobalEventModal } from "@/components/employees/modals/GlobalEventModal";
 import { getJewishHoliday } from "@/lib/hebrewDate";
@@ -146,6 +147,8 @@ export default function DashboardPage() {
   const [whatsAppDialogOpen, setWhatsAppDialogOpen] = useState(false);
   const [whatsappBroadcastOpen, setWhatsappBroadcastOpen] = useState(false);
   const [globalEventOpen, setGlobalEventOpen] = useState(false);
+  const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
+  const [reportHubOpen, setReportHubOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
   const [trendMode, setTrendMode] = useState<"rolling" | "month">("rolling");
@@ -850,57 +853,95 @@ export default function DashboardPage() {
     user
   ]);
 
-  const activeFilterTags = useMemo(() => {
-    const tags: string[] = [];
+  const activeFilters = useMemo(() => {
+    const list: { id: string; label: string; onRemove: () => void }[] = [];
+
+    // Org filters
+    if (cleanTeamId) {
+      const ids = cleanTeamId.split(",");
+      const label = ids.length > 1 ? `${ids.length} חוליות` : currentTeam ? formatUnitName("team", currentTeam.name) : `חוליה ${cleanTeamId}`;
+      list.push({
+        id: "team",
+        label,
+        onRemove: () => handleFilterChange("team", ""),
+      });
+    } else if (cleanSectionId) {
+      const ids = cleanSectionId.split(",");
+      const label = ids.length > 1 ? `${ids.length} מדורים` : currentSection ? formatUnitName("section", currentSection.name) : `מדור ${cleanSectionId}`;
+      list.push({
+        id: "section",
+        label,
+        onRemove: () => handleFilterChange("section", ""),
+      });
+    } else if (cleanDeptId && user?.is_admin) {
+      const ids = cleanDeptId.split(",");
+      const label = ids.length > 1 ? `${ids.length} מחלקות` : currentDept ? formatUnitName("department", currentDept.name) : `מחלקה ${cleanDeptId}`;
+      list.push({
+        id: "department",
+        label,
+        onRemove: () => handleFilterChange("department", ""),
+      });
+    }
+
+    // Status filter
     if (selectedStatusData) {
-      tags.push(selectedStatusData.name);
+      list.push({
+        id: "status",
+        label: selectedStatusData.name,
+        onRemove: () => {
+          setSelectedStatusId(null);
+          setSelectedStatusData(null);
+          handleFilterChange("status", null);
+        },
+      });
     }
+
+    // Service types
     if (selectedServiceTypes.length > 0) {
-      tags.push(...selectedServiceTypes);
+      selectedServiceTypes.forEach((type) => {
+        list.push({
+          id: `service-${type}`,
+          label: type,
+          onRemove: () => {
+            const next = selectedServiceTypes.filter((t) => t !== type);
+            setSelectedServiceTypes(next);
+            handleFilterChange("serviceType", next);
+          },
+        });
+      });
     }
+
+    // Age range
     if (selectedAgeRange.min || selectedAgeRange.max) {
       const ageText = selectedAgeRange.max
         ? `גילאי ${selectedAgeRange.min}-${selectedAgeRange.max}`
         : `גילאי ${selectedAgeRange.min}+`;
-      tags.push(ageText);
-    }
-    
-    // Add org filter tag if selected
-    if (cleanTeamId) {
-      const ids = cleanTeamId.split(",");
-      if (ids.length > 1) {
-        tags.push(`${ids.length} חוליות`);
-      } else if (currentTeam) {
-        tags.push(formatUnitName("team", currentTeam.name));
-      }
-    } else if (cleanSectionId) {
-      const ids = cleanSectionId.split(",");
-      if (ids.length > 1) {
-        tags.push(`${ids.length} מדורים`);
-      } else if (currentSection) {
-        tags.push(formatUnitName("section", currentSection.name));
-      }
-    } else if (cleanDeptId) {
-      const ids = cleanDeptId.split(",");
-      if (ids.length > 1) {
-        tags.push(`${ids.length} מחלקות`);
-      } else if (currentDept) {
-        tags.push(formatUnitName("department", currentDept.name));
-      }
+      list.push({
+        id: "age",
+        label: ageText,
+        onRemove: () => {
+          setSelectedAgeRange({});
+          handleFilterChange("ageRange", "all");
+        },
+      });
     }
 
-    return tags;
+    return list;
   }, [
+    cleanTeamId,
+    cleanSectionId,
+    cleanDeptId,
+    currentTeam,
+    currentSection,
+    currentDept,
+    user,
     selectedStatusData,
     selectedServiceTypes,
     selectedAgeRange,
-    cleanDeptId,
-    cleanSectionId,
-    cleanTeamId,
-    currentDept,
-    currentSection,
-    currentTeam,
+    handleFilterChange,
   ]);
+
+  const activeFilterTags = useMemo(() => activeFilters.map((f) => f.label), [activeFilters]);
 
   const handleStatusClick = (
     statusId: number,
@@ -949,7 +990,9 @@ export default function DashboardPage() {
         <div className="flex sm:hidden items-center justify-between gap-2 mb-2 w-full">
           <div className="flex items-center gap-1.5 min-w-0">
             <span className="text-xs font-bold text-muted-foreground truncate">
-              {unitName || "תמונת מצב יומית"}
+              {activeFilters.length > 0
+                ? activeFilters.map((f) => f.label).join(", ")
+                : unitName || "תמונת מצב יומית"}
             </span>
             {holiday && (
               <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-black border border-amber-500/20 shrink-0">
@@ -963,78 +1006,166 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="hidden sm:block">
-          <PageHeader
-            icon={LayoutDashboard}
-            title="לוח בקרה"
-            className="mb-0"
-            badge={
-              <div className="flex items-center justify-between w-full">
-                {/* Desktop Left: DateHeader (hidden on md+ where it's centered in the top header) */}
-                <div className="flex md:hidden items-center gap-2">
-                  <DateHeader className="origin-left" />
-                </div>
+        {/* Section Header: Context on Right, Filter & Quick Actions Dropdown on Left */}
+        <div className="hidden sm:flex items-center justify-between w-full mb-3 px-1">
+          {/* Right side (RTL): Section Identity & Scope */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h2 className="text-base sm:text-lg font-bold text-foreground tracking-tight shrink-0">
+              תמונת מצב יומית
+            </h2>
+            <div className="h-4 w-px bg-border/60 shrink-0" />
 
-                {/* Desktop Right: Actions & Filters */}
-                <div className="hidden lg:flex items-center gap-2">
-                  <div id="dashboard-filter-btn">
-                  <DashboardFilters
-                    structure={structure}
-                    statuses={allStatusTypes.map((s: any) => ({ status_id: s.id, status_name: s.name, color: s.color }))}
-                    allStatusTypes={allStatusTypes}
-                    selectedDeptId={selectedDeptId}
-                    selectedSectionId={selectedSectionId}
-                    selectedTeamId={selectedTeamId}
-                    selectedStatusId={selectedStatusId?.toString()}
-                    serviceTypes={serviceTypes}
-                    selectedServiceTypes={selectedServiceTypes}
-                    selectedAgeRange={selectedAgeRange}
-                    onFilterChange={handleFilterChange}
-                    canSelectDept={canSelectDept}
-                    canSelectSection={canSelectSection}
-                    canSelectTeam={canSelectTeam}
-                    hasActiveFiltersExternal={activeFilterInfo.hasActive}
-                    activeFilterCountExternal={activeFilterInfo.count}
-                    user={user}
-                  />
-                  </div>
-
-                  <ReportHub
-                    id="report-hub-card"
-                    onShareBirthdays={() => setWhatsAppDialogOpen(true)}
-                    filters={memoizedFilters}
-                    initialDate={selectedDate}
-                  />
-
-                  <Button
-                    id="event-button"
-                    variant="outline"
-                    onClick={() => setGlobalEventOpen(true)}
-                    className={cn(
-                      "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs",
-                      activeTutorial === "event" && "tutorial-highlight"
-                    )}
+            {activeFilters.length > 0 ? (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {activeFilters.map((filter) => (
+                  <span
+                    key={filter.id}
+                    className="inline-flex items-center gap-1.5 text-primary font-bold bg-primary/10 px-2.5 py-0.5 rounded-lg border border-primary/20 text-xs transition-all hover:bg-primary/15"
                   >
-                    <Calendar className="w-3.5 h-3.5 text-primary" />
-                    <span>אירוע</span>
-                  </Button>
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                    <span>{filter.label}</span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        filter.onRemove();
+                      }}
+                      className="w-3.5 h-3.5 rounded-full hover:bg-primary/20 flex items-center justify-center transition-colors cursor-pointer mr-0.5 shrink-0"
+                      title={`הסר סינון ${filter.label}`}
+                      aria-label={`הסר סינון ${filter.label}`}
+                    >
+                      <X className="w-2.5 h-2.5 text-primary" />
+                    </button>
+                  </span>
+                ))}
 
-                  <Button
-                    id="broadcast-button"
-                    variant="outline"
-                    onClick={() => setWhatsappBroadcastOpen(true)}
-                    className={cn(
-                      "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs",
-                      activeTutorial === "broadcast" && "tutorial-highlight"
-                    )}
+                {activeFilters.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleFilterChange("reset")}
+                    className="text-[11px] text-muted-foreground hover:text-foreground font-semibold underline underline-offset-2 transition-colors cursor-pointer mr-1"
                   >
-                    <MessageSquare className="w-3.5 h-3.5 text-primary" />
-                    <span>רשימת תפוצה</span>
-                  </Button>
-                </div>
+                    נקה הכל
+                  </button>
+                )}
               </div>
-            }
-          />
+            ) : (
+              <span className="text-xs text-muted-foreground/80 font-medium">
+                {unitName || "כלל היחידה"}
+              </span>
+            )}
+          </div>
+
+          {/* Left side (RTL): Quick Actions Dropdown & Filter */}
+          <div className="flex items-center gap-2">
+            {/* Quick Actions Dropdown */}
+            <Popover open={actionsMenuOpen} onOpenChange={setActionsMenuOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  id="dashboard-actions-trigger"
+                  variant="outline"
+                  className={cn(
+                    "h-9 rounded-xl gap-2 font-bold px-3 text-xs bg-card/80 hover:bg-muted/70 border-border/60 shadow-xs cursor-pointer active:scale-95 transition-all",
+                    (activeTutorial === "event" || activeTutorial === "broadcast" || activeTutorial === "report-hub") && "tutorial-highlight"
+                  )}
+                >
+                  <span>פעולות ודוחות</span>
+                  <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform duration-200", actionsMenuOpen && "rotate-180")} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-64 p-1.5 rounded-2xl border-border/40 shadow-xl bg-card"
+                align="start"
+                dir="rtl"
+              >
+                <div className="space-y-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActionsMenuOpen(false);
+                      setReportHubOpen(true);
+                    }}
+                    className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted text-right transition-colors cursor-pointer group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-foreground">מרכז דוחות</p>
+                      <p className="text-[10px] text-muted-foreground truncate">ייצוא דוחות נוכחות ונתונים</p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActionsMenuOpen(false);
+                      setGlobalEventOpen(true);
+                    }}
+                    className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted text-right transition-colors cursor-pointer group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <Calendar className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-foreground">אירוע יחידה</p>
+                      <p className="text-[10px] text-muted-foreground truncate">קביעת יום מחלקה, מדור או חוליה</p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActionsMenuOpen(false);
+                      setWhatsappBroadcastOpen(true);
+                    }}
+                    className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted text-right transition-colors cursor-pointer group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <MessageSquare className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-foreground">רשימת תפוצה</p>
+                      <p className="text-[10px] text-muted-foreground truncate">שליחת הודעת וואטסאפ מרוכזת</p>
+                    </div>
+                  </button>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            {/* Filter Trigger */}
+            <div id="dashboard-filter-btn">
+              <DashboardFilters
+                structure={structure}
+                statuses={allStatusTypes.map((s: any) => ({ status_id: s.id, status_name: s.name, color: s.color }))}
+                allStatusTypes={allStatusTypes}
+                selectedDeptId={selectedDeptId}
+                selectedSectionId={selectedSectionId}
+                selectedTeamId={selectedTeamId}
+                selectedStatusId={selectedStatusId?.toString()}
+                serviceTypes={serviceTypes}
+                selectedServiceTypes={selectedServiceTypes}
+                selectedAgeRange={selectedAgeRange}
+                onFilterChange={handleFilterChange}
+                canSelectDept={canSelectDept}
+                canSelectSection={canSelectSection}
+                canSelectTeam={canSelectTeam}
+                hasActiveFiltersExternal={activeFilterInfo.hasActive}
+                activeFilterCountExternal={activeFilterInfo.count}
+                user={user}
+              />
+            </div>
+
+            {/* Controlled ReportHub Dialog */}
+            <ReportHub
+              open={reportHubOpen}
+              onOpenChange={setReportHubOpen}
+              hideTrigger={true}
+              onShareBirthdays={() => setWhatsAppDialogOpen(true)}
+              filters={memoizedFilters}
+              initialDate={selectedDate}
+            />
+          </div>
         </div>
 
         {/* Mobile Quick Actions Bar — Modern Elevated App Bar */}

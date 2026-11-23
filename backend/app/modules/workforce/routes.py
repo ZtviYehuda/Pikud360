@@ -2005,7 +2005,7 @@ def bulk_log_attendance_endpoint():
 @workforce_bp.route("/attendance/bulk-scope", methods=["POST"])
 @jwt_required(optional=True)
 def bulk_scope_attendance_endpoint():
-    """Logs bulk status update for an entire scope (department/section/team)."""
+    """Logs bulk status update for an entire scope (department/section/team) with strict validation."""
     data = request.get_json() or {}
     scope_type = data.get("scope_type")
     scope_id = data.get("scope_id")
@@ -2014,11 +2014,144 @@ def bulk_scope_attendance_endpoint():
     end_date = data.get("end_date")
     note = data.get("note")
 
-    logger.info(f"Bulk scope status update: scope_type={scope_type}, scope_id={scope_id}, status={status_type_id}")
-    return jsonify({
-        "success": True,
-        "message": "אירוע היחידה עודכן בהצלחה",
-    }), 200
+    # 1. Validation: content/note is strictly mandatory
+    if not note or not str(note).strip():
+        logger.warning(f"Rejected bulk scope event: empty content/note. scope_type={scope_type}, scope_id={scope_id}")
+        return jsonify({
+            "success": False,
+            "error": "חובה להזין את תוכן האירוע"
+        }), 400
+
+    note_str = str(note).strip()
+
+    # 2. Validation: scope is required
+    if not scope_type or not scope_id:
+        return jsonify({
+            "success": False,
+            "error": "יש לבחור רמת יחידה לאירוע"
+        }), 400
+
+    # 3. Validation: dates are required
+    if not start_date or not end_date:
+        return jsonify({
+            "success": False,
+            "error": "יש לבחור תאריכי התחלה וסיום"
+        }), 400
+
+    try:
+        start_d = datetime.strptime(str(start_date)[:10], "%Y-%m-%d").date()
+        end_d = datetime.strptime(str(end_date)[:10], "%Y-%m-%d").date()
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": "תאריכים לא תקינים"
+        }), 400
+
+    if end_d < start_d:
+        return jsonify({
+            "success": False,
+            "error": "תאריך הסיום לא יכול להיות לפני תאריך ההתחלה"
+        }), 400
+
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                # Resolve status ID for UNIT_DAY / MISSION
+                cur.execute("SELECT id, code, name FROM workforce.schedule_statuses;")
+                status_rows = cur.fetchall()
+                status_id_by_code = {r[1]: str(r[0]) for r in status_rows}
+                status_id_by_name = {r[2]: str(r[0]) for r in status_rows}
+                all_status_ids = {str(r[0]): str(r[0]) for r in status_rows}
+
+                st_uuid = None
+                if status_type_id:
+                    st_str = str(status_type_id).strip()
+                    if st_str in all_status_ids:
+                        st_uuid = st_str
+                    elif st_str in status_id_by_code:
+                        st_uuid = status_id_by_code[st_str]
+                    elif st_str in status_id_by_name:
+                        st_uuid = status_id_by_name[st_str]
+
+                if not st_uuid:
+                    st_uuid = status_id_by_code.get("MISSION") or status_id_by_code.get("UNIT_DAY") or (str(status_rows[0][0]) if status_rows else None)
+
+                # Get tenant_id
+                cur.execute("SELECT id FROM core.tenants LIMIT 1;")
+                t_row = cur.fetchone()
+                tenant_id = str(t_row[0]) if t_row else str(uuid.uuid4())
+
+                # Fetch active employees
+                cur.execute("""
+                    SELECT id, org_unit_id
+                    FROM workforce.employees
+                    WHERE status != 'INACTIVE' AND deleted_at IS NULL;
+                """)
+                employees = cur.fetchall()
+
+                org_map = get_org_hierarchy_map()
+                all_team_keys = [str(t["id"]) for d in FULL_ORGANIZATION_STRUCTURE for s in d.get("sections", []) for t in s.get("teams", [])]
+
+                target_scope_id = str(scope_id).strip()
+                target_emp_ids = []
+
+                for emp in employees:
+                    emp_id = str(emp[0])
+                    emp_org = str(emp[1]) if emp[1] else ""
+                    h_info = org_map.get(emp_org)
+                    if not h_info and all_team_keys:
+                        assigned_team = all_team_keys[abs(hash(emp_id)) % len(all_team_keys)]
+                        h_info = org_map.get(assigned_team, {"dept_id": "1", "sect_id": "101", "team_id": "1001"})
+
+                    if not h_info:
+                        continue
+
+                    if scope_type == "department" and str(h_info.get("dept_id")) == target_scope_id:
+                        target_emp_ids.append(emp_id)
+                    elif scope_type == "section" and str(h_info.get("sect_id")) == target_scope_id:
+                        target_emp_ids.append(emp_id)
+                    elif scope_type == "team" and str(h_info.get("team_id")) == target_scope_id:
+                        target_emp_ids.append(emp_id)
+
+                if not target_emp_ids:
+                    return jsonify({
+                        "success": False,
+                        "error": "לא נמצאו עובדים ביחידה שנבחרה"
+                    }), 400
+
+                updated_count = 0
+                for emp_id in target_emp_ids:
+                    curr = start_d
+                    while curr <= end_d:
+                        sched_id = str(uuid.uuid4())
+                        cur.execute("""
+                            INSERT INTO workforce.employee_daily_schedule (
+                                id, tenant_id, employee_id, organization_unit_id, schedule_date,
+                                status_id, notes, created_at, updated_at
+                            ) VALUES (
+                                %s, %s, %s, (SELECT org_unit_id FROM workforce.employees WHERE id = %s), %s, %s, %s, NOW(), NOW()
+                            )
+                            ON CONFLICT (employee_id, schedule_date) DO UPDATE SET
+                                status_id = EXCLUDED.status_id,
+                                notes = EXCLUDED.notes,
+                                updated_at = NOW();
+                        """, (sched_id, tenant_id, emp_id, emp_id, curr, st_uuid, note_str))
+                        curr += timedelta(days=1)
+                        updated_count += 1
+
+                conn.commit()
+
+        logger.info(f"Bulk scope status update succeeded: scope_type={scope_type}, scope_id={scope_id}, {len(target_emp_ids)} employees, {updated_count} entries, note='{note_str}'")
+        return jsonify({
+            "success": True,
+            "message": f"אירוע היחידה עודכן בהצלחה עבור {len(target_emp_ids)} עובדים",
+            "employees_count": len(target_emp_ids),
+            "updated_count": updated_count
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error in bulk scope attendance update: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @workforce_bp.route("/attendance/roster-verify", methods=["POST"])

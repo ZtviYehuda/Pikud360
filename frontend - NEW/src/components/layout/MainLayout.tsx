@@ -525,7 +525,7 @@ export default function MainLayout() {
                   title="מעבר למרכז תמיכה וניהול"
                 >
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <Terminal className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                    <LifeBuoy className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
                     {isSidebarOpen && <span className="truncate">מרכז תמיכה וניהול</span>}
                   </div>
                   {isSidebarOpen && <ArrowLeft className="w-3.5 h-3.5 shrink-0 opacity-75" />}
@@ -781,9 +781,10 @@ export default function MainLayout() {
                     <button
                       type="button"
                       onClick={switchToSupportMode}
-                      className="hidden md:flex items-center justify-center px-3.5 h-9 sm:h-9.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/15 hover:border-amber-500/40 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
+                      className="hidden md:flex items-center gap-1.5 px-3.5 h-9 sm:h-9.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/15 hover:border-amber-500/40 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
                       title="מעבר למרכז תמיכה וניהול"
                     >
+                      <LifeBuoy className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
                       <span>מרכז תמיכה וניהול</span>
                     </button>
                   )

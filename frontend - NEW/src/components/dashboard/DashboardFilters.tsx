@@ -86,6 +86,7 @@ interface DashboardFiltersProps {
   isDialogContent?: boolean;
   onClose?: () => void;
   className?: string;
+  triggerClassName?: string;
 }
 
 const DEFAULT_SERVICE_TYPES: string[] = [];
@@ -126,6 +127,7 @@ export const DashboardFilters = ({
   isDialogContent = false,
   onClose,
   className,
+  triggerClassName,
 }: DashboardFiltersProps) => {
   const { user: authUser } = useAuthContext();
   const activeUser = propUser || authUser;
@@ -1153,6 +1155,7 @@ export const DashboardFilters = ({
                   className={cn(
                     "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs flex items-center",
                     hasActiveFilters && "border-primary/50 text-primary bg-primary/5 dark:bg-primary/10",
+                    triggerClassName,
                   )}
                 >
                   <Filter className="w-3.5 h-3.5 text-primary shrink-0" />

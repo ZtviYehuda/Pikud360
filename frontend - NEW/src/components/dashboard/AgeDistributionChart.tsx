@@ -180,7 +180,7 @@ export const AgeDistributionChart = ({
       className="bg-card/70 dark:bg-card/50 backdrop-blur-md text-card-foreground rounded-2xl border border-border/60 shadow-xs flex flex-col overflow-hidden h-full relative transition-all"
     >
       {/* Header matching Attendance Trend exactly */}
-      <CardHeader className="px-4 sm:px-6 py-3 sm:py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3 shrink-0">
+      <CardHeader className="px-4 sm:px-6 py-3 sm:py-0 sm:h-[70px] flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-3 shrink-0">
         <div className="space-y-1 min-w-0 flex-1">
           <div className="flex items-center gap-2.5 min-w-0 flex-wrap">
             <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">

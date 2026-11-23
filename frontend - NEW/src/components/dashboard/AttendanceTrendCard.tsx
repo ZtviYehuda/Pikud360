@@ -82,6 +82,7 @@ export const AttendanceTrendCard = forwardRef(
       range = 30,
       className,
       unitName = "כלל היחידה",
+      subtitle,
       selectedDate = new Date(),
       onDateSelect,
       onRangeChange,
@@ -463,16 +464,21 @@ export const AttendanceTrendCard = forwardRef(
         )}
       >
         {!hideHeader && (
-          <CardHeader className="px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between border-b border-border/40 gap-3 sm:gap-4 shrink-0">
-            {/* ── Row 1 on mobile / Right on desktop: Icon + Title + (Mobile Average) ── */}
+          <CardHeader className="px-4 sm:px-6 py-3 sm:py-0 sm:h-[70px] flex flex-col sm:flex-row items-stretch sm:items-center justify-between border-b border-border/40 gap-3 sm:gap-4 shrink-0">
+            {/* ── Row 1 on mobile / Right on desktop: Icon + Title + Subtitle + (Mobile Average) ── */}
             <div className="flex items-center justify-between sm:justify-start gap-2.5 shrink-0">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                  <TrendingUp className="w-4 h-4" />
+              <div className="space-y-0.5 min-w-0">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <TrendingUp className="w-4 h-4" />
+                  </div>
+                  <CardTitle className="text-sm sm:text-base font-bold text-foreground tracking-tight truncate">
+                    מגמת נוכחות וזמינות
+                  </CardTitle>
                 </div>
-                <CardTitle className="text-sm sm:text-base font-bold text-foreground tracking-tight truncate">
-                  מגמת נוכחות וזמינות
-                </CardTitle>
+                <p className="text-xs text-muted-foreground truncate hidden sm:block">
+                  {subtitle || "מעקב נוכחות וזמינות מבצעית"}
+                </p>
               </div>
 
               {/* Mobile Average (Top Left on Mobile) */}
@@ -487,20 +493,14 @@ export const AttendanceTrendCard = forwardRef(
               {/* ── CENTER: Segmented period pill: ← [📅 date] → ── */}
               <div className="flex items-center gap-2 no-export sm:flex-1 sm:justify-center">
                 <div className="inline-flex items-center rounded-md border border-border/50 overflow-hidden shrink-0">
-                  {/* ← (visually right in RTL) → Next */}
+                  {/* תקופה קודמת (visually right in RTL) */}
                   <button
                     type="button"
-                    onClick={handleNavNext}
-                    disabled={isAtCurrentPeriod}
-                    className={cn(
-                      "w-6 h-6 flex items-center justify-center bg-muted/40 transition-colors cursor-pointer border-l border-border/40",
-                      isAtCurrentPeriod
-                        ? "text-muted-foreground/25 cursor-default"
-                        : "hover:bg-muted/70 text-muted-foreground hover:text-foreground cursor-pointer"
-                    )}
-                    title="תקופה הבאה"
+                    onClick={handleNavPrev}
+                    className="w-6 h-6 flex items-center justify-center bg-muted/40 hover:bg-muted/70 text-muted-foreground hover:text-foreground transition-colors cursor-pointer border-l border-border/40"
+                    title="תקופה קודמת"
                   >
-                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </button>
 
                   {/* Clickable date label → opens popover */}
@@ -661,14 +661,20 @@ export const AttendanceTrendCard = forwardRef(
                     </PopoverContent>
                   </Popover>
 
-                  {/* → (visually left in RTL) → Prev */}
+                  {/* תקופה הבאה (visually left in RTL) */}
                   <button
                     type="button"
-                    onClick={handleNavPrev}
-                    className="w-6 h-6 flex items-center justify-center bg-muted/40 hover:bg-muted/70 text-muted-foreground hover:text-foreground transition-colors cursor-pointer border-r border-border/40"
-                    title="תקופה קודמת"
+                    onClick={handleNavNext}
+                    disabled={isAtCurrentPeriod}
+                    className={cn(
+                      "w-6 h-6 flex items-center justify-center bg-muted/40 transition-colors cursor-pointer border-r border-border/40",
+                      isAtCurrentPeriod
+                        ? "text-muted-foreground/25 cursor-default"
+                        : "hover:bg-muted/70 text-muted-foreground hover:text-foreground cursor-pointer"
+                    )}
+                    title="תקופה הבאה"
                   >
-                    <ChevronRight className="w-3.5 h-3.5" />
+                    <ChevronLeft className="w-3.5 h-3.5" />
                   </button>
                 </div>
 

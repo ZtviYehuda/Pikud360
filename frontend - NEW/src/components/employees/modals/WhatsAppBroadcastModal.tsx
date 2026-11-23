@@ -1,11 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDragHandle,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AppModalContent, AppModalHeader, AppModalBody, AppModalFooter } from "@/components/common/AppModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -557,75 +552,56 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
           onOpenChange(val);
         }}
       >
-        <DialogContent
-          className={cn(
-            "p-0 border-none sm:border sm:border-border/40 bg-background flex flex-col overflow-hidden transition-all duration-300 w-full sm:w-auto rounded-t-[2.2rem] rounded-b-none sm:rounded-3xl max-h-[94dvh]",
-            showAiView
-              ? "sm:max-w-5xl lg:max-w-6xl sm:h-[80vh] sm:max-h-[760px] p-2 sm:p-3"
-              : "sm:max-w-4xl lg:max-w-5xl sm:h-auto sm:max-h-[85vh]"
-          )}
-          dir="rtl"
+        <AppModalContent
+          size={showAiView ? "full" : "lg"}
         >
-          <DialogDragHandle />
-          
           {/* Header */}
-          <div className="p-4 sm:p-5 border-b border-border/40 bg-muted/20 relative shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-600 shrink-0">
-                  <MessageSquare className="w-5.5 h-5.5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <DialogTitle className="text-lg sm:text-xl font-black tracking-tight truncate">
-                      רשימת תפוצה בוואטסאפ
-                    </DialogTitle>
-                    {/* Live Automatic Gateway Connection Badge */}
-                    {gatewayStatus === "connected" && (
-                      <span className="flex items-center gap-1 text-[10px] font-bold bg-green-500/10 text-green-600 border border-green-500/20 px-2 py-0.5 rounded-full shrink-0">
-                        <Zap className="w-3 h-3 fill-green-600 animate-pulse" />
-                        שליחה אוטומטית פעילה
-                      </span>
+          <AppModalHeader
+            icon={MessageSquare}
+            iconVariant="green"
+            title="רשימת תפוצה בוואטסאפ"
+            badge={
+              gatewayStatus === "connected" ? (
+                <span className="flex items-center gap-1 text-[10px] font-bold bg-green-500/10 text-green-600 border border-green-500/20 px-2 py-0.5 rounded-full shrink-0">
+                  <Zap className="w-3 h-3 fill-green-600 animate-pulse" />
+                  שליחה אוטומטית פעילה
+                </span>
+              ) : null
+            }
+            subtitle={
+              <div className="flex items-center gap-2 mt-0.5">
+                <div className="flex items-center gap-1.5">
+                  <div
+                    className={cn(
+                      "w-2 h-2 rounded-full transition-all",
+                      step === 1 && !showAiView ? "bg-primary w-4" : "bg-primary/20",
+                      broadcastMode && "bg-green-500 w-4",
                     )}
-                  </div>
-                  <DialogDescription className="sr-only">
-                    שליחת הודעות תפוצה בוואטסאפ לעובדים ולקבוצות
-                  </DialogDescription>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <div className="flex items-center gap-1.5">
-                      <div
-                        className={cn(
-                          "w-2 h-2 rounded-full transition-all",
-                          step === 1 && !showAiView ? "bg-primary w-4" : "bg-primary/20",
-                          broadcastMode && "bg-green-500 w-4",
-                        )}
-                      />
-                      <div
-                        className={cn(
-                          "w-2 h-2 rounded-full transition-all",
-                          (step === 2 || showAiView) && !broadcastMode
-                            ? "bg-primary w-4"
-                            : "bg-primary/20",
-                        )}
-                      />
-                    </div>
-                    <p className="text-xs font-bold text-muted-foreground/80 truncate">
-                      {broadcastMode
-                        ? "שליחה רציפה"
-                        : showAiView
-                          ? "מחולל הודעות AI"
-                          : step === 1
-                            ? "בחירת נמענים / קבוצות"
-                            : "ניסוח הודעה"}
-                    </p>
-                  </div>
+                  />
+                  <div
+                    className={cn(
+                      "w-2 h-2 rounded-full transition-all",
+                      (step === 2 || showAiView) && !broadcastMode
+                        ? "bg-primary w-4"
+                        : "bg-primary/20",
+                    )}
+                  />
                 </div>
+                <span className="text-xs font-bold text-muted-foreground/80 truncate">
+                  {broadcastMode
+                    ? "שליחה רציפה"
+                    : showAiView
+                      ? "מחולל הודעות AI"
+                      : step === 1
+                        ? "בחירת נמענים / קבוצות"
+                        : "ניסוח הודעה"}
+                </span>
               </div>
-            </div>
-          </div>
+            }
+          />
 
           {/* Main Content Area */}
-          <div className="flex-1 flex flex-col p-4 sm:p-5 pt-2 space-y-3.5 overflow-hidden overflow-y-auto custom-scrollbar relative">
+          <AppModalBody className="p-4 sm:p-5 pt-2 space-y-3.5 relative">
             
             {/* Automatic Sending Progress Overlay */}
             {isAutoSending ? (
@@ -1058,13 +1034,13 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
                 )}
               </>
             )}
-          </div>
+          </AppModalBody>
 
           {/* Footer - Hidden when showAiView or isAutoSending is active */}
           {!showAiView && !isAutoSending && (
-            <div className="p-4 border-t border-border/40 bg-card shrink-0 relative z-20">
+            <AppModalFooter>
               {step === 1 && !broadcastMode && (
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2.5 w-full">
                   <Button
                     variant="outline"
                     onClick={handleCopyNumbers}
@@ -1073,7 +1049,7 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
                         ? selectedIds.size === 0
                         : selectedGroupIds.size === 0
                     }
-                    className="font-black h-11 rounded-xl gap-1.5 border-border/60 hover:bg-background text-xs px-4 transition-all"
+                    className="font-black h-11 rounded-xl gap-1.5 border-border/60 hover:bg-background text-xs px-4 transition-all cursor-pointer"
                   >
                     <Copy className="w-4 h-4" />
                     <span>העתק כתובות</span>
@@ -1085,7 +1061,7 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
                         ? selectedIds.size === 0
                         : selectedGroupIds.size === 0
                     }
-                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-black h-11 rounded-xl gap-2 text-xs sm:text-sm transition-all active:scale-[0.98]"
+                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-black h-11 rounded-xl gap-2 text-xs sm:text-sm transition-all active:scale-[0.98] cursor-pointer"
                   >
                     המשך לניסוח ההודעה
                   </Button>
@@ -1093,11 +1069,11 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
               )}
 
               {step === 2 && !broadcastMode && (
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2.5 w-full">
                   <Button
                     variant="outline"
                     onClick={() => setStep(1)}
-                    className="font-black h-11 rounded-xl border-border/60 hover:bg-muted text-xs px-4 transition-all"
+                    className="font-black h-11 rounded-xl border-border/60 hover:bg-muted text-xs px-4 transition-all cursor-pointer"
                   >
                     חזור
                   </Button>
@@ -1108,7 +1084,7 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
                         ? selectedEmployeesList.length === 0
                         : selectedGroupsList.length === 0
                     }
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white font-black h-11 rounded-xl gap-2 text-xs sm:text-sm transition-all active:scale-[0.98]"
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white font-black h-11 rounded-xl gap-2 text-xs sm:text-sm transition-all active:scale-[0.98] cursor-pointer"
                   >
                     <Send className="w-4 h-4 -scale-x-100" />
                     {gatewayStatus === "connected" ? (
@@ -1130,7 +1106,7 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
               )}
 
               {broadcastMode && (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 w-full">
                   <div className="flex justify-between items-center px-1">
                     <span className="text-[11px] font-black text-muted-foreground flex items-center gap-1.5">
                       <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
@@ -1145,13 +1121,13 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
                     <Button
                       onClick={() => setBroadcastMode(false)}
                       variant="outline"
-                      className="h-11 rounded-xl font-bold flex-[1] text-xs border-destructive/20 text-destructive hover:bg-destructive/10"
+                      className="h-11 rounded-xl font-bold flex-[1] text-xs border-destructive/20 text-destructive hover:bg-destructive/10 cursor-pointer"
                     >
                       עצור
                     </Button>
                     <Button
                       onClick={handleSendNext}
-                      className="bg-green-600 hover:bg-green-700 text-white font-black h-11 rounded-xl flex-[2] gap-1.5 text-xs transition-all active:scale-[0.98]"
+                      className="bg-green-600 hover:bg-green-700 text-white font-black h-11 rounded-xl flex-[2] gap-1.5 text-xs transition-all active:scale-[0.98] cursor-pointer"
                     >
                       <Send className="w-4 h-4 fill-white -scale-x-100" />
                       הבא: {selectedEmployeesList[currentSendIndex]?.first_name}
@@ -1159,9 +1135,9 @@ export const WhatsAppBroadcastModal: React.FC<WhatsAppBroadcastModalProps> = ({
                   </div>
                 </div>
               )}
-            </div>
+            </AppModalFooter>
           )}
-        </DialogContent>
+        </AppModalContent>
       </Dialog>
 
       {/* Modal for Adding / Editing Custom WhatsApp Group */}

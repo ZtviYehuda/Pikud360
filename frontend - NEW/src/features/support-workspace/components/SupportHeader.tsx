@@ -11,7 +11,7 @@ import {
   Sun,
   LogOut,
   Bell,
-  Terminal,
+  LifeBuoy,
   Eye,
 } from "lucide-react";
 
@@ -43,7 +43,7 @@ export const SupportHeader: React.FC<SupportHeaderProps> = ({
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold shadow-xs">
-            <Terminal className="w-4 h-4" aria-hidden="true" />
+            <LifeBuoy className="w-4 h-4" aria-hidden="true" />
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">

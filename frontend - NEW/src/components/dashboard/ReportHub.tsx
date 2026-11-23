@@ -25,6 +25,7 @@ import {
 import { FaWhatsapp } from "react-icons/fa";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { AppModalContent, AppModalHeader, AppModalBody } from "@/components/common/AppModal";
 import { ReportToolbar, ReportDatePicker } from "@/components/dashboard/ReportToolbar";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useAuthContext } from "@/context/AuthContext";
@@ -51,6 +52,9 @@ interface ReportHubProps {
     statusName?: string;
     status_id?: string;
   };
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }
 
 export const ReportHub: React.FC<ReportHubProps> = ({
@@ -67,8 +71,13 @@ export const ReportHub: React.FC<ReportHubProps> = ({
     unitName: "כלל היחידה",
     status_id: undefined,
   },
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  hideTrigger = false,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setIsOpen = controlledOnOpenChange || setInternalOpen;
   const [previewType, setPreviewType] = useState<null | 'snapshot' | 'trend' | 'comparison' | 'birthdays'>(null);
   const [localDate, setLocalDate] = useState<Date>(initialDate);
   const [localViewMode, setLocalViewMode] = useState<
@@ -385,64 +394,45 @@ export const ReportHub: React.FC<ReportHubProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button 
-            id={id || "report-hub-card"}
-            variant="outline" 
-            className={cn(
-              "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs flex items-center",
-              className,
-              (searchParams.get("tutorial") === "report-hub" || activeTutorial === "report-hub") && "tutorial-highlight"
-            )}
-          >
-            {className?.includes("flex-col") ? (
-              <>
-                <FileText className="w-4 h-4 text-primary shrink-0" />
-                <span className="text-[11px] font-bold leading-none">דוחות</span>
-              </>
-            ) : (
-              <>
-                <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
-                <span className="text-xs font-bold">מרכז דוחות</span>
-              </>
-            )}
-          </Button>
-        </DialogTrigger>
+        {!hideTrigger && (
+          <DialogTrigger asChild>
+            <Button 
+              id={id || "report-hub-card"}
+              variant="outline" 
+              className={cn(
+                "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs flex items-center",
+                className,
+                (searchParams.get("tutorial") === "report-hub" || activeTutorial === "report-hub") && "tutorial-highlight"
+              )}
+            >
+              {className?.includes("flex-col") ? (
+                <>
+                  <FileText className="w-4 h-4 text-primary shrink-0" />
+                  <span className="text-[11px] font-bold leading-none">דוחות</span>
+                </>
+              ) : (
+                <>
+                  <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="text-xs font-bold">מרכז דוחות</span>
+                </>
+              )}
+            </Button>
+          </DialogTrigger>
+        )}
 
-        <DialogContent
+        <AppModalContent
+          size="lg"
           onCloseAutoFocus={(e) => {
             e.preventDefault();
           }}
-          className={cn(
-            "p-0 overflow-hidden border-0 bg-background/97 backdrop-blur-3xl rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col transition-all duration-300 shadow-2xl",
-          "h-auto max-h-[82vh] sm:max-h-[88vh]",
-          "sm:max-w-2xl w-full sm:w-[95vw] sm:mx-auto"
-        )}>
-          <DialogDragHandle />
-
+        >
           {previewType === null ? (
-            <>
-              {/* Menu Header */}
-              <div className="px-5 pt-5 pb-3 sm:px-7 sm:pt-6 sm:pb-3 text-right shrink-0 flex items-center justify-between gap-4">
-                <DialogHeader className="text-right flex-1 min-w-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-xs">
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1 min-w-0 text-right">
-                      <DialogTitle className="text-base sm:text-lg font-black text-foreground tracking-tight leading-snug">
-                        מרכז הפקת דוחות
-                      </DialogTitle>
-                      <DialogDescription className="text-xs font-medium text-muted-foreground/70 leading-tight mt-0.5">
-                        הפקה ושיתוף נתונים מבצעיים
-                      </DialogDescription>
-                    </div>
-                  </div>
-                </DialogHeader>
-              </div>
-
-              {/* Unified Controls Bar (Period Tabs + Date Picker) */}
-              <div className="px-5 sm:px-7 pb-4 shrink-0 border-b border-border/30">
+            <AppModalHeader
+              icon={FileText}
+              iconVariant="blue"
+              title="מרכז הפקת דוחות"
+              subtitle="הפקה ושיתוף נתונים מבצעיים"
+              toolbar={
                 <ReportToolbar
                   viewMode={localViewMode}
                   onViewModeChange={setLocalViewMode}
@@ -453,49 +443,28 @@ export const ReportHub: React.FC<ReportHubProps> = ({
                   maxDate={maxDate}
                   hideDatePicker={false}
                 />
-              </div>
-            </>
+              }
+            />
           ) : (
-            <>
-              {/* Preview Header */}
-              <div className="px-5 pt-5 pb-3 sm:px-7 sm:pt-6 sm:pb-3 text-right shrink-0 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setPreviewType(null);
-                    }}
-                    className="flex items-center justify-center w-8 h-8 rounded-xl text-muted-foreground/70 hover:text-foreground hover:bg-muted/40 transition-all border border-border/40 shadow-xs active:scale-95 shrink-0 cursor-pointer"
-                    title="חזרה לתפריט הדוחות"
-                  >
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                  <div className="w-[1px] h-6 bg-border/30 mx-0.5 shrink-0" />
-                  <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center shadow-xs shrink-0", 
-                    previewType === 'snapshot' ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" :
-                    previewType === 'trend' ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" :
-                    previewType === 'comparison' ? "bg-purple-500/10 text-purple-600 dark:text-purple-400" : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
-                  )}>
-                    {previewType === 'snapshot' && <Users className="w-5 h-5" />}
-                    {previewType === 'trend' && <TrendingUp className="w-5 h-5" />}
-                    {previewType === 'comparison' && <BarChart2 className="w-5 h-5" />}
-                    {previewType === 'birthdays' && <Gift className="w-5 h-5" />}
-                  </div>
-                  <div className="text-right min-w-0">
-                    <h4 className="text-base sm:text-lg font-black text-foreground tracking-tight leading-snug truncate">
-                      {previewType === 'snapshot' ? "מצבת כוח אדם" :
-                       previewType === 'trend' ? "מגמות וזמינות" :
-                       previewType === 'comparison' ? "השוואת תת-יחידות" : "ריכוז ימי הולדת"}
-                    </h4>
-                    <p className="text-xs font-medium text-muted-foreground/70 leading-tight mt-0.5 truncate">{filters.unitName}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Unified Controls Bar (Period Tabs + Date Picker) */}
-              <div className="px-5 sm:px-7 pb-4 shrink-0 border-b border-border/30">
+            <AppModalHeader
+              onBack={() => setPreviewType(null)}
+              icon={
+                previewType === 'snapshot' ? Users :
+                previewType === 'trend' ? TrendingUp :
+                previewType === 'comparison' ? BarChart2 : Gift
+              }
+              iconVariant={
+                previewType === 'snapshot' ? "blue" :
+                previewType === 'trend' ? "amber" :
+                previewType === 'comparison' ? "purple" : "rose"
+              }
+              title={
+                previewType === 'snapshot' ? "מצבת כוח אדם" :
+                previewType === 'trend' ? "מגמות וזמינות" :
+                previewType === 'comparison' ? "השוואת תת-יחידות" : "ריכוז ימי הולדת"
+              }
+              subtitle={filters.unitName}
+              toolbar={
                 <ReportToolbar
                   viewMode={localViewMode}
                   onViewModeChange={setLocalViewMode}
@@ -506,11 +475,11 @@ export const ReportHub: React.FC<ReportHubProps> = ({
                   maxDate={maxDate}
                   hideDatePicker={false}
                 />
-              </div>
-            </>
+              }
+            />
           )}
 
-          <div className="px-4 sm:px-6 py-4 overflow-y-auto custom-scrollbar flex-1 min-h-0 relative">
+          <AppModalBody className="p-4 sm:p-6 space-y-4 relative">
             {(isOldDate && !hasArchiveAccess) ? (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md rounded-b-[1.5rem] sm:rounded-b-[2rem]">
                 <div className="bg-card border border-border/50 rounded-[2rem] p-8 max-w-md text-center space-y-4 m-4">
@@ -669,8 +638,8 @@ export const ReportHub: React.FC<ReportHubProps> = ({
                 </div>
               </div>
             )}
-          </div>
-        </DialogContent>
+          </AppModalBody>
+        </AppModalContent>
       </Dialog>
       {/* Hidden high-res capture divs — only mount when dialog is open and rendering is stable to prevent recharts measuring zero-sized containers */}
       {isOpen && renderCharts && (
