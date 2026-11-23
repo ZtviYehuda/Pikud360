@@ -248,6 +248,7 @@ export const ChatSidebar: React.FC = () => {
       });
       setNewMessage("");
       fetchConversation();
+      refreshAlerts();
     } catch (err) {
       console.error("Failed to send message:", err);
     } finally {
@@ -307,7 +308,8 @@ export const ChatSidebar: React.FC = () => {
     const hasAdmin = list.some((c: any) => c.is_admin);
     if (!hasAdmin && !user?.is_admin) {
       list.unshift({
-        id: 1,
+        id: "691b0694-1c0f-49de-9213-1f4ed4ea2936",
+        user_id: "691b0694-1c0f-49de-9213-1f4ed4ea2936",
         employee_number: "admin",
         first_name: "צוות",
         last_name: "תמיכה",

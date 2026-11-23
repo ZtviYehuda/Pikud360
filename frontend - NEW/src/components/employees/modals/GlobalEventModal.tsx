@@ -24,6 +24,8 @@ import {
   AlertCircle,
   CheckCircle2,
   RotateCcw,
+  ChevronDown,
+  ChevronLeft,
 } from "lucide-react";
 import { useAuthContext } from "@/context/AuthContext";
 import { useEmployees } from "@/hooks/useEmployees";
@@ -164,9 +166,12 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
         scope: "team" as const,
         targetId: selectedTeamId,
         name: selectedTeam.name,
-        parent: `${selectedDept?.name || ""} > ${selectedSection?.name || ""}`,
+        deptName: selectedDept?.name ? formatUnitName("department", selectedDept.name) : "",
+        sectionName: selectedSection?.name ? formatUnitName("section", selectedSection.name) : "",
+        teamName: formatUnitName("team", selectedTeam.name),
         label: formatUnitName("team", selectedTeam.name),
         toLabel: formatUnitToName("team", selectedTeam.name),
+        scopeLabel: "רמת חוליה",
       };
     }
     if (selectedSectionId && selectedSection) {
@@ -174,9 +179,12 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
         scope: "section" as const,
         targetId: selectedSectionId,
         name: selectedSection.name,
-        parent: selectedDept?.name || "",
+        deptName: selectedDept?.name ? formatUnitName("department", selectedDept.name) : "",
+        sectionName: formatUnitName("section", selectedSection.name),
+        teamName: "",
         label: formatUnitName("section", selectedSection.name),
         toLabel: formatUnitToName("section", selectedSection.name),
+        scopeLabel: "רמת מדור",
       };
     }
     if (selectedDeptId && selectedDept) {
@@ -184,9 +192,12 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
         scope: "department" as const,
         targetId: selectedDeptId,
         name: selectedDept.name,
-        parent: "כלל המחלקה",
+        deptName: formatUnitName("department", selectedDept.name),
+        sectionName: "",
+        teamName: "",
         label: formatUnitName("department", selectedDept.name),
         toLabel: formatUnitToName("department", selectedDept.name),
+        scopeLabel: "רמת מחלקה",
       };
     }
     return null;
@@ -249,20 +260,20 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg p-0 overflow-hidden bg-background border-border/40 flex flex-col">
+      <DialogContent className="sm:max-w-2xl md:max-w-3xl w-full p-0 overflow-hidden bg-background border-border/40 flex flex-col">
         <DialogDragHandle />
 
         {/* ── Header ── */}
-        <div className="px-6 py-5 border-b border-border/40 bg-muted/20 text-right shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-              <Calendar className="w-5 h-5 text-primary" />
+        <div className="px-6 sm:px-8 py-5 sm:py-6 border-b border-border/40 bg-muted/20 text-right shrink-0">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+              <Calendar className="w-5.5 h-5.5 text-primary" />
             </div>
             <div className="space-y-0.5 text-right">
-              <DialogTitle className="text-base sm:text-lg font-bold text-foreground tracking-tight">
+              <DialogTitle className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
                 הוספת אירוע יחידה
               </DialogTitle>
-              <DialogDescription className="text-xs font-normal text-muted-foreground">
+              <DialogDescription className="text-xs sm:text-sm font-normal text-muted-foreground">
                 קביעת יום מחלקה, מדור או חוליה
               </DialogDescription>
             </div>
@@ -270,71 +281,87 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
         </div>
 
         {/* ── Body ── */}
-        <div className="flex-1 flex flex-col px-5 py-4 sm:px-6 sm:py-5 space-y-4 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 flex flex-col px-6 sm:px-8 py-5 sm:py-6 space-y-5 sm:space-y-6 overflow-y-auto custom-scrollbar">
           {hasCommandPower ? (
             <>
               {/* ── Hierarchical Unit Selector ── */}
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-foreground">
+                  <span className="text-xs font-bold text-foreground">
                     בחר רמת יחידה לאירוע
                   </span>
                   {activeTarget && (
                     <button
                       onClick={handleResetSelection}
-                      className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium transition-colors"
+                      className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 font-medium transition-colors cursor-pointer"
                     >
-                      <RotateCcw className="w-3 h-3" />
+                      <RotateCcw className="w-3.5 h-3.5" />
                       איפוס בחירה
                     </button>
                   )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 w-full min-w-0">
+                <div className="grid grid-cols-3 gap-3 sm:gap-4 w-full min-w-0">
                   {/* Department Card */}
                   <Select
                     value={selectedDeptId || undefined}
                     onValueChange={(val) => {
-                      setSelectedDeptId(val);
+                      if (val === "__ALL__") {
+                        setSelectedDeptId("");
+                      } else {
+                        setSelectedDeptId(val);
+                      }
                       setSelectedSectionId("");
                       setSelectedTeamId("");
                     }}
                   >
                     <SelectPrimitive.Trigger
                       className={cn(
-                        "h-20 w-full min-w-0 px-2 py-2 flex flex-col items-center justify-between rounded-xl border text-center transition-all duration-200 cursor-pointer outline-none",
-                        "hover:shadow-xs",
+                        "group h-24 sm:h-28 w-full min-w-0 p-3 sm:p-4 flex flex-col justify-between rounded-2xl border text-right transition-all duration-200 cursor-pointer outline-none relative overflow-hidden",
                         selectedDeptId
-                          ? "border-primary/80 bg-primary/[0.04] text-foreground shadow-xs ring-1 ring-primary/20"
-                          : "border-border/60 bg-card/60 hover:bg-card hover:border-border text-muted-foreground"
+                          ? "border-primary/80 bg-primary/[0.06] text-foreground shadow-xs ring-1 ring-primary/25"
+                          : "border-border/60 bg-card/60 hover:bg-card hover:border-border text-foreground hover:shadow-xs"
                       )}
                     >
                       <div className="flex items-center justify-between w-full">
                         <div className={cn(
-                          "w-6 h-6 rounded-lg flex items-center justify-center",
-                          selectedDeptId ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                          "w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center transition-colors",
+                          selectedDeptId
+                            ? "bg-primary text-primary-foreground shadow-xs"
+                            : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
                         )}>
-                          <Building2 className="w-3.5 h-3.5" />
+                          <Building2 className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                         </div>
-                        {selectedDeptId && (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                        {selectedDeptId ? (
+                          <span className="flex items-center gap-1 text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            נבחר
+                          </span>
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
                         )}
                       </div>
 
-                      <div className="w-full text-right">
-                        <span className="text-[10px] font-medium text-muted-foreground block">
+                      <div className="w-full text-right mt-1">
+                        <h4 className="text-sm sm:text-base font-bold text-foreground leading-tight">
                           מחלקה
-                        </span>
-                        <p className={cn(
-                          "text-xs font-bold truncate leading-tight",
-                          selectedDeptId ? "text-primary" : "text-foreground"
-                        )}>
-                          {selectedDept ? cleanUnitName(selectedDept.name) : "בחר..."}
-                        </p>
+                        </h4>
+                        {selectedDept ? (
+                          <p className="text-xs sm:text-sm font-black text-primary truncate leading-tight mt-0.5">
+                            {cleanUnitName(selectedDept.name)}
+                          </p>
+                        ) : (
+                          <p className="text-[11px] sm:text-xs font-normal text-muted-foreground/75 leading-tight mt-0.5">
+                            כלל המחלקות
+                          </p>
+                        )}
                       </div>
                     </SelectPrimitive.Trigger>
 
                     <SelectContent position="popper" className="rounded-xl border-border/40 max-h-56 custom-scrollbar z-[100]">
+                      <SelectItem value="__ALL__" className="text-xs text-muted-foreground cursor-pointer font-medium">
+                        כלל המחלקות (ללא סינון)
+                      </SelectItem>
                       {departments.map((d: any) => (
                         <SelectItem key={d.id} value={d.id.toString()} className="font-bold cursor-pointer text-xs">
                           {cleanUnitName(d.name)}
@@ -347,51 +374,67 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
                   <Select
                     value={selectedSectionId || undefined}
                     onValueChange={(val) => {
-                      setSelectedSectionId(val);
-                      setSelectedTeamId("");
-                      const s = allSections.find((x: any) => x.id.toString() === val);
-                      if (s && !selectedDeptId) {
-                        setSelectedDeptId(s.dept_id.toString());
+                      if (val === "__ALL__") {
+                        setSelectedSectionId("");
+                      } else {
+                        setSelectedSectionId(val);
+                        const s = allSections.find((x: any) => x.id.toString() === val);
+                        if (s && !selectedDeptId) {
+                          setSelectedDeptId(s.dept_id.toString());
+                        }
                       }
+                      setSelectedTeamId("");
                     }}
                     disabled={availableSections.length === 0}
                   >
                     <SelectPrimitive.Trigger
                       className={cn(
-                        "h-20 w-full min-w-0 px-2 py-2 flex flex-col items-center justify-between rounded-xl border text-center transition-all duration-200 cursor-pointer outline-none",
-                        "hover:shadow-xs",
+                        "group h-24 sm:h-28 w-full min-w-0 p-3 sm:p-4 flex flex-col justify-between rounded-2xl border text-right transition-all duration-200 cursor-pointer outline-none relative overflow-hidden",
                         selectedSectionId
-                          ? "border-primary/80 bg-primary/[0.04] text-foreground shadow-xs ring-1 ring-primary/20"
-                          : "border-border/60 bg-card/60 hover:bg-card hover:border-border text-muted-foreground",
+                          ? "border-primary/80 bg-primary/[0.06] text-foreground shadow-xs ring-1 ring-primary/25"
+                          : "border-border/60 bg-card/60 hover:bg-card hover:border-border text-foreground hover:shadow-xs",
                         availableSections.length === 0 && "opacity-40 cursor-not-allowed pointer-events-none"
                       )}
                     >
                       <div className="flex items-center justify-between w-full">
                         <div className={cn(
-                          "w-6 h-6 rounded-lg flex items-center justify-center",
-                          selectedSectionId ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                          "w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center transition-colors",
+                          selectedSectionId
+                            ? "bg-primary text-primary-foreground shadow-xs"
+                            : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
                         )}>
-                          <LayoutPanelLeft className="w-3.5 h-3.5" />
+                          <LayoutPanelLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                         </div>
-                        {selectedSectionId && (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                        {selectedSectionId ? (
+                          <span className="flex items-center gap-1 text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            נבחר
+                          </span>
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
                         )}
                       </div>
 
-                      <div className="w-full text-right">
-                        <span className="text-[10px] font-medium text-muted-foreground block">
+                      <div className="w-full text-right mt-1">
+                        <h4 className="text-sm sm:text-base font-bold text-foreground leading-tight">
                           מדור
-                        </span>
-                        <p className={cn(
-                          "text-xs font-bold truncate leading-tight",
-                          selectedSectionId ? "text-primary" : "text-foreground"
-                        )}>
-                          {selectedSection ? cleanUnitName(selectedSection.name) : "בחר..."}
-                        </p>
+                        </h4>
+                        {selectedSection ? (
+                          <p className="text-xs sm:text-sm font-black text-primary truncate leading-tight mt-0.5">
+                            {cleanUnitName(selectedSection.name)}
+                          </p>
+                        ) : (
+                          <p className="text-[11px] sm:text-xs font-normal text-muted-foreground/75 leading-tight mt-0.5">
+                            {availableSections.length === 0 ? "אין מדורים זמינים" : "כלל המדורים"}
+                          </p>
+                        )}
                       </div>
                     </SelectPrimitive.Trigger>
 
                     <SelectContent position="popper" className="rounded-xl border-border/40 max-h-56 custom-scrollbar z-[100]">
+                      <SelectItem value="__ALL__" className="text-xs text-muted-foreground cursor-pointer font-medium">
+                        כלל המדורים (ללא סינון)
+                      </SelectItem>
                       {availableSections.map((s: any) => (
                         <SelectItem key={s.id} value={s.id.toString()} className="font-bold cursor-pointer text-xs">
                           <span>{cleanUnitName(s.name)}</span>
@@ -407,51 +450,67 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
                   <Select
                     value={selectedTeamId || undefined}
                     onValueChange={(val) => {
-                      setSelectedTeamId(val);
-                      const t = allTeams.find((x: any) => x.id.toString() === val);
-                      if (t) {
-                        if (!selectedSectionId) setSelectedSectionId(t.section_id.toString());
-                        if (!selectedDeptId) setSelectedDeptId(t.dept_id.toString());
+                      if (val === "__ALL__") {
+                        setSelectedTeamId("");
+                      } else {
+                        setSelectedTeamId(val);
+                        const t = allTeams.find((x: any) => x.id.toString() === val);
+                        if (t) {
+                          if (!selectedSectionId) setSelectedSectionId(t.section_id.toString());
+                          if (!selectedDeptId) setSelectedDeptId(t.dept_id.toString());
+                        }
                       }
                     }}
                     disabled={availableTeams.length === 0}
                   >
                     <SelectPrimitive.Trigger
                       className={cn(
-                        "h-20 w-full min-w-0 px-2 py-2 flex flex-col items-center justify-between rounded-xl border text-center transition-all duration-200 cursor-pointer outline-none",
-                        "hover:shadow-xs",
+                        "group h-24 sm:h-28 w-full min-w-0 p-3 sm:p-4 flex flex-col justify-between rounded-2xl border text-right transition-all duration-200 cursor-pointer outline-none relative overflow-hidden",
                         selectedTeamId
-                          ? "border-primary/80 bg-primary/[0.04] text-foreground shadow-xs ring-1 ring-primary/20"
-                          : "border-border/60 bg-card/60 hover:bg-card hover:border-border text-muted-foreground",
+                          ? "border-primary/80 bg-primary/[0.06] text-foreground shadow-xs ring-1 ring-primary/25"
+                          : "border-border/60 bg-card/60 hover:bg-card hover:border-border text-foreground hover:shadow-xs",
                         availableTeams.length === 0 && "opacity-40 cursor-not-allowed pointer-events-none"
                       )}
                     >
                       <div className="flex items-center justify-between w-full">
                         <div className={cn(
-                          "w-6 h-6 rounded-lg flex items-center justify-center",
-                          selectedTeamId ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                          "w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center transition-colors",
+                          selectedTeamId
+                            ? "bg-primary text-primary-foreground shadow-xs"
+                            : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
                         )}>
-                          <Users className="w-3.5 h-3.5" />
+                          <Users className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                         </div>
-                        {selectedTeamId && (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                        {selectedTeamId ? (
+                          <span className="flex items-center gap-1 text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            נבחר
+                          </span>
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
                         )}
                       </div>
 
-                      <div className="w-full text-right">
-                        <span className="text-[10px] font-medium text-muted-foreground block">
+                      <div className="w-full text-right mt-1">
+                        <h4 className="text-sm sm:text-base font-bold text-foreground leading-tight">
                           חוליה
-                        </span>
-                        <p className={cn(
-                          "text-xs font-bold truncate leading-tight",
-                          selectedTeamId ? "text-primary" : "text-foreground"
-                        )}>
-                          {selectedTeam ? cleanUnitName(selectedTeam.name) : "בחר..."}
-                        </p>
+                        </h4>
+                        {selectedTeam ? (
+                          <p className="text-xs sm:text-sm font-black text-primary truncate leading-tight mt-0.5">
+                            {cleanUnitName(selectedTeam.name)}
+                          </p>
+                        ) : (
+                          <p className="text-[11px] sm:text-xs font-normal text-muted-foreground/75 leading-tight mt-0.5">
+                            {availableTeams.length === 0 ? "אין חוליות זמינות" : "כלל החוליות"}
+                          </p>
+                        )}
                       </div>
                     </SelectPrimitive.Trigger>
 
                     <SelectContent position="popper" className="rounded-xl border-border/40 max-h-56 custom-scrollbar z-[100]">
+                      <SelectItem value="__ALL__" className="text-xs text-muted-foreground cursor-pointer font-medium">
+                        כלל החוליות (ללא סינון)
+                      </SelectItem>
                       {availableTeams.map((t: any) => (
                         <SelectItem key={t.id} value={t.id.toString()} className="font-bold cursor-pointer text-xs">
                           <span>{cleanUnitName(t.name)}</span>
@@ -464,14 +523,55 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
                   </Select>
                 </div>
 
-                {/* ── Active Target Breadcrumb / Feedback ── */}
-                {activeTarget && (
-                  <div className="p-2.5 rounded-xl bg-primary/5 border border-primary/20 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-primary" />
-                      <span className="font-bold text-primary">{activeTarget.label}</span>
+                {/* ── Active Target Breadcrumb / Feedback (RTL hierarchy) ── */}
+                {activeTarget ? (
+                  <div className="p-3 sm:p-3.5 rounded-xl bg-primary/10 border border-primary/25 flex items-center justify-between gap-3 text-xs sm:text-sm" dir="rtl">
+                    <div className="flex items-center gap-2 flex-wrap min-w-0">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+                      <span className="text-muted-foreground font-medium shrink-0">יעד:</span>
+
+                      {/* Department level (Root) */}
+                      {activeTarget.deptName && (
+                        <span className={cn(
+                          "truncate",
+                          activeTarget.scope === "department" ? "font-bold text-primary" : "text-muted-foreground"
+                        )}>
+                          {activeTarget.deptName}
+                        </span>
+                      )}
+
+                      {/* Section level */}
+                      {activeTarget.sectionName && (
+                        <>
+                          <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
+                          <span className={cn(
+                            "truncate",
+                            activeTarget.scope === "section" ? "font-bold text-primary" : "text-muted-foreground"
+                          )}>
+                            {activeTarget.sectionName}
+                          </span>
+                        </>
+                      )}
+
+                      {/* Team level */}
+                      {activeTarget.teamName && (
+                        <>
+                          <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
+                          <span className="font-bold text-primary truncate">
+                            {activeTarget.teamName}
+                          </span>
+                        </>
+                      )}
                     </div>
-                    <span className="text-muted-foreground text-[11px]">{activeTarget.parent}</span>
+
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-primary/15 text-primary shrink-0">
+                      {activeTarget.scopeLabel}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="p-2.5 sm:p-3 rounded-xl bg-muted/40 border border-border/40 flex items-center justify-between text-xs text-muted-foreground" dir="rtl">
+                    <span>בחר יחידה מהכרטיסים למעלה כדי להחיל את האירוע</span>
+                    <span className="text-[11px] font-medium text-muted-foreground/70">מחלקה / מדור / חוליה</span>
                   </div>
                 )}
               </div>
@@ -486,9 +586,9 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
           )}
 
           {/* Date Selection */}
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-1.5">
-              <Label className="text-[11px] font-bold text-muted-foreground">תאריך התחלה</Label>
+              <Label className="text-xs font-bold text-muted-foreground">תאריך התחלה</Label>
               <Input
                 type="date"
                 value={startDate}
@@ -499,11 +599,11 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
                     setEndDate(newStart);
                   }
                 }}
-                className="bg-background border-border/60 h-10 rounded-xl font-bold px-3 text-xs w-full block text-center shadow-xs"
+                className="bg-background border-border/60 h-11 rounded-xl font-bold px-3 text-xs sm:text-sm w-full block text-center shadow-xs"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[11px] font-bold text-muted-foreground">תאריך סיום</Label>
+              <Label className="text-xs font-bold text-muted-foreground">תאריך סיום</Label>
               <Input
                 type="date"
                 value={endDate}
@@ -516,16 +616,16 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
                     setEndDate(newEnd);
                   }
                 }}
-                className="bg-background border-border/60 h-10 rounded-xl font-bold px-3 text-xs w-full block text-center shadow-xs"
+                className="bg-background border-border/60 h-11 rounded-xl font-bold px-3 text-xs sm:text-sm w-full block text-center shadow-xs"
               />
             </div>
           </div>
 
           {/* Note */}
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-1.5">
+            <Label className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
               תוכן האירוע
-              <span className="text-[10px] text-muted-foreground/60 font-normal">
+              <span className="text-xs text-muted-foreground/60 font-normal">
                 (יופיע ביומן)
               </span>
             </Label>
@@ -533,15 +633,15 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
               placeholder="יום מחלקה, גיבוש, תרגיל..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="resize-none min-h-[75px] bg-background border-border/60 rounded-xl p-3 text-sm leading-relaxed shadow-xs"
+              className="resize-none min-h-[90px] bg-background border-border/60 rounded-xl p-3.5 text-sm leading-relaxed shadow-xs"
             />
           </div>
         </div>
 
         {/* ── Footer ── */}
-        <div className="px-6 py-4 border-t border-border/40 bg-muted/20 shrink-0 space-y-2">
+        <div className="px-6 sm:px-8 py-4 sm:py-5 border-t border-border/40 bg-muted/20 shrink-0 space-y-2.5">
           <Button
-            className="w-full rounded-xl h-10 font-bold text-xs transition-all active:scale-[0.98] shadow-xs bg-primary text-primary-foreground hover:bg-primary/90"
+            className="w-full rounded-xl h-11 sm:h-12 font-bold text-xs sm:text-sm transition-all active:scale-[0.98] shadow-xs bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={handleSubmit}
             disabled={isUpdatingScope || !hasCommandPower || !activeTarget}
           >
@@ -557,7 +657,7 @@ export const GlobalEventModal: React.FC<GlobalEventModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="w-full text-xs font-medium text-muted-foreground hover:text-foreground transition-colors py-1 text-center"
+            className="w-full text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-1 text-center"
           >
             ביטול
           </button>

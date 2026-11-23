@@ -560,12 +560,15 @@ export default function SettingsPage() {
       const response = await apiClient.post(
         "/auth/reset-impersonated-password",
       );
-      if (response.status === 200) {
-        toast.success("הסיסמא אופסה בהצלחה (123456)");
+      if (response.data?.success || response.status === 200) {
+        toast.success(response.data?.message || "הסיסמה אופסה בהצלחה (123456)");
+      } else {
+        toast.error(response.data?.message || "שגיאה באיפוס הסיסמה");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("שגיאה באיפוס הסיסמה");
+      const errMsg = error.response?.data?.message || error.response?.data?.error || "שגיאה באיפוס הסיסמה";
+      toast.error(errMsg);
     } finally {
       setIsResetting(false);
     }

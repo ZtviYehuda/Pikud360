@@ -1,25 +1,24 @@
-# ── Stage 1: Build React app ───────────────────────────────────────────────────
+# ====================================================================
+# Standalone Dockerfile for Matzevet Frontend (Direct Folder Build)
+# ====================================================================
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies first (cached layer if package.json unchanged)
-COPY package.json package-lock.json* ./
-RUN npm ci --legacy-peer-deps
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 
-# Copy source code and build
-COPY . .
+COPY package*.json ./
+RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+
+COPY . ./
 RUN npm run build
 
-# ── Stage 2: Serve with Nginx ─────────────────────────────────────────────────
-FROM nginx:alpine AS production
+FROM nginx:alpine-slim
 
-# Copy built React files
 COPY --from=builder /app/dist /usr/share/nginx/html
+COPY ../docker/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
+EXPOSE 8080
 
 CMD ["nginx", "-g", "daemon off;"]

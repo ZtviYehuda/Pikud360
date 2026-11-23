@@ -621,11 +621,13 @@ def get_employees_chat_contacts():
             has_admin = any(c.get("is_admin") for c in contacts)
             if not has_admin:
                 support_contact = {
-                    "id": 1,
+                    "id": "691b0694-1c0f-49de-9213-1f4ed4ea2936",
+                    "user_id": "691b0694-1c0f-49de-9213-1f4ed4ea2936",
                     "employee_number": "admin",
                     "first_name": "צוות",
                     "last_name": "תמיכה",
                     "is_admin": True,
+                    "is_commander": True,
                     "rank": "מנהל מערכת ראשי",
                     "department_name": "מטה הפיקוד",
                     "section_name": "ניהול מערכת",
@@ -750,6 +752,8 @@ def get_notifications_alerts():
 
                 # 1. Fetch unread support & archive restore tickets
                 if is_admin:
+                    from app.modules.notifications.routes import _get_aliases
+                    admin_aliases = tuple(set(a.lower() for a in _get_aliases(user_id)))
                     cur.execute("""
                         SELECT 
                             f.id, f.category, f.title, f.description, f.priority,
@@ -761,14 +765,16 @@ def get_notifications_alerts():
                         LEFT JOIN security.users u ON u.id = f.user_id
                         LEFT JOIN workforce.employees e ON e.user_id = u.id OR e.employee_number::text = u.username
                         LEFT JOIN core.organization_units ou ON ou.id = e.org_unit_id
-                        LEFT JOIN support.alert_reads r ON r.alert_id = ('restore-' || f.id::text) AND r.user_id = %s
-                        LEFT JOIN support.alert_reads r2 ON r2.alert_id = ('ticket-' || f.id::text) AND r2.user_id = %s
+                        LEFT JOIN support.alert_reads r ON (
+                            r.alert_id = ('restore-' || f.id::text) 
+                            OR r.alert_id = ('ticket-' || f.id::text)
+                            OR r.alert_id = ('hist-' || f.id::text)
+                            OR r.alert_id = f.id::text
+                        ) AND LOWER(r.user_id) IN %s
                         WHERE f.deleted_at IS NULL
-                          AND f.status IN ('received', 'open', 'pending')
                           AND r.read_at IS NULL
-                          AND r2.read_at IS NULL
                         ORDER BY f.created_at DESC;
-                    """, (str(user_id), str(user_id)))
+                    """, (admin_aliases,))
                     rows = cur.fetchall()
 
                     for r in rows:
@@ -807,28 +813,59 @@ def get_notifications_alerts():
                                 }
                             })
                 else:
+                    from app.modules.notifications.routes import _get_aliases
+                    ticket_user_aliases = set(_get_aliases(user_id))
+                    if is_admin or claims.get("is_impersonated"):
+                        ticket_user_aliases.update(_get_aliases(claims.get("impersonated_by", "admin")))
+                        ticket_user_aliases.update(["admin", "1", "691b0694-1c0f-49de-9213-1f4ed4ea2936"])
+                    ticket_user_aliases_tuple = tuple(ticket_user_aliases)
+
                     cur.execute("""
                         SELECT 
                             f.id, f.category, f.title, f.description, f.status, f.resolution_comment, f.updated_at
                         FROM support.feedback_reports f
-                        LEFT JOIN support.alert_reads r ON r.alert_id = ('ticket-reply-' || f.id::text) AND r.user_id = %s
+                        LEFT JOIN support.alert_reads r ON (
+                            r.alert_id = ('ticket-reply-' || f.id::text)
+                            OR r.alert_id = ('hist-' || f.id::text)
+                            OR r.alert_id = f.id::text
+                        ) AND LOWER(r.user_id) IN %s
                         WHERE f.deleted_at IS NULL
-                          AND (f.user_id::text = %s OR f.created_by::text = %s)
-                          AND f.status IN ('in_progress', 'resolved', 'closed')
+                          AND (f.user_id::text IN %s OR f.created_by::text IN %s)
+                          AND f.status IN ('in_progress', 'resolved', 'closed', 'done', 'approved', 'rejected')
                           AND f.updated_at > f.created_at
                           AND r.read_at IS NULL
                         ORDER BY f.updated_at DESC LIMIT 10;
-                    """, (str(user_id), str(user_id), str(user_id)))
+                    """, (ticket_user_aliases_tuple, ticket_user_aliases_tuple, ticket_user_aliases_tuple))
                     for r in cur.fetchall():
                         fid, category, title, desc, status, comment, updated_at = r
                         upd_iso = updated_at.isoformat() if hasattr(updated_at, "isoformat") else str(updated_at)
-                        status_he = "אושרה/טופלה" if status == "resolved" else "בטיפול" if status == "in_progress" else status
+                        if status == "approved":
+                            status_he = "אושרה"
+                            alert_type = "success"
+                            alert_title = f"בקשתך אושרה: {title}"
+                            alert_desc = f"אישור צוות הניהול: {comment}" if comment else "בקשתך אושרה לצפייה"
+                        elif status == "rejected":
+                            status_he = "נדחתה"
+                            alert_type = "danger"
+                            alert_title = f"בקשתך נדחתה: {title}"
+                            alert_desc = f"נימוק הדחייה: {comment}" if comment else "בקשתך נדחתה ע״י צוות הניהול"
+                        elif status in ("resolved", "done", "closed"):
+                            status_he = "טופלה"
+                            alert_type = "success"
+                            alert_title = f"בקשתך טופלה: {title}"
+                            alert_desc = f"תשובת התמיכה: {comment}" if comment else "הפנייה סומנה כטופלה"
+                        else:
+                            status_he = "בטיפול"
+                            alert_type = "info"
+                            alert_title = f"בקשתך בטיפול: {title}"
+                            alert_desc = f"עדכון: {comment}" if comment else "פנייתך נמצאת בטיפול"
+
                         alerts.append({
                             "id": f"ticket-reply-{fid}",
-                            "type": "info",
-                            "title": f"עדכון בקשה: {title} ({status_he})",
-                            "description": f"תגובת התמיכה: {comment}" if comment else f"סטטוס עודכן ל-{status_he}",
-                            "link": "/feedback?tab=my-tickets",
+                            "type": alert_type,
+                            "title": alert_title,
+                            "description": alert_desc,
+                            "link": f"/feedback?tab=my-tickets&ticket_id={fid}",
                             "created_at": upd_iso,
                             "data": {"ticket_id": str(fid), "status": status}
                         })
@@ -856,22 +893,23 @@ def get_notifications_alerts():
                     mid, s_id, s_first, s_last, m_title, m_desc, m_created, emp_id, emp_user_id, emp_num = m
                     m_created_iso = m_created.isoformat() if hasattr(m_created, "isoformat") else str(m_created)
                     is_sender_support = str(s_id).lower() in ["admin", "1", "admin-support", "691b0694-1c0f-49de-9213-1f4ed4ea2936"]
+                    effective_sender = "691b0694-1c0f-49de-9213-1f4ed4ea2936" if is_sender_support else (str(emp_id) if emp_id else str(s_id))
                     alerts.append({
                         "id": f"msg-{mid}",
                         "type": "info",
-                        "title": m_title or f"הודעה מאת {s_first} {s_last}".strip(),
+                        "title": m_title or ("הודעה מצוות התמיכה" if is_sender_support else f"הודעה מאת {s_first} {s_last}".strip()),
                         "description": m_desc or "",
-                        "link": "/feedback?tab=messages",
+                        "link": f"/feedback?tab=messages&contact_id={effective_sender}",
                         "created_at": m_created_iso,
                         "data": {
                             "message_id": mid,
-                            "sender_id": str(emp_id) if emp_id else ("1" if is_sender_support else str(s_id)),
-                            "sender_user_id": str(emp_user_id or ""),
-                            "sender_emp_num": str(emp_num or ""),
+                            "sender_id": effective_sender,
+                            "sender_user_id": str(emp_user_id or effective_sender),
+                            "sender_emp_num": str(emp_num or ("admin" if is_sender_support else "")),
                             "raw_sender_id": str(s_id),
                             "is_support": is_sender_support,
-                            "sender_first": s_first or "",
-                            "sender_last": s_last or ""
+                            "sender_first": "צוות" if is_sender_support else (s_first or ""),
+                            "sender_last": "תמיכה" if is_sender_support else (s_last or "")
                         }
                     })
 
@@ -887,36 +925,77 @@ def get_notifications_alerts_history():
     user_id = get_jwt_identity() or "admin"
     history = []
     try:
+        from app.modules.notifications.routes import _get_aliases
+        user_aliases = tuple(set(a.lower() for a in _get_aliases(user_id)))
         with get_db_connection() as conn:
             with conn.cursor() as cur:
+                # 1. Ticket and Restore alerts in history
                 cur.execute("""
                     SELECT 
                         f.id, f.category, f.title, f.description, f.status, f.created_at, f.updated_at,
                         COALESCE(e.first_name, u.username, 'משתמש') AS sender_first,
-                        COALESCE(e.last_name, '') AS sender_last
+                        COALESCE(e.last_name, '') AS sender_last,
+                        r.alert_id, r.read_at
                     FROM support.feedback_reports f
                     LEFT JOIN security.users u ON u.id = f.user_id
                     LEFT JOIN workforce.employees e ON e.user_id = u.id OR e.employee_number::text = u.username
-                    LEFT JOIN support.alert_reads r ON (r.alert_id = ('restore-' || f.id::text) OR r.alert_id = ('ticket-' || f.id::text)) AND r.user_id = %s
+                    JOIN support.alert_reads r ON (
+                        r.alert_id = ('restore-' || f.id::text) 
+                        OR r.alert_id = ('ticket-' || f.id::text)
+                        OR r.alert_id = ('ticket-reply-' || f.id::text)
+                        OR r.alert_id = ('hist-' || f.id::text)
+                        OR r.alert_id = f.id::text
+                    ) AND LOWER(r.user_id) IN %s
                     WHERE f.deleted_at IS NULL
-                      AND (f.status IN ('resolved', 'closed', 'rejected') OR r.read_at IS NOT NULL)
-                    ORDER BY COALESCE(f.updated_at, f.created_at) DESC LIMIT 40;
-                """, (str(user_id),))
+                      AND r.read_at IS NOT NULL
+                    ORDER BY r.read_at DESC LIMIT 40;
+                """, (user_aliases,))
                 for r in cur.fetchall():
-                    fid, category, title, desc, status, created_at, updated_at, first, last = r
+                    fid, category, title, desc, status, created_at, updated_at, first, last, stored_alert_id, read_at = r
                     sender_name = f"{first} {last}".strip()
-                    date_val = updated_at or created_at
-                    date_iso = date_val.isoformat() if hasattr(date_val, "isoformat") else str(date_val)
+                    read_iso = read_at.isoformat() if hasattr(read_at, "isoformat") else str(read_at)
+                    created_iso = created_at.isoformat() if hasattr(created_at, "isoformat") else str(created_at)
                     is_archive = (category == "archive_restore")
+                    real_alert_id = stored_alert_id if (stored_alert_id and not stored_alert_id.startswith("hist-")) else (
+                        f"restore-{fid}" if is_archive else f"ticket-{fid}"
+                    )
                     history.append({
-                        "id": f"hist-{fid}",
+                        "id": real_alert_id,
                         "type": "info",
                         "title": f"בקשת שחזור מהארכיון - {sender_name}" if is_archive else (title or "פניית תמיכה"),
                         "description": desc or title or "",
                         "link": "/feedback?tab=admin-view",
-                        "created_at": date_iso,
+                        "created_at": created_iso,
+                        "read_at": read_iso,
                         "data": {"ticket_id": str(fid), "status": status}
                     })
+
+                # 2. Chat messages in history
+                cur.execute("""
+                    SELECT 
+                        m.id, m.sender_id, m.sender_first, m.sender_last, m.title, m.description, m.created_at, r.read_at
+                    FROM core.chat_messages m
+                    JOIN support.alert_reads r ON r.alert_id = ('msg-' || m.id::text) AND LOWER(r.user_id) IN %s
+                    WHERE r.read_at IS NOT NULL
+                    ORDER BY r.read_at DESC LIMIT 20;
+                """, (user_aliases,))
+                for rm in cur.fetchall():
+                    mid, s_id, s_first, s_last, m_title, m_desc, m_created, m_read_at = rm
+                    read_iso = m_read_at.isoformat() if hasattr(m_read_at, "isoformat") else str(m_read_at)
+                    m_created_iso = m_created.isoformat() if hasattr(m_created, "isoformat") else str(m_created)
+                    history.append({
+                        "id": f"msg-{mid}",
+                        "type": "info",
+                        "title": m_title or f"הודעה מאת {s_first} {s_last}".strip(),
+                        "description": m_desc or "",
+                        "link": "/feedback?tab=messages",
+                        "created_at": m_created_iso,
+                        "read_at": read_iso,
+                        "data": {"message_id": mid}
+                    })
+
+                history.sort(key=lambda x: x.get("read_at") or "", reverse=True)
+
     except Exception as e:
         logger.error(f"Error fetching notification history: {e}", exc_info=True)
 
@@ -928,16 +1007,17 @@ def get_notifications_alerts_history():
 def mark_notification_alert_read(alert_id):
     user_id = get_jwt_identity() or "admin"
     try:
+        aid_str = str(alert_id).strip()
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
                     INSERT INTO support.alert_reads (user_id, alert_id, read_at)
                     VALUES (%s, %s, NOW())
                     ON CONFLICT (user_id, alert_id) DO UPDATE SET read_at = NOW();
-                """, (str(user_id), str(alert_id)))
+                """, (str(user_id), aid_str))
 
-                if str(alert_id).startswith("msg-"):
-                    mid = str(alert_id).replace("msg-", "")
+                if aid_str.startswith("msg-"):
+                    mid = aid_str.replace("msg-", "")
                     cur.execute("UPDATE core.chat_messages SET read_at = NOW() WHERE id::text = %s;", (mid,))
                 conn.commit()
         return jsonify({"success": True}), 200
@@ -951,16 +1031,45 @@ def mark_notification_alert_read(alert_id):
 def unmark_notification_alert_read(alert_id):
     user_id = get_jwt_identity() or "admin"
     try:
+        from app.modules.notifications.routes import _get_aliases
+        user_aliases = tuple(set(a.lower() for a in _get_aliases(user_id)))
+        
+        aid_str = str(alert_id).strip()
+        clean_id = aid_str
+        for prefix in ["hist-", "restore-", "ticket-reply-", "ticket-", "msg-"]:
+            if clean_id.startswith(prefix):
+                clean_id = clean_id[len(prefix):]
+                break
+
+        possible_alert_ids = (
+            aid_str,
+            clean_id,
+            f"restore-{clean_id}",
+            f"ticket-{clean_id}",
+            f"ticket-reply-{clean_id}",
+            f"msg-{clean_id}",
+            f"hist-{clean_id}"
+        )
+
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
                     DELETE FROM support.alert_reads
-                    WHERE user_id = %s AND alert_id = %s;
-                """, (str(user_id), str(alert_id)))
+                    WHERE LOWER(user_id) IN %s
+                      AND alert_id IN %s;
+                """, (user_aliases, possible_alert_ids))
+
+                if aid_str.startswith("msg-") or clean_id.isdigit():
+                    cur.execute("""
+                        UPDATE core.chat_messages
+                        SET read_at = NULL
+                        WHERE id::text = %s OR id::text = %s;
+                    """, (aid_str, clean_id))
+
                 conn.commit()
         return jsonify({"success": True}), 200
     except Exception as e:
-        logger.error(f"Error unmarking alert read: {e}")
+        logger.error(f"Error unmarking alert read: {e}", exc_info=True)
         return jsonify({"success": True}), 200
 
 

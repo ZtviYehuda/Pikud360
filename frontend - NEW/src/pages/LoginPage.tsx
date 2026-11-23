@@ -16,6 +16,9 @@ import {
   ShieldAlert,
   Sun,
   Moon,
+  ShieldCheck,
+  Users,
+  ChevronLeft,
 } from "lucide-react";
 import { useAuthContext } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -207,12 +210,151 @@ const HexagonPatrolGrid = ({ theme, accentColor }: { theme: string; accentColor:
   );
 };
 
+// ─── Admin Role Choice Overlay ──────────────────────────────────────────────
+function AdminChoiceOverlay({
+  isDark,
+  onChoose,
+}: {
+  isDark: boolean;
+  onChoose: (dest: "/support-workspace" | "/") => void;
+}) {
+  return (
+    <motion.div
+      key="admin-choice"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.35 }}
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+    >
+      {/* Backdrop */}
+      <div
+        className={cn(
+          "absolute inset-0 backdrop-blur-xl",
+          isDark ? "bg-slate-950/90" : "bg-white/85",
+        )}
+      />
+
+      <motion.div
+        initial={{ scale: 0.92, y: 24, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        transition={{ delay: 0.1, duration: 0.45, ease: "easeOut" }}
+        className="relative z-10 w-full max-w-md"
+        dir="rtl"
+      >
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className={cn(
+            "w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center",
+            isDark ? "bg-slate-800 border border-slate-700" : "bg-slate-100 border border-slate-200",
+          )}>
+            <ShieldCheck className="w-7 h-7 text-[var(--primary)]" />
+          </div>
+          <h2 className={cn(
+            "text-xl font-black tracking-tight",
+            isDark ? "text-white" : "text-slate-900",
+          )}>
+            ברוך הבא, צוות התמיכה
+          </h2>
+          <p className={cn(
+            "text-sm mt-1 font-medium",
+            isDark ? "text-slate-400" : "text-slate-500",
+          )}>
+            כיצד תרצה להיכנס?
+          </p>
+        </div>
+
+        {/* Choice Cards */}
+        <div className="space-y-3">
+          {/* Support Workspace */}
+          <button
+            onClick={() => onChoose("/support-workspace")}
+            className={cn(
+              "w-full text-right rounded-2xl p-5 border transition-all duration-200 group flex items-center gap-4",
+              isDark
+                ? "bg-slate-800/80 border-slate-700 hover:border-[var(--primary)] hover:bg-slate-800"
+                : "bg-white border-slate-200 hover:border-[var(--primary)] hover:bg-slate-50",
+            )}
+          >
+            <div className={cn(
+              "w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors",
+              isDark
+                ? "bg-[var(--primary)]/10 group-hover:bg-[var(--primary)]/20"
+                : "bg-[var(--primary)]/8 group-hover:bg-[var(--primary)]/15",
+            )}>
+              <ShieldCheck className="w-6 h-6 text-[var(--primary)]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={cn(
+                "font-black text-base leading-snug",
+                isDark ? "text-white" : "text-slate-900",
+              )}>
+                כניסה כצוות תמיכה
+              </p>
+              <p className={cn(
+                "text-xs mt-0.5 font-medium",
+                isDark ? "text-slate-400" : "text-slate-500",
+              )}>
+                ממשק ניהול מערכת ותמיכה מלאה
+              </p>
+            </div>
+            <ChevronLeft className={cn(
+              "w-5 h-5 shrink-0 transition-all group-hover:-translate-x-0.5",
+              isDark ? "text-slate-500" : "text-slate-400",
+            )} />
+          </button>
+
+          {/* Commander Simulation */}
+          <button
+            onClick={() => onChoose("/")}
+            className={cn(
+              "w-full text-right rounded-2xl p-5 border transition-all duration-200 group flex items-center gap-4",
+              isDark
+                ? "bg-slate-800/80 border-slate-700 hover:border-amber-500/60 hover:bg-slate-800"
+                : "bg-white border-slate-200 hover:border-amber-500/60 hover:bg-amber-50/30",
+            )}
+          >
+            <div className={cn(
+              "w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors",
+              isDark
+                ? "bg-amber-500/10 group-hover:bg-amber-500/20"
+                : "bg-amber-50 group-hover:bg-amber-100/80",
+            )}>
+              <Users className="w-6 h-6 text-amber-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={cn(
+                "font-black text-base leading-snug",
+                isDark ? "text-white" : "text-slate-900",
+              )}>
+                כניסה כמפקד
+              </p>
+              <p className={cn(
+                "text-xs mt-0.5 font-medium",
+                isDark ? "text-slate-400" : "text-slate-500",
+              )}>
+                סימולציה — צפייה במערכת כמפקד
+              </p>
+            </div>
+            <ChevronLeft className={cn(
+              "w-5 h-5 shrink-0 transition-all group-hover:-translate-x-0.5",
+              isDark ? "text-slate-500" : "text-slate-400",
+            )} />
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ─── Main Login Page ─────────────────────────────────────────────────────────
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showAdminChoice, setShowAdminChoice] = useState(false);
 
   const translateErrorText = (errorText: string): string => {
     if (!errorText) return "";
@@ -382,16 +524,19 @@ export default function LoginPage() {
         if (response.data?.success) {
           const { token, user: loggedUser } = response.data;
 
-          // Use the login function from AuthContext to set state
-          // We might need to handle the state manually if context login expects username/pass
-          // Actually, our verify endpoint returns the token and user, same as login.
-          // Let's assume context.login can accept partials or we update localstorage.
           localStorage.setItem("token", token);
           localStorage.setItem("user", JSON.stringify(loggedUser));
           localStorage.setItem("biometric_last_user", targetUsername);
 
           await refreshUser(); // Essential to update context state
-          navigate("/", { replace: true });
+
+          // Admin gets a role-selection screen; all others go straight in
+          if (loggedUser?.is_admin || targetUsername === "admin") {
+            setIsLoading(false);
+            setShowAdminChoice(true);
+          } else {
+            navigate("/", { replace: true });
+          }
           return;
         }
       } catch (e: any) {
@@ -489,7 +634,16 @@ export default function LoginPage() {
 
       await refreshUser();
       setShowPinModal(false);
-      navigate("/", { replace: true });
+
+      // For admin PIN login, show role-selection instead of direct navigation
+      const storedUser = localStorage.getItem("user");
+      const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+      if (parsedUser?.is_admin || pinUsername === "admin") {
+        setIsLoading(false);
+        setShowAdminChoice(true);
+      } else {
+        navigate("/", { replace: true });
+      }
       return true;
     } catch (err: any) {
       console.error("PIN verification error:", err);
@@ -581,7 +735,13 @@ export default function LoginPage() {
 
         // Save credentials for biometric login next time
         await saveCredentials(trimmedUser, trimmedPass);
-        navigate("/", { replace: true });
+
+        // Admin gets a role-selection overlay; others navigate directly
+        if (trimmedUser === "admin") {
+          setShowAdminChoice(true);
+        } else {
+          navigate("/", { replace: true });
+        }
       } else {
         setError("שם משתמש או סיסמה שגויים.");
         setPassword("");
@@ -602,6 +762,14 @@ export default function LoginPage() {
     setError("");
   };
 
+  // Navigate from admin choice overlay
+  const handleAdminChoice = (dest: "/support-workspace" | "/") => {
+    // Persist the mode so router RBAC doesn't override the choice
+    sessionStorage.setItem("admin_mode", dest === "/support-workspace" ? "support" : "commander");
+    setShowAdminChoice(false);
+    navigate(dest, { replace: true });
+  };
+
   // Dynamic class helpers for Theme
   const isDark = theme === "dark";
 
@@ -613,6 +781,12 @@ export default function LoginPage() {
       )}
       dir="rtl"
     >
+      {/* Admin Role Choice Overlay */}
+      <AnimatePresence>
+        {showAdminChoice && (
+          <AdminChoiceOverlay isDark={isDark} onChoose={handleAdminChoice} />
+        )}
+      </AnimatePresence>
       <HexagonPatrolGrid theme={theme} accentColor={accentColor} />
 
       {/* Cybernetic Theme Toggle Panel */}

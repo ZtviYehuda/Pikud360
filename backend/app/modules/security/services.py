@@ -285,6 +285,13 @@ class SecurityService:
                     "UPDATE security.users SET password_hash = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s;",
                     (new_hash, user.id)
                 )
+                # Clear must_change_password flag
+                cur.execute("""
+                    INSERT INTO security.user_preferences (user_id, display_preferences)
+                    VALUES (%s, '{"must_change_password": false}'::jsonb)
+                    ON CONFLICT (user_id) DO UPDATE
+                    SET display_preferences = COALESCE(security.user_preferences.display_preferences, '{}'::jsonb) || '{"must_change_password": false}'::jsonb;
+                """, (str(user.id),))
                 # Revoke all existing sessions for user
                 cur.execute(
                     "UPDATE security.user_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE user_id = %s AND revoked_at IS NULL;",

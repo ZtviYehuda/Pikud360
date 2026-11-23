@@ -1,4 +1,3 @@
-import { useFeedback } from "@/context/FeedbackContext";
 import React, { useState, useEffect, useRef } from "react";
 import apiClient from "@/config/api.client";
 import {
@@ -14,7 +13,6 @@ import {
   HelpCircle,
   MessageSquare,
   Users,
-  Bug,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -1321,30 +1319,6 @@ export function GlobalAiSupport() {
                   transition={{ type: "spring", stiffness: 400, damping: 28 }}
                   className="absolute bottom-16 left-0 w-56 flex flex-col gap-2 pointer-events-auto z-[250]"
                 >
-                  {/* Bug Report */}
-                  <motion.button
-                    initial={{ opacity: 0, x: -12 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0 }}
-                    onClick={() => {
-                      setShowQuickMenu(false);
-                      openFeedback("תפריט עזרה וסיוע");
-                    }}
-                    className="flex items-center gap-3 w-full px-3.5 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-750 shadow-2xl hover:bg-slate-900 dark:hover:bg-slate-800 hover:border-red-500/60 transition-all group text-right active:scale-[0.98]"
-                  >
-                    <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-500 group-hover:bg-red-500 group-hover:text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-all">
-                      <Bug className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-black text-slate-800 dark:text-slate-100 group-hover:text-white transition-colors">
-                        דיווח על באג
-                      </p>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-slate-300 font-medium transition-colors">
-                        שלח פנייה לצוות
-                      </p>
-                    </div>
-                  </motion.button>
-
                   {/* Commander Chat */}
                   <motion.button
                     initial={{ opacity: 0, x: -12 }}

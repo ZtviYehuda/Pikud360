@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import apiClient from "@/config/api.client";
 import { useAuthContext } from "@/context/AuthContext";
 
@@ -18,18 +18,30 @@ export function useNotifications() {
   const [history, setHistory] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const isInitialLoadRef = useRef(true);
 
-  const fetchAlerts = async () => {
+  const fetchAlerts = async (silent: boolean = false) => {
     if (!user) return;
-    setLoading(true);
+    if (!silent && isInitialLoadRef.current && alerts.length === 0) {
+      setLoading(true);
+    }
     try {
       const { data } = await apiClient.get<Alert[]>("/notifications/alerts");
       // The API now returns only unread alerts
-      setAlerts(data);
+      // Only update state if alerts actually changed to prevent jumping/flickering re-renders
+      setAlerts((prev) => {
+        if (prev.length === data.length && prev.every((p, i) => p.id === data[i]?.id && p.read_at === data[i]?.read_at)) {
+          return prev;
+        }
+        return data;
+      });
     } catch (err) {
       console.error("Failed to fetch alerts:", err);
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+        isInitialLoadRef.current = false;
+      }
     }
   };
 
@@ -75,8 +87,8 @@ export function useNotifications() {
       // Remove from history immediately
       setHistory((prev) => prev.filter((a) => a.id !== notificationId));
 
-      // Fetch active alerts to show it back in the list
-      fetchAlerts();
+      // Fetch active alerts and history immediately to reflect changes in both lists and badges
+      await Promise.all([fetchAlerts(false), fetchHistory()]);
     } catch (err) {
       console.error("Failed to mark notification as unread:", err);
     }
@@ -119,10 +131,16 @@ export function useNotifications() {
   };
 
   useEffect(() => {
-    fetchAlerts();
-    // Refresh every 5 minutes
-    const interval = setInterval(fetchAlerts, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    isInitialLoadRef.current = true;
+    fetchAlerts(false);
+    // Refresh every 3 seconds for live real-time updates silently in background
+    const interval = setInterval(() => fetchAlerts(true), 3000);
+    const handleFocus = () => fetchAlerts(true);
+    window.addEventListener("focus", handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, [user]);
 
   const unreadCount = alerts.length; // All alerts shown are unread

@@ -12,6 +12,7 @@ import { useAuthContext } from "@/context/AuthContext";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useDateContext } from "@/context/DateContext";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { DateHeader } from "@/components/common/DateHeader";
 import { LayoutDashboard } from "lucide-react";
 import { format, getDaysInMonth, endOfMonth, subMonths, startOfDay, isBefore, isSameMonth } from "date-fns";
 import { he } from "date-fns/locale";
@@ -944,68 +945,93 @@ export default function DashboardPage() {
     >
       <div className="relative z-10 space-y-3 sm:space-y-4 pt-2 sm:pt-6 pb-2 sm:pb-4 px-2 sm:px-6 max-w-full mx-auto transition-all">
 
+        {/* Mobile Top Bar: Context on Right, DateHeader on Left */}
+        <div className="flex sm:hidden items-center justify-between gap-2 mb-2 w-full">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-xs font-bold text-muted-foreground truncate">
+              {unitName || "תמונת מצב יומית"}
+            </span>
+            {holiday && (
+              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-black border border-amber-500/20 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                {holiday}
+              </span>
+            )}
+          </div>
+          <div className="shrink-0">
+            <DateHeader className="origin-left" />
+          </div>
+        </div>
+
         <div className="hidden sm:block">
           <PageHeader
             icon={LayoutDashboard}
             title="לוח בקרה"
             className="mb-0"
             badge={
-              // Desktop only — mobile uses the grid below
-              <div className="hidden lg:flex items-center gap-2">
-                <div id="dashboard-filter-btn">
-                <DashboardFilters
-                  structure={structure}
-                  statuses={allStatusTypes.map((s: any) => ({ status_id: s.id, status_name: s.name, color: s.color }))}
-                  allStatusTypes={allStatusTypes}
-                  selectedDeptId={selectedDeptId}
-                  selectedSectionId={selectedSectionId}
-                  selectedTeamId={selectedTeamId}
-                  selectedStatusId={selectedStatusId?.toString()}
-                  serviceTypes={serviceTypes}
-                  selectedServiceTypes={selectedServiceTypes}
-                  selectedAgeRange={selectedAgeRange}
-                  onFilterChange={handleFilterChange}
-                  canSelectDept={canSelectDept}
-                  canSelectSection={canSelectSection}
-                  canSelectTeam={canSelectTeam}
-                  hasActiveFiltersExternal={activeFilterInfo.hasActive}
-                  activeFilterCountExternal={activeFilterInfo.count}
-                  user={user}
-                />
+              <div className="flex items-center justify-between w-full">
+                {/* Desktop Left: DateHeader (hidden on md+ where it's centered in the top header) */}
+                <div className="flex md:hidden items-center gap-2">
+                  <DateHeader className="origin-left" />
                 </div>
 
-                <ReportHub
-                  id="report-hub-card"
-                  onShareBirthdays={() => setWhatsAppDialogOpen(true)}
-                  filters={memoizedFilters}
-                  initialDate={selectedDate}
-                />
+                {/* Desktop Right: Actions & Filters */}
+                <div className="hidden lg:flex items-center gap-2">
+                  <div id="dashboard-filter-btn">
+                  <DashboardFilters
+                    structure={structure}
+                    statuses={allStatusTypes.map((s: any) => ({ status_id: s.id, status_name: s.name, color: s.color }))}
+                    allStatusTypes={allStatusTypes}
+                    selectedDeptId={selectedDeptId}
+                    selectedSectionId={selectedSectionId}
+                    selectedTeamId={selectedTeamId}
+                    selectedStatusId={selectedStatusId?.toString()}
+                    serviceTypes={serviceTypes}
+                    selectedServiceTypes={selectedServiceTypes}
+                    selectedAgeRange={selectedAgeRange}
+                    onFilterChange={handleFilterChange}
+                    canSelectDept={canSelectDept}
+                    canSelectSection={canSelectSection}
+                    canSelectTeam={canSelectTeam}
+                    hasActiveFiltersExternal={activeFilterInfo.hasActive}
+                    activeFilterCountExternal={activeFilterInfo.count}
+                    user={user}
+                  />
+                  </div>
 
-                <Button
-                  id="event-button"
-                  variant="outline"
-                  onClick={() => setGlobalEventOpen(true)}
-                  className={cn(
-                    "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs",
-                    activeTutorial === "event" && "tutorial-highlight"
-                  )}
-                >
-                  <Calendar className="w-3.5 h-3.5 text-primary" />
-                  <span>אירוע</span>
-                </Button>
+                  <ReportHub
+                    id="report-hub-card"
+                    onShareBirthdays={() => setWhatsAppDialogOpen(true)}
+                    filters={memoizedFilters}
+                    initialDate={selectedDate}
+                  />
 
-                <Button
-                  id="broadcast-button"
-                  variant="outline"
-                  onClick={() => setWhatsappBroadcastOpen(true)}
-                  className={cn(
-                    "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs",
-                    activeTutorial === "broadcast" && "tutorial-highlight"
-                  )}
-                >
-                  <MessageSquare className="w-3.5 h-3.5 text-primary" />
-                  <span>רשימת תפוצה</span>
-                </Button>
+                  <Button
+                    id="event-button"
+                    variant="outline"
+                    onClick={() => setGlobalEventOpen(true)}
+                    className={cn(
+                      "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs",
+                      activeTutorial === "event" && "tutorial-highlight"
+                    )}
+                  >
+                    <Calendar className="w-3.5 h-3.5 text-primary" />
+                    <span>אירוע</span>
+                  </Button>
+
+                  <Button
+                    id="broadcast-button"
+                    variant="outline"
+                    onClick={() => setWhatsappBroadcastOpen(true)}
+                    className={cn(
+                      "h-9 rounded-xl gap-1.5 font-bold transition-all px-3 text-foreground bg-card/70 dark:bg-card/50 hover:bg-accent/60 border-border/60 text-xs shadow-xs",
+                      activeTutorial === "broadcast" && "tutorial-highlight"
+                    )}
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-primary" />
+                    <span>רשימת תפוצה</span>
+                  </Button>
+                </div>
               </div>
             }
           />

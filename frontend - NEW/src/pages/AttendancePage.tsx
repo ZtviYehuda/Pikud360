@@ -51,6 +51,7 @@ import { AttendanceCalendarView } from "@/components/attendance/AttendanceCalend
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { DateHeader } from "@/components/common/DateHeader";
 import { cn, cleanUnitName } from "@/lib/utils";
 import {
   BulkStatusUpdateModal,
@@ -680,12 +681,29 @@ export default function AttendancePage() {
     >
       {/* Top Header & Actions Section */}
       <div className="pt-2 sm:pt-6 pb-2 sm:pb-4 px-3 sm:px-6 shrink-0 transition-all">
+        {/* Mobile Top Bar: Context on Right, DateHeader on Left */}
+        <div className="flex sm:hidden items-center justify-between gap-2 mb-2 w-full">
+          <span className="text-xs font-bold text-muted-foreground truncate">
+            מעקב נוכחות וסטטוס יומי
+          </span>
+          <div className="shrink-0">
+            <DateHeader className="origin-left" />
+          </div>
+        </div>
+
         {/* Desktop Page Header Section */}
         <div className="hidden sm:block">
           <PageHeader
             icon={CalendarDays}
             title="מעקב נוכחות"
             className="mb-0"
+            badge={
+              <div className="flex items-center justify-between w-full">
+                <div className="flex md:hidden items-center gap-2">
+                  <DateHeader className="origin-left" />
+                </div>
+              </div>
+            }
           />
         </div>
 

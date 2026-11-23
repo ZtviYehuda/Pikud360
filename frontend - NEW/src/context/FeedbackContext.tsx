@@ -14,7 +14,20 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
   const [onReturnCallback, setOnReturnCallback] = useState<(() => void) | null>(null);
 
   const openFeedback = (page?: string, onReturn?: () => void) => {
-    setContextPage(page || "");
+    let targetPage = page;
+    if (!targetPage && typeof window !== "undefined") {
+      const path = window.location.pathname;
+      if (path === "/") targetPage = "לוח בקרה";
+      else if (path === "/employees") targetPage = "ניהול שוטרים";
+      else if (path === "/attendance") targetPage = "ניהול נוכחות";
+      else if (path === "/roster") targetPage = "סידור עבודה";
+      else if (path === "/transfers") targetPage = "בקשות העברה";
+      else if (path === "/messaging" || path === "/feedback") targetPage = "מרכז הודעות ותקשורת";
+      else if (path === "/audit") targetPage = "מרכז ניטור וביקורת";
+      else if (path === "/settings") targetPage = "הגדרות מערכת";
+      else targetPage = document.title || path;
+    }
+    setContextPage(targetPage || "");
     setOnReturnCallback(onReturn ? () => onReturn : null);
     setTimeout(() => { setIsOpen(true); }, 60);
   };

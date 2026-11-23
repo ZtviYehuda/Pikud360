@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useState, useRef } from "react";
+import { ColorPickerDialog } from "./ColorPickerDialog";
 
 interface AppearanceSettingsProps {
   theme: string;
@@ -27,7 +28,7 @@ export function AppearanceSettings({
   setShowAiSupport,
 }: AppearanceSettingsProps) {
   const [isCustomOpen, setIsCustomOpen] = useState(accentColor.startsWith("#"));
-  const colorInputRef = useRef<HTMLInputElement>(null);
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 
   const accentColors = [
     { id: "blue", label: "כחול", class: "bg-blue-500" },
@@ -49,10 +50,6 @@ export function AppearanceSettings({
     { id: "normal", label: "רגיל" },
     { id: "large", label: "גדול" },
   ];
-
-  const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAccentColor(e.target.value);
-  };
 
   return (
     <div id="appearance-settings-page" className="w-full pb-24 lg:pb-0 space-y-6 sm:space-y-8">
@@ -265,10 +262,10 @@ export function AppearanceSettings({
               transition={{ delay: accentColors.length * 0.04 }}
               onClick={() => {
                 setIsCustomOpen(true);
-                colorInputRef.current?.click();
+                setIsColorPickerOpen(true);
               }}
               className={cn(
-                "relative flex flex-col items-center gap-1.5 p-1 rounded-xl transition-all min-w-[50px] sm:min-w-[60px] lg:min-w-[0] lg:flex-1",
+                "relative flex flex-col items-center gap-1.5 p-1 rounded-xl transition-all min-w-[50px] sm:min-w-[60px] lg:min-w-[0] lg:flex-1 cursor-pointer",
               )}
             >
               <div
@@ -285,13 +282,6 @@ export function AppearanceSettings({
                 ) : (
                   <Check className="w-4 h-4 text-white" />
                 )}
-                <input
-                  ref={colorInputRef}
-                  type="color"
-                  className="absolute inset-0 opacity-0 cursor-pointer pointer-events-none"
-                  value={accentColor.startsWith("#") ? accentColor : "#0074ff"}
-                  onChange={handleCustomColorChange}
-                />
               </div>
               <span className={cn(
                   "text-[9px] sm:text-[10px] font-bold text-center",
@@ -312,7 +302,8 @@ export function AppearanceSettings({
               >
                 <div className="flex items-center gap-4 p-5 rounded-[2.5rem] bg-muted/20 border border-border/40 backdrop-blur-md">
                   <div 
-                    className="w-14 h-14 rounded-2xl border border-white/20 relative"
+                    onClick={() => setIsColorPickerOpen(true)}
+                    className="w-14 h-14 rounded-2xl border border-white/20 relative cursor-pointer hover:scale-105 active:scale-95 transition-transform"
                     style={{ backgroundColor: accentColor }}
                   >
                     <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-black/10" />
@@ -324,8 +315,8 @@ export function AppearanceSettings({
                          <span className="font-mono text-lg font-black tracking-tighter text-foreground">{accentColor.toUpperCase()}</span>
                          <div className="h-4 w-px bg-border" />
                          <button 
-                          onClick={() => colorInputRef.current?.click()}
-                          className="text-xs text-primary font-bold hover:underline"
+                          onClick={() => setIsColorPickerOpen(true)}
+                          className="text-xs text-primary font-bold hover:underline cursor-pointer"
                          >
                            שינוי צבע
                          </button>
@@ -336,6 +327,16 @@ export function AppearanceSettings({
               </motion.div>
             )}
           </AnimatePresence>
+
+          <ColorPickerDialog
+            open={isColorPickerOpen}
+            onOpenChange={setIsColorPickerOpen}
+            color={accentColor}
+            onColorSelect={(newColor) => {
+              setAccentColor(newColor);
+              setIsCustomOpen(true);
+            }}
+          />
         </div>
         </SectionCard>
       </div>

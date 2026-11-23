@@ -45,7 +45,17 @@ import { SickLeaveDetailsDialog } from "@/components/dashboard/SickLeaveDetailsD
 import { BirthdayGreetingsModal } from "@/components/dashboard/BirthdayGreetingsModal";
 import { WhatsAppIcon } from "@/components/common/WhatsAppIcon";
 import { toast } from "sonner";
-import { Send, Eye, Mail } from "lucide-react";
+import {
+  Send,
+  Eye,
+  Mail,
+  LifeBuoy,
+  Terminal,
+  GitBranch,
+  Search,
+  Loader2,
+  ShieldCheck,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -53,6 +63,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { GlobalAiSupport } from "@/components/common/GlobalAiSupport";
 import { ChatSidebar } from "./ChatSidebar";
@@ -61,6 +72,9 @@ import { GroupMessageModal } from "@/components/chat/GroupMessageModal";
 import { useTheme } from "@/context/ThemeContext";
 import apiClient from "@/config/api.client";
 import { PwaInstallPrompt } from "./PwaInstallPrompt";
+import { SupportUserDrawer } from "@/features/support-workspace/components/SupportUserDrawer";
+import { supportApi } from "@/features/support-workspace/api";
+import type { SupportDashboardStats, SupportUserListItem } from "@/features/support-workspace/types";
 
 function getAlertConfig(alert: {
   id: string;
@@ -178,7 +192,6 @@ export default function MainLayout() {
   const [sickEmployees, setSickEmployees] = React.useState<any[]>([]);
   const [bdayModalOpen, setBdayModalOpen] = React.useState(false);
   const [bdayEmployees, setBdayEmployees] = React.useState<any[]>([]);
-  const [pendingRequestsCount, setPendingRequestsCount] = React.useState(0);
   const [isMobile, setIsMobile] = React.useState(window.innerWidth < 640);
 
   React.useEffect(() => {
@@ -186,23 +199,6 @@ export default function MainLayout() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  const fetchPendingCount = async () => {
-    if (!user?.is_admin) return;
-    try {
-      const { data } = await apiClient.get("/support/tickets/pending-count");
-      if (!data) return; // Endpoint may not exist — fail silently
-      setPendingRequestsCount(data.count || 0);
-    } catch (err) {
-      // Silently ignore — endpoint may not be deployed
-    }
-  };
-
-  React.useEffect(() => {
-    fetchPendingCount();
-    const interval = setInterval(fetchPendingCount, 60000); // Check every minute
-    return () => clearInterval(interval);
-  }, [user]);
 
   // Check for critical morning alerts
   React.useEffect(() => {
@@ -232,12 +228,13 @@ export default function MainLayout() {
             label: "פתח צ'אט",
             onClick: () => {
               markAsRead(alert.id);
-              navigate("/messaging?tab=messages");
+              const targetContactId = alert.data?.sender_id || (alert.data?.is_support ? "691b0694-1c0f-49de-9213-1f4ed4ea2936" : 0);
+              navigate(`/messaging?tab=messages&contact_id=${targetContactId}`);
               openChat({
-                id: alert.data?.sender_id || 0,
-                name:
-                  alert.data?.sender || alert.title.replace("הודעה מאת ", ""),
-                role: "מפקד",
+                id: targetContactId,
+                name: alert.data?.is_support ? "צוות תמיכה" : (alert.data?.sender || alert.title.replace("הודעה מאת ", "")),
+                role: alert.data?.is_support ? "ניהול מערכת" : "מפקד",
+                is_admin: Boolean(alert.data?.is_support),
               });
             },
           },
@@ -256,8 +253,35 @@ export default function MainLayout() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const navItems = [
-    { name: "לוח בקרה", path: "/", icon: LayoutDashboard },
+  const isSupportWorkspace = location.pathname.startsWith("/support-workspace");
+
+  // Support Workspace State & Diagnostics
+  const [supportStats, setSupportStats] = React.useState<SupportDashboardStats | null>(null);
+  const [selectedUserId, setSelectedUserId] = React.useState<number | string | null>(null);
+
+  // Poll health stats for Support Workspace
+  React.useEffect(() => {
+    if (!user?.is_admin) return;
+    let isMounted = true;
+    const loadHealth = async () => {
+      try {
+        const data = await supportApi.getDashboard();
+        if (isMounted) setSupportStats(data);
+      } catch (e) {
+        // Silent background fail
+      }
+    };
+
+    loadHealth();
+    const interval = setInterval(loadHealth, 30000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [user]);
+
+  const commanderNavItems = [
+    { name: "לוח בקרה", path: "/", icon: LayoutDashboard, exact: true },
     { name: "מעקב נוכחות", path: "/attendance", icon: CalendarDays },
     { name: "סידור עבודה", path: "/roster", icon: CalendarRange },
     // Only show these if NOT a temp commander
@@ -268,15 +292,44 @@ export default function MainLayout() {
         ]
       : []),
     { name: "מרכז הודעות ותקשורת", path: "/messaging", icon: MessageSquare },
-    ...(user?.is_admin
-      ? [{ name: "יומן פעילות", path: "/activity-log", icon: Activity }]
-      : []),
     { name: "הגדרות", path: "/settings", icon: Settings },
   ];
 
-  // Derive the current page title for the mobile header
+  const supportNavItems = [
+    { name: "תמונת מצב", path: "/support-workspace", icon: LayoutDashboard, exact: true },
+    { name: "פניות ובקשות שחזור", path: "/support-workspace/tickets", icon: LifeBuoy },
+    { name: "משתמשים והרשאות", path: "/support-workspace/users", icon: Users },
+    { name: "הודעות מערכת", path: "/support-workspace/announcements", icon: Megaphone },
+    { name: "עדכוני גרסה", path: "/support-workspace/updates", icon: GitBranch },
+    { name: "יומן פעילות", path: "/support-workspace/activity", icon: Activity },
+  ];
+
+  const navItems = isSupportWorkspace ? supportNavItems : commanderNavItems;
+
+  const switchToCommanderMode = () => {
+    sessionStorage.setItem("admin_mode", "commander");
+    navigate("/");
+  };
+
+  const switchToSupportMode = () => {
+    sessionStorage.setItem("admin_mode", "support");
+    navigate("/support-workspace");
+  };
+
+  // Derive the current page title for the header
   const getPageTitle = () => {
     const path = location.pathname;
+    if (isSupportWorkspace) {
+      if (path === "/support-workspace") return "תמונת מצב תפעולית";
+      if (path === "/support-workspace/tickets") return "פניות ובקשות שחזור";
+      if (path === "/support-workspace/users") return "משתמשים והרשאות";
+      if (path === "/support-workspace/announcements") return "הודעות מערכת ותפעול";
+      if (path === "/support-workspace/updates") return "עדכוני גרסה ושחזורים";
+      if (path === "/support-workspace/activity") return "יומן פעילות אדמין";
+      if (path === "/support-workspace/health") return "בריאות ובקרת מערכת";
+      return "מרכז התמיכה";
+    }
+
     if (path === "/employees/new") return "הוספת שוטר";
     if (path.startsWith("/employees/edit/")) return "עריכת שוטר";
     if (path.startsWith("/employees/") && path !== "/employees") return "כרטיס שוטר";
@@ -288,10 +341,10 @@ export default function MainLayout() {
     if (path === "/change-password") return "שינוי סיסמה";
 
     return (
-      navItems.find(
-        (item) =>
-          item.path === path ||
-          (item.path !== "/" && path.startsWith(item.path)),
+      navItems.find((item) =>
+        item.exact
+          ? path === item.path
+          : item.path === path || (item.path !== "/" && path.startsWith(item.path))
       )?.name ?? "לוח בקרה"
     );
   };
@@ -342,10 +395,10 @@ export default function MainLayout() {
             : "translate-x-full lg:translate-x-0 lg:w-20",
         )}
       >
-        {/* Sidebar Header - Exactly h-16 to align seamlessly with top header border */}
+        {/* Sidebar Header - Exactly h-20 to align seamlessly with top header border */}
         <div
           className={cn(
-            "h-16 flex-none flex items-center border-b border-border/40 transition-all duration-200",
+            "h-20 flex-none flex items-center border-b border-border/40 transition-all duration-200",
             isSidebarOpen ? "px-4 justify-between" : "px-0 justify-center"
           )}
         >
@@ -372,12 +425,11 @@ export default function MainLayout() {
             )}
           </button>
 
-          {/* Left Side Actions (Desktop Theme Toggle & Mobile Close Button) */}
+          {/* Mobile Close Button */}
           {isSidebarOpen && (
-            <div className="flex items-center gap-1.5">
-              <ThemeToggle variant="minimal" className="hidden lg:flex" />
+            <div className="flex items-center gap-1.5 lg:hidden">
               <button
-                className="lg:hidden p-1 text-muted-foreground hover:text-foreground rounded-lg"
+                className="p-1 text-muted-foreground hover:text-foreground rounded-lg"
                 onClick={() => setIsSidebarOpen(false)}
               >
                 <X className="w-5 h-5" />
@@ -439,17 +491,49 @@ export default function MainLayout() {
         {/* Sidebar Footer */}
         <div
           className={cn(
-            "p-3 border-t border-border/40 flex flex-col gap-2.5",
+            "p-3 pb-5 sm:pb-6 border-t border-border/40 flex flex-col gap-3",
             isSidebarOpen ? "" : "items-center",
           )}
         >
-          {/* Mobile Only: Theme Toggle at bottom of sidebar */}
-          {isSidebarOpen && (
-            <div className="lg:hidden w-full flex items-center justify-between px-3 py-2 rounded-xl bg-muted/40 border border-border/40 select-none">
-              <span className="text-xs font-bold text-foreground">מצב תצוגה</span>
-              <ThemeToggle variant="minimal" />
+          {/* Admin Workspace Mode Switcher Button in Sidebar */}
+          {user?.is_admin && (
+            <div className="w-full pb-1">
+              {isSupportWorkspace ? (
+                <button
+                  type="button"
+                  onClick={switchToCommanderMode}
+                  className={cn(
+                    "w-full rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary font-bold text-xs flex items-center justify-between gap-2 p-2.5 transition-all active:scale-95 cursor-pointer shadow-2xs",
+                    isSidebarOpen ? "h-9 px-3 justify-between" : "h-9 px-0 justify-center"
+                  )}
+                  title="מעבר לתצוגת מפקד (מבט על)"
+                >
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Eye className="w-4 h-4 shrink-0 text-primary" />
+                    {isSidebarOpen && <span className="truncate">תצוגת מפקד (מבט על)</span>}
+                  </div>
+                  {isSidebarOpen && <ArrowLeft className="w-3.5 h-3.5 shrink-0 opacity-75" />}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={switchToSupportMode}
+                  className={cn(
+                    "w-full rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-700 dark:text-amber-300 font-bold text-xs flex items-center justify-between gap-2 p-2.5 transition-all active:scale-95 cursor-pointer shadow-2xs",
+                    isSidebarOpen ? "h-9 px-3 justify-between" : "h-9 px-0 justify-center"
+                  )}
+                  title="מעבר למרכז תמיכה וניהול"
+                >
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Terminal className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                    {isSidebarOpen && <span className="truncate">מרכז תמיכה וניהול</span>}
+                  </div>
+                  {isSidebarOpen && <ArrowLeft className="w-3.5 h-3.5 shrink-0 opacity-75" />}
+                </button>
+              )}
             </div>
           )}
+
 
           {/* Impersonation Return Button in Sidebar */}
           {isImpersonating && (
@@ -468,29 +552,31 @@ export default function MainLayout() {
             </div>
           )}
 
-          {/* Feedback & Suggestions Button in Sidebar */}
-          {isSidebarOpen ? (
-            <button
-              type="button"
-              onClick={() => {
-                if (window.innerWidth < 1024) setIsSidebarOpen(false);
-                openFeedback("סרגל ניווט ראשי");
-              }}
-              className="w-full h-9 px-3 rounded-xl bg-primary/5 hover:bg-primary/10 border border-primary/20 text-primary text-xs font-bold flex items-center gap-2 transition-all cursor-pointer select-none active:scale-[0.98]"
-            >
-              <MessageSquarePlus className="w-4 h-4 shrink-0" />
-              <span className="truncate flex-1 text-right">משוב ודיווח באג</span>
-              <span className="text-[10px] font-black bg-primary/15 px-1.5 py-0.5 rounded-md">v1.1.3</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => openFeedback("סרגל ניווט ראשי")}
-              title="משוב ודיווח באג (v1.1.3)"
-              className="w-10 h-10 rounded-2xl flex items-center justify-center text-primary hover:bg-primary/10 transition-all border border-primary/20 bg-primary/5 active:scale-95 cursor-pointer"
-            >
-              <MessageSquarePlus className="w-4 h-4" />
-            </button>
+          {/* Feedback & Suggestions Button in Sidebar (Hidden in Support Workspace) */}
+          {!isSupportWorkspace && (
+            isSidebarOpen ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.innerWidth < 1024) setIsSidebarOpen(false);
+                  openFeedback(currentPageName);
+                }}
+                className="w-full h-9 px-3 rounded-xl bg-primary/5 hover:bg-primary/10 border border-primary/20 text-primary text-xs font-bold flex items-center gap-2 transition-all cursor-pointer select-none active:scale-[0.98]"
+              >
+                <MessageSquarePlus className="w-4 h-4 shrink-0" />
+                <span className="truncate flex-1 text-right">משוב ודיווח באג</span>
+                <span className="text-[10px] font-black bg-primary/15 px-1.5 py-0.5 rounded-md">v1.1.3</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => openFeedback(currentPageName)}
+                title="משוב ודיווח באג (v1.1.3)"
+                className="w-10 h-10 rounded-2xl flex items-center justify-center text-primary hover:bg-primary/10 transition-all border border-primary/20 bg-primary/5 active:scale-95 cursor-pointer"
+              >
+                <MessageSquarePlus className="w-4 h-4" />
+              </button>
+            )
           )}
 
           {/* User Profile Area */}
@@ -528,15 +614,6 @@ export default function MainLayout() {
                   </span>
                 </div>
               </Link>
-
-              {/* Logout Button */}
-              <button
-                onClick={() => logout()}
-                title="התנתק"
-                className="w-8 h-8 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all shrink-0 active:scale-95 cursor-pointer"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
             </div>
           ) : (
             /* Collapsed Profile Link */
@@ -553,20 +630,6 @@ export default function MainLayout() {
                 ? "💬"
                 : `${user?.first_name?.[0] ?? ""}${user?.last_name?.[0] ?? ""}`}
             </Link>
-          )}
-
-          {/* Action Area below profile (Collapsed) */}
-          {!isSidebarOpen && (
-            <div className="flex flex-col items-center gap-2 w-full pt-1">
-              <ThemeToggle variant="minimal" />
-              <button
-                onClick={() => logout()}
-                title="התנתק"
-                className="w-10 h-10 rounded-2xl flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all border border-border/40 bg-background/50 active:scale-95 cursor-pointer"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
           )}
 
           {/* Watermark in Sidebar */}
@@ -588,238 +651,165 @@ export default function MainLayout() {
 
       {/* Main Content Area */}
       <div className="flex-grow flex flex-col min-w-0">
-        <header className="h-16 bg-card border-b border-border/40 px-4 lg:px-8 flex items-center justify-between gap-x-4 sticky top-0 z-40 transition-none flex-none">
-          {/* Right side: Logo + Page Title + Status Dot */}
-          <div className="flex items-center gap-1 sm:gap-4 flex-1 min-w-0 ml-2">
-            {/* Mobile Menu Toggle */}
+        <header className="relative h-14 sm:h-16 md:h-20 bg-card/95 backdrop-blur-md border-b border-border/40 px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-x-2 sm:gap-x-4 sticky top-0 z-40 flex-none transition-none">
+          {/* Right side: Clickable Title to open sidebar + Status Dot */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 pr-0 z-10">
             <button
+              type="button"
               onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden flex items-center justify-center shrink-0 active:scale-90 transition-all"
-              aria-label="Open menu"
+              className="group flex items-center gap-2 text-right focus:outline-none cursor-pointer active:scale-95 transition-transform"
+              title="פתח תפריט"
+              aria-label="פתח תפריט"
             >
-              <img
-                src="/logo_unit.png"
-                alt="סמל היחידה"
-                className="w-10 h-10 sm:w-11 sm:h-11 object-contain shrink-0"
-              />
+              <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none truncate group-hover:text-primary transition-colors">
+                {currentPageName}
+              </h1>
             </button>
 
-            {/* Mobile page title & status dot — sits between logo and date/notifications */}
-            <div className="lg:hidden flex-1 flex flex-col items-start pr-2 min-w-0">
-              {/* Green status dot above the name */}
-              <div className="mb-0.5 flex items-center gap-1">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      id="mobile-system-status-dot"
-                      title="סטטוס מערכת"
-                      className="flex items-center shrink-0 focus:outline-none p-0.5"
-                    >
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                      </span>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className="w-60 p-4 rounded-2xl border-border shadow-xl backdrop-blur-xl bg-card/95"
-                    align="start"
-                    dir="rtl"
-                  >
-                    <div className="space-y-3 text-right">
-                      <div className="flex items-center gap-2 pb-2 border-b border-border/40">
-                        <span className="relative flex h-2 w-2 shrink-0">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                        </span>
-                        <div>
-                          <h4 className="text-xs font-black text-foreground">
-                            המערכת פעילה
-                          </h4>
-                          <p className="text-[10px] font-bold text-muted-foreground">
-                            חיבור מאובטח
-                          </p>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-muted-foreground">
-                            משתמש מחובר:
-                          </span>
-                          <span className="text-[10px] font-black text-foreground">
-                            {user?.first_name} {user?.last_name}
-                          </span>
-                        </div>
-                        <div className="p-2.5 rounded-xl bg-muted/30 border border-border/20">
-                          <p className="text-[10px] font-bold text-muted-foreground mb-1 flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            כניסה קודמת:
-                          </p>
-                          <p className="text-[11px] font-black text-primary">
-                            {(user as any)?.previous_login
-                              ? new Date(
-                                  (user as any).previous_login,
-                                ).toLocaleString("he-IL", {
-                                  day: "2-digit",
-                                  month: "2-digit",
-                                  year: "2-digit",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
-                              : "כניסה ראשונה"}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <span className="text-[9px] font-black text-emerald-500/90 leading-none">
-                  פעיל
-                </span>
-              </div>
-              <h2 className="text-base sm:text-lg font-black text-foreground tracking-tight leading-tight whitespace-nowrap">
-                {currentPageName}
-              </h2>
-            </div>
-
-            {/* Desktop Only Pulsing Status Dot */}
-            <div className="hidden lg:flex items-center gap-2">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    id="system-status-dot"
-                    title="סטטוס מערכת"
-                    className="flex items-center shrink-0 focus:outline-none p-1"
-                  >
-                    <span className="relative flex h-2 w-2">
+            {/* Status Indicator Dot */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  id="system-status-dot"
+                  title="סטטוס מערכת: פעיל ומאובטח"
+                  className="flex items-center shrink-0 focus:outline-none p-1 cursor-pointer group"
+                >
+                  <span className="relative flex h-2.5 w-2.5 sm:h-3 sm:w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-emerald-500 shadow-xs group-hover:scale-110 transition-transform"></span>
+                  </span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-60 p-4 rounded-2xl border-border shadow-xl backdrop-blur-xl bg-card/95"
+                align="start"
+                dir="rtl"
+              >
+                <div className="space-y-3 text-right">
+                  <div className="flex items-center gap-2 pb-2 border-b border-border/40">
+                    <span className="relative flex h-2 w-2 shrink-0">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-60 p-4 rounded-2xl border-border shadow-xl backdrop-blur-xl bg-card/95"
-                  align="start"
-                  dir="rtl"
-                >
-                  <div className="space-y-3 text-right">
-                    <div className="flex items-center gap-2 pb-2 border-b border-border/40">
-                      <span className="relative flex h-2 w-2 shrink-0">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                      </span>
-                      <div>
-                        <h4 className="text-xs font-black text-foreground">
-                          המערכת פעילה
-                        </h4>
-                        <p className="text-[10px] font-bold text-muted-foreground">
-                          חיבור מאובטח
-                        </p>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-muted-foreground">
-                          משתמש מחובר:
-                        </span>
-                        <span className="text-[10px] font-black text-foreground">
-                          {user?.first_name} {user?.last_name}
-                        </span>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-muted/30 border border-border/20">
-                        <p className="text-[10px] font-bold text-muted-foreground mb-1 flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          כניסה קודמת:
-                        </p>
-                        <p className="text-[11px] font-black text-primary">
-                          {(user as any)?.previous_login
-                            ? new Date(
-                                (user as any).previous_login,
-                              ).toLocaleString("he-IL", {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "2-digit",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
-                            : "כניסה ראשונה"}
-                        </p>
-                      </div>
+                    <div>
+                      <h4 className="text-xs font-black text-foreground">
+                        המערכת פעילה
+                      </h4>
+                      <p className="text-[10px] font-bold text-muted-foreground">
+                        חיבור מאובטח
+                      </p>
                     </div>
                   </div>
-                </PopoverContent>
-              </Popover>
-              <h1 className="text-sm font-black text-foreground tracking-tight leading-none whitespace-nowrap">
-                מערכת במצב פעיל
-              </h1>
-            </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-muted-foreground">
+                        משתמש מחובר:
+                      </span>
+                      <span className="text-[10px] font-black text-foreground">
+                        {user?.first_name} {user?.last_name}
+                      </span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-muted/30 border border-border/20">
+                      <p className="text-[10px] font-bold text-muted-foreground mb-1 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        כניסה קודמת:
+                      </p>
+                      <p className="text-[11px] font-black text-primary">
+                        {(user as any)?.previous_login
+                          ? new Date(
+                              (user as any).previous_login,
+                            ).toLocaleString("he-IL", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "כניסה ראשונה"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-6 shrink-0">
-            {/* Global DateHeader */}
-            <div className="shrink-0">
-              <DateHeader className="sm:scale-100 scale-100 origin-left" />
-            </div>
+          {/* Centered Date in Header (Desktop / Tablet) */}
+          <div className="hidden md:flex items-center justify-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-10">
+            <DateHeader />
+          </div>
 
-            <div className="h-4 sm:h-5 w-px bg-border hidden sm:block" />
+          <div className="flex items-center gap-1.5 sm:gap-3 md:gap-5 shrink-0 z-10">
+            {/* Support Workspace Real-time System Status Pill (Desktop only) */}
+            {isSupportWorkspace && (
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border border-border/60 bg-muted/30 text-xs">
+                <span className="relative flex h-2 w-2">
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                    (supportStats?.system_status || "healthy") === "healthy" && (supportStats?.open_incidents_count || 0) === 0
+                      ? "bg-emerald-400"
+                      : "bg-rose-400"
+                  }`} />
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                    (supportStats?.system_status || "healthy") === "healthy" && (supportStats?.open_incidents_count || 0) === 0
+                      ? "bg-emerald-500"
+                      : "bg-rose-500"
+                  }`} />
+                </span>
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {(supportStats?.system_status || "healthy") === "healthy" && (supportStats?.open_incidents_count || 0) === 0
+                    ? "כל המערכות תקינות"
+                    : `${supportStats?.open_incidents_count || 0} תקלות פעילות`}
+                </span>
+              </div>
+            )}
 
-            <div className="flex items-center gap-1.5 sm:gap-3">
-              {/* Feedback Center Button */}
-              <button
-                id="feedback-toggle-btn"
-                onClick={() => openFeedback()}
-                title="מרכז משוב, דיווח באגים והצעות"
-                className="hidden sm:flex w-8 h-8 sm:w-10 sm:h-10 items-center justify-center rounded-xl text-muted-foreground hover:bg-primary/5 hover:text-primary transition-all relative cursor-pointer"
-              >
-                <MessageSquarePlus className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
+            <div className="flex items-center gap-1 sm:gap-2">
 
-              {/* Chat Button with Unread Badge - Hidden on mobile, visible on desktop */}
-              <button
-                id="chat-toggle-btn"
-                onClick={toggleChat}
-                title="צ'אט והודעות"
-                className="hidden sm:flex w-8 h-8 sm:w-10 sm:h-10 items-center justify-center rounded-xl text-muted-foreground hover:bg-primary/5 hover:text-primary transition-all relative"
-              >
-                <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
-                {unreadMessagesCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-50"></span>
-                    <span className="relative flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-black text-primary-foreground ring-2 ring-card">
-                      {unreadMessagesCount}
-                    </span>
-                  </span>
+                {/* Mode Switcher Pill Button for Admin (Desktop only) */}
+                {user?.is_admin && (
+                  isSupportWorkspace ? (
+                    <button
+                      type="button"
+                      onClick={switchToCommanderMode}
+                      className="hidden md:flex items-center gap-1.5 px-3.5 h-9 sm:h-9.5 rounded-xl border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
+                      title="חזור לתצוגת מפקד"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>תצוגת מפקד (מבט על)</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={switchToSupportMode}
+                      className="hidden md:flex items-center justify-center px-3.5 h-9 sm:h-9.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/15 hover:border-amber-500/40 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
+                      title="מעבר למרכז תמיכה וניהול"
+                    >
+                      <span>מרכז תמיכה וניהול</span>
+                    </button>
+                  )
                 )}
-              </button>
-
-              {/* Combined Notifications/Messages Popover */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    id="mobile-notifications-btn"
-                    className="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-primary/5 hover:text-primary transition-all"
-                  >
-                    <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
-                    {unreadCount + (user?.is_admin ? pendingRequestsCount : 0) + (isMobile ? unreadMessagesCount : 0) >
-                      0 && (
-                      <span
-                        className={cn(
-                          "absolute -top-1.5 -right-1.5 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full text-[9px] sm:text-[10px] font-black text-primary-foreground ring-2 ring-card animate-in zoom-in-50",
-                          pendingRequestsCount > 0 && user?.is_admin
-                            ? "bg-amber-500 shadow-lg shadow-amber-500/20"
-                            : "bg-primary",
-                        )}
-                      >
-                        {unreadCount +
-                          (user?.is_admin ? pendingRequestsCount : 0) +
-                          (isMobile ? unreadMessagesCount : 0)}
-                      </span>
-                    )}
-                  </button>
-                </PopoverTrigger>
+              {/* Unified Messages & Notifications Popover */}
+              {!isSupportWorkspace && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      id="notifications-messages-btn"
+                      title="הודעות והתראות"
+                      className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-muted/70 hover:text-foreground transition-all cursor-pointer"
+                    >
+                      <MessageSquare className="w-4.5 h-4.5" />
+                      {unreadCount > 0 && (
+                        <span
+                          className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full text-[9px] font-bold text-primary-foreground ring-2 ring-card animate-in zoom-in-50 bg-primary"
+                        >
+                          {unreadCount}
+                        </span>
+                      )}
+                    </button>
+                  </PopoverTrigger>
                 <PopoverContent
                   className="w-[450px] max-w-[95vw] p-0 overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-300/90 dark:border-slate-700/90 shadow-[0_20px_60px_-10px_rgba(15,23,42,0.25),0_0_0_1px_rgba(15,23,42,0.1)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85),0_0_0_1px_rgba(255,255,255,0.12)] z-50 animate-in fade-in-0 zoom-in-95"
-                  align="start"
+                  align="end"
                 >
                   <div className="p-4 border-b border-slate-200/80 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-10">
                     <div className="flex items-center justify-between mb-3">
@@ -837,7 +827,14 @@ export default function MainLayout() {
                               : "צ'אט"}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3">
+                        <Link
+                          to="/messaging"
+                          className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1"
+                        >
+                          <span>מרכז הודעות מלא</span>
+                          <ArrowLeft className="w-2.5 h-2.5" />
+                        </Link>
                         {notificationTab === "active" && alerts.length > 0 && (
                           <button
                             onClick={markAllAsRead}
@@ -906,30 +903,95 @@ export default function MainLayout() {
                   </div>
                   <div className="max-h-[60vh] sm:max-h-[400px] overflow-y-auto custom-scrollbar bg-muted/50">
                     {notificationTab === "messages" ? (
-                      <div className="p-8 flex flex-col items-center justify-center gap-4 text-center">
-                        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                          <MessageSquare className="w-8 h-8" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-black text-foreground mb-1">
-                            צ'אט והודעות מערכת
-                          </p>
-                          <p className="text-[10px] font-medium text-muted-foreground max-w-[200px]">
-                            נהל שיחות עם מפקדים וקבל הודעות עדכון בזמן אמת
-                          </p>
-                        </div>
-                        <Button
-                          onClick={() => {
-                            toggleChat();
-                          }}
-                          className="rounded-xl font-black text-xs gap-2 px-6"
-                        >
-                          פתח את מרכז ההודעות
-                          <ArrowLeft className="w-3 h-3" />
-                        </Button>
-                      </div>
+                      (() => {
+                        const msgAlerts = alerts.filter((a) => a.id.startsWith("msg-"));
+                        if (msgAlerts.length === 0) {
+                          return (
+                            <div className="p-8 flex flex-col items-center justify-center gap-4 text-center">
+                              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                <MessageSquare className="w-8 h-8" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-black text-foreground mb-1">
+                                  צ'אט והודעות מערכת
+                                </p>
+                                <p className="text-[10px] font-medium text-muted-foreground max-w-[200px]">
+                                  נהל שיחות עם מפקדים וקבל הודעות עדכון בזמן אמת
+                                </p>
+                              </div>
+                              <Button
+                                onClick={() => { toggleChat(); }}
+                                className="rounded-xl font-black text-xs gap-2 px-6"
+                              >
+                                פתח את מרכז ההודעות
+                                <ArrowLeft className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          );
+                        }
+                        return (
+                          <div className="flex flex-col">
+                            {msgAlerts.map((alert) => {
+                              const isRead = readIds.includes(alert.id);
+                              const config = getAlertConfig(alert);
+                              const Icon = config.icon;
+                              return (
+                                <div
+                                  key={alert.id}
+                                  className={cn(
+                                    "p-3 sm:p-4 flex flex-row-reverse gap-3 sm:gap-4 hover:bg-card transition-all border-b border-border last:border-0 group relative cursor-pointer",
+                                    isRead && "opacity-60 grayscale-[0.3]",
+                                  )}
+                                  dir="rtl"
+                                  onClick={() => {
+                                    if (!isRead) toggleRead(alert.id);
+                                    if (alert.link) navigate(alert.link);
+                                  }}
+                                >
+                                  <div
+                                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
+                                    style={{ backgroundColor: config.bg, color: config.color }}
+                                  >
+                                    <Icon className="w-5 h-5" />
+                                  </div>
+                                  <div className="flex-1 min-w-0 text-right">
+                                    <div className="flex items-center justify-start gap-2">
+                                      {!isRead && (
+                                        <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                                      )}
+                                      <p className={cn(
+                                        "text-xs font-black transition-colors",
+                                        isRead ? "text-muted-foreground" : "text-foreground group-hover:text-primary",
+                                      )}>
+                                        {alert.title}
+                                      </p>
+                                    </div>
+                                    <p className={cn(
+                                      "text-[11px] font-bold leading-tight mt-1",
+                                      isRead ? "text-muted-foreground/60" : "text-muted-foreground",
+                                    )}>
+                                      {alert.description}
+                                    </p>
+                                  </div>
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      toggleRead(alert.id);
+                                    }}
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-all text-muted-foreground hover:text-primary hover:bg-primary/10 opacity-0 group-hover:opacity-100 shrink-0"
+                                    title={isRead ? "סמן כלא נקרא" : "סמן כנקרא"}
+                                  >
+                                    <CheckCheck className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()
                     ) : notificationTab === "active" ? (
-                      loadingNotifs ? (
+                      (loadingNotifs && alerts.length === 0) ? (
                         <div className="p-12 flex flex-col items-center justify-center gap-3 opacity-50">
                           <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
                           <span className="text-xs font-bold">
@@ -1204,7 +1266,12 @@ export default function MainLayout() {
                                   <CheckCircle2 className="w-3.5 h-3.5" />
                                 </div>
                                 <button
-                                  onClick={() => markAsUnread(alert.id)}
+                                  onClick={async (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    await markAsUnread(alert.id);
+                                    toast.success("ההתראה הוחזרה לרשימת הפעילות שלא נקראו");
+                                  }}
                                   title="סמן כלא נקרא"
                                   className="w-6 h-6 rounded-md hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
                                 >
@@ -1226,6 +1293,23 @@ export default function MainLayout() {
                   )}
                 </PopoverContent>
               </Popover>
+              )}
+
+              {/* Theme Toggle Button */}
+              <ThemeToggle
+                variant="minimal"
+                className="w-8.5 h-8.5 sm:w-10 sm:h-10 rounded-xl text-muted-foreground hover:bg-muted/70 hover:text-foreground cursor-pointer flex items-center justify-center transition-all"
+              />
+
+              {/* Logout Button */}
+              <button
+                type="button"
+                onClick={() => logout()}
+                title="התנתק"
+                className="w-8.5 h-8.5 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all cursor-pointer active:scale-95"
+              >
+                <LogOut className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              </button>
             </div>
           </div>
         </header>
@@ -1233,7 +1317,7 @@ export default function MainLayout() {
         {/* Content Page */}
         <main
           className={cn(
-            "flex-grow bg-background custom-scrollbar px-2 lg:px-6",
+            "flex-grow bg-background custom-scrollbar px-3 lg:px-6 pt-5 lg:pt-6 pb-6",
             (location.pathname === "/messaging" || location.pathname === "/feedback") &&
               (new URLSearchParams(location.search).get("tab") === "messages" ||
                !new URLSearchParams(location.search).get("tab"))
@@ -1250,7 +1334,7 @@ export default function MainLayout() {
                 "h-full flex flex-col",
             )}
           >
-            <Outlet context={{ isSidebarOpen }} />
+            <Outlet context={{ isSidebarOpen, stats: supportStats, onSelectUser: (id: number | string) => setSelectedUserId(id) }} />
           </div>
         </main>
         {/* Impersonation Banner */}
@@ -1361,15 +1445,21 @@ export default function MainLayout() {
                   <Button
                     className="w-full sm:flex-1 h-12 sm:h-11 rounded-2xl font-black shadow-lg shadow-primary/20"
                     onClick={() => {
-                      navigate(selectedAlert.link);
+                      let targetLink = selectedAlert.link;
+                      if (selectedAlert.data?.ticket_id && !targetLink.includes("ticket_id=")) {
+                        targetLink += (targetLink.includes("?") ? "&" : "?") + `ticket_id=${selectedAlert.data.ticket_id}`;
+                      }
+                      navigate(targetLink);
                       setSelectedAlert(null);
+                      if (!readIds.includes(selectedAlert.id)) {
+                        toggleRead(selectedAlert.id);
+                      }
                       if (selectedAlert.link.includes("#")) {
                         const id = selectedAlert.link.split("#")[1];
                         setTimeout(() => {
                           document
                             .getElementById(id)
                             ?.scrollIntoView({ behavior: "smooth" });
-                          // Add a highlight effect
                           const el = document.getElementById(id);
                           if (el) {
                             el.classList.add(
@@ -1408,6 +1498,15 @@ export default function MainLayout() {
           open={bdayModalOpen}
           onOpenChange={setBdayModalOpen}
           weeklyBirthdays={bdayEmployees}
+        />
+
+
+
+        {/* Diagnostic Dossier Drawer */}
+        <SupportUserDrawer
+          userId={selectedUserId}
+          open={Boolean(selectedUserId)}
+          onClose={() => setSelectedUserId(null)}
         />
       </div>
     </div>

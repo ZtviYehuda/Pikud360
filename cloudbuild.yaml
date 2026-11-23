@@ -1,0 +1,142 @@
+# ==============================================================================
+# Google Cloud Build Pipeline for Matzevet / Pikud360 Platform
+# Region: me-west1 (Tel Aviv, Israel)
+# ==============================================================================
+
+substitutions:
+  _REGION: 'me-west1'
+  _REPOSITORY: 'matzevet-repo'
+  _INSTANCE_NAME: 'matzevet-db-prod'
+  _GCS_BUCKET: 'matzevet-media-prod'
+
+steps:
+  # ----------------------------------------------------------------------------
+  # 1. Build and push Backend image
+  # ----------------------------------------------------------------------------
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/backend:${SHORT_SHA}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/backend:latest'
+      - '-f'
+      - 'docker/backend.Dockerfile'
+      - '.'
+    id: 'build-backend'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/backend'
+    id: 'push-backend'
+
+  # ----------------------------------------------------------------------------
+  # 2. Build and push Frontend image
+  # ----------------------------------------------------------------------------
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/frontend:${SHORT_SHA}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/frontend:latest'
+      - '-f'
+      - 'docker/frontend.Dockerfile'
+      - '.'
+    id: 'build-frontend'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/frontend'
+    id: 'push-frontend'
+
+  # ----------------------------------------------------------------------------
+  # 3. Build and push WhatsApp service image
+  # ----------------------------------------------------------------------------
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/whatsapp-service:${SHORT_SHA}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/whatsapp-service:latest'
+      - '-f'
+      - 'whatsapp-service/Dockerfile'
+      - 'whatsapp-service'
+    id: 'build-whatsapp'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/whatsapp-service'
+    id: 'push-whatsapp'
+
+  # ----------------------------------------------------------------------------
+  # 4. Deploy Backend to Google Cloud Run
+  # ----------------------------------------------------------------------------
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'matzevet-backend'
+      - '--image'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/backend:latest'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--min-instances'
+      - '1'
+      - '--max-instances'
+      - '10'
+      - '--cpu'
+      - '1'
+      - '--memory'
+      - '1Gi'
+      - '--set-env-vars'
+      - 'FLASK_ENV=production,USE_GCS=true,GCS_BUCKET_NAME=${_GCS_BUCKET},POSTGRES_DB=matzevet_db,POSTGRES_USER=postgres,POSTGRES_HOST=/cloudsql/${PROJECT_ID}:${_REGION}:${_INSTANCE_NAME}'
+      - '--set-secrets'
+      - 'SECRET_KEY=matzevet-flask-secret:latest,JWT_SECRET_KEY=matzevet-jwt-secret:latest,POSTGRES_PASSWORD=matzevet-db-password:latest'
+      - '--add-cloudsql-instances'
+      - '${PROJECT_ID}:${_REGION}:${_INSTANCE_NAME}'
+    id: 'deploy-backend'
+
+  # ----------------------------------------------------------------------------
+  # 5. Deploy Frontend to Google Cloud Run
+  # ----------------------------------------------------------------------------
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'matzevet-frontend'
+      - '--image'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/frontend:latest'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--min-instances'
+      - '1'
+      - '--max-instances'
+      - '5'
+      - '--cpu'
+      - '0.5'
+      - '--memory'
+      - '256Mi'
+    id: 'deploy-frontend'
+
+images:
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/backend:latest'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/frontend:latest'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/whatsapp-service:latest'
+
+timeout: '1200s'

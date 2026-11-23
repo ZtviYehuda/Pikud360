@@ -70,11 +70,24 @@ def resolve_access_scope(user_id: str, tenant_id: str, claims: Optional[dict] = 
         "transfers.view",
     ]
 
+    support_perms = [
+        "support.*",
+        "support.workspace.view",
+        "support.system.view",
+        "support.users.view",
+        "support.users.manage",
+        "support.incidents.view",
+        "support.incidents.manage",
+        "support.announcements.manage",
+        "support.impersonation",
+        "support.activity.view",
+    ]
+
     if effective.get("is_admin") or effective.get("level") == "global":
         return AuthorizationContext(
             user_id=str(user_id) if user_id else "admin",
             tenant_id=tenant_id,
-            permissions=["*"] + default_perms,
+            permissions=["*"] + default_perms + support_perms,
             organization_units=[],
             scope_type=ScopeType.GLOBAL.value
         )

@@ -5,6 +5,7 @@ import {
   History,
   AlertCircle,
   CheckCircle2,
+  XCircle,
   X,
   Settings,
   Search,
@@ -27,6 +28,11 @@ import {
   RotateCcw,
   Clock,
   Calendar,
+  HelpCircle,
+  Bug,
+  Lightbulb,
+  Sparkles,
+  Headphones,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
@@ -85,14 +91,114 @@ const getScreenshotUrl = (url?: string) => {
   return url;
 };
 
+const isSupportAlias = (id: any) => {
+  if (!id) return false;
+  const s = String(id).toLowerCase();
+  return ["1", "admin", "admin-support", "691b0694-1c0f-49de-9213-1f4ed4ea2936"].includes(s);
+};
+
+const isSameContactId = (id1: any, id2: any) => {
+  if (id1 === null || id1 === undefined || id2 === null || id2 === undefined) return false;
+  const s1 = String(id1).toLowerCase();
+  const s2 = String(id2).toLowerCase();
+  if (s1 === s2) return true;
+  if (isSupportAlias(s1) && isSupportAlias(s2)) return true;
+  return false;
+};
+
+export type TicketCategoryType =
+  | "archive_restore"
+  | "support"
+  | "bug"
+  | "improvement"
+  | "feature";
+
+export const normalizeCategory = (
+  category?: string,
+  title?: string,
+): TicketCategoryType => {
+  const cat = (category || "").toLowerCase().trim();
+  const t = (title || "").toLowerCase().trim();
+
+  // Archive restore requests
+  if (
+    cat === "archive_restore" ||
+    cat.includes("ארכיון") ||
+    cat.includes("שחזור") ||
+    t.includes("שחזור מהארכיון") ||
+    t.includes("שחזור ארכיון")
+  ) {
+    return "archive_restore";
+  }
+
+  // Bug reports
+  if (
+    cat === "bug" ||
+    cat.includes("באג") ||
+    cat.includes("תקלה") ||
+    t.includes("באג") ||
+    t.includes("תקלה")
+  ) {
+    return "bug";
+  }
+
+  // Improvement suggestions
+  if (
+    cat === "improvement" ||
+    cat.includes("שיפור") ||
+    cat.includes("הצעה") ||
+    t.includes("שיפור")
+  ) {
+    return "improvement";
+  }
+
+  // New feature requests
+  if (
+    cat === "feature" ||
+    cat.includes("פיצ'ר") ||
+    cat.includes("יכולת חדשה") ||
+    t.includes("פיצ'ר")
+  ) {
+    return "feature";
+  }
+
+  // General support / help
+  return "support";
+};
+
+const feedbackCategoryLabels: Record<string, string> = {
+  archive_restore: "שחזור ארכיון",
+  support: "קריאת תמיכה",
+  bug: "דיווח על באג",
+  improvement: "הצעה לשיפור",
+  feature: "פיצ'ר חדש",
+};
+
 const FeedbackPage = () => {
   const { user: currentUser } = useAuthContext();
   const { openChat, openGroupModal } = useChat();
   const { alerts, markAsRead, refreshAlerts } = useNotifications();
   const isAdmin = currentUser?.is_admin;
 
+  const isCommanderMode =
+    sessionStorage.getItem("admin_mode") === "commander" ||
+    currentUser?.is_commander ||
+    Boolean(currentUser?.role_name?.includes("מפקד")) ||
+    currentUser?.is_temp_commander;
+
+  const isSupportTeam = Boolean(
+    !isCommanderMode &&
+    (currentUser?.is_support ||
+     (currentUser?.is_admin && sessionStorage.getItem("admin_mode") === "support") ||
+     (currentUser?.username === "admin" && sessionStorage.getItem("admin_mode") !== "commander"))
+  );
+
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = (searchParams.get("tab") as any) || "messages";
+  const tabFromUrl = searchParams.get("tab");
+  const initialTab =
+    isAdmin && tabFromUrl === "my-tickets"
+      ? "admin-view"
+      : (tabFromUrl as any) || "messages";
   const [activeTab, setActiveTab] = useState<
     | "messages"
     | "whatsapp-broadcast"
@@ -102,6 +208,33 @@ const FeedbackPage = () => {
     | "chat-admin"
     | "whats-new"
   >(initialTab);
+  const targetTicketId = searchParams.get("ticket_id");
+  const targetTicketRef = React.useRef<HTMLDivElement>(null);
+
+  // Sync activeTab whenever searchParams changes (e.g. from alert clicks or deep links)
+  useEffect(() => {
+    let tabParam = searchParams.get("tab");
+    if (isAdmin && tabParam === "my-tickets") {
+      tabParam = "admin-view";
+      setSearchParams({ tab: "admin-view" }, { replace: true });
+    }
+    if (
+      tabParam &&
+      tabParam !== activeTab &&
+      [
+        "messages",
+        "whatsapp-broadcast",
+        "admin-view",
+        "send",
+        "my-tickets",
+        "chat-admin",
+        "whats-new",
+      ].includes(tabParam)
+    ) {
+      setActiveTab(tabParam as any);
+    }
+  }, [searchParams, isAdmin]);
+
   const [myTickets, setMyTickets] = useState<Ticket[]>([]);
   const [allTickets, setAllTickets] = useState<Ticket[]>([]);
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
@@ -158,7 +291,7 @@ const FeedbackPage = () => {
   const [isSubmittingUpdate, setIsSubmittingUpdate] = useState(false);
 
   // Send ticket form state
-  const [ticketCategory, setTicketCategory] = useState("הצעה לשיפור");
+  const [ticketCategory, setTicketCategory] = useState("קריאת תמיכה");
   const [ticketDescription, setTicketDescription] = useState("");
   const [isSendingTicket, setIsSendingTicket] = useState(false);
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
@@ -193,18 +326,32 @@ const FeedbackPage = () => {
       }
 
       const categoryMapping: Record<string, string> = {
+        "קריאת תמיכה": "support",
+        תמיכה: "support",
+        "באג במערכת": "bug",
         באג: "bug",
         "הצעה לשיפור": "improvement",
         "פיצ'ר חדש": "feature",
       };
 
+      const mappedCategory = categoryMapping[ticketCategory] || "support";
+      const titlePrefix =
+        mappedCategory === "support"
+          ? "קריאת תמיכה"
+          : mappedCategory === "bug"
+            ? "דיווח על באג"
+            : mappedCategory === "feature"
+              ? "בקשת פיצ'ר"
+              : "הצעה לשיפור";
+
       await apiClient.post("/feedback", {
-        category: categoryMapping[ticketCategory] || "improvement",
+        category: mappedCategory,
+        title: `${titlePrefix}: ${ticketDescription.slice(0, 45).trim()}`,
         description: ticketDescription,
         screenshot_url: uploadedUrl,
         context_page: "feedback_page",
       });
-      toast.success("הפנייה נשלחה בהצלחה");
+      toast.success("הפנייה נשלחה בהצלחה לצוות המערכת");
       setTicketDescription("");
       setScreenshotFile(null);
       setScreenshotPreview(null);
@@ -266,44 +413,51 @@ const FeedbackPage = () => {
     },
   );
 
-  const markContactAsRead = (contactId: number, timestamp?: string) => {
+  const markContactAsRead = (contactId: any, timestamp?: string) => {
     // Clear global alerts for this contact
     alerts
       .filter(
         (a) =>
           a.id.startsWith("msg-") &&
-          Number(a.data?.sender_id) === Number(contactId),
+          isSameContactId(a.data?.sender_id || a.data?.raw_sender_id, contactId),
       )
       .forEach((a) => markAsRead(a.id));
 
     const timeToSave = timestamp || new Date().toISOString();
     setReadTimestamps((prev) => {
-      const next = { ...prev, [contactId]: timeToSave };
+      const next = { ...prev, [String(contactId)]: timeToSave };
       localStorage.setItem("chat_read_timestamps", JSON.stringify(next));
       return next;
     });
   };
 
-  const getUnreadCount = (contactId: number) => {
-    return alerts.filter(
+  const getUnreadCount = (contactId: any) => {
+    const alertMatches = alerts.filter(
       (a) =>
         a.id.startsWith("msg-") &&
-        Number(a.data?.sender_id) === Number(contactId),
+        (isSameContactId(a.data?.sender_id, contactId) ||
+          isSameContactId(a.data?.raw_sender_id, contactId) ||
+          isSameContactId(a.data?.sender_user_id, contactId)),
     ).length;
+    const msgSummary = internalMessages.find((m: any) =>
+      isSameContactId(m.other_id, contactId),
+    );
+    return Math.max(alertMatches, Number(msgSummary?.unread_count || 0));
   };
 
   // SaaS Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [adminFilter, setAdminFilter] = useState<
-    "all" | "pending" | "done" | "dismissed"
+    "all" | "pending" | "approved" | "rejected" | "dismissed"
   >("pending");
   const [adminCategoryFilter, setAdminCategoryFilter] = useState<
-    "all" | "bug" | "improvement" | "feature" | "support"
+    "all" | "archive_restore" | "bug" | "improvement" | "feature" | "support"
   >("all");
   const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
 
   const categoryOptions = [
     { value: "all" as const, label: "כל הסוגים" },
+    { value: "archive_restore" as const, label: "שחזור ארכיון" },
     { value: "bug" as const, label: "באגים (Bugs)" },
     { value: "improvement" as const, label: "הצעות לשיפור" },
     { value: "feature" as const, label: "פיצ'רים חדשים" },
@@ -315,12 +469,22 @@ const FeedbackPage = () => {
     type: "feedback" | "support";
   } | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [archiveDuration, setArchiveDuration] = useState<
+    "24h" | "7d" | "30d" | "permanent"
+  >("24h");
+  const [generalDecision, setGeneralDecision] = useState<
+    "approved" | "done" | "in_progress" | "rejected"
+  >("approved");
+  const [isSubmittingDecision, setIsSubmittingDecision] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const fetchMyTickets = async () => {
     setIsLoadingTickets(true);
     try {
-      const response = await apiClient.get("/feedback/my");
+      const ticketIdParam = searchParams.get("ticket_id");
+      const response = await apiClient.get("/feedback/my", {
+        params: ticketIdParam ? { ticket_id: ticketIdParam } : undefined,
+      });
       setMyTickets(response.data);
     } catch (error) {
       console.error(error);
@@ -421,7 +585,7 @@ const FeedbackPage = () => {
     }
   };
 
-  const fetchChatMessages = async (otherId: number) => {
+  const fetchChatMessages = async (otherId: any) => {
     setLoadingChat(true);
     try {
       const { data } = await apiClient.get(
@@ -432,7 +596,7 @@ const FeedbackPage = () => {
       // Update read status locally with timezone-safe logic
       if (data && data.length > 0) {
         const receivedMsgs = data.filter(
-          (m: any) => Number(m.sender_id) === Number(otherId),
+          (m: any) => isSameContactId(m.sender_id, otherId),
         );
         if (receivedMsgs.length > 0) {
           const latestMsg = receivedMsgs[receivedMsgs.length - 1];
@@ -448,7 +612,7 @@ const FeedbackPage = () => {
       alerts.forEach((alert) => {
         if (
           alert.id.startsWith("msg-") &&
-          Number(alert.data?.sender_id) === Number(otherId)
+          isSameContactId(alert.data?.sender_id || alert.data?.raw_sender_id, otherId)
         ) {
           markAsRead(alert.id);
         }
@@ -471,12 +635,13 @@ const FeedbackPage = () => {
     try {
       await apiClient.post("/notifications/send", {
         recipient_id: selectedChatContact.id,
-        title: `הודעה מ${currentUser?.first_name} ${currentUser?.last_name}`,
+        title: `הודעה מ${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() || "הודעה חדשה",
         description: chatInput.trim(),
       });
       setChatInput("");
-      fetchChatMessages(selectedChatContact.id);
+      await fetchChatMessages(selectedChatContact.id);
       fetchInternalMessages();
+      refreshAlerts();
     } catch (e) {
       toast.error("שגיאה בשליחת ההודעה");
     } finally {
@@ -555,10 +720,20 @@ const FeedbackPage = () => {
     else if (activeTab === "admin-view" && isAdmin) fetchAdminTickets();
     else if (activeTab === "messages") {
       fetchInternalMessages();
-      if (employees.length === 0) fetchEmployeesForMessages();
+      fetchEmployeesForMessages();
     } else if (activeTab === "chat-admin" && isAdmin) fetchAllConversations();
     else if (activeTab === "whats-new") fetchSystemUpdates();
-  }, [activeTab, isAdmin]);
+  }, [activeTab, isAdmin, currentUser?.id, currentUser?.is_impersonated, searchParams.get("ticket_id")]);
+
+  // Auto-scroll to target ticket when specified in query params
+  useEffect(() => {
+    if (targetTicketId && myTickets.length > 0) {
+      const timer = setTimeout(() => {
+        targetTicketRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [targetTicketId, myTickets]);
 
   // Real-time message polling
   useEffect(() => {
@@ -573,7 +748,7 @@ const FeedbackPage = () => {
             if (data && data.length > 0) {
               const receivedMsgs = data.filter(
                 (m: any) =>
-                  Number(m.sender_id) === Number(selectedChatContact.id),
+                  isSameContactId(m.sender_id, selectedChatContact.id),
               );
               if (receivedMsgs.length > 0) {
                 const latestMsg = receivedMsgs[receivedMsgs.length - 1];
@@ -583,7 +758,7 @@ const FeedbackPage = () => {
           })
           .catch((err) => console.error(err));
       }
-    }, 4000);
+    }, 2500);
     return () => clearInterval(interval);
   }, [activeTab, selectedChatContact]);
 
@@ -616,78 +791,244 @@ const FeedbackPage = () => {
     }
   };
 
-  const handleAdminReply = async () => {
-    if (!replyText.trim() || !selectedItem) return;
+  const handleAdminDecision = async (
+    decision: "approved" | "done" | "in_progress" | "rejected",
+    customDuration?: "24h" | "7d" | "30d" | "permanent",
+  ) => {
+    if (!selectedItem) return;
+
+    if (decision === "rejected" && !replyText.trim()) {
+      toast.error("נא להזין נימוק לדחיית הבקשה");
+      return;
+    }
+
+    setIsSubmittingDecision(true);
     try {
+      const isArchive =
+        selectedItem.data.category === "archive_restore" ||
+        selectedItem.data.title?.includes("שחזור");
+
+      const dur = customDuration || archiveDuration;
+      let finalComment = replyText.trim();
+
+      if (isArchive && decision === "approved") {
+        const durationLabels = {
+          "24h": "חד-פעמית (24 שעות)",
+          "7d": "למשך שבוע (7 ימים)",
+          "30d": "למשך חודש (30 ימים)",
+          "permanent": "אישור קבוע ללא הגבלת זמן",
+        };
+        const durationText = durationLabels[dur] || "24 שעות";
+        if (!finalComment) {
+          finalComment = `בקשת השחזור מהארכיון אושרה לצפייה (${durationText}). הנתונים זמינים כעת במערכת.`;
+        } else {
+          finalComment = `בקשת השחזור מהארכיון אושרה (${durationText}). ${finalComment}`;
+        }
+      } else if (!finalComment) {
+        if (decision === "approved") finalComment = "הבקשה אושרה ע״י צוות הניהול.";
+        else if (decision === "done") finalComment = "הפנייה טופלה בהצלחה.";
+        else if (decision === "in_progress")
+          finalComment = "הפנייה נמצאת בבדיקה ובטיפול.";
+        else if (decision === "rejected")
+          finalComment = "הבקשה נדחתה ע״י צוות הניהול.";
+      }
+
       if (selectedItem.type === "feedback") {
         await apiClient.put(`/feedback/admin/update/${selectedItem.data.id}`, {
-          status: "done",
-          admin_reply: replyText,
+          status: decision,
+          admin_reply: finalComment,
+          resolution_comment: finalComment,
+          access_duration: isArchive ? dur : undefined,
         });
       } else {
         await apiClient.put(`/support/tickets/${selectedItem.data.id}/reply`, {
-          admin_reply: replyText,
+          status: decision,
+          admin_reply: finalComment,
         });
       }
-      toast.success("תשובה נשלחה");
+
+      const decisionMessages = {
+        approved: "הבקשה אושרה בהצלחה",
+        rejected: "הבקשה נדחתה",
+        done: "הפנייה סומנה כטופלה",
+        in_progress: "הפנייה הועברה לטיפול",
+      };
+      toast.success(decisionMessages[decision]);
       setReplyText("");
       setSelectedItem(null);
       fetchAdminTickets();
+      fetchMyTickets();
     } catch (error) {
-      toast.error("שגיאה בשליחה");
+      toast.error("שגיאה בעדכון הפנייה");
+    } finally {
+      setIsSubmittingDecision(false);
     }
+  };
+
+  const handleAdminReply = async () => {
+    if (!selectedItem) return;
+    const isArchive =
+      selectedItem.data.category === "archive_restore" ||
+      selectedItem.data.title?.includes("שחזור");
+    const defaultDecision = isArchive ? "approved" : "done";
+    await handleAdminDecision(defaultDecision);
   };
 
   const availableCommanders = useMemo(() => {
     if (!currentUser) return [];
 
-    // If Admin: Can message ANYONE
-    if (currentUser.is_admin) {
-      return employees.filter((e) => Number(e.id) !== Number(currentUser.id));
-    }
+    let list: any[] = Array.isArray(employees) ? [...employees] : [];
 
-    // Include ALL commanders and Admins
-    const allCommandersAndAdmins = employees.filter(
-      (e) =>
-        (e.is_commander || e.is_admin) &&
-        Number(e.id) !== Number(currentUser.id),
+    // Always ensure Support Team Admin is in the list for non-admin users
+    const hasAdmin = list.some(
+      (c: any) => c.is_admin || isSupportAlias(c.id) || isSupportAlias(c.user_id),
     );
-
-    // If Commander: Include subordinates
-    let subordinates: any[] = [];
-    if (currentUser.is_commander) {
-      subordinates = employees.filter((e) => {
-        if (Number(e.id) === Number(currentUser.id)) return false;
-        if (
-          currentUser.commands_department_id &&
-          e.department_id === currentUser.commands_department_id
-        )
-          return true;
-        if (
-          currentUser.commands_section_id &&
-          e.section_id === currentUser.commands_section_id
-        )
-          return true;
-        if (
-          currentUser.commands_team_id &&
-          e.team_id === currentUser.commands_team_id
-        )
-          return true;
-        return false;
+    if (!hasAdmin && !currentUser?.is_admin) {
+      list.unshift({
+        id: "691b0694-1c0f-49de-9213-1f4ed4ea2936",
+        user_id: "691b0694-1c0f-49de-9213-1f4ed4ea2936",
+        employee_number: "admin",
+        first_name: "צוות",
+        last_name: "תמיכה",
+        is_admin: true,
+        is_commander: true,
+        rank: "מנהל מערכת ראשי",
+        department_name: "מטה הפיקוד",
+        section_name: "ניהול מערכת",
+        team_name: "צוות תמיכה",
+        is_active: true,
+        is_online: true,
+        chat_status: "online",
       });
     }
 
-    // Combine and deduplicate
-    const combined = [...allCommandersAndAdmins, ...subordinates];
-
-    return Array.from(new Set(combined.map((e) => e.id)))
-      .map((id) => combined.find((e) => e.id === id))
-      .sort((a, b) => {
-        if (a.is_admin && !b.is_admin) return -1;
-        if (!a.is_admin && b.is_admin) return 1;
-        return 0;
+    // Include any sender from internalMessages if not already present
+    if (Array.isArray(internalMessages)) {
+      internalMessages.forEach((m: any) => {
+        if (!m.other_id) return;
+        const exists = list.some(
+          (c: any) =>
+            isSameContactId(c.id, m.other_id) ||
+            isSameContactId(c.user_id, m.other_id),
+        );
+        if (!exists && !isSameContactId(m.other_id, currentUser.id)) {
+          const isSup = isSupportAlias(m.other_id);
+          list.push({
+            id: isSup ? "691b0694-1c0f-49de-9213-1f4ed4ea2936" : m.other_id,
+            user_id: isSup ? "691b0694-1c0f-49de-9213-1f4ed4ea2936" : m.other_id,
+            first_name: isSup ? "צוות" : (m.sender_first || m.title || "איש קשר"),
+            last_name: isSup ? "תמיכה" : (m.sender_last || ""),
+            is_admin: isSup,
+            is_commander: true,
+            is_active: true,
+            is_online: isSup,
+          });
+        }
       });
-  }, [employees, currentUser]);
+    }
+
+    // Include any sender from unread message alerts
+    if (Array.isArray(alerts)) {
+      alerts.forEach((a: any) => {
+        if (!a.id?.startsWith("msg-") || !a.data?.sender_id) return;
+        const sId = a.data.sender_id;
+        const exists = list.some(
+          (c: any) =>
+            isSameContactId(c.id, sId) || isSameContactId(c.user_id, sId),
+        );
+        if (!exists && !isSameContactId(sId, currentUser.id)) {
+          const isSup = Boolean(a.data.is_support || isSupportAlias(sId));
+          list.push({
+            id: isSup ? "691b0694-1c0f-49de-9213-1f4ed4ea2936" : sId,
+            user_id: a.data.sender_user_id || sId,
+            employee_number: a.data.sender_emp_num || "",
+            first_name: isSup
+              ? "צוות"
+              : (a.data.sender_first || a.title?.replace("הודעה מאת ", "") || "איש קשר"),
+            last_name: isSup ? "תמיכה" : (a.data.sender_last || ""),
+            is_admin: isSup,
+            is_commander: true,
+            is_active: true,
+            is_online: true,
+          });
+        }
+      });
+    }
+
+    // Exclude logged-in user themselves
+    const nonSelf = list.filter((e: any) => {
+      return (
+        !isSameContactId(e.id, currentUser.id) &&
+        !isSameContactId(e.user_id, currentUser.id) &&
+        !isSameContactId(e.employee_number, currentUser.username)
+      );
+    });
+
+    // Deduplicate by normalized contact key
+    const unique = new Map<string, any>();
+    nonSelf.forEach((item: any) => {
+      const key = isSupportAlias(item.id)
+        ? "admin"
+        : String(item.id || item.user_id);
+      if (!unique.has(key)) {
+        unique.set(key, item);
+      }
+    });
+
+    return Array.from(unique.values()).sort((a: any, b: any) => {
+      // 1. Support Team Admin ALWAYS at the top
+      if (a.is_admin && !b.is_admin) return -1;
+      if (!a.is_admin && b.is_admin) return 1;
+
+      // 2. Contacts with unread messages
+      const unreadA = getUnreadCount(a.id);
+      const unreadB = getUnreadCount(b.id);
+      if (unreadA > 0 && unreadB === 0) return -1;
+      if (unreadA === 0 && unreadB > 0) return 1;
+
+      // 3. Contacts with recent messages
+      const msgA = internalMessages.find((m: any) =>
+        isSameContactId(m.other_id, a.id),
+      );
+      const msgB = internalMessages.find((m: any) =>
+        isSameContactId(m.other_id, b.id),
+      );
+      if (msgA && !msgB) return -1;
+      if (!msgA && msgB) return 1;
+      if (msgA && msgB) {
+        return (
+          new Date(msgB.created_at).getTime() - new Date(msgA.created_at).getTime()
+        );
+      }
+
+      return 0;
+    });
+  }, [employees, currentUser, internalMessages, alerts]);
+
+  // Synchronize selected contact with URL params or auto-select first active contact
+  useEffect(() => {
+    if (activeTab !== "messages" || availableCommanders.length === 0) return;
+
+    const contactIdParam = searchParams.get("contact_id");
+    if (contactIdParam) {
+      const match = availableCommanders.find(
+        (c) =>
+          isSameContactId(c.id, contactIdParam) ||
+          isSameContactId(c.user_id, contactIdParam),
+      );
+      if (match && !isSameContactId(selectedChatContact?.id, match.id)) {
+        setSelectedChatContact(match);
+        fetchChatMessages(match.id);
+        return;
+      }
+    }
+
+    if (!selectedChatContact) {
+      const first = availableCommanders[0];
+      setSelectedChatContact(first);
+      fetchChatMessages(first.id);
+    }
+  }, [activeTab, availableCommanders, searchParams, selectedChatContact]);
 
   const totalUnreadCount = useMemo(() => {
     return alerts.filter((a) => a.id.startsWith("msg-")).length;
@@ -710,16 +1051,28 @@ const FeedbackPage = () => {
     return allAdminItems.filter(
       (item) =>
         item.status !== "done" &&
+        item.status !== "resolved" &&
         item.status !== "dismissed" &&
         item.status !== "irrelevant" &&
-        item.status !== "closed",
+        item.status !== "closed" &&
+        item.status !== "approved" &&
+        item.status !== "rejected",
     ).length;
+  }, [allAdminItems]);
+
+  const approvedTicketsCount = useMemo(() => {
+    return allAdminItems.filter((item) => item.status === "approved").length;
+  }, [allAdminItems]);
+
+  const rejectedTicketsCount = useMemo(() => {
+    return allAdminItems.filter((item) => item.status === "rejected").length;
   }, [allAdminItems]);
 
   const archivedTicketsCount = useMemo(() => {
     return allAdminItems.filter(
       (item) =>
         item.status === "done" ||
+        item.status === "resolved" ||
         item.status === "dismissed" ||
         item.status === "irrelevant" ||
         item.status === "closed",
@@ -747,6 +1100,14 @@ const FeedbackPage = () => {
       );
     }
     switch (category) {
+      case "archive_restore":
+      case "שחזור ארכיון":
+        return (
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0 flex items-center gap-1">
+            <Archive className="w-3 h-3" />
+            שחזור ארכיון
+          </span>
+        );
       case "bug":
       case "באג":
         return (
@@ -792,40 +1153,35 @@ const FeedbackPage = () => {
         if (
           adminFilter === "pending" &&
           (item.status === "done" ||
+            item.status === "resolved" ||
             item.status === "dismissed" ||
             item.status === "irrelevant" ||
-            item.status === "closed")
+            item.status === "closed" ||
+            item.status === "approved" ||
+            item.status === "rejected")
         )
+          return false;
+        if (adminFilter === "approved" && item.status !== "approved")
+          return false;
+        if (adminFilter === "rejected" && item.status !== "rejected")
           return false;
         if (
           adminFilter === "dismissed" &&
           item.status !== "done" &&
+          item.status !== "resolved" &&
           item.status !== "dismissed" &&
           item.status !== "irrelevant" &&
           item.status !== "closed"
         )
           return false;
-        if (adminCategoryFilter === "support" && item.type !== "support")
-          return false;
-        if (
-          adminCategoryFilter === "bug" &&
-          (item.type !== "feedback" ||
-            (item.category !== "bug" && item.category !== "באג"))
-        )
-          return false;
-        if (
-          adminCategoryFilter === "improvement" &&
-          (item.type !== "feedback" ||
-            (item.category !== "improvement" &&
-              item.category !== "הצעה לשיפור"))
-        )
-          return false;
-        if (
-          adminCategoryFilter === "feature" &&
-          (item.type !== "feedback" ||
-            (item.category !== "feature" && item.category !== "פיצ'ר חדש"))
-        )
-          return false;
+        if (adminCategoryFilter !== "all") {
+          const itemCat = normalizeCategory(item.category, item.title);
+          if (adminCategoryFilter === "support") {
+            if (item.type !== "support" && itemCat !== "support") return false;
+          } else if (itemCat !== adminCategoryFilter) {
+            return false;
+          }
+        }
         return true;
       })
       .sort(
@@ -853,6 +1209,18 @@ const FeedbackPage = () => {
       in_progress: {
         label: "בטיפול",
         classes: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",
+      },
+      approved: {
+        label: "אושר",
+        classes: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+      },
+      rejected: {
+        label: "נדחה",
+        classes: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
+      },
+      resolved: {
+        label: "טופל",
+        classes: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20",
       },
       done: {
         label: "טופל",
@@ -939,36 +1307,25 @@ const FeedbackPage = () => {
                     }}
                   />
                 ) : (
-                  <>
-                    <TabItem
-                      icon={Plus}
-                      label="פנייה חדשה"
-                      active={activeTab === "send"}
-                      onClick={() => {
-                        setActiveTab("send");
-                        setSearchParams({ tab: "send" });
-                      }}
-                    />
-                    <TabItem
-                      icon={Archive}
-                      label="הפניות שלי"
-                      active={activeTab === "my-tickets"}
-                      onClick={() => {
-                        setActiveTab("my-tickets");
-                        setSearchParams({ tab: "my-tickets" });
-                        fetchMyTickets();
-                      }}
-                    />
-                  </>
-                )}
-                {isAdmin && (
                   <TabItem
-                    icon={History}
-                    label="גיבוי צ'אטים"
-                    active={activeTab === "chat-admin"}
+                    icon={Archive}
+                    label="הפניות שלי"
+                    active={activeTab === "my-tickets"}
                     onClick={() => {
-                      setActiveTab("chat-admin");
-                      setSearchParams({ tab: "chat-admin" });
+                      setActiveTab("my-tickets");
+                      setSearchParams({ tab: "my-tickets" });
+                      fetchMyTickets();
+                    }}
+                  />
+                )}
+                {!isAdmin && (
+                  <TabItem
+                    icon={Plus}
+                    label="פנייה חדשה"
+                    active={activeTab === "send"}
+                    onClick={() => {
+                      setActiveTab("send");
+                      setSearchParams({ tab: "send" });
                     }}
                   />
                 )}
@@ -1050,14 +1407,16 @@ const FeedbackPage = () => {
                             </div>
                           </div>
 
-                          <Button
-                            onClick={() => setAddUpdateOpen(true)}
-                            size="sm"
-                            className="h-9.5 px-4 rounded-xl text-xs font-bold gap-1.5 shadow-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shrink-0"
-                          >
-                            <Plus className="w-4 h-4" />
-                            פרסם עדכון גרסה חדש
-                          </Button>
+                          {isSupportTeam && (
+                            <Button
+                              onClick={() => setAddUpdateOpen(true)}
+                              size="sm"
+                              className="h-9.5 px-4 rounded-xl text-xs font-bold gap-1.5 shadow-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shrink-0"
+                            >
+                              <Plus className="w-4 h-4" />
+                              פרסם עדכון גרסה חדש
+                            </Button>
+                          )}
                         </div>
 
                         {/* Recent Releases List */}
@@ -1131,14 +1490,18 @@ const FeedbackPage = () => {
                       </div>
 
                       {/* ── Section 2: Metric KPI Cards ── */}
-                      <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
                         {/* Card 1: Pending */}
                         <button
                           type="button"
-                          onClick={() => setAdminFilter(adminFilter === "pending" ? "all" : "pending")}
+                          onClick={() =>
+                            setAdminFilter(
+                              adminFilter === "pending" ? "all" : "pending",
+                            )
+                          }
                           className={cn(
                             "group relative overflow-hidden rounded-2xl border transition-all text-right w-full cursor-pointer select-none",
-                            "p-3.5 sm:p-4.5 bg-card/80 dark:bg-card/50 backdrop-blur-xs shadow-2xs hover:shadow-xs",
+                            "p-3 sm:p-4 bg-card/80 dark:bg-card/50 backdrop-blur-xs shadow-2xs hover:shadow-xs",
                             adminFilter === "pending"
                               ? "border-amber-500/60 ring-2 ring-amber-500/20 bg-amber-500/[0.04]"
                               : "border-border/60 hover:border-border hover:bg-card",
@@ -1153,30 +1516,114 @@ const FeedbackPage = () => {
                             )}
                             style={{ backgroundColor: "#f59e0b" }}
                           />
-                          <div className="flex items-center justify-between gap-2.5 sm:gap-4">
-                            <div className="space-y-1 text-right min-w-0 flex-1">
-                              <span className="text-xs sm:text-sm font-semibold text-muted-foreground block truncate">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="space-y-0.5 text-right min-w-0 flex-1">
+                              <span className="text-xs font-semibold text-muted-foreground block truncate">
                                 ממתין לטיפול
                               </span>
-                              <span className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-none">
+                              <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-none">
                                 {pendingTicketsCount}
                               </span>
                             </div>
-                            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl border flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/20 shadow-2xs">
-                              <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/20 shadow-2xs">
+                              <Clock className="w-4 h-4" />
                             </div>
                           </div>
                         </button>
 
-                        {/* Card 2: Dismissed / Handled */}
+                        {/* Card 2: Approved */}
                         <button
                           type="button"
-                          onClick={() => setAdminFilter(adminFilter === "dismissed" ? "all" : "dismissed")}
+                          onClick={() =>
+                            setAdminFilter(
+                              adminFilter === "approved" ? "all" : "approved",
+                            )
+                          }
                           className={cn(
                             "group relative overflow-hidden rounded-2xl border transition-all text-right w-full cursor-pointer select-none",
-                            "p-3.5 sm:p-4.5 bg-card/80 dark:bg-card/50 backdrop-blur-xs shadow-2xs hover:shadow-xs",
-                            adminFilter === "dismissed"
+                            "p-3 sm:p-4 bg-card/80 dark:bg-card/50 backdrop-blur-xs shadow-2xs hover:shadow-xs",
+                            adminFilter === "approved"
                               ? "border-emerald-500/60 ring-2 ring-emerald-500/20 bg-emerald-500/[0.04]"
+                              : "border-border/60 hover:border-border hover:bg-card",
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "absolute top-0 inset-x-0 h-1 transition-opacity",
+                              adminFilter === "approved"
+                                ? "opacity-100"
+                                : "opacity-0 group-hover:opacity-40",
+                            )}
+                            style={{ backgroundColor: "#10b981" }}
+                          />
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="space-y-0.5 text-right min-w-0 flex-1">
+                              <span className="text-xs font-semibold text-muted-foreground block truncate">
+                                אושרו
+                              </span>
+                              <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-none">
+                                {approvedTicketsCount}
+                              </span>
+                            </div>
+                            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 shadow-2xs">
+                              <CheckCircle2 className="w-4 h-4" />
+                            </div>
+                          </div>
+                        </button>
+
+                        {/* Card 3: Rejected */}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setAdminFilter(
+                              adminFilter === "rejected" ? "all" : "rejected",
+                            )
+                          }
+                          className={cn(
+                            "group relative overflow-hidden rounded-2xl border transition-all text-right w-full cursor-pointer select-none",
+                            "p-3 sm:p-4 bg-card/80 dark:bg-card/50 backdrop-blur-xs shadow-2xs hover:shadow-xs",
+                            adminFilter === "rejected"
+                              ? "border-rose-500/60 ring-2 ring-rose-500/20 bg-rose-500/[0.04]"
+                              : "border-border/60 hover:border-border hover:bg-card",
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "absolute top-0 inset-x-0 h-1 transition-opacity",
+                              adminFilter === "rejected"
+                                ? "opacity-100"
+                                : "opacity-0 group-hover:opacity-40",
+                            )}
+                            style={{ backgroundColor: "#f43f5e" }}
+                          />
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="space-y-0.5 text-right min-w-0 flex-1">
+                              <span className="text-xs font-semibold text-muted-foreground block truncate">
+                                נדחו
+                              </span>
+                              <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-none">
+                                {rejectedTicketsCount}
+                              </span>
+                            </div>
+                            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/20 shadow-2xs">
+                              <XCircle className="w-4 h-4" />
+                            </div>
+                          </div>
+                        </button>
+
+                        {/* Card 4: Dismissed / Handled */}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setAdminFilter(
+                              adminFilter === "dismissed" ? "all" : "dismissed",
+                            )
+                          }
+                          className={cn(
+                            "group relative overflow-hidden rounded-2xl border transition-all text-right w-full cursor-pointer select-none",
+                            "p-3 sm:p-4 bg-card/80 dark:bg-card/50 backdrop-blur-xs shadow-2xs hover:shadow-xs",
+                            adminFilter === "dismissed"
+                              ? "border-teal-500/60 ring-2 ring-teal-500/20 bg-teal-500/[0.04]"
                               : "border-border/60 hover:border-border hover:bg-card",
                           )}
                         >
@@ -1187,30 +1634,30 @@ const FeedbackPage = () => {
                                 ? "opacity-100"
                                 : "opacity-0 group-hover:opacity-40",
                             )}
-                            style={{ backgroundColor: "#10b981" }}
+                            style={{ backgroundColor: "#14b8a6" }}
                           />
-                          <div className="flex items-center justify-between gap-2.5 sm:gap-4">
-                            <div className="space-y-1 text-right min-w-0 flex-1">
-                              <span className="text-xs sm:text-sm font-semibold text-muted-foreground block truncate">
-                                טופלו / בארכיון
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="space-y-0.5 text-right min-w-0 flex-1">
+                              <span className="text-xs font-semibold text-muted-foreground block truncate">
+                                טופלו / ארכיון
                               </span>
-                              <span className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-none">
+                              <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-none">
                                 {archivedTicketsCount}
                               </span>
                             </div>
-                            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl border flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 shadow-2xs">
-                              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 bg-teal-500/10 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 border-teal-500/20 shadow-2xs">
+                              <Archive className="w-4 h-4" />
                             </div>
                           </div>
                         </button>
 
-                        {/* Card 3: All Items */}
+                        {/* Card 5: All Items */}
                         <button
                           type="button"
                           onClick={() => setAdminFilter("all")}
                           className={cn(
                             "group relative overflow-hidden rounded-2xl border transition-all text-right w-full cursor-pointer select-none",
-                            "p-3.5 sm:p-4.5 bg-card/80 dark:bg-card/50 backdrop-blur-xs shadow-2xs hover:shadow-xs",
+                            "p-3 sm:p-4 bg-card/80 dark:bg-card/50 backdrop-blur-xs shadow-2xs hover:shadow-xs",
                             adminFilter === "all"
                               ? "border-primary/60 ring-2 ring-primary/20 bg-primary/[0.04]"
                               : "border-border/60 hover:border-border hover:bg-card",
@@ -1225,17 +1672,17 @@ const FeedbackPage = () => {
                             )}
                             style={{ backgroundColor: "#3b82f6" }}
                           />
-                          <div className="flex items-center justify-between gap-2.5 sm:gap-4">
-                            <div className="space-y-1 text-right min-w-0 flex-1">
-                              <span className="text-xs sm:text-sm font-semibold text-muted-foreground block truncate">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="space-y-0.5 text-right min-w-0 flex-1">
+                              <span className="text-xs font-semibold text-muted-foreground block truncate">
                                 כלל הפניות
                               </span>
-                              <span className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-none">
+                              <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-none">
                                 {allAdminItems.length}
                               </span>
                             </div>
-                            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl border flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 bg-primary/10 text-primary border-primary/20 shadow-2xs">
-                              <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 bg-primary/10 text-primary border-primary/20 shadow-2xs">
+                              <MessageSquare className="w-4 h-4" />
                             </div>
                           </div>
                         </button>
@@ -1559,8 +2006,10 @@ const FeedbackPage = () => {
                                 );
                               })
                               .map((contact: any) => {
-                                const isSelected =
-                                  selectedChatContact?.id === contact.id;
+                                const isSelected = isSameContactId(
+                                  selectedChatContact?.id,
+                                  contact.id,
+                                );
                                 const isGenericSupport =
                                   contact.is_admin &&
                                   (!contact.first_name ||
@@ -1571,7 +2020,7 @@ const FeedbackPage = () => {
                                     contact.employee_number;
                                 const lastMsg = internalMessages.find(
                                   (m: any) =>
-                                    String(m.other_id) === String(contact.id),
+                                    isSameContactId(m.other_id, contact.id),
                                 );
                                 const unreadCount = getUnreadCount(contact.id);
 
@@ -1773,8 +2222,9 @@ const FeedbackPage = () => {
                                 ) : (
                                   chatMessages.map((msg: any) => {
                                     const isOwn =
-                                      Number(msg.sender_id) ===
-                                      Number(currentUser?.id);
+                                      isSameContactId(msg.sender_id, currentUser?.id) ||
+                                      isSameContactId(msg.sender_id, currentUser?.user_id) ||
+                                      isSameContactId(msg.sender_id, currentUser?.username);
                                     return (
                                       <div
                                         key={msg.id}
@@ -1897,7 +2347,19 @@ const FeedbackPage = () => {
                       className="space-y-6"
                     >
                       <div className="space-y-3">
-                        {myTickets.length === 0 ? (
+                        {isLoadingTickets ? (
+                          <div className="space-y-3">
+                            {[1, 2, 3].map((i) => (
+                              <div
+                                key={i}
+                                className="h-24 rounded-2xl bg-card/40 border border-border/40 animate-pulse p-4 flex flex-col justify-between"
+                              >
+                                <div className="h-4 w-1/4 bg-muted/60 rounded-md" />
+                                <div className="h-3 w-3/4 bg-muted/40 rounded-md" />
+                              </div>
+                            ))}
+                          </div>
+                        ) : myTickets.length === 0 ? (
                           <div className="py-12 flex flex-col items-center justify-center text-center bg-card/20 rounded-3xl border border-dashed border-border/50">
                             <Archive className="w-12 h-12 text-muted-foreground/30 mb-3" />
                             <h3 className="text-sm font-black text-foreground">
@@ -1905,71 +2367,94 @@ const FeedbackPage = () => {
                             </h3>
                           </div>
                         ) : (
-                          myTickets.map((ticket) => (
-                            <Card
-                              key={ticket.id}
-                              className="group bg-card/40 border border-border/40 backdrop-blur-xl rounded-2xl p-4 hover:bg-card/60 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                            >
-                              <div className="space-y-1 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-black text-sm text-foreground">
-                                    {ticket.category}
-                                  </span>
-                                  <span className="text-[10px] font-bold text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
-                                    {new Date(
-                                      ticket.created_at,
-                                    ).toLocaleDateString("he-IL")}
-                                  </span>
-                                </div>
-                                <p className="text-xs font-medium text-muted-foreground line-clamp-1 max-w-xl">
-                                  {ticket.description}
-                                </p>
-                                {ticket.screenshot_url && (
-                                  <div className="mt-3 flex items-center gap-3">
-                                    <div
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        window.open(
-                                          getScreenshotUrl(
-                                            ticket.screenshot_url,
-                                          ),
-                                          "_blank",
-                                        );
-                                      }}
-                                      className="relative w-16 h-12 rounded-xl overflow-hidden border border-border/40 bg-black/5 cursor-pointer hover:border-primary/40 transition-all group shrink-0"
-                                    >
-                                      <img
-                                        src={getScreenshotUrl(
-                                          ticket.screenshot_url,
-                                        )}
-                                        alt="צילום מסך פנייה"
-                                        className="w-full h-full object-cover"
-                                      />
-                                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <Eye className="w-3.5 h-3.5 text-white" />
-                                      </div>
-                                    </div>
-                                    <span className="text-[10px] font-bold text-muted-foreground">
-                                      צילום מסך מצורף (לחץ להגדלה)
+                          myTickets.map((ticket) => {
+                            const isTarget = Boolean(targetTicketId && ticket.id === targetTicketId);
+                            const normalizedCat = normalizeCategory(ticket.category, ticket.title);
+                            const categoryLabel = feedbackCategoryLabels[normalizedCat] || ticket.category;
+                            const hasReply = Boolean(ticket.admin_reply || ticket.resolution_comment);
+
+                            return (
+                              <Card
+                                key={ticket.id}
+                                ref={isTarget ? targetTicketRef : undefined}
+                                className={cn(
+                                  "group bg-card/40 border backdrop-blur-xl rounded-2xl p-4 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4",
+                                  isTarget
+                                    ? "border-primary/60 ring-2 ring-primary/30 bg-primary/[0.04] shadow-md shadow-primary/10"
+                                    : "border-border/40 hover:bg-card/60"
+                                )}
+                              >
+                                <div className="space-y-1.5 flex-1 min-w-0">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="font-black text-sm text-foreground">
+                                      {ticket.title || categoryLabel}
                                     </span>
+                                    {ticket.title && (
+                                      <span className="text-[10px] font-bold text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
+                                        {categoryLabel}
+                                      </span>
+                                    )}
+                                    <span className="text-[10px] font-bold text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
+                                      {new Date(
+                                        ticket.created_at,
+                                      ).toLocaleDateString("he-IL")}
+                                    </span>
+                                    {isTarget && (
+                                      <span className="text-[10px] font-black text-primary bg-primary/15 px-2 py-0.5 rounded-full animate-pulse">
+                                        פנייה מבוקשת
+                                      </span>
+                                    )}
                                   </div>
-                                )}
-                                {ticket.admin_reply && (
-                                  <div className="mt-2 p-3 bg-primary/5 border border-primary/10 rounded-xl">
-                                    <p className="text-[10px] font-black uppercase text-primary/70 mb-1">
-                                      תשובת צוות ניהול
-                                    </p>
-                                    <p className="text-xs font-bold text-foreground">
-                                      {ticket.admin_reply}
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="self-start sm:self-center">
-                                {getStatusBadge(ticket.status)}
-                              </div>
-                            </Card>
-                          ))
+                                  <p className="text-xs font-medium text-muted-foreground line-clamp-2 max-w-xl whitespace-pre-wrap">
+                                    {ticket.description}
+                                  </p>
+                                  {ticket.screenshot_url && (
+                                    <div className="mt-3 flex items-center gap-3">
+                                      <div
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          window.open(
+                                            getScreenshotUrl(
+                                              ticket.screenshot_url,
+                                            ),
+                                            "_blank",
+                                          );
+                                        }}
+                                        className="relative w-16 h-12 rounded-xl overflow-hidden border border-border/40 bg-black/5 cursor-pointer hover:border-primary/40 transition-all group shrink-0"
+                                      >
+                                        <img
+                                          src={getScreenshotUrl(
+                                            ticket.screenshot_url,
+                                          )}
+                                          alt="צילום מסך פנייה"
+                                          className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                          <Eye className="w-3.5 h-3.5 text-white" />
+                                        </div>
+                                      </div>
+                                      <span className="text-[10px] font-bold text-muted-foreground">
+                                        צילום מסך מצורף (לחץ להגדלה)
+                                      </span>
+                                    </div>
+                                  )}
+                                  {hasReply && (
+                                    <div className="mt-2.5 p-3.5 bg-primary/5 border border-primary/15 rounded-xl">
+                                      <p className="text-[10px] font-black uppercase text-primary mb-1">
+                                        תשובת צוות ניהול
+                                      </p>
+                                      <p className="text-xs font-bold text-foreground whitespace-pre-wrap">
+                                        {ticket.admin_reply || ticket.resolution_comment}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="self-start sm:self-center shrink-0">
+                                  {getStatusBadge(ticket.status)}
+                                </div>
+                              </Card>
+                            );
+                          })
                         )}
                       </div>
                     </motion.div>
@@ -2258,7 +2743,7 @@ const FeedbackPage = () => {
                               )}
                             />
                           </button>
-                          {isAdmin && (
+                          {isSupportTeam && (
                             <button
                               onClick={() => setAddUpdateOpen(true)}
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-primary text-white font-black text-[11px] shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all"
@@ -2410,7 +2895,7 @@ const FeedbackPage = () => {
                                 סוג הפנייה
                               </label>
                               <div className="flex gap-2">
-                                {["באג", "הצעה לשיפור", "פיצ'ר חדש"].map(
+                                {["קריאת תמיכה", "באג במערכת", "הצעה לשיפור", "פיצ'ר חדש"].map(
                                   (cat) => (
                                     <button
                                       type="button"
@@ -2673,22 +3158,112 @@ const FeedbackPage = () => {
                         </div>
                       </div>
                     )}
+                  {/* Archive access duration picker if it's an archive restore request */}
+                  {(selectedItem.data.category === "archive_restore" ||
+                    selectedItem.data.title?.includes("שחזור")) && (
+                    <div className="space-y-2 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20">
+                      <label className="text-[11px] font-black text-amber-700 dark:text-amber-300 block">
+                        משך גישה לארכיון בעת אישור
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                        {[
+                          { val: "24h", label: "24 שעות" },
+                          { val: "7d", label: "7 ימים" },
+                          { val: "30d", label: "30 ימים" },
+                          { val: "permanent", label: "קבוע" },
+                        ].map((d) => (
+                          <button
+                            key={d.val}
+                            type="button"
+                            onClick={() => setArchiveDuration(d.val as any)}
+                            className={cn(
+                              "py-1.5 px-2 rounded-xl text-xs font-bold transition-all border cursor-pointer",
+                              archiveDuration === d.val
+                                ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                                : "bg-card/70 text-foreground border-border/40 hover:bg-muted"
+                            )}
+                          >
+                            {d.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-4">
                     <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
-                      מענה רשמי
+                      מענה רשמי / נימוק
                     </label>
                     <textarea
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
-                      placeholder="כתוב כאן את התשובה..."
-                      className="w-full h-32 p-4 bg-background border border-border/50 rounded-2xl text-sm font-medium text-foreground focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                      placeholder="כתוב כאן את התשובה או הנימוק (חובה במקרה של דחייה)..."
+                      className="w-full h-28 p-3.5 bg-background border border-border/50 rounded-2xl text-xs sm:text-sm font-medium text-foreground focus:ring-2 focus:ring-primary/20 transition-all resize-none"
                     />
-                    <Button
-                      onClick={handleAdminReply}
-                      className="w-full h-12 rounded-xl font-black bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
-                    >
-                      שליחת מענה
-                    </Button>
+
+                    {/* Action buttons */}
+                    <div className="space-y-2">
+                      {(selectedItem.data.category === "archive_restore" ||
+                        selectedItem.data.title?.includes("שחזור")) ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            onClick={() => handleAdminDecision("approved")}
+                            disabled={isSubmittingDecision}
+                            className="h-11 rounded-xl font-black bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 gap-1.5 cursor-pointer"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                            אשר שחזור
+                          </Button>
+                          <Button
+                            onClick={() => handleAdminDecision("rejected")}
+                            disabled={isSubmittingDecision}
+                            variant="destructive"
+                            className="h-11 rounded-xl font-black shadow-md shadow-destructive/20 gap-1.5 cursor-pointer"
+                          >
+                            <X className="w-4 h-4" />
+                            דחה בקשה
+                          </Button>
+                          <Button
+                            onClick={() => handleAdminDecision("in_progress")}
+                            disabled={isSubmittingDecision}
+                            variant="outline"
+                            className="col-span-2 h-10 rounded-xl font-bold border-border/60 hover:bg-muted text-xs gap-1.5 cursor-pointer"
+                          >
+                            <Clock className="w-3.5 h-3.5 text-blue-500" />
+                            סמן כבטיפול
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            onClick={() => handleAdminDecision("done")}
+                            disabled={isSubmittingDecision}
+                            className="h-11 rounded-xl font-black bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 gap-1.5 cursor-pointer"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                            סמן כטופל
+                          </Button>
+                          <Button
+                            onClick={() => handleAdminDecision("rejected")}
+                            disabled={isSubmittingDecision}
+                            variant="destructive"
+                            className="h-11 rounded-xl font-black shadow-md shadow-destructive/20 gap-1.5 cursor-pointer"
+                          >
+                            <X className="w-4 h-4" />
+                            דחה פנייה
+                          </Button>
+                          <Button
+                            onClick={() => handleAdminDecision("in_progress")}
+                            disabled={isSubmittingDecision}
+                            variant="outline"
+                            className="col-span-2 h-10 rounded-xl font-bold border-border/60 hover:bg-muted text-xs gap-1.5 cursor-pointer"
+                          >
+                            <Clock className="w-3.5 h-3.5 text-blue-500" />
+                            סמן כבטיפול
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -2866,7 +3441,7 @@ const FeedbackPage = () => {
         </AnimatePresence>
         {/* ==================== ADD SYSTEM UPDATE DIALOG ==================== */}
         <AnimatePresence>
-          {addUpdateOpen && isAdmin && (
+          {addUpdateOpen && isSupportTeam && (
             <>
               {/* Backdrop */}
               <motion.div
@@ -3049,25 +3624,25 @@ const FeedbackPage = () => {
             </>
           ) : (
             <>
-              {isAdmin && (
+              {isAdmin ? (
                 <MobileBottomNavLink
-                  label="ניהול"
-                  icon={Settings}
+                  label="ניהול פניות"
+                  icon={Filter}
                   active={activeTab === "admin-view"}
                   onClick={() => {
                     setActiveTab("admin-view");
                     setSearchParams({ tab: "admin-view" });
                   }}
                 />
-              )}
-              {isAdmin && (
+              ) : (
                 <MobileBottomNavLink
-                  label="גיבוי"
-                  icon={ShieldCheck}
-                  active={activeTab === "chat-admin"}
+                  label="הפניות שלי"
+                  icon={History}
+                  active={activeTab === "my-tickets"}
                   onClick={() => {
-                    setActiveTab("chat-admin");
-                    setSearchParams({ tab: "chat-admin" });
+                    setActiveTab("my-tickets");
+                    setSearchParams({ tab: "my-tickets" });
+                    fetchMyTickets();
                   }}
                 />
               )}
@@ -3083,18 +3658,6 @@ const FeedbackPage = () => {
                 }}
                 badge={totalUnreadCount}
               />
-              {!isAdmin && (
-                <MobileBottomNavLink
-                  label="הפניות שלי"
-                  icon={History}
-                  active={activeTab === "my-tickets"}
-                  onClick={() => {
-                    setActiveTab("my-tickets");
-                    setSearchParams({ tab: "my-tickets" });
-                    fetchMyTickets();
-                  }}
-                />
-              )}
               {!isAdmin && (
                 <MobileBottomNavLink
                   label="פנייה"

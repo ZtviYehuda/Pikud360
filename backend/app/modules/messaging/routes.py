@@ -264,8 +264,9 @@ def search_messaging():
 
 import urllib.request
 import json
+import os
 
-LOCAL_GATEWAY_URL = "http://localhost:3001"
+LOCAL_GATEWAY_URL = os.getenv("WHATSAPP_GATEWAY_URL", os.getenv("LOCAL_GATEWAY_URL", "http://localhost:3001"))
 
 @messaging_bp.route("/whatsapp/status", methods=["GET"])
 @messaging_bp.route("/employees/whatsapp/status", methods=["GET"])

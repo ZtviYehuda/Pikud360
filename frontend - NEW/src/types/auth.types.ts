@@ -36,6 +36,11 @@ export interface AuthUser {
   last_password_change?: string | null;
   is_temp_commander?: boolean;
   active_delegate_id?: number;
+  is_support?: boolean;
+  roles?: string[];
+  permissions?: string[];
+  display_name?: string;
+  uuid?: string;
   theme?: string;
   accent_color?: string;
   font_size?: string;

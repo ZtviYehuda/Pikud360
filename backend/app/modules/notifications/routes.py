@@ -192,6 +192,16 @@ def get_chat_conversation(recipient_id):
 
         with get_db_connection() as conn:
             with conn.cursor() as cur:
+                # Mark incoming unread messages in this conversation as read
+                cur.execute("""
+                    UPDATE core.chat_messages
+                    SET read_at = NOW()
+                    WHERE LOWER(recipient_id) IN %s
+                      AND LOWER(sender_id) IN %s
+                      AND read_at IS NULL;
+                """, (user_aliases, recipient_aliases))
+                conn.commit()
+
                 cur.execute("""
                     SELECT id, sender_id, recipient_id, title, description, created_at, sender_first, sender_last
                     FROM core.chat_messages
@@ -220,6 +230,53 @@ def get_chat_conversation(recipient_id):
                 return jsonify(messages), 200
     except Exception as e:
         logger.error(f"Error fetching conversation for recipient {recipient_id}: {e}", exc_info=True)
+        return jsonify([]), 200
+
+
+@notifications_bp.route("/notifications/messages", methods=["GET"])
+@jwt_required(optional=True)
+def list_user_messages_overview():
+    """Returns conversation summaries (last message and unread count) for all contacts."""
+    try:
+        user_id = get_jwt_identity() or "default-user"
+        user_aliases = _get_aliases(user_id)
+
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT id, sender_id, recipient_id, title, description, created_at, read_at
+                    FROM core.chat_messages
+                    WHERE LOWER(sender_id) IN %s OR LOWER(recipient_id) IN %s
+                    ORDER BY created_at DESC;
+                """, (user_aliases, user_aliases))
+                rows = cur.fetchall()
+
+                conversations = {}
+                for row in rows:
+                    m_id, s_id, r_id, title, desc, created_at, read_at = row
+                    is_incoming = str(r_id).lower() in user_aliases
+                    partner_id = str(s_id) if is_incoming else str(r_id)
+
+                    # Normalize support / admin aliases so they map consistently
+                    if partner_id.lower() in ["1", "admin", "admin-support", "691b0694-1c0f-49de-9213-1f4ed4ea2936"]:
+                        partner_id = "691b0694-1c0f-49de-9213-1f4ed4ea2936"
+
+                    if partner_id not in conversations:
+                        conversations[partner_id] = {
+                            "other_id": partner_id,
+                            "last_message_id": m_id,
+                            "description": desc,
+                            "title": title,
+                            "created_at": created_at.isoformat() if hasattr(created_at, "isoformat") else str(created_at),
+                            "unread_count": 0
+                        }
+
+                    if is_incoming and not read_at:
+                        conversations[partner_id]["unread_count"] += 1
+
+                return jsonify(list(conversations.values())), 200
+    except Exception as e:
+        logger.error(f"Error fetching messages overview: {e}", exc_info=True)
         return jsonify([]), 200
 
 

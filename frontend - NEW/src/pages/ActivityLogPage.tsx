@@ -255,7 +255,7 @@ export default function ActivityLogPage() {
     }
   };
 
-  const isAccessAllowed = user?.is_admin || user?.is_commander || activeTab === "my";
+  const isAccessAllowed = user?.is_admin || activeTab === "my";
 
   if (!isAccessAllowed) {
     return (
@@ -358,7 +358,7 @@ export default function ActivityLogPage() {
                </div>
              </button>
 
-             {(user?.is_admin || user?.is_commander) && (
+             {user?.is_admin && (
                <button
                  onClick={() => setActiveTab("all")}
                  className={cn(

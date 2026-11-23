@@ -16,7 +16,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const AUTH_DIR = path.join(__dirname, "whatsapp_auth");
+const AUTH_DIR = process.env.WHATSAPP_AUTH_DIR || path.join(__dirname, "whatsapp_auth");
 
 app.use(cors());
 app.use(express.json());
@@ -62,14 +62,26 @@ async function initWhatsApp() {
       }
 
       if (connection === "close") {
-        const shouldReconnect =
-          (lastDisconnect?.error)?.output?.statusCode !== DisconnectReason.loggedOut;
+        const statusCode = (lastDisconnect?.error)?.output?.statusCode;
+        const isLoggedOut = statusCode === DisconnectReason.loggedOut;
         connectionStatus = "disconnected";
         currentQrDataUrl = null;
         connectedUser = null;
 
-        console.log("Connection closed. Reconnecting:", shouldReconnect);
-        if (shouldReconnect) {
+        console.log("Connection closed. Status code:", statusCode, "Logged out:", isLoggedOut);
+        if (isLoggedOut) {
+          // Stale or expired credentials - clear them so a fresh QR code is generated
+          console.log("Session logged out or expired. Clearing stale auth credentials to generate a fresh QR code...");
+          try {
+            if (fs.existsSync(AUTH_DIR)) {
+              fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+            }
+          } catch (e) {
+            console.error("Failed to clear auth dir:", e);
+          }
+          setTimeout(initWhatsApp, 1500);
+        } else {
+          // Network hiccup or temporary drop - reconnect
           setTimeout(initWhatsApp, 3000);
         }
       } else if (connection === "open") {

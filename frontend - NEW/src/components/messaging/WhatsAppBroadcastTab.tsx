@@ -27,6 +27,7 @@ import {
   Send,
   ChevronLeft,
   FileText,
+  Sparkles,
 } from "lucide-react";
 import { AiMessageGeneratorModal } from "./AiMessageGeneratorModal";
 import { WhatsAppIcon } from "@/components/common/WhatsAppIcon";
@@ -346,6 +347,9 @@ export const WhatsAppBroadcastTab: React.FC = () => {
   const [selectedCustomGroupIds, setSelectedCustomGroupIds] = useState<
     Set<string>
   >(new Set());
+  const [treeViewMode, setTreeViewMode] = useState<"units" | "custom_groups">(
+    "units",
+  );
   const [showCustomGroupModal, setShowCustomGroupModal] = useState(false);
   const [editingCustomGroup, setEditingCustomGroup] =
     useState<CustomWhatsAppGroup | null>(null);
@@ -1184,520 +1188,612 @@ export const WhatsAppBroadcastTab: React.FC = () => {
       activeTemplate.content !== messageBody);
 
   // Render Tree Component
-  const renderTreeContent = () => (
-    <div className="space-y-3">
-      {/* Custom WhatsApp Groups Card */}
-      <div className="rounded-xl border border-border/60 bg-muted/20 p-2.5 space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-            <Users className="w-3.5 h-3.5 text-primary" />
-            <span>קבוצות מותאמות אישית ({customGroups.length})</span>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleOpenCreateCustomGroupModal}
-            className="h-6 px-2 text-[11px] font-bold text-primary hover:bg-primary/10 gap-1 rounded-lg border-primary/20"
-          >
-            <Plus className="w-3 h-3" />
-            <span>קבוצה חדשה</span>
-          </Button>
-        </div>
+  const renderTreeContent = () => {
+    const totalSelectedCount =
+      selectedTargets.length +
+      selectedIndividuals.size +
+      selectedCustomGroupIds.size;
 
-        {customGroups.length === 0 ? (
-          <div className="text-[11px] text-muted-foreground/75 py-2 text-center bg-background/60 rounded-lg border border-dashed border-border/60">
-            לא נוצרו עדיין קבוצות מותאמות. לחץ על{" "}
-            <strong className="text-foreground">"קבוצה חדשה"</strong> כדי ליצור
-            קבוצה בשם לבחירתך.
-          </div>
-        ) : (
-          <div className="space-y-1 max-h-[140px] overflow-y-auto custom-scrollbar">
-            {customGroups.map((group) => {
-              const isSel = selectedCustomGroupIds.has(group.id);
-              return (
-                <div
-                  key={group.id}
-                  className={cn(
-                    "flex items-center justify-between p-1.5 px-2 rounded-lg text-xs transition-colors select-none",
-                    isSel
-                      ? "bg-primary/10 text-foreground border border-primary/20 font-medium"
-                      : "hover:bg-muted/60 bg-background/70 border border-border/40 text-foreground",
-                  )}
-                >
-                  <div
-                    onClick={() => toggleCustomGroup(group.id)}
-                    className="flex items-center gap-2 min-w-0 cursor-pointer flex-1"
-                  >
-                    <div
-                      className={cn(
-                        "w-4 h-4 rounded border flex items-center justify-center shrink-0",
-                        isSel
-                          ? "bg-primary border-primary text-primary-foreground"
-                          : "border-input bg-background",
-                      )}
-                    >
-                      {isSel && <Check className="w-3 h-3 stroke-[3]" />}
-                    </div>
-                    <span className="truncate font-semibold">{group.name}</span>
-                  </div>
+    const filteredCustomGroups = customGroups.filter((g) =>
+      g.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
 
-                  <div className="flex items-center gap-0.5 shrink-0">
-                    {group.link && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => window.open(group.link, "_blank")}
-                        className="h-6 w-6 p-0 text-[#25D366] hover:text-[#1faa53]"
-                        title="פתח קישור לקבוצת הוואטסאפ"
-                      >
-                        <WhatsAppIcon className="w-3.5 h-3.5" />
-                      </Button>
-                    )}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleOpenEditCustomGroupModal(group)}
-                      className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
-                      title="ערוך קבוצה"
-                    >
-                      <Edit2 className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        handleDeleteCustomGroup(group.id, group.name)
-                      }
-                      className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                      title="מחק קבוצה"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+    return (
+      <div className="flex flex-col space-y-3">
+        {/* Clean Flat Tabs without rounded pill background or frames */}
+        <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-1">
+          <div className="flex items-center gap-5">
+            <button
+              type="button"
+              onClick={() => setTreeViewMode("units")}
+              className={cn(
+                "flex items-center gap-1.5 pb-2 text-xs font-bold transition-all cursor-pointer relative",
+                treeViewMode === "units"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span>יחידות ומדורים</span>
+              {selectedTargets.length > 0 && (
+                <span className="bg-primary/10 text-primary text-[10px] font-bold px-1.5 py-0.2 rounded-full">
+                  {selectedTargets.length}
+                </span>
+              )}
+              {treeViewMode === "units" && (
+                <span className="absolute bottom-0 right-0 left-0 h-0.5 bg-primary rounded-full" />
+              )}
+            </button>
 
-      <div className="flex items-center justify-between text-xs pt-1 border-t border-border/40">
-        <span className="font-semibold text-foreground">עץ יחידות ושוטרים</span>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="link"
-            size="sm"
-            onClick={selectAllOrganization}
-            className="p-0 h-auto text-xs"
-          >
-            בחר הכל
-          </Button>
-          {(selectedTargets.length > 0 ||
-            selectedIndividuals.size > 0 ||
-            selectedCustomGroupIds.size > 0) && (
-            <>
-              <span className="text-muted-foreground">•</span>
+            <button
+              type="button"
+              onClick={() => setTreeViewMode("custom_groups")}
+              className={cn(
+                "flex items-center gap-1.5 pb-2 text-xs font-bold transition-all cursor-pointer relative",
+                treeViewMode === "custom_groups"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>קבוצות מותאמות ({customGroups.length})</span>
+              {selectedCustomGroupIds.size > 0 && (
+                <span className="bg-primary/10 text-primary text-[10px] font-bold px-1.5 py-0.2 rounded-full">
+                  {selectedCustomGroupIds.size}
+                </span>
+              )}
+              {treeViewMode === "custom_groups" && (
+                <span className="absolute bottom-0 right-0 left-0 h-0.5 bg-primary rounded-full" />
+              )}
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1">
+            {treeViewMode === "custom_groups" && (
               <Button
-                variant="link"
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleOpenCreateCustomGroupModal}
+                className="h-7 px-2.5 text-xs font-bold text-primary hover:bg-primary/10 gap-1 rounded-xl border-primary/30 shadow-2xs"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>קבוצה חדשה</span>
+              </Button>
+            )}
+
+            {totalSelectedCount > 0 && (
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={clearSelection}
-                className="p-0 h-auto text-xs text-destructive hover:text-destructive"
+                className="h-7 px-2 text-xs font-semibold text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer"
               >
                 נקה
               </Button>
-            </>
+            )}
+
+            {treeViewMode === "units" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={selectAllOrganization}
+                className="h-7 px-2 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer"
+              >
+                בחר הכל
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60" />
+          <Input
+            placeholder={
+              treeViewMode === "units"
+                ? "חיפוש מחלקה, מדור, צוות או שוטר..."
+                : "חיפוש קבוצה מותאמת..."
+            }
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pr-9 h-9 text-xs rounded-xl bg-muted/20 border-border/50 focus:bg-background transition-all"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           )}
         </div>
-      </div>
 
-      <div className="relative">
-        <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="חיפוש מחלקה, מדור, צוות..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pr-9 h-9 text-xs"
-        />
-      </div>
-
-      <div className="border rounded-lg p-2 max-h-[380px] overflow-y-auto space-y-1">
-        {filteredStructure.length === 0 ? (
-          <div className="p-6 text-center text-xs text-muted-foreground">
-            לא נמצאו יחידות התואמות לחיפוש
-          </div>
-        ) : (
-          filteredStructure.map((dept) => {
-            const isDeptExpanded = expandedDepts.has(dept.id);
-            const isDeptSel = isTargetSelected("department", dept.id);
-            const deptKey = `department_${dept.id}`;
-            const deptGroupLink = groupLinks[deptKey];
-            const canEditDept = canCommanderEditUnit(
-              user,
-              { level: "department", id: dept.id, name: dept.name },
-              structure,
-            );
-
-            return (
-              <div key={dept.id} className="space-y-1">
-                <div
-                  className={cn(
-                    "flex items-center justify-between p-1.5 px-2 rounded-md text-xs transition-colors select-none",
-                    isDeptSel
-                      ? "bg-accent text-accent-foreground font-medium"
-                      : "hover:bg-muted text-foreground",
-                  )}
+        {/* Tree / Group Content Container */}
+        {treeViewMode === "custom_groups" ? (
+          <div className="min-h-[460px] max-h-[calc(100vh-280px)] overflow-y-auto custom-scrollbar rounded-xl p-1 space-y-1">
+            {customGroups.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-8 text-center bg-muted/15 rounded-2xl border border-dashed border-border/60 space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-foreground">אין קבוצות מותאמות אישית</p>
+                  <p className="text-[11px] text-muted-foreground max-w-xs">
+                    צור קבוצת וואטסאפ ייעודית עם קישור ישיר להפצה מהירה
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleOpenCreateCustomGroupModal}
+                  className="h-8 px-3 text-xs font-bold gap-1.5 rounded-xl shadow-2xs"
                 >
-                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleDeptExpand(dept.id)}
-                      className="p-0 h-5 w-5 shrink-0"
-                    >
-                      {isDeptExpanded ? (
-                        <ChevronDown className="w-3.5 h-3.5" />
-                      ) : (
-                        <ChevronRight className="w-3.5 h-3.5 rotate-180" />
-                      )}
-                    </Button>
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>קבוצה חדשה</span>
+                </Button>
+              </div>
+            ) : filteredCustomGroups.length === 0 ? (
+              <div className="p-6 text-center text-xs text-muted-foreground">
+                לא נמצאו קבוצות התואמות לחיפוש
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {filteredCustomGroups.map((group) => {
+                  const isSel = selectedCustomGroupIds.has(group.id);
+                  return (
                     <div
-                      onClick={() =>
-                        toggleTarget({
-                          level: "department",
-                          id: dept.id,
-                          name: cleanUnitName(dept.name),
-                        })
-                      }
-                      className="flex items-center gap-2 min-w-0 cursor-pointer flex-1"
+                      key={group.id}
+                      className={cn(
+                        "flex items-center justify-between py-2 px-2.5 rounded-lg text-xs transition-colors select-none",
+                        isSel
+                          ? "bg-primary/10 text-primary font-bold"
+                          : "hover:bg-muted/60 text-foreground",
+                      )}
                     >
                       <div
-                        className={cn(
-                          "w-4 h-4 rounded border flex items-center justify-center shrink-0",
-                          isDeptSel
-                            ? "bg-primary border-primary text-primary-foreground"
-                            : "border-input bg-background",
-                        )}
+                        onClick={() => toggleCustomGroup(group.id)}
+                        className="flex items-center gap-2 min-w-0 cursor-pointer flex-1"
                       >
-                        {isDeptSel && <Check className="w-3 h-3 stroke-[3]" />}
+                        <div
+                          className={cn(
+                            "w-4 h-4 rounded-md border flex items-center justify-center shrink-0 transition-all",
+                            isSel
+                              ? "bg-primary border-primary text-primary-foreground shadow-2xs"
+                              : "border-border/80 bg-background hover:border-primary/50",
+                          )}
+                        >
+                          {isSel && <Check className="w-3 h-3 stroke-[3]" />}
+                        </div>
+                        <span className="truncate">{group.name}</span>
                       </div>
-                      <span className="truncate">
-                        {cleanUnitName(dept.name)}
-                      </span>
+
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        {group.link && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(group.link, "_blank")}
+                            className="h-7 w-7 p-0 text-[#25D366] hover:text-[#1faa53] hover:bg-[#25D366]/10 rounded-lg"
+                            title="פתח קישור לקבוצת הוואטסאפ"
+                          >
+                            <WhatsAppIcon className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenEditCustomGroupModal(group)}
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground rounded-lg"
+                          title="ערוך קבוצה"
+                        >
+                          <Edit2 className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            handleDeleteCustomGroup(group.id, group.name)
+                          }
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive rounded-lg"
+                          title="מחק קבוצה"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="min-h-[460px] max-h-[calc(100vh-280px)] overflow-y-auto custom-scrollbar rounded-xl p-1 space-y-1">
+            {filteredStructure.length === 0 ? (
+              <div className="p-8 text-center text-xs text-muted-foreground">
+                לא נמצאו יחידות התואמות לחיפוש
+              </div>
+            ) : (
+              filteredStructure.map((dept) => {
+                const isDeptExpanded = expandedDepts.has(dept.id);
+                const isDeptSel = isTargetSelected("department", dept.id);
+                const deptKey = `department_${dept.id}`;
+                const deptGroupLink = groupLinks[deptKey];
+                const canEditDept = canCommanderEditUnit(
+                  user,
+                  { level: "department", id: dept.id, name: dept.name },
+                  structure,
+                );
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    {canEditDept ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          handleOpenEditGroupLink({
-                            level: "department",
-                            id: dept.id,
-                            name: cleanUnitName(dept.name),
-                          })
-                        }
-                        className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
-                        title={
-                          deptGroupLink
-                            ? "ערוך קישור קבוצה"
-                            : "הגדר קישור קבוצה"
-                        }
-                      >
-                        <Link2 className="w-3.5 h-3.5" />
-                      </Button>
-                    ) : deptGroupLink ? (
-                      <span
-                        title="קישור קבוצה מוגדר"
-                        className="text-muted-foreground p-1 opacity-50"
-                      >
-                        <Link2 className="w-3.5 h-3.5" />
-                      </span>
-                    ) : null}
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] py-0 px-1 font-normal"
+                return (
+                  <div key={dept.id} className="space-y-0.5">
+                    <div
+                      className={cn(
+                        "flex items-center justify-between py-2 px-2.5 rounded-lg text-xs transition-colors select-none",
+                        isDeptSel
+                          ? "bg-primary/10 text-primary font-bold"
+                          : "hover:bg-muted/60 text-foreground font-semibold",
+                      )}
                     >
-                      מחלקה
-                    </Badge>
-                  </div>
-                </div>
-
-                {isDeptExpanded && (
-                  <div className="pr-4 space-y-0.5 border-r mr-2 my-0.5">
-                    {dept.sections?.map((sec) => {
-                      const isSecExpanded = expandedSections.has(sec.id);
-                      const isSecSel = isTargetSelected("section", sec.id);
-                      const secKey = `section_${sec.id}`;
-                      const secGroupLink = groupLinks[secKey];
-                      const canEditSec = canCommanderEditUnit(
-                        user,
-                        { level: "section", id: sec.id, name: sec.name },
-                        structure,
-                      );
-
-                      return (
-                        <div key={sec.id} className="space-y-0.5">
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleDeptExpand(dept.id)}
+                          className="p-0 h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                        >
+                          {isDeptExpanded ? (
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          ) : (
+                            <ChevronRight className="w-3.5 h-3.5 rotate-180" />
+                          )}
+                        </Button>
+                        <div
+                          onClick={() =>
+                            toggleTarget({
+                              level: "department",
+                              id: dept.id,
+                              name: cleanUnitName(dept.name),
+                            })
+                          }
+                          className="flex items-center gap-2 min-w-0 cursor-pointer flex-1"
+                        >
                           <div
                             className={cn(
-                              "flex items-center justify-between p-1.5 px-2 rounded-md text-xs transition-colors select-none",
-                              isSecSel
-                                ? "bg-accent text-accent-foreground font-medium"
-                                : "hover:bg-muted text-foreground",
+                              "w-4 h-4 rounded-md border flex items-center justify-center shrink-0 transition-all",
+                              isDeptSel
+                                ? "bg-primary border-primary text-primary-foreground shadow-2xs"
+                                : "border-border/80 bg-background hover:border-primary/50",
                             )}
                           >
-                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => toggleSectionExpand(sec.id)}
-                                className="p-0 h-5 w-5 shrink-0"
-                              >
-                                {isSecExpanded ? (
-                                  <ChevronDown className="w-3.5 h-3.5" />
-                                ) : (
-                                  <ChevronRight className="w-3.5 h-3.5 rotate-180" />
-                                )}
-                              </Button>
-                              <div
-                                onClick={() =>
-                                  toggleTarget({
-                                    level: "section",
-                                    id: sec.id,
-                                    name: cleanUnitName(sec.name),
-                                  })
-                                }
-                                className="flex items-center gap-2 min-w-0 cursor-pointer flex-1"
-                              >
-                                <div
-                                  className={cn(
-                                    "w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0",
-                                    isSecSel
-                                      ? "bg-primary border-primary text-primary-foreground"
-                                      : "border-input bg-background",
-                                  )}
-                                >
-                                  {isSecSel && (
-                                    <Check className="w-2.5 h-2.5 stroke-[3]" />
-                                  )}
-                                </div>
-                                <span className="truncate">
-                                  {cleanUnitName(sec.name)}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-1 shrink-0">
-                              {canEditSec ? (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() =>
-                                    handleOpenEditGroupLink({
-                                      level: "section",
-                                      id: sec.id,
-                                      name: cleanUnitName(sec.name),
-                                    })
-                                  }
-                                  className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
-                                  title={
-                                    secGroupLink
-                                      ? "ערוך קישור קבוצה"
-                                      : "הגדר קישור קבוצה"
-                                  }
-                                >
-                                  <Link2 className="w-3 h-3" />
-                                </Button>
-                              ) : secGroupLink ? (
-                                <span
-                                  title="קישור קבוצה מוגדר"
-                                  className="text-muted-foreground p-1 opacity-50"
-                                >
-                                  <Link2 className="w-3 h-3" />
-                                </span>
-                              ) : null}
-                              <Badge
-                                variant="outline"
-                                className="text-[9px] py-0 px-1 font-normal"
-                              >
-                                מדור
-                              </Badge>
-                            </div>
+                            {isDeptSel && (
+                              <Check className="w-3 h-3 stroke-[3]" />
+                            )}
                           </div>
+                          <span className="truncate">
+                            {cleanUnitName(dept.name)}
+                          </span>
+                        </div>
+                      </div>
 
-                          {isSecExpanded && (
-                            <div className="pr-4 space-y-0.5 border-r mr-2 my-0.5">
-                              {sec.teams?.map((team) => {
-                                const isTeamSel = isTargetSelected(
-                                  "team",
-                                  team.id,
-                                );
-                                const isTeamExp = expandedTeams.has(team.id);
-                                const teamKey = `team_${team.id}`;
-                                const teamGroupLink = groupLinks[teamKey];
-                                const canEditTeam = canCommanderEditUnit(
-                                  user,
-                                  {
-                                    level: "team",
-                                    id: team.id,
-                                    name: team.name,
-                                  },
-                                  structure,
-                                );
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {canEditDept ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              handleOpenEditGroupLink({
+                                level: "department",
+                                id: dept.id,
+                                name: cleanUnitName(dept.name),
+                              })
+                            }
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground rounded-md"
+                            title={
+                              deptGroupLink
+                                ? "ערוך קישור קבוצה"
+                                : "הגדר קישור קבוצה"
+                            }
+                          >
+                            <Link2 className="w-3.5 h-3.5" />
+                          </Button>
+                        ) : deptGroupLink ? (
+                          <span
+                            title="קישור קבוצה מוגדר"
+                            className="text-muted-foreground p-1 opacity-50"
+                          >
+                            <Link2 className="w-3.5 h-3.5" />
+                          </span>
+                        ) : null}
+                        <span className="text-[10px] font-medium text-muted-foreground/75 bg-muted/60 px-1.5 py-0.5 rounded-md">
+                          מחלקה
+                        </span>
+                      </div>
+                    </div>
 
-                                const teamOfficers = safeEmployees.filter(
-                                  (e) => e.team_id === team.id && e.is_active,
-                                );
+                    {isDeptExpanded && (
+                      <div className="pr-4 space-y-0.5 border-r border-border/40 mr-2.5 my-0.5">
+                        {dept.sections?.map((sec) => {
+                          const isSecExpanded = expandedSections.has(sec.id);
+                          const isSecSel = isTargetSelected("section", sec.id);
+                          const secKey = `section_${sec.id}`;
+                          const secGroupLink = groupLinks[secKey];
+                          const canEditSec = canCommanderEditUnit(
+                            user,
+                            { level: "section", id: sec.id, name: sec.name },
+                            structure,
+                          );
 
-                                return (
-                                  <div key={team.id} className="space-y-0.5">
+                          return (
+                            <div key={sec.id} className="space-y-0.5">
+                              <div
+                                className={cn(
+                                  "flex items-center justify-between py-1.5 px-2 rounded-lg text-xs transition-colors select-none",
+                                  isSecSel
+                                    ? "bg-primary/10 text-primary font-semibold"
+                                    : "hover:bg-muted/50 text-foreground/90",
+                                )}
+                              >
+                                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => toggleSectionExpand(sec.id)}
+                                    className="p-0 h-5 w-5 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                                  >
+                                    {isSecExpanded ? (
+                                      <ChevronDown className="w-3 h-3" />
+                                    ) : (
+                                      <ChevronRight className="w-3 h-3 rotate-180" />
+                                    )}
+                                  </Button>
+                                  <div
+                                    onClick={() =>
+                                      toggleTarget({
+                                        level: "section",
+                                        id: sec.id,
+                                        name: cleanUnitName(sec.name),
+                                      })
+                                    }
+                                    className="flex items-center gap-2 min-w-0 cursor-pointer flex-1"
+                                  >
                                     <div
                                       className={cn(
-                                        "flex items-center justify-between p-1 px-2 rounded-md text-xs transition-colors select-none",
-                                        isTeamSel
-                                          ? "bg-accent text-accent-foreground font-medium"
-                                          : "hover:bg-muted text-foreground",
+                                        "w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-all",
+                                        isSecSel
+                                          ? "bg-primary border-primary text-primary-foreground shadow-2xs"
+                                          : "border-border/80 bg-background hover:border-primary/50",
                                       )}
                                     >
-                                      <div className="flex items-center gap-1 min-w-0 flex-1">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() =>
-                                            toggleTeamExpand(team.id)
-                                          }
-                                          className="p-0 h-5 w-5 shrink-0"
-                                        >
-                                          {isTeamExp ? (
-                                            <ChevronDown className="w-3.5 h-3.5" />
-                                          ) : (
-                                            <ChevronRight className="w-3.5 h-3.5 rotate-180" />
-                                          )}
-                                        </Button>
-                                        <div
-                                          onClick={() =>
-                                            toggleTarget({
-                                              level: "team",
-                                              id: team.id,
-                                              name: cleanUnitName(team.name),
-                                            })
-                                          }
-                                          className="flex items-center gap-1.5 min-w-0 cursor-pointer flex-1"
-                                        >
-                                          <div
-                                            className={cn(
-                                              "w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0",
-                                              isTeamSel
-                                                ? "bg-primary border-primary text-primary-foreground"
-                                                : "border-input bg-background",
-                                            )}
-                                          >
-                                            {isTeamSel && (
-                                              <Check className="w-2.5 h-2.5 stroke-[3]" />
-                                            )}
-                                          </div>
-                                          <span className="truncate">
-                                            {cleanUnitName(team.name)}
-                                          </span>
-                                        </div>
-                                      </div>
-
-                                      <div className="flex items-center gap-1 shrink-0">
-                                        {canEditTeam && (
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() =>
-                                              handleOpenEditGroupLink({
-                                                level: "team",
-                                                id: team.id,
-                                                name: cleanUnitName(team.name),
-                                              })
-                                            }
-                                            className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
-                                            title={
-                                              teamGroupLink
-                                                ? "ערוך קישור קבוצה"
-                                                : "הגדר קישור קבוצה"
-                                            }
-                                          >
-                                            <Link2 className="w-3 h-3" />
-                                          </Button>
-                                        )}
-                                        <span className="text-[10px] text-muted-foreground font-mono">
-                                          ({teamOfficers.length})
-                                        </span>
-                                      </div>
+                                      {isSecSel && (
+                                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                                      )}
                                     </div>
+                                    <span className="truncate">
+                                      {cleanUnitName(sec.name)}
+                                    </span>
+                                  </div>
+                                </div>
 
-                                    {isTeamExp && (
-                                      <div className="pr-4 space-y-0.5 my-0.5">
-                                        {teamOfficers.map((emp) => {
-                                          const isIndSel =
-                                            isIndividualSelected(emp.id) ||
-                                            isTeamSel;
-                                          return (
-                                            <div
-                                              key={emp.id}
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  {canEditSec ? (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() =>
+                                        handleOpenEditGroupLink({
+                                          level: "section",
+                                          id: sec.id,
+                                          name: cleanUnitName(sec.name),
+                                        })
+                                      }
+                                      className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground rounded-md"
+                                      title={
+                                        secGroupLink
+                                          ? "ערוך קישור קבוצה"
+                                          : "הגדר קישור קבוצה"
+                                      }
+                                    >
+                                      <Link2 className="w-3 h-3" />
+                                    </Button>
+                                  ) : secGroupLink ? (
+                                    <span
+                                      title="קישור קבוצה מוגדר"
+                                      className="text-muted-foreground p-1 opacity-50"
+                                    >
+                                      <Link2 className="w-3 h-3" />
+                                    </span>
+                                  ) : null}
+                                  <span className="text-[9px] font-medium text-muted-foreground/75 bg-muted/50 px-1.5 py-0.5 rounded-md">
+                                    מדור
+                                  </span>
+                                </div>
+                              </div>
+
+                              {isSecExpanded && (
+                                <div className="pr-4 space-y-0.5 border-r border-border/40 mr-2 my-0.5">
+                                  {sec.teams?.map((team) => {
+                                    const isTeamSel = isTargetSelected(
+                                      "team",
+                                      team.id,
+                                    );
+                                    const isTeamExp = expandedTeams.has(
+                                      team.id,
+                                    );
+                                    const teamKey = `team_${team.id}`;
+                                    const teamGroupLink = groupLinks[teamKey];
+                                    const canEditTeam = canCommanderEditUnit(
+                                      user,
+                                      {
+                                        level: "team",
+                                        id: team.id,
+                                        name: team.name,
+                                      },
+                                      structure,
+                                    );
+
+                                    const teamOfficers = safeEmployees.filter(
+                                      (e) =>
+                                        e.team_id === team.id && e.is_active,
+                                    );
+
+                                    return (
+                                      <div
+                                        key={team.id}
+                                        className="space-y-0.5"
+                                      >
+                                        <div
+                                          className={cn(
+                                            "flex items-center justify-between py-1 px-2 rounded-lg text-xs transition-colors select-none",
+                                            isTeamSel
+                                              ? "bg-primary/10 text-primary font-semibold"
+                                              : "hover:bg-muted/40 text-foreground/80",
+                                          )}
+                                        >
+                                          <div className="flex items-center gap-1 min-w-0 flex-1">
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
                                               onClick={() =>
-                                                toggleIndividual(emp.id)
+                                                toggleTeamExpand(team.id)
                                               }
-                                              className={cn(
-                                                "flex items-center justify-between p-1.5 px-2 rounded-md text-xs cursor-pointer select-none transition-colors",
-                                                isIndSel
-                                                  ? "bg-primary/10 text-primary font-medium"
-                                                  : "hover:bg-muted text-muted-foreground",
-                                              )}
+                                              className="p-0 h-5 w-5 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer"
                                             >
-                                              <div className="flex items-center gap-2 min-w-0">
-                                                <div
-                                                  className={cn(
-                                                    "w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0",
-                                                    isIndSel
-                                                      ? "bg-primary border-primary text-primary-foreground"
-                                                      : "border-input bg-background",
-                                                  )}
-                                                >
-                                                  {isIndSel && (
-                                                    <Check className="w-2 h-2 stroke-[3]" />
-                                                  )}
-                                                </div>
-                                                <span className="truncate">
-                                                  {emp.dominant_name ||
-                                                    `${emp.first_name} ${emp.last_name}`}
-                                                </span>
+                                              {isTeamExp ? (
+                                                <ChevronDown className="w-3 h-3" />
+                                              ) : (
+                                                <ChevronRight className="w-3 h-3 rotate-180" />
+                                              )}
+                                            </Button>
+                                            <div
+                                              onClick={() =>
+                                                toggleTarget({
+                                                  level: "team",
+                                                  id: team.id,
+                                                  name: cleanUnitName(
+                                                    team.name,
+                                                  ),
+                                                })
+                                              }
+                                              className="flex items-center gap-1.5 min-w-0 cursor-pointer flex-1"
+                                            >
+                                              <div
+                                                className={cn(
+                                                  "w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-all",
+                                                  isTeamSel
+                                                    ? "bg-primary border-primary text-primary-foreground shadow-2xs"
+                                                    : "border-border/80 bg-background hover:border-primary/50",
+                                                )}
+                                              >
+                                                {isTeamSel && (
+                                                  <Check className="w-2.5 h-2.5 stroke-[3]" />
+                                                )}
                                               </div>
-                                              <span className="font-mono text-[10px] opacity-60">
-                                                {emp.phone_number ||
-                                                  "ללא טלפון"}
+                                              <span className="truncate">
+                                                {cleanUnitName(team.name)}
                                               </span>
                                             </div>
-                                          );
-                                        })}
+                                          </div>
+
+                                          <div className="flex items-center gap-1 shrink-0">
+                                            {canEditTeam && (
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() =>
+                                                  handleOpenEditGroupLink({
+                                                    level: "team",
+                                                    id: team.id,
+                                                    name: cleanUnitName(
+                                                      team.name,
+                                                    ),
+                                                  })
+                                                }
+                                                className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground rounded-md"
+                                                title={
+                                                  teamGroupLink
+                                                    ? "ערוך קישור קבוצה"
+                                                    : "הגדר קישור קבוצה"
+                                                }
+                                              >
+                                                <Link2 className="w-3 h-3" />
+                                              </Button>
+                                            )}
+                                            <span className="text-[10px] text-muted-foreground font-mono">
+                                              ({teamOfficers.length})
+                                            </span>
+                                          </div>
+                                        </div>
+
+                                        {isTeamExp && (
+                                          <div className="pr-4 space-y-0.5 my-0.5">
+                                            {teamOfficers.map((emp) => {
+                                              const isIndSel =
+                                                isIndividualSelected(emp.id) ||
+                                                isTeamSel;
+                                              return (
+                                                <div
+                                                  key={emp.id}
+                                                  onClick={() =>
+                                                    toggleIndividual(emp.id)
+                                                  }
+                                                  className={cn(
+                                                    "flex items-center justify-between py-1 px-2 rounded-md text-xs cursor-pointer select-none transition-all",
+                                                    isIndSel
+                                                      ? "bg-primary/15 text-primary font-bold"
+                                                      : "hover:bg-muted/50 text-muted-foreground hover:text-foreground",
+                                                  )}
+                                                >
+                                                  <div className="flex items-center gap-2 min-w-0">
+                                                    <div
+                                                      className={cn(
+                                                        "w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-all",
+                                                        isIndSel
+                                                          ? "bg-primary border-primary text-primary-foreground shadow-2xs"
+                                                          : "border-border/80 bg-background hover:border-primary/50",
+                                                      )}
+                                                    >
+                                                      {isIndSel && (
+                                                        <Check className="w-2 h-2 stroke-[3]" />
+                                                      )}
+                                                    </div>
+                                                    <span className="truncate">
+                                                      {emp.dominant_name ||
+                                                        `${emp.first_name} ${emp.last_name}`}
+                                                    </span>
+                                                  </div>
+                                                  <span className="font-mono text-[10px] opacity-60">
+                                                    {emp.phone_number ||
+                                                      "ללא טלפון"}
+                                                  </span>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        )}
                                       </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
+                                    );
+                                  })}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            );
-          })
+                );
+              })
+            )}
+          </div>
         )}
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="space-y-4 pb-20 lg:pb-6 px-1 sm:px-0">
@@ -1707,28 +1803,40 @@ export const WhatsAppBroadcastTab: React.FC = () => {
         <div className="hidden lg:block lg:col-span-5">
           <Card className="rounded-2xl border border-border/50 bg-card/60 shadow-xs">
             <CardHeader className="pb-3 border-b border-border/40">
-              <CardTitle className="text-base font-bold">
-                עץ יחידות ושוטרים
-              </CardTitle>
-              <CardDescription className="text-xs">
-                בחר יחידות או שוטרים לשליחת ההודעה
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-base font-bold text-foreground">
+                    עץ יחידות ושוטרים
+                  </CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                    בחר יחידות או שוטרים לשליחת ההודעה
+                  </CardDescription>
+                </div>
+                {resolvedRecipients.length > 0 && (
+                  <Badge
+                    variant="outline"
+                    className="text-xs font-bold border-primary/30 bg-primary/10 text-primary py-1 px-2.5 rounded-xl animate-in fade-in"
+                  >
+                    {resolvedRecipients.length} שוטרים נבחרו
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
-            <CardContent className="pt-4">{renderTreeContent()}</CardContent>
+            <CardContent className="pt-3.5">{renderTreeContent()}</CardContent>
           </Card>
         </div>
 
         {/* Left Column (Main Composer): Borderless on Mobile, Clean Card on Desktop */}
         <div className="lg:col-span-7">
-          <div className="rounded-2xl sm:rounded-3xl lg:border lg:border-border/50 lg:bg-card/50 lg:shadow-xs flex flex-col space-y-5 sm:space-y-6 p-0 sm:p-2 lg:p-6">
+          <div className="rounded-xl lg:border lg:border-border/50 lg:bg-card/50 lg:shadow-xs flex flex-col space-y-3 p-3 sm:p-4 lg:p-4.5">
             
             {/* Desktop Header Section (Hidden on Mobile since page header already exists) */}
-            <div className="hidden sm:flex sm:items-center justify-between gap-2.5 pb-3 border-b border-border/30">
+            <div className="hidden sm:flex sm:items-center justify-between gap-2 pb-2.5 border-b border-border/30">
               <div>
-                <h2 className="text-base sm:text-lg font-black text-foreground">
+                <h2 className="text-sm sm:text-base font-bold text-foreground">
                   ניסוח והפצת הודעה
                 </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-[11px] text-muted-foreground mt-0.5">
                   הפצה מיידית לקבוצות וואטסאפ יחידתיות או לשוטרים
                 </p>
               </div>
@@ -1738,19 +1846,19 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                   <div className="flex items-center gap-1.5">
                     <Badge
                       variant="outline"
-                      className="text-xs font-semibold border-emerald-500/30 text-emerald-600 bg-emerald-500/5 gap-1.5 py-1 px-2.5 rounded-xl"
+                      className="text-xs font-semibold border-emerald-500/30 text-emerald-600 bg-emerald-500/5 gap-1.5 py-0.5 px-2.5 rounded-lg"
                     >
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                       וואטסאפ מחובר
                     </Badge>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={handleGatewayLogout}
-                      className="h-7 px-2 text-xs font-semibold text-destructive hover:text-destructive hover:bg-destructive/10 gap-1 rounded-xl transition-colors cursor-pointer"
+                      className="h-7 px-2 text-xs font-semibold text-destructive hover:text-destructive hover:bg-destructive/10 gap-1 rounded-lg transition-colors cursor-pointer"
                       title="נתק חשבון וואטסאפ"
                     >
-                      <LogOut className="w-3.5 h-3.5" />
+                      <LogOut className="w-3 h-3" />
                       <span>התנתק</span>
                     </Button>
                   </div>
@@ -1759,7 +1867,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => setShowQrModal(true)}
-                    className="h-8 text-xs font-semibold gap-1.5 rounded-xl border-border/60 cursor-pointer"
+                    className="h-7.5 text-xs font-semibold gap-1.5 rounded-lg border-border/60 cursor-pointer"
                   >
                     <QrCode className="w-3.5 h-3.5" />
                     חבר QR
@@ -1773,7 +1881,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
               <div className="flex items-center gap-1">
                 {gatewayStatus.status === "connected" ? (
                   <>
-                    <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 gap-1.5 py-1 px-2.5 rounded-xl flex items-center">
+                    <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 gap-1.5 py-1 px-2.5 rounded-lg flex items-center">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                       וואטסאפ מחובר
                     </div>
@@ -1781,7 +1889,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                       variant="ghost"
                       size="sm"
                       onClick={handleGatewayLogout}
-                      className="h-7 px-1.5 text-[11px] font-bold text-destructive hover:text-destructive hover:bg-destructive/10 gap-0.5 rounded-lg cursor-pointer"
+                      className="h-7 px-1.5 text-[11px] font-bold text-destructive hover:text-destructive hover:bg-destructive/10 gap-0.5 rounded-md cursor-pointer"
                       title="נתק חשבון וואטסאפ"
                     >
                       <LogOut className="w-3 h-3" />
@@ -1793,7 +1901,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => setShowQrModal(true)}
-                    className="h-7 text-xs font-semibold gap-1.5 rounded-xl border-border/40"
+                    className="h-7 text-xs font-semibold gap-1.5 rounded-lg border-border/40"
                   >
                     <QrCode className="w-3 h-3" />
                     חבר QR
@@ -1806,7 +1914,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => setMobileTreeOpen(true)}
-                className="h-8 px-2.5 rounded-xl bg-muted/40 hover:bg-muted/60 text-xs font-bold gap-1.5 text-foreground cursor-pointer shrink-0"
+                className="h-7.5 px-2.5 rounded-lg bg-muted/40 hover:bg-muted/60 text-xs font-bold gap-1.5 text-foreground cursor-pointer shrink-0"
               >
                 <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
                 <span>
@@ -1817,51 +1925,50 @@ export const WhatsAppBroadcastTab: React.FC = () => {
               </Button>
             </div>
 
-            {/* Form Row 1: Template Selector & AI Smart Draft */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs gap-2">
-                <label className="font-bold text-foreground text-xs sm:text-sm">
-                  תבנית וניסוח הודעה
-                </label>
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAiDraftModal(true)}
-                    className="h-8 text-xs font-bold text-primary border-primary/30 bg-primary/5 hover:bg-primary/10 gap-1.5 rounded-xl transition-all shadow-2xs cursor-pointer"
-                  >
-                    <FileText className="w-3.5 h-3.5" />
-                    <span>מחולל הודעות</span>
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleOpenNewTemplateModal}
-                    className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground font-semibold rounded-xl cursor-pointer"
-                  >
-                    + תבנית
-                  </Button>
-                </div>
+            {/* Form Row 1: Unified Sleek Bar for Templates & AI */}
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setTemplatePopoverOpen(true)}
+                  className="flex-1 justify-between h-8.5 text-xs font-medium bg-background border-border/50 rounded-lg px-3 hover:bg-muted/30 cursor-pointer shadow-2xs"
+                >
+                  <span className="truncate">
+                    {activeTemplate
+                      ? activeTemplate.label
+                      : "בחר תבנית מוכנה מראש (או ניסוח חופשי)..."}
+                  </span>
+                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground opacity-60 shrink-0 mr-1" />
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAiDraftModal(true)}
+                  className="h-8.5 text-xs font-bold text-primary border-primary/30 bg-primary/5 hover:bg-primary/10 gap-1.5 rounded-lg transition-all shadow-2xs shrink-0 cursor-pointer px-2.5"
+                  title="מחולל הודעות מבוסס AI"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  <span>מחולל AI</span>
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleOpenNewTemplateModal}
+                  className="h-8.5 px-2 text-xs text-muted-foreground hover:text-foreground font-semibold rounded-lg shrink-0 cursor-pointer"
+                  title="הוספת תבנית חדשה"
+                >
+                  <Plus className="w-3.5 h-3.5 ml-0.5" />
+                  <span>תבנית</span>
+                </Button>
               </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setTemplatePopoverOpen(true)}
-                className="w-full justify-between h-11 text-xs sm:text-sm font-medium bg-background border-border/50 rounded-2xl px-3.5 hover:bg-muted/30 cursor-pointer shadow-2xs"
-              >
-                <span className="truncate">
-                  {activeTemplate
-                    ? activeTemplate.label
-                    : "בחר תבנית מוכנה מראש (או לחץ לניסוח חופשי)..."}
-                </span>
-                <ChevronDown className="w-4 h-4 text-muted-foreground opacity-60 shrink-0" />
-              </Button>
-
               {isTemplateModified && (
-                <div className="flex items-center justify-between p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300">
+                <div className="flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300">
                   <span className="truncate">
                     שינית את הניסוח לתבנית '{activeTemplate?.label}'
                   </span>
@@ -1869,32 +1976,29 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                     size="sm"
                     variant="outline"
                     onClick={handleSaveActiveTemplateChanges}
-                    className="h-7 text-xs px-2.5 rounded-xl"
+                    className="h-6 text-[11px] px-2 rounded-md font-semibold"
                   >
-                    <Save className="w-3 h-3 ml-1" />
+                    <Save className="w-2.5 h-2.5 ml-1" />
                     שמור
                   </Button>
                 </div>
               )}
             </div>
 
-            {/* Form Row 2: Subject */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-foreground block">
-                נושא / כותרת (אופציונלי)
-              </label>
+            {/* Form Row 2: Subject (Compact single line) */}
+            <div>
               <Input
-                placeholder="עדכון יומי, תזכורת נוכחות..."
+                placeholder="נושא / כותרת (אופציונלי)..."
                 value={messageTitle}
                 onChange={(e) => setMessageTitle(e.target.value)}
-                className="h-11 text-xs sm:text-sm rounded-2xl bg-background border-border/50 shadow-2xs"
+                className="h-8.5 text-xs rounded-lg bg-background border-border/50 shadow-2xs placeholder:text-muted-foreground/70"
               />
             </div>
 
             {/* Form Row 3: Message Content */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <label className="font-bold text-foreground">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs px-0.5">
+                <label className="font-bold text-foreground text-xs sm:text-sm">
                   תוכן ההודעה <span className="text-primary">*</span>
                 </label>
                 <span className="text-muted-foreground font-mono text-[10px]">
@@ -1903,32 +2007,32 @@ export const WhatsAppBroadcastTab: React.FC = () => {
               </div>
               <Textarea
                 placeholder="כתוב כאן את תוכן ההודעה..."
-                rows={6}
+                rows={7}
                 value={messageBody}
                 onChange={(e) => setMessageBody(e.target.value)}
-                className="min-h-[160px] sm:min-h-[190px] text-xs sm:text-sm leading-relaxed resize-y custom-scrollbar rounded-2xl bg-background border-border/50 p-3.5 sm:p-4 shadow-2xs"
+                className="min-h-[180px] sm:min-h-[205px] text-xs sm:text-sm leading-relaxed resize-y custom-scrollbar rounded-xl bg-background border-border/50 p-3 sm:p-3.5 shadow-2xs focus-visible:ring-1"
               />
             </div>
 
             {/* Mode A: Group targets quick list */}
             {(selectedTargets.length > 0 ||
               selectedCustomGroupIds.size > 0) && (
-              <div className="space-y-2 pt-2 border-t border-border/30">
+              <div className="space-y-1.5 pt-2 border-t border-border/30">
                 <span className="text-xs font-bold text-foreground block">
                   קבוצות יעד לשליחה (
                   {selectedTargets.length + selectedCustomGroupIds.size}):
                 </span>
-                <div className="space-y-1.5 max-h-[160px] overflow-y-auto custom-scrollbar">
+                <div className="space-y-1 max-h-[130px] overflow-y-auto custom-scrollbar">
                   {/* Custom Groups */}
                   {customGroups
                     .filter((g) => selectedCustomGroupIds.has(g.id))
                     .map((group) => (
                       <div
                         key={group.id}
-                        className="flex items-center justify-between p-2.5 rounded-2xl border bg-primary/5 border-primary/20 text-xs"
+                        className="flex items-center justify-between py-1 px-2.5 rounded-lg border bg-primary/5 border-primary/20 text-xs"
                       >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-bold truncate">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="font-semibold truncate">
                             {group.name}
                           </span>
                           <span className="text-[10px] text-muted-foreground shrink-0">
@@ -1936,7 +2040,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="flex items-center gap-1 shrink-0">
                           <Button
                             type="button"
                             variant="ghost"
@@ -1944,10 +2048,10 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                             onClick={() =>
                               handleOpenEditCustomGroupModal(group)
                             }
-                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground rounded-xl"
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground rounded-md"
                             title="ערוך קבוצה / קישור"
                           >
-                            <Edit2 className="w-3.5 h-3.5" />
+                            <Edit2 className="w-3 h-3" />
                           </Button>
 
                           <Button
@@ -1955,12 +2059,12 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                             size="sm"
                             onClick={() => handleAutoSendToCustomGroup(group)}
                             disabled={autoSending}
-                            className="h-8 text-xs bg-[#25D366] hover:bg-[#1faa53] text-white font-bold rounded-xl px-3"
+                            className="h-6.5 text-[11px] bg-[#25D366] hover:bg-[#1faa53] text-white font-bold rounded-md px-2.5"
                           >
                             {autoSending ? (
-                              <Loader2 className="w-3 h-3 animate-spin ml-1" />
+                              <Loader2 className="w-2.5 h-2.5 animate-spin ml-1" />
                             ) : (
-                              <WhatsAppIcon className="w-3 h-3 ml-1" />
+                              <WhatsAppIcon className="w-2.5 h-2.5 ml-1" />
                             )}
                             שלח
                           </Button>
@@ -1981,23 +2085,23 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                     return (
                       <div
                         key={key}
-                        className="flex items-center justify-between p-2.5 rounded-2xl border border-border/40 bg-muted/20 text-xs"
+                        className="flex items-center justify-between py-1 px-2.5 rounded-lg border border-border/40 bg-muted/20 text-xs"
                       >
-                        <span className="font-bold truncate">
+                        <span className="font-semibold truncate">
                           {target.name}
                         </span>
 
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="flex items-center gap-1 shrink-0">
                           {canEdit && (
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
                               onClick={() => handleOpenEditGroupLink(target)}
-                              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground rounded-xl"
+                              className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground rounded-md"
                               title="ערוך קישור קבוצה"
                             >
-                              <Link2 className="w-3.5 h-3.5" />
+                              <Link2 className="w-3 h-3" />
                             </Button>
                           )}
 
@@ -2006,12 +2110,12 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                             size="sm"
                             onClick={() => handleAutoSendToGroup(target)}
                             disabled={autoSending}
-                            className="h-8 text-xs bg-[#25D366] hover:bg-[#1faa53] text-white font-bold rounded-xl px-3"
+                            className="h-6.5 text-[11px] bg-[#25D366] hover:bg-[#1faa53] text-white font-bold rounded-md px-2.5"
                           >
                             {autoSending ? (
-                              <Loader2 className="w-3 h-3 animate-spin ml-1" />
+                              <Loader2 className="w-2.5 h-2.5 animate-spin ml-1" />
                             ) : (
-                              <WhatsAppIcon className="w-3 h-3 ml-1" />
+                              <WhatsAppIcon className="w-2.5 h-2.5 ml-1" />
                             )}
                             שלח
                           </Button>
@@ -2028,7 +2132,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
               (selectedTargets.length === 0 &&
                 selectedCustomGroupIds.size === 0 &&
                 recipientEmployees.length > 0)) && (
-              <div className="space-y-2 pt-2 border-t border-border/30">
+              <div className="space-y-1.5 pt-2 border-t border-border/30">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-foreground">
                     שוטרים ({recipientEmployees.length}):
@@ -2037,14 +2141,14 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                     size="sm"
                     onClick={handleAutoBroadcastToAll}
                     disabled={autoSending || validPhoneCount === 0}
-                    className="h-8 text-xs bg-[#25D366] hover:bg-[#1faa53] text-white font-bold rounded-xl px-3"
+                    className="h-7 text-xs bg-[#25D366] hover:bg-[#1faa53] text-white font-bold rounded-lg px-2.5"
                   >
                     <WhatsAppIcon className="w-3 h-3 ml-1" />
                     שלח לכולם ({validPhoneCount})
                   </Button>
                 </div>
 
-                <div className="max-h-[140px] overflow-y-auto space-y-1 custom-scrollbar">
+                <div className="max-h-[130px] overflow-y-auto space-y-1 custom-scrollbar">
                   {recipientEmployees.map((emp) => {
                     const isSent = sentMap[emp.id];
                     const hasPhone = Boolean(emp.phone_number);
@@ -2052,7 +2156,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                     return (
                       <div
                         key={emp.id}
-                        className="flex items-center justify-between p-2 px-2.5 rounded-2xl border border-border/40 bg-muted/20 text-xs"
+                        className="flex items-center justify-between py-1 px-2.5 rounded-lg border border-border/40 bg-muted/20 text-xs"
                       >
                         <span className="font-medium truncate block">
                           {emp.dominant_name ||
@@ -2064,7 +2168,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                           variant={isSent ? "secondary" : "outline"}
                           onClick={() => handleOpenIndividualWhatsApp(emp)}
                           disabled={!hasPhone}
-                          className="h-7 text-xs px-2.5 rounded-xl font-semibold"
+                          className="h-6 text-[11px] px-2 rounded-md font-semibold"
                         >
                           {isSent ? "נשלח ✓" : "שלח"}
                         </Button>
@@ -2075,15 +2179,15 @@ export const WhatsAppBroadcastTab: React.FC = () => {
               </div>
             )}
 
-            {/* Action Buttons Footer: Structured 2-Row Layout */}
-            <div className="pt-3 border-t border-border/30 space-y-2">
+            {/* Action Buttons Footer: Compact & Clean Layout */}
+            <div className="pt-2.5 border-t border-border/30 space-y-2">
               <div className="flex items-center gap-2">
                 <Button
                   onClick={handleDirectWhatsAppShare}
                   disabled={!messageBody.trim()}
-                  className="flex-1 h-12 text-sm font-bold bg-[#25D366] hover:bg-[#20ba59] text-white rounded-2xl shadow-sm transition-all active:scale-[0.99] cursor-pointer gap-2"
+                  className="flex-1 h-9 text-xs sm:text-sm font-bold bg-[#25D366] hover:bg-[#20ba59] text-white rounded-lg shadow-2xs transition-all active:scale-[0.99] cursor-pointer gap-1.5"
                 >
-                  <WhatsAppIcon className="w-4 h-4 ml-1" />
+                  <WhatsAppIcon className="w-3.5 h-3.5 ml-1" />
                   <span>שתף בוואטסאפ</span>
                 </Button>
 
@@ -2091,7 +2195,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                   onClick={handleCopyMessage}
                   disabled={!messageBody.trim()}
                   variant="outline"
-                  className="h-12 px-4 text-xs sm:text-sm font-bold rounded-2xl border-border/50 hover:bg-muted/40 cursor-pointer gap-1.5"
+                  className="h-9 px-3 text-xs sm:text-sm font-bold rounded-lg border-border/50 hover:bg-muted/40 cursor-pointer gap-1.5"
                 >
                   <Copy className="w-3.5 h-3.5" />
                   <span>העתק</span>
@@ -2106,7 +2210,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                   sendingInternal
                 }
                 variant="outline"
-                className="w-full h-11 text-xs sm:text-sm font-bold rounded-2xl border border-border/50 bg-muted/20 hover:bg-muted/40 text-foreground cursor-pointer gap-2"
+                className="w-full h-8 text-xs font-semibold rounded-lg border border-border/50 bg-muted/20 hover:bg-muted/40 text-foreground cursor-pointer gap-1.5"
               >
                 <Bell className="w-3.5 h-3.5 text-primary" />
                 <span>שידור התראה במערכת ({resolvedRecipients.length} נמענים)</span>
@@ -2153,7 +2257,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
       {/* ── Templates Picker & Management Dialog (Native Bottom Sheet on Mobile) ── */}
       <Dialog open={templatePopoverOpen} onOpenChange={setTemplatePopoverOpen}>
         <DialogContent
-          className="sm:max-w-md text-right rounded-2xl p-6 space-y-4"
+          className="sm:max-w-xl md:max-w-2xl text-right rounded-2xl p-6 space-y-4"
           dir="rtl"
         >
           <DialogHeader className="text-right space-y-1 pb-2 border-b">
@@ -2175,28 +2279,28 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                 setTemplatePopoverOpen(false);
               }}
               className={cn(
-                "flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors text-xs select-none",
+                "flex items-center justify-between p-3.5 px-4 rounded-xl border cursor-pointer transition-colors text-xs select-none",
                 !activeTemplateId
                   ? "bg-primary/10 border-primary text-primary font-semibold"
                   : "hover:bg-muted text-muted-foreground bg-muted/20",
               )}
             >
-              <span>ניסוח חופשי (ללא תבנית)</span>
+              <span className="font-medium text-xs">ניסוח חופשי (ללא תבנית)</span>
               {!activeTemplateId && <Check className="w-4 h-4 text-primary" />}
             </div>
 
             {/* Template list */}
-            <div className="max-h-[260px] overflow-y-auto space-y-2 pr-0.5">
+            <div className="max-h-[360px] overflow-y-auto space-y-2 pr-0.5 custom-scrollbar">
               {templates.map((tmpl) => {
                 const isSelected = activeTemplateId === tmpl.id;
                 return (
                   <div
                     key={tmpl.id}
                     className={cn(
-                      "group flex items-center justify-between p-3 rounded-xl border transition-colors text-xs select-none",
+                      "group flex items-center justify-between p-3.5 px-4 rounded-xl border transition-colors text-xs select-none",
                       isSelected
                         ? "bg-primary/10 border-primary text-primary font-semibold"
-                        : "hover:bg-muted border-border bg-card text-foreground",
+                        : "hover:bg-muted/60 border-border bg-card text-foreground",
                     )}
                   >
                     <div
@@ -2206,7 +2310,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                       }}
                       className="flex-1 min-w-0 cursor-pointer pr-1"
                     >
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2">
                         <span className="font-semibold text-sm block truncate">
                           {tmpl.label}
                         </span>
@@ -2214,12 +2318,12 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                           <Check className="w-3.5 h-3.5 text-primary shrink-0" />
                         )}
                       </div>
-                      <span className="text-xs text-muted-foreground block truncate mt-0.5 font-normal">
+                      <span className="text-xs text-muted-foreground block line-clamp-2 mt-1 font-normal leading-relaxed">
                         {tmpl.content}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0 mr-2">
+                    <div className="flex items-center gap-1.5 shrink-0 mr-3">
                       <Button
                         type="button"
                         size="sm"
@@ -2287,7 +2391,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
         onOpenChange={(open) => !open && setEditingTemplate(null)}
       >
         <DialogContent
-          className="sm:max-w-md text-right rounded-2xl p-6 space-y-4"
+          className="sm:max-w-lg md:max-w-xl text-right rounded-2xl p-6 space-y-4"
           dir="rtl"
         >
           <DialogHeader className="text-right space-y-1 pb-2 border-b">
@@ -2442,7 +2546,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
         onOpenChange={setShowNewTemplateModal}
       >
         <DialogContent
-          className="w-full sm:w-auto sm:max-w-lg text-right rounded-t-[2.2rem] rounded-b-none sm:rounded-3xl p-4 sm:p-6 space-y-3.5 max-h-[94dvh] sm:max-h-[92vh] flex flex-col bg-card"
+          className="sm:max-w-xl md:max-w-2xl flex flex-col text-right rounded-2xl p-6"
           dir="rtl"
         >
           <DialogHeader className="text-right space-y-1 pb-2 border-b border-border/30">
@@ -2454,7 +2558,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3 my-1 flex-1 overflow-y-auto custom-scrollbar pr-0.5">
+          <div className="space-y-4 my-2 flex-1 overflow-y-auto custom-scrollbar -mx-2 px-2 py-1.5">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-foreground block">
                 שם התבנית:
@@ -2463,7 +2567,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                 placeholder="הזן שם מזהה לתבנית (למשל: תזכורת שיבוץ)..."
                 value={newTemplateLabel}
                 onChange={(e) => setNewTemplateLabel(e.target.value)}
-                className="h-10 sm:h-11 text-xs sm:text-sm rounded-xl bg-background border-border/50"
+                className="h-10 sm:h-11 text-sm rounded-xl bg-background border-border/50"
               />
             </div>
 
@@ -2475,7 +2579,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
                 placeholder="הזן כותרת..."
                 value={newTemplateTitle}
                 onChange={(e) => setNewTemplateTitle(e.target.value)}
-                className="h-10 sm:h-11 text-xs sm:text-sm rounded-xl bg-background border-border/50"
+                className="h-10 sm:h-11 text-sm rounded-xl bg-background border-border/50"
               />
             </div>
 
@@ -2485,21 +2589,21 @@ export const WhatsAppBroadcastTab: React.FC = () => {
               </label>
               <Textarea
                 placeholder="כתוב כאן את תוכן התבנית..."
-                rows={7}
+                rows={6}
                 value={newTemplateContent}
                 onChange={(e) => setNewTemplateContent(e.target.value)}
-                className="min-h-[160px] sm:min-h-[200px] text-xs sm:text-sm leading-relaxed resize-y custom-scrollbar rounded-2xl bg-background border-border/50 p-3.5 sm:p-4 shadow-2xs"
+                className="min-h-[150px] sm:min-h-[180px] text-sm leading-relaxed resize-y custom-scrollbar rounded-2xl bg-background border-border/50 p-3.5 shadow-2xs"
               />
             </div>
           </div>
 
-          <DialogFooter className="flex flex-row justify-end gap-2 pt-2.5 border-t border-border/30">
+          <DialogFooter className="flex flex-row justify-end gap-2 pt-3 border-t border-border/30">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => setShowNewTemplateModal(false)}
-              className="text-xs h-9 px-4 rounded-xl cursor-pointer"
+              className="text-sm h-10 px-5 rounded-xl cursor-pointer"
             >
               ביטול
             </Button>
@@ -2507,7 +2611,7 @@ export const WhatsAppBroadcastTab: React.FC = () => {
               type="button"
               size="sm"
               onClick={handleCreateNewTemplate}
-              className="text-xs font-bold h-9 px-5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer shadow-sm"
+              className="text-sm font-bold h-10 px-6 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer shadow-sm"
             >
               שמור תבנית
             </Button>

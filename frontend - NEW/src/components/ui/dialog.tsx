@@ -106,9 +106,15 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  disableSwipe = false,
+  disableKeyboardOffset = false,
+  showSwipeHandle = true,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
+  disableSwipe?: boolean;
+  disableKeyboardOffset?: boolean;
+  showSwipeHandle?: boolean;
 }) {
   const [translateY, setTranslateY] = React.useState(0);
   const [isSwiping, setIsSwiping] = React.useState(false);
@@ -118,7 +124,7 @@ function DialogContent({
 
   // Mobile virtualViewport & Keyboard Focus Manager
   React.useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || disableKeyboardOffset) return;
 
     const handleFocusIn = (e: FocusEvent) => {
       if (window.innerWidth >= 640) return;
@@ -193,6 +199,7 @@ function DialogContent({
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (disableSwipe) return;
     if (typeof window !== "undefined" && window.innerWidth >= 640) return;
     const target = contentRef.current;
     if (!target || target.scrollTop <= 5) {
@@ -202,7 +209,7 @@ function DialogContent({
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isSwiping) return;
+    if (disableSwipe || !isSwiping) return;
     const currentY = e.touches[0].clientY;
     const deltaY = currentY - touchStartY.current;
     if (deltaY > 0) {
@@ -213,7 +220,7 @@ function DialogContent({
   };
 
   const handleTouchEnd = () => {
-    if (!isSwiping) return;
+    if (disableSwipe || !isSwiping) return;
     setIsSwiping(false);
     if (translateY > 90) {
       triggerClose();
@@ -231,9 +238,9 @@ function DialogContent({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         style={{
-          transform: translateY > 0 ? `translateY(${translateY}px)` : undefined,
-          bottom: keyboardOffset > 0 ? `${keyboardOffset}px` : undefined,
-          maxHeight: keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset + 12}px)` : undefined,
+          transform: !disableSwipe && translateY > 0 ? `translateY(${translateY}px)` : undefined,
+          bottom: !disableKeyboardOffset && keyboardOffset > 0 ? `${keyboardOffset}px` : undefined,
+          maxHeight: !disableKeyboardOffset && keyboardOffset > 0 ? `calc(100vh - ${keyboardOffset + 12}px)` : undefined,
           transition: isSwiping ? "none" : "all 0.25s cubic-bezier(0.32, 0.72, 0, 1)",
           ...(props.style || {}),
         }}
@@ -254,9 +261,11 @@ function DialogContent({
         <DialogHistoryHandler />
 
         {/* Swipe Handle Indicator at top on Mobile */}
-        <div className="w-full pt-2.5 pb-2 flex justify-center items-center shrink-0 sm:hidden touch-none select-none bg-card">
-          <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
-        </div>
+        {showSwipeHandle && !disableSwipe && (
+          <div className="w-full pt-2.5 pb-2 flex justify-center items-center shrink-0 sm:hidden touch-none select-none bg-card">
+            <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+          </div>
+        )}
 
         {children}
 

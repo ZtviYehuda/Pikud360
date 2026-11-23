@@ -463,9 +463,9 @@ export const AttendanceTrendCard = forwardRef(
         )}
       >
         {!hideHeader && (
-          <CardHeader className="px-4 sm:px-6 py-3 sm:py-4 flex flex-row items-center justify-between space-y-0 border-b border-border/40 gap-4 shrink-0">
-            {/* ── RIGHT: Icon + Title + Period nav pill ── */}
-            <div className="flex flex-col gap-1.5 min-w-0 flex-1">
+          <CardHeader className="px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between border-b border-border/40 gap-3 sm:gap-4 shrink-0">
+            {/* ── Row 1 on mobile / Right on desktop: Icon + Title + (Mobile Average) ── */}
+            <div className="flex items-center justify-between sm:justify-start gap-2.5 shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                   <TrendingUp className="w-4 h-4" />
@@ -475,9 +475,18 @@ export const AttendanceTrendCard = forwardRef(
                 </CardTitle>
               </div>
 
-              {/* Segmented period pill: ← [📅 date] → */}
-              <div className="flex items-center gap-2 no-export">
-                <div className="inline-flex items-center rounded-md border border-border/50 overflow-hidden">
+              {/* Mobile Average (Top Left on Mobile) */}
+              <div className="flex sm:hidden items-baseline gap-1 select-none shrink-0">
+                <span className="text-xs text-muted-foreground font-medium">ממוצע:</span>
+                <span className="text-sm font-black text-foreground tracking-tight">{averagePct}%</span>
+              </div>
+            </div>
+
+            {/* ── Row 2 on mobile / Center & Left on desktop ── */}
+            <div className="flex items-center justify-between sm:justify-between gap-2 flex-1 min-w-0">
+              {/* ── CENTER: Segmented period pill: ← [📅 date] → ── */}
+              <div className="flex items-center gap-2 no-export sm:flex-1 sm:justify-center">
+                <div className="inline-flex items-center rounded-md border border-border/50 overflow-hidden shrink-0">
                   {/* ← (visually right in RTL) → Next */}
                   <button
                     type="button"
@@ -679,38 +688,39 @@ export const AttendanceTrendCard = forwardRef(
                   </button>
                 )}
               </div>
-            </div>
 
-            {/* ── LEFT: Average + Range toggle ── */}
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="flex items-baseline gap-1 select-none">
-                <span className="text-xs text-muted-foreground font-medium">ממוצע:</span>
-                <span className="text-sm font-black text-foreground tracking-tight">{averagePct}%</span>
-              </div>
-              {/* Range toggle — always visible */}
-              <div className="inline-flex items-center p-0.5 rounded-lg bg-muted/60 border border-border/40 shrink-0 no-export">
-                {ranges.map((r) => (
-                  <button
-                    key={r.value}
-                    type="button"
-                    onClick={() => {
-                      onRangeChange?.(r.value);
-                      if (r.value === 7) {
-                        onTrendModeChange?.("rolling");
-                        setInternalMode("rolling");
-                      }
-                      onDateSelect?.(new Date());
-                    }}
-                    className={cn(
-                      "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all cursor-pointer select-none",
-                      range === r.value
-                        ? "bg-background text-foreground shadow-xs font-bold"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {r.label}
-                  </button>
-                ))}
+              {/* ── LEFT: Desktop Average + Range toggle ── */}
+              <div className="flex items-center gap-3 shrink-0">
+                {/* Desktop Average (Hidden on Mobile) */}
+                <div className="hidden sm:flex items-baseline gap-1 select-none">
+                  <span className="text-xs text-muted-foreground font-medium">ממוצע:</span>
+                  <span className="text-sm font-black text-foreground tracking-tight">{averagePct}%</span>
+                </div>
+                {/* Range toggle — always visible */}
+                <div className="inline-flex items-center p-0.5 rounded-lg bg-muted/60 border border-border/40 shrink-0 no-export">
+                  {ranges.map((r) => (
+                    <button
+                      key={r.value}
+                      type="button"
+                      onClick={() => {
+                        onRangeChange?.(r.value);
+                        if (r.value === 7) {
+                          onTrendModeChange?.("rolling");
+                          setInternalMode("rolling");
+                        }
+                        onDateSelect?.(new Date());
+                      }}
+                      className={cn(
+                        "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all cursor-pointer select-none",
+                        range === r.value
+                          ? "bg-background text-foreground shadow-xs font-bold"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </CardHeader>

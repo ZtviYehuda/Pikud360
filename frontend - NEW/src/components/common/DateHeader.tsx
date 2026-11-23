@@ -35,47 +35,48 @@ export const DateHeader: React.FC<{ className?: string }> = ({ className }) => {
 
   return (
     <>
-      <div className={cn("flex items-center gap-2", className)}>
+      <div className={cn("flex items-center gap-1.5", className)}>
         <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
           <PopoverTrigger asChild>
             <button
               className={cn(
-                "flex items-center gap-1 sm:gap-2 px-1.5 sm:px-3 py-1.5 rounded-xl transition-all",
-                "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800",
+                "group flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all select-none cursor-pointer outline-none",
+                "text-foreground hover:bg-muted/60 dark:hover:bg-slate-800/60 active:scale-95",
                 isPending && "opacity-50"
               )}
             >
-              <CalendarIcon className="hidden sm:block w-4 h-4 text-slate-400 dark:text-slate-500" />
+              <CalendarIcon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
               
-              <div className="flex items-center text-[12px] sm:text-[13px] tracking-tight">
-                {/* Day name (Hidden on mobile) */}
-                <span className="hidden sm:inline font-normal mr-1.5">
+              <div className="flex items-center text-sm tracking-tight font-medium">
+                {/* Day name */}
+                <span className="font-semibold text-foreground">
                   {format(selectedDate, "EEEE", { locale: he })}
                 </span>
-                <span className="hidden sm:inline text-slate-300 dark:text-slate-700 mx-1.5 font-light">|</span>
+                <span className="text-muted-foreground/30 font-bold mx-1.5">•</span>
                 
-                <span className="font-semibold tabular-nums">
+                {/* Date numbers */}
+                <span className="font-bold tabular-nums text-foreground">
                   {format(selectedDate, "dd/MM/yy")}
                 </span>
               </div>
 
               {holiday && (
-                <span className="flex items-center gap-1.5 mr-2 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 text-[10px] font-black border border-amber-500/20 shrink-0">
+                <span className="inline-flex items-center gap-1.5 mr-1.5 text-amber-600 dark:text-amber-400 text-xs font-semibold shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                   {holiday}
                 </span>
               )}
 
-              {/* "Today" badge - shown optionally if needed */}
+              {/* "Today" indicator - clean and border-free */}
               {isToday && !holiday && (
-                <div className="hidden sm:flex items-center gap-1 mr-2 px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600">
-                  <div className="w-1 h-1 rounded-full bg-emerald-500" />
-                  <span className="text-[9px] font-bold">היום</span>
-                </div>
+                <span className="inline-flex items-center gap-1.5 mr-1.5 text-emerald-600 dark:text-emerald-400 text-xs font-semibold shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  היום
+                </span>
               )}
             </button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 rounded-2xl border-border/40 shadow-xl" align="end">
+          <PopoverContent className="w-auto p-0 rounded-2xl border-border/40 shadow-xl" align="center">
             <Calendar
               mode="single"
               selected={selectedDate}
@@ -105,8 +106,9 @@ export const DateHeader: React.FC<{ className?: string }> = ({ className }) => {
         {/* Quick Today Toggle */}
         {!isToday && (
           <button
+            type="button"
             onClick={handleToday}
-            className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center transition-all hover:bg-primary/20 hover:scale-105 active:scale-95"
+            className="w-7 h-7 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted/60 flex items-center justify-center transition-all cursor-pointer active:scale-95"
             title="חזרה להיום"
           >
             <RotateCcw className="w-3.5 h-3.5" />

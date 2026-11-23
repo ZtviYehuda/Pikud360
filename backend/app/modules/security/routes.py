@@ -234,7 +234,7 @@ def login():
         "assignment_date": user_prefs.get("assignment_date") or "",
         "police_license": user_prefs.get("police_license", False),
         "security_clearance": user_prefs.get("security_clearance", False),
-        "must_change_password": False,
+        "must_change_password": bool(user_prefs.get("must_change_password", False)),
         "is_admin": is_admin,
         "is_commander": is_commander,
         "department_id": dept_id,
@@ -318,18 +318,60 @@ def me():
     is_admin = scope_info.get("is_admin", False)
     
     user_prefs = user_preference_repo.get_by_user_id(user_id) if user_id else {}
+    disp_prefs = user_prefs.get("display_preferences") if isinstance(user_prefs.get("display_preferences"), dict) else {}
     is_commander = bool(is_admin or ("COMMANDER" in user_roles) or scope_info.get("commands_team_id") or scope_info.get("commands_section_id") or scope_info.get("commands_department_id") or (getattr(emp, "position", "") in ["מפקד", "קצין"]))
 
-    first_name = (
-        user_prefs.get("first_name")
-        or (emp.first_name if emp else None)
-        or ("מנהל" if is_admin else "מפקד")
-    )
-    last_name = (
-        user_prefs.get("last_name")
-        or (emp.last_name if emp else None)
-        or ("מערכת" if is_admin else "")
-    )
+    if is_admin:
+        first_name = "צוות"
+        last_name = "התמיכה"
+        display_name = "צוות התמיכה"
+        is_support = True
+        roles = ["ADMIN"]
+        permissions = [
+            "support.*",
+            "support.workspace.view",
+            "support.system.view",
+            "support.users.view",
+            "support.users.manage",
+            "support.incidents.view",
+            "support.incidents.manage",
+            "support.announcements.manage",
+            "support.impersonation",
+            "support.activity.view",
+            "*"
+        ]
+    else:
+        first_name = (
+            disp_prefs.get("first_name")
+            or user_prefs.get("first_name")
+            or (emp.first_name if emp else None)
+            or "מפקד"
+        )
+        last_name = (
+            disp_prefs.get("last_name")
+            or user_prefs.get("last_name")
+            or (emp.last_name if emp else None)
+            or ""
+        )
+        display_name = f"{first_name} {last_name}".strip() or username
+        is_support = False
+        roles = user_roles if user_roles else (["COMMANDER"] if is_commander else ["OFFICER"])
+        # Query assigned permissions
+        permissions = []
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT DISTINCT p.code
+                        FROM security.permissions p
+                        JOIN security.role_permissions rp ON rp.permission_id = p.id
+                        JOIN security.user_roles ur ON ur.role_id = rp.role_id
+                        WHERE ur.user_id::text = %s;
+                    """, (str(user_id),))
+                    permissions = [row[0] for row in cur.fetchall()]
+        except Exception:
+            permissions = []
+
     phone_number = (
         user_prefs.get("phone_number")
         or (emp.phone if emp else None)
@@ -347,6 +389,7 @@ def me():
         "id": user_id,
         "first_name": first_name,
         "last_name": last_name,
+        "display_name": display_name,
         "username": username,
         "email": email,
         "phone_number": phone_number,
@@ -358,7 +401,11 @@ def me():
         "assignment_date": user_prefs.get("assignment_date") or "",
         "police_license": user_prefs.get("police_license", False),
         "security_clearance": user_prefs.get("security_clearance", False),
+        "must_change_password": bool(user_prefs.get("must_change_password") or disp_prefs.get("must_change_password", False)),
         "is_admin": is_admin,
+        "is_support": is_support,
+        "roles": roles,
+        "permissions": permissions,
         "is_commander": is_commander,
         "is_impersonated": is_impersonated,
         "impersonated_by": claims.get("impersonated_by", "admin"),
@@ -374,7 +421,7 @@ def me():
         "commands_department_id": scope_info.get("commands_department_id"),
         "commands_section_id": scope_info.get("commands_section_id"),
         "commands_team_id": scope_info.get("commands_team_id"),
-        "role_name": "מנהל מערכת ראשי" if is_admin else getattr(emp, "rank", "מפקד"),
+        "role_name": "צוות התמיכה" if is_admin else getattr(emp, "rank", "מפקד"),
     }
 
     return jsonify({
@@ -988,6 +1035,58 @@ def exit_impersonation():
         "success": True,
         "message": "חזרת בהצלחה לחשבון מנהל המערכת"
     }), 200
+
+
+@security_bp.route("/reset-impersonated-password", methods=["POST"])
+@jwt_required()
+def reset_impersonated_password():
+    """Resets the currently impersonated user's password to default '123456'."""
+    user_id = get_jwt_identity()
+    if not user_id:
+        return jsonify({"success": False, "message": "משתמש לא מחובר"}), 401
+
+    try:
+        user = security_service._user_repo.get_by_id(str(user_id))
+        if not user:
+            return jsonify({"success": False, "message": "משתמש לא נמצא"}), 404
+
+        new_hash = security_service.hash_password("123456")
+
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE security.users SET password_hash = %s, updated_at = CURRENT_TIMESTAMP WHERE id::text = %s;",
+                    (new_hash, str(user_id))
+                )
+                # Force change password flag
+                cur.execute("""
+                    INSERT INTO security.user_preferences (user_id, display_preferences)
+                    VALUES (%s, '{"must_change_password": true}'::jsonb)
+                    ON CONFLICT (user_id) DO UPDATE
+                    SET display_preferences = COALESCE(security.user_preferences.display_preferences, '{}'::jsonb) || '{"must_change_password": true}'::jsonb;
+                """, (str(user_id),))
+                conn.commit()
+
+        claims = get_jwt() or {}
+        security_service.create_audit_log(
+            tenant_id=claims.get("tenant_id") or "00000000-0000-0000-0000-000000000001",
+            user_id=str(user_id),
+            session_id=None,
+            request_id=str(uuid.uuid4()),
+            event_type="SECURITY_EVENT",
+            action="IMPERSONATED_PASSWORD_RESET",
+            table_name="security.users",
+            record_id=str(user_id),
+            severity="WARNING"
+        )
+
+        return jsonify({
+            "success": True,
+            "message": "הסיסמה אופסה בהצלחה לסיסמת ברירת המחדל (123456)"
+        }), 200
+    except Exception as e:
+        logger.error(f"Error resetting impersonated password: {e}", exc_info=True)
+        return jsonify({"success": False, "message": f"שגיאה באיפוס הסיסמה: {str(e)}"}), 500
 
 
 TERMS_LOG_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "terms_acceptances_log.json")

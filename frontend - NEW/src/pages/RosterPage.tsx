@@ -4,6 +4,7 @@ import { useEmployees } from "@/hooks/useEmployees";
 import { useAuthContext } from "@/context/AuthContext";
 import { EmployeeLink } from "@/components/common/EmployeeLink";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { DateHeader } from "@/components/common/DateHeader";
 import {
   startOfWeek,
   endOfWeek,
@@ -793,6 +794,16 @@ export default function RosterPage() {
       dir="rtl"
     >
       <div className="flex flex-col h-full">
+        {/* Mobile Top Bar: Context on Right, DateHeader on Left */}
+        <div className="flex sm:hidden items-center justify-between gap-2 pt-2 pb-2 px-4 shrink-0 w-full">
+          <span className="text-xs font-bold text-muted-foreground truncate">
+            סידור עבודה שבועי
+          </span>
+          <div className="shrink-0">
+            <DateHeader className="origin-left" />
+          </div>
+        </div>
+
         {/* Unified Page Header - Premium Layout Style */}
         <div className="hidden sm:block pt-6 pb-4 shrink-0 transition-all px-4 sm:px-6">
           <PageHeader
@@ -801,7 +812,13 @@ export default function RosterPage() {
             className="mb-0"
             hideMobile={true}
             badge={
-              <div className="flex flex-col sm:flex-row items-center gap-3 mt-4 lg:mt-0 w-full sm:w-auto">
+              <div className="flex items-center justify-between w-full">
+                {/* Desktop Left: DateHeader (hidden on md+ where it's centered in the top header) */}
+                <div className="flex md:hidden items-center gap-2">
+                  <DateHeader className="origin-left" />
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-3 mt-4 lg:mt-0 w-full sm:w-auto">
                 {/* Save/Undo Actions */}
                 <AnimatePresence>
                   {pendingUpdates.length > 0 && (
@@ -925,6 +942,7 @@ export default function RosterPage() {
                   </div>
                 </div>
               </div>
+            </div>
             }
           />
         </div>

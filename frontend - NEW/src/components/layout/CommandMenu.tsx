@@ -87,18 +87,6 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
           ]
         : []),
 
-      ...(user?.is_admin
-        ? [
-            {
-              name: "יומן פעילות",
-              description: "צפייה בלוגים של שינויי מערכת ופעולות משתמשים",
-              path: "/activity-log",
-              icon: Activity,
-              category: "דפים",
-            },
-          ]
-        : []),
-
       {
         name: "הגדרות",
         description: "ניהול הגדרות אישיות, התראות ונראות המערכת",

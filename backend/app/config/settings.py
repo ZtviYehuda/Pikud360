@@ -37,9 +37,21 @@ class Settings:
     SMTP_FROM_EMAIL: str = os.getenv("SMTP_FROM_EMAIL", os.getenv("SMTP_USER", "no-reply@pikud360.gov.il"))
     SMTP_USE_TLS: bool = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
     
+    # Google Cloud Storage (GCS) Configuration
+    GCS_BUCKET_NAME: Optional[str] = os.getenv("GCS_BUCKET_NAME")
+    USE_GCS: bool = os.getenv("USE_GCS", "false").lower() in ("true", "1") or bool(os.getenv("GCS_BUCKET_NAME"))
+
     @property
     def database_url(self) -> str:
-        """Returns the PostgreSQL connection string."""
+        """Returns the PostgreSQL connection string with Cloud SQL & Unix socket support."""
+        explicit_url = os.getenv("DATABASE_URL")
+        if explicit_url:
+            return explicit_url
+            
+        # Support GCP Cloud SQL Unix Sockets (e.g. /cloudsql/project:region:instance)
+        if self.DB_HOST.startswith("/"):
+            return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@/{self.DB_NAME}?host={self.DB_HOST}"
+            
         return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
 class DevelopmentSettings(Settings):

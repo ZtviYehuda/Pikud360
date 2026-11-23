@@ -44,10 +44,20 @@ const PrivacyPage        = lazyWithRetry(() => import("@/pages/PrivacyPage"));
 const CreateEmployeePage = lazyWithRetry(() => import("@/pages/CreateEmployeePage"));
 const EmployeeViewPage   = lazyWithRetry(() => import("@/pages/EmployeeViewPage"));
 const ChangePasswordPage = lazyWithRetry(() => import("@/pages/ChangePasswordPage"));
-const ActivityLogPage    = lazyWithRetry(() => import("@/pages/ActivityLogPage"));
 const FeedbackPage       = lazyWithRetry(() => import("@/pages/FeedbackPage"));
 
 const MessagingPage       = lazyWithRetry(() => import("@/features/messaging/MessagingPage"));
+
+// ── Support Workspace pages ──────────────────────────────────────────────────
+const SupportWorkspaceLayout   = lazyWithRetry(() => import("@/features/support-workspace/SupportWorkspaceLayout"));
+const SupportDashboardPage     = lazyWithRetry(() => import("@/features/support-workspace/pages/SupportDashboardPage"));
+const SupportSystemHealthPage  = lazyWithRetry(() => import("@/features/support-workspace/pages/SupportSystemHealthPage"));
+const SupportUserLookupPage    = lazyWithRetry(() => import("@/features/support-workspace/pages/SupportUserLookupPage"));
+const SupportIncidentsPage     = lazyWithRetry(() => import("@/features/support-workspace/pages/SupportIncidentsPage"));
+const SupportAnnouncementsPage = lazyWithRetry(() => import("@/features/support-workspace/pages/SupportAnnouncementsPage"));
+const SupportUpdatesPage       = lazyWithRetry(() => import("@/features/support-workspace/pages/SupportUpdatesPage"));
+const SupportTicketsPage       = lazyWithRetry(() => import("@/features/support-workspace/pages/SupportTicketsPage"));
+const SupportActivityPage      = lazyWithRetry(() => import("@/features/support-workspace/pages/SupportActivityPage"));
 
 // ── Page-level suspense wrapper ───────────────────────────────────────────────
 // Keeps UX smooth: shows LoadingScreen while the chunk downloads
@@ -125,6 +135,20 @@ const ProtectedRoute = () => {
     return <Outlet />;
   }
 
+  // Support Workspace RBAC boundary:
+  // 1. Dedicated Admin (when NOT impersonating) must land directly in /support-workspace
+  //    UNLESS they explicitly chose Commander mode via the login choice overlay.
+  const isDedicatedAdmin = Boolean(user.is_admin && !user.is_impersonated);
+  const adminMode = sessionStorage.getItem("admin_mode"); // 'support' | 'commander'
+  if (isDedicatedAdmin && location.pathname === "/" && adminMode !== "commander") {
+    return <Navigate to="/support-workspace" replace />;
+  }
+
+  // 2. Non-admin users are strictly prohibited from accessing /support-workspace/*
+  if (!user.is_admin && location.pathname.startsWith("/support-workspace")) {
+    return <Navigate to="/" replace />;
+  }
+
   const managementRoutes = ["/employees", "/transfers"];
   if (user.is_temp_commander && managementRoutes.some((r) => location.pathname.startsWith(r))) {
     return <Navigate to="/" replace />;
@@ -146,6 +170,17 @@ export const router = createBrowserRouter([
       {
         element: <ProtectedRoute />,
         children: [
+          // Support Workspace dedicated routes
+          { path: "/support-workspace",               element: <PageSuspense><SupportDashboardPage /></PageSuspense> },
+          { path: "/support-workspace/tickets",       element: <PageSuspense><SupportTicketsPage /></PageSuspense> },
+          { path: "/support-workspace/health",        element: <PageSuspense><SupportSystemHealthPage /></PageSuspense> },
+          { path: "/support-workspace/users",         element: <PageSuspense><SupportUserLookupPage /></PageSuspense> },
+          { path: "/support-workspace/incidents",     element: <PageSuspense><SupportIncidentsPage /></PageSuspense> },
+          { path: "/support-workspace/announcements", element: <PageSuspense><SupportAnnouncementsPage /></PageSuspense> },
+          { path: "/support-workspace/updates",       element: <PageSuspense><SupportUpdatesPage /></PageSuspense> },
+          { path: "/support-workspace/activity",      element: <PageSuspense><SupportActivityPage /></PageSuspense> },
+
+          // Operational commander & workforce routes
           { path: "/",                    element: <DashboardPage /> },
           { path: "/change-password",     element: <PageSuspense><ChangePasswordPage /></PageSuspense> },
           { path: "/employees",           element: <EmployeesPage /> },
@@ -158,7 +193,7 @@ export const router = createBrowserRouter([
           { path: "/settings",            element: <SettingsPage /> },
           { path: "/feedback",            element: <PageSuspense><FeedbackPage /></PageSuspense> },
           { path: "/messaging",           element: <PageSuspense><FeedbackPage /></PageSuspense> },
-          { path: "/activity-log",        element: <PageSuspense><ActivityLogPage /></PageSuspense> },
+          { path: "/activity-log",        element: <Navigate to="/support-workspace/activity" replace /> },
           { path: "/manage",              element: <Navigate to="/employees" replace /> },
           { path: "*",                    element: <Navigate to="/" replace /> },
         ],

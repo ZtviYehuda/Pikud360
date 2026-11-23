@@ -1,19 +1,40 @@
 export interface Ticket {
-  id: number;
-  user_id: number;
+  id: string | number;
+  user_id?: string | number;
   first_name?: string;
   last_name?: string;
+  sender_name?: string;
+  department_name?: string;
   category: string;
+  title?: string;
   description: string;
-  status: 'received' | 'reviewing' | 'in_progress' | 'done' | 'dismissed' | 'irrelevant' | 'open' | 'closed';
+  priority?: string;
+  status:
+    | 'received'
+    | 'reviewing'
+    | 'in_progress'
+    | 'done'
+    | 'dismissed'
+    | 'irrelevant'
+    | 'open'
+    | 'closed'
+    | 'approved'
+    | 'rejected';
+  resolution_comment?: string | null;
   admin_reply: string | null;
   created_at: string;
+  updated_at?: string;
   screenshot_url?: string;
+  context_page?: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  access_duration?: string | null;
+  access_expires_at?: string | null;
 }
 
 export interface SupportTicket {
-  id: number;
-  user_id: number;
+  id: string | number;
+  user_id: string | number;
   full_name: string;
   subject: string;
   message: string;

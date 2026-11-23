@@ -85,6 +85,7 @@ def create_app() -> Flask:
 
     from app.modules.messaging.routes import messaging_bp
     app.register_blueprint(messaging_bp, url_prefix="/api/messaging")
+    app.register_blueprint(messaging_bp, url_prefix="/api", name="messaging_api")
 
     from app.modules.admin.routes import admin_bp
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
@@ -101,6 +102,9 @@ def create_app() -> Flask:
     from app.modules.feedback.routes import feedback_bp
     app.register_blueprint(feedback_bp, url_prefix="/api")
     app.register_blueprint(feedback_bp, url_prefix="", name="feedback_root_api")
+
+    from app.modules.support.routes import support_bp
+    app.register_blueprint(support_bp, url_prefix="/api/support")
 
 
 
