@@ -269,35 +269,24 @@ export function ExportReportDialog({
                   locale={he}
                   className="p-0 w-full flex justify-center pointer-events-auto cursor-pointer"
                   classNames={{
-                    months:
-                      "flex flex-col text-center w-full items-center",
-                    month: "space-y-3 w-full max-w-[340px] flex flex-col items-center",
-                    caption:
-                      "flex justify-center pt-1 pb-4 relative items-center w-full",
+                    root: "w-full flex justify-center",
+                    months: "relative flex flex-col items-center w-full",
+                    month: "flex flex-col w-full max-w-[560px] gap-4 relative",
+                    month_caption:
+                      "flex items-center justify-center h-10 w-full relative px-12",
                     caption_label:
-                      "text-base font-bold text-foreground tracking-tight",
-                    nav: "absolute top-0 left-0 right-0 flex items-center justify-between px-1 h-9",
-                    nav_button:
-                      "h-8 w-8 hover:bg-muted/40 text-muted-foreground hover:text-foreground rounded-lg transition-colors flex items-center justify-center cursor-pointer pointer-events-auto",
-                    nav_button_previous: "order-1",
-                    nav_button_next: "order-2",
+                      "text-base sm:text-lg font-bold text-foreground tracking-tight select-none",
+                    nav: "flex items-center justify-between w-full absolute top-0 inset-x-0 h-10 px-2 pointer-events-none z-10",
+                    button_previous:
+                      "pointer-events-auto h-9 w-9 p-0 rounded-xl hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-all flex items-center justify-center cursor-pointer border border-border/30 shadow-2xs",
+                    button_next:
+                      "pointer-events-auto h-9 w-9 p-0 rounded-xl hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-all flex items-center justify-center cursor-pointer border border-border/30 shadow-2xs",
                     table: "w-full border-collapse",
-                    head_row: "grid grid-cols-7 gap-1.5 mb-2.5 w-full",
-                    head_cell:
-                      "text-muted-foreground/80 font-bold text-xs text-center py-1 flex items-center justify-center",
-                    row: "grid grid-cols-7 gap-1.5 mb-1.5 w-full",
-                    cell: "flex items-center justify-center cursor-pointer pointer-events-auto",
-                    day: "h-9 w-9 sm:h-10 sm:w-10 font-medium rounded-xl hover:bg-muted/50 flex items-center justify-center text-xs text-foreground transition-all cursor-pointer pointer-events-auto",
-                    day_selected:
-                      "bg-primary text-primary-foreground font-bold hover:bg-primary hover:text-primary-foreground shadow-sm",
-                    day_today:
-                      "font-bold text-primary ring-1 ring-primary/40 rounded-xl",
-                    day_outside: "text-muted-foreground/30 opacity-30",
-                    day_disabled: "text-muted-foreground/30 opacity-20",
-                    day_range_middle:
-                      "aria-selected:bg-primary/10 aria-selected:text-primary rounded-none",
-                    day_range_start: "rounded-l-xl rounded-r-none bg-primary text-primary-foreground font-bold",
-                    day_range_end: "rounded-r-xl rounded-l-none bg-primary text-primary-foreground font-bold",
+                    weekdays: "flex w-full justify-between mb-2 px-1",
+                    weekday:
+                      "text-muted-foreground/80 font-bold text-xs flex-1 text-center py-1 select-none",
+                    week: "flex w-full justify-between gap-1.5 mt-1.5 px-1",
+                    day: "relative flex-1 aspect-square p-0 flex items-center justify-center select-none",
                   }}
                 />
               </div>
