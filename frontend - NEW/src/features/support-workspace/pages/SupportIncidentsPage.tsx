@@ -29,6 +29,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/utils";
 import { supportApi } from "../api";
 import type { Incident, IncidentSeverity, IncidentStatus } from "../types";
 
@@ -86,7 +87,7 @@ export const SupportIncidentsPage: React.FC = () => {
       setNewDesc("");
       fetchIncidents();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "פתיחת האירוע נכשלה");
+      toast.error(extractErrorMessage(err, "פתיחת האירוע נכשלה"));
     } finally {
       setCreating(false);
     }
@@ -106,7 +107,7 @@ export const SupportIncidentsPage: React.FC = () => {
       setUpdateNote("");
       fetchIncidents();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "עדכון האירוע נכשל");
+      toast.error(extractErrorMessage(err, "עדכון האירוע נכשל"));
     } finally {
       setUpdating(false);
     }

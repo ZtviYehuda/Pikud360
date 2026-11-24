@@ -28,6 +28,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/utils";
 import { supportApi } from "../api";
 import type { Announcement, AnnouncementPriority } from "../types";
 
@@ -80,7 +81,7 @@ export const SupportAnnouncementsPage: React.FC = () => {
       setNewContent("");
       fetchAnnouncements();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "פרסום ההודעה נכשל");
+      toast.error(extractErrorMessage(err, "פרסום ההודעה נכשל"));
     } finally {
       setCreating(false);
     }
@@ -93,7 +94,7 @@ export const SupportAnnouncementsPage: React.FC = () => {
       toast.success("ההודעה הוסרה");
       fetchAnnouncements();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "מחיקת ההודעה נכשלה");
+      toast.error(extractErrorMessage(err, "מחיקת ההודעה נכשלה"));
     }
   };
 

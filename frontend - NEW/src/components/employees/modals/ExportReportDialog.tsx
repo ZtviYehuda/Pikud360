@@ -24,7 +24,7 @@ import { useDateContext } from "@/context/DateContext";
 import { type DateRange } from "react-day-picker";
 import { toast } from "sonner";
 import { useEmployees } from "@/hooks/useEmployees";
-import { cn } from "@/lib/utils";
+import { cn, extractErrorMessage } from "@/lib/utils";
 
 import { FilterModal, type EmployeeFilters } from "./FilterModal";
 
@@ -148,8 +148,7 @@ export function ExportReportDialog({
       } else if (error?.response?.status === 403) {
         toast.error("אין הרשאה לייצא דוחות");
       } else {
-        const errorMessage = error?.response?.data?.error || error?.message || "שגיאה ביצירת הדו״ח";
-        toast.error(errorMessage);
+        toast.error(extractErrorMessage(error, "שגיאה ביצירת הדו״ח"));
       }
     }
   };

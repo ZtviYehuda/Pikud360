@@ -27,7 +27,7 @@ import {
   Upload,
 } from "lucide-react";
 import type { Employee } from "@/types/employee.types";
-import { cn, cleanUnitName, calculateAge, getWhatsAppUrl } from "@/lib/utils";
+import { cn, cleanUnitName, calculateAge, getWhatsAppUrl, extractErrorMessage } from "@/lib/utils";
 import { FilterModal, ImportEmployeesModal } from "./modals";
 import type { EmployeeFilters } from "./modals/FilterModal";
 import { EmployeeLink } from "@/components/common/EmployeeLink";
@@ -346,7 +346,7 @@ export const EmployeeTable = ({
         toast.error(data.error || "שגיאה בייבוא", { id: loadingToastId });
       }
     } catch (e: any) {
-      toast.error(e.response?.data?.error || "שגיאה בייבוא קובץ. אנא ודא שהפורמט תקין.", { id: loadingToastId });
+      toast.error(extractErrorMessage(e, "שגיאה בייבוא קובץ. אנא ודא שהפורמט תקין."), { id: loadingToastId });
       console.error(e);
     }
     // reset input

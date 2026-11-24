@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from "react";
 import apiClient from "@/config/api.client";
 import * as endpoints from "@/config/auth.endpoints";
 import type { AuthUser, LoginResponse } from "@/types/auth.types";
+import { extractErrorMessage } from "@/lib/utils";
 
 export const useAuth = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -74,7 +75,7 @@ export const useAuth = () => {
       }
       return false;
     } catch (err: any) {
-      const msg = err.response?.data?.error || "Login failed";
+      const msg = extractErrorMessage(err, "Login failed");
       setError(msg);
       return false;
     } finally {
@@ -125,7 +126,7 @@ export const useAuth = () => {
       }
       return false;
     } catch (err: any) {
-      const msg = err.response?.data?.error || "Failed to change password";
+      const msg = extractErrorMessage(err, "Failed to change password");
       setError(msg);
       return false;
     } finally {

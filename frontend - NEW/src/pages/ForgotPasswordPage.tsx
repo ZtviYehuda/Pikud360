@@ -16,7 +16,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/context/ThemeContext";
-import { cn } from "@/lib/utils";
+import { cn, extractErrorMessage } from "@/lib/utils";
 import apiClient from "@/config/api.client";
 import * as endpoints from "@/config/auth.endpoints";
 import { toast } from "sonner";
@@ -250,7 +250,7 @@ export default function ForgotPasswordPage() {
         setError(data.error || "אירעה שגיאה בשליחת הקוד");
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || "שגיאת שרת. נסה שוב מאוחר יותר.");
+      setError(extractErrorMessage(err, "שגיאת שרת. נסה שוב מאוחר יותר."));
     } finally {
       setIsLoading(false);
     }
@@ -277,7 +277,7 @@ export default function ForgotPasswordPage() {
         setError(data.error || "קוד שגוי או פג תוקף");
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || "אימות הקוד נכשל");
+      setError(extractErrorMessage(err, "אימות הקוד נכשל"));
     } finally {
       setIsLoading(false);
     }
@@ -313,7 +313,7 @@ export default function ForgotPasswordPage() {
         setError(data.error || "עדכון הסיסמה נכשל");
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || "שגיאה בעדכון הסיסמה");
+      setError(extractErrorMessage(err, "שגיאה בעדכון הסיסמה"));
     } finally {
       setIsLoading(false);
     }

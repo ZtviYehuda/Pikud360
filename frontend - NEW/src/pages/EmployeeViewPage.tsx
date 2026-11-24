@@ -61,7 +61,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { cn, cleanUnitName, isValidIsraeliPhone } from "@/lib/utils";
+import { cn, cleanUnitName, isValidIsraeliPhone, extractErrorMessage } from "@/lib/utils";
 import * as endpoints from "@/config/employees.endpoints";
 import { format } from "date-fns";
 import { BirthdayGreetingsModal } from "@/components/dashboard/BirthdayGreetingsModal";
@@ -1154,7 +1154,7 @@ export default function EmployeeViewPage() {
       }
     } catch (e: any) {
       toast.error(
-        e.response?.data?.error || "שגיאה בהתחברות כמשתמש",
+        extractErrorMessage(e, "שגיאה בהתחברות כמשתמש"),
       );
     }
   };
@@ -1392,7 +1392,7 @@ export default function EmployeeViewPage() {
       toast.success("המשתמש נמחק בהצלחה מהמערכת");
       navigate("/employees");
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "שגיאה במחיקת המשתמש");
+      toast.error(extractErrorMessage(err, "שגיאה במחיקת המשתמש"));
     }
   };
 

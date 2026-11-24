@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner";
 import apiClient from "@/config/api.client";
 import { motion, AnimatePresence } from "framer-motion";
+import { extractErrorMessage } from "@/lib/utils";
 
 interface ForgotPasswordDialogProps {
   open: boolean;
@@ -56,7 +57,7 @@ export function ForgotPasswordDialog({
       toast.success("קוד אימות נשלח למייל");
     } catch (error: any) {
       console.error("Failed to send code", error);
-      toast.error(error.response?.data?.error || "שגיאה בשליחת המייל");
+      toast.error(extractErrorMessage(error, "שגיאה בשליחת המייל"));
     } finally {
       setIsLoading(false);
     }

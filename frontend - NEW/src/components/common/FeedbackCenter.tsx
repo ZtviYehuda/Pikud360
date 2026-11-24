@@ -35,7 +35,7 @@ import {
   Rocket,
   ShieldCheck,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, extractErrorMessage } from "@/lib/utils";
 
 const CHANGELOG = [
   {
@@ -292,7 +292,7 @@ export function FeedbackCenter({
       fetchMyTickets();
     } catch (error: any) {
       console.error("Feedback Submission Error:", error.response?.data || error.message);
-      toast.error(error.response?.data?.error || "שגיאה בשליחת המשוב, נסה שנית");
+      toast.error(extractErrorMessage(error, "שגיאה בשליחת המשוב, נסה שנית"));
     } finally {
       setIsSubmitting(false);
     }

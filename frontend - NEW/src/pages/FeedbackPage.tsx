@@ -41,7 +41,7 @@ import { toast } from "sonner";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { cn } from "../lib/utils";
+import { cn, extractErrorMessage } from "../lib/utils";
 import { Card } from "../components/ui/card";
 import { useAuthContext } from "../context/AuthContext";
 import { useChat } from "@/context/ChatContext";
@@ -558,7 +558,7 @@ const FeedbackPage = () => {
       fetchSystemUpdates();
     } catch (error: any) {
       console.error("Error saving update:", error);
-      toast.error(error.response?.data?.error || "שגיאה בשמירת עדכון הגרסה");
+      toast.error(extractErrorMessage(error, "שגיאה בשמירת עדכון הגרסה"));
     } finally {
       setIsSubmittingUpdate(false);
     }

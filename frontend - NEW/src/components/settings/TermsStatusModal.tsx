@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import apiClient from "@/config/api.client";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, extractErrorMessage } from "@/lib/utils";
 
 interface UserTermsRecord {
   id: string;
@@ -63,7 +63,7 @@ export const TermsStatusModal: React.FC<TermsStatusModalProps> = ({
       }
     } catch (err: any) {
       console.error("Error fetching terms status:", err);
-      toast.error(err?.response?.data?.error || "שגיאה בתקשורת עם השרת");
+      toast.error(extractErrorMessage(err, "שגיאה בתקשורת עם השרת"));
     } finally {
       setIsLoading(false);
     }

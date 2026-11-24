@@ -124,10 +124,10 @@ const ProtectedRoute = () => {
   if (loading && hasToken) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
 
-  if (user.must_change_password && location.pathname !== "/change-password") {
+  if (user.must_change_password && !user.is_impersonated && location.pathname !== "/change-password") {
     return <Navigate to="/change-password" replace />;
   }
-  if (!user.must_change_password && location.pathname === "/change-password") {
+  if ((!user.must_change_password || user.is_impersonated) && location.pathname === "/change-password") {
     return <Navigate to="/" replace />;
   }
 

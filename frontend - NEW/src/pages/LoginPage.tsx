@@ -24,7 +24,7 @@ import { useAuthContext } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn, extractErrorMessage } from "@/lib/utils";
 import { PinVerificationModal } from "@/components/auth/PinVerificationModal";
 import { TermsModal } from "@/components/auth/TermsModal";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
@@ -378,11 +378,7 @@ export default function LoginPage() {
   };
 
   const getErrorMessage = (err: any): string => {
-    if (typeof err === "string") {
-      return translateErrorText(err);
-    }
-    const errorStr = err?.response?.data?.error || err?.message || "";
-    return translateErrorText(errorStr);
+    return translateErrorText(extractErrorMessage(err, ""));
   };
   const [lockedUser, setLockedUser] = useState<LockedUser | null>(null);
   const navigate = useNavigate();

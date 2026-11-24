@@ -17,7 +17,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { cn } from "@/lib/utils";
+import { cn, extractErrorMessage } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -255,8 +255,7 @@ export default function SettingsPage() {
       toast.success("קובץ הגיבוי נמחק בהצלחה");
       fetchBackups();
     } catch (err) {
-      const errorMsg = (err as any).response?.data?.error || "שגיאה במחיקת הקובץ";
-      toast.error(errorMsg);
+      toast.error(extractErrorMessage(err, "שגיאה במחיקת הקובץ"));
     }
   };
 
@@ -567,8 +566,7 @@ export default function SettingsPage() {
       }
     } catch (error: any) {
       console.error(error);
-      const errMsg = error.response?.data?.message || error.response?.data?.error || "שגיאה באיפוס הסיסמה";
-      toast.error(errMsg);
+      toast.error(extractErrorMessage(error, "שגיאה באיפוס הסיסמה"));
     } finally {
       setIsResetting(false);
     }

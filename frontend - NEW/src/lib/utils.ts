@@ -5,6 +5,24 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Safely extracts a string error message from any API error, object, or exception.
+ * Prevents "Objects are not valid as a React child" errors when backend returns structured error objects.
+ */
+export function extractErrorMessage(err: any, fallback = "אירעה שגיאה"): string {
+  if (!err) return fallback;
+  if (typeof err === "string") return err;
+  const payload = err.response?.data?.error ?? err.response?.data?.message ?? err.message ?? err.error;
+  if (!payload) return fallback;
+  if (typeof payload === "string") return payload;
+  if (typeof payload === "object" && payload !== null) {
+    if (typeof payload.message === "string") return payload.message;
+    if (typeof payload.error === "string") return payload.error;
+    if (typeof payload.details === "string") return payload.details;
+  }
+  return fallback;
+}
+
 export function cleanUnitName(name?: string | null): string {
   if (!name) return "—";
   return (

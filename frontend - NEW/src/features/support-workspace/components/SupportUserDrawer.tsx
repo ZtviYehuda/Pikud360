@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, extractErrorMessage } from "@/lib/utils";
 import {
   User,
   Shield,
@@ -90,7 +90,7 @@ export const SupportUserDrawer: React.FC<SupportUserDrawerProps> = ({
       const data = await supportApi.getUserDetails(id);
       setDossier(data);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "שגיאה בטעינת תיק המשתמש");
+      toast.error(extractErrorMessage(err, "שגיאה בטעינת תיק המשתמש"));
       onClose();
     } finally {
       setLoading(false);
@@ -124,7 +124,7 @@ export const SupportUserDrawer: React.FC<SupportUserDrawerProps> = ({
       await loadDossier(userId);
       if (onUserUpdated) onUserUpdated();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "הפעולה נכשלה");
+      toast.error(extractErrorMessage(err, "הפעולה נכשלה"));
     } finally {
       setActionLoading(null);
     }

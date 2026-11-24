@@ -20,7 +20,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { cn, cleanUnitName, isValidIsraeliPhone } from "@/lib/utils";
+import { cn, cleanUnitName, isValidIsraeliPhone, extractErrorMessage } from "@/lib/utils";
 import apiClient from "@/config/api.client";
 import * as endpoints from "@/config/employees.endpoints";
 import { generateUniqueUsername } from "@/utils/usernameGenerator";
@@ -318,7 +318,7 @@ export const ImportEmployeesModal: React.FC<ImportEmployeesModalProps> = ({
         successCount++;
       } catch (err: any) {
         failCount++;
-        const msg = err.response?.data?.message || err.response?.data?.error || err.message || "שגיאה לא ידועה";
+        const msg = extractErrorMessage(err, "שגיאה לא ידועה");
         failErrors.push(`${row.firstName} ${row.lastName}: ${msg}`);
       }
     }

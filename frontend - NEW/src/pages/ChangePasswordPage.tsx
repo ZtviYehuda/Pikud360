@@ -19,7 +19,7 @@ import { useTheme } from "@/context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
-import { cn } from "@/lib/utils";
+import { cn, extractErrorMessage } from "@/lib/utils";
 import apiClient from "@/config/api.client";
 
 export default function ChangePasswordPage() {
@@ -79,7 +79,7 @@ export default function ChangePasswordPage() {
 
     try {
       // Check password uniqueness across system accounts
-      const checkRes = await apiClient.post("/api/security/check-password-unique", {
+      const checkRes = await apiClient.post("/security/check-password-unique", {
         password: newPassword,
         user_id: user?.id,
       });
@@ -97,10 +97,7 @@ export default function ChangePasswordPage() {
         setError(error || "שגיאה בעדכון הסיסמה. נסה שוב מאוחר יותר.");
       }
     } catch (err: any) {
-      const msg =
-        err.response?.data?.error ||
-        err.response?.data?.message ||
-        "שגיאה בעדכון הסיסמה. נסה שוב מאוחר יותר.";
+      const msg = extractErrorMessage(err, "שגיאה בעדכון הסיסמה. נסה שוב מאוחר יותר.");
       setError(msg);
     } finally {
       setIsLoading(false);
