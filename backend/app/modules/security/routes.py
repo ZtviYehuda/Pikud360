@@ -740,6 +740,51 @@ def change_password():
     return _clear_refresh_cookie(response), 200
 
 
+@security_bp.route("/verify-credentials", methods=["POST"])
+@jwt_required()
+def verify_credentials():
+    """Verifies user's current password to reveal login credentials securely."""
+    user_id = get_jwt_identity()
+    if not user_id:
+        return jsonify({"success": False, "message": "משתמש לא מחובר", "error": "משתמש לא מחובר"}), 401
+
+    req_data = request.get_json() or {}
+    password = (
+        req_data.get("password")
+        or req_data.get("current_password")
+        or req_data.get("currentPassword")
+    )
+    if not password:
+        return jsonify({"success": False, "message": "אנא הזן סיסמה", "error": "אנא הזן סיסמה"}), 400
+
+    user = user_repo.get_by_id(str(user_id))
+    if not user:
+        return jsonify({"success": False, "message": "משתמש לא נמצא", "error": "משתמש לא נמצא"}), 404
+
+    claims = get_jwt()
+    is_impersonated = claims.get("is_impersonated", False)
+    impersonated_by = claims.get("impersonated_by")
+
+    # Check password for current target user
+    verified = security_service.verify_password(password, user.password_hash)
+
+    # If in impersonation mode and user's password didn't match, also allow the impersonating admin's password
+    if not verified and is_impersonated and impersonated_by:
+        admin_user = user_repo.get_by_username(impersonated_by)
+        if admin_user and security_service.verify_password(password, admin_user.password_hash):
+            verified = True
+
+    if not verified:
+        return jsonify({"success": False, "message": "סיסמה שגויה. אנא נסה שנית.", "error": "סיסמה שגויה. אנא נסה שנית."}), 400
+
+    return jsonify({
+        "success": True,
+        "message": "אימות הסיסמה בוצע בהצלחה",
+        "username": user.username,
+        "email": user.email
+    }), 200
+
+
 @security_bp.route("/support/tickets/pending-count", methods=["GET"])
 @jwt_required(optional=True)
 def support_tickets_pending_count():
