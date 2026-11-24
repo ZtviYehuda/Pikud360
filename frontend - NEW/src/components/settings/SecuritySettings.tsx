@@ -165,70 +165,45 @@ export function SecuritySettings({
 
   return (
     <div className=" w-full pb-24 lg:pb-0">
-      {/* Alerts Area - Redesigned to be subtler but effective */}
+      {/* Alerts Area - Compact and subtle */}
       {(user?.is_impersonated || shouldShowAlert) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="flex flex-col gap-2 mb-4">
           {user?.is_impersonated && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-            >
-              <div className="bg-destructive/5 border border-destructive/20 rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 flex items-start gap-3 sm:gap-4">
-                <div className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-destructive/10 shrink-0">
-                  <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-destructive" />
-                </div>
-                <div className="space-y-1 sm:space-y-2 flex-1">
-                  <h4 className="font-black text-destructive text-base sm:text-lg">
-                    מצב התחזות פעיל
-                  </h4>
-                  <p className="text-xs sm:text-sm text-destructive/70 font-medium">
-                    התחברת כשוטר אחר. ניתן לאפס את הסיסמה לשם המשתמש המקורי.
-                  </p>
-                  <Button
-                    onClick={handleResetImpersonatedPassword}
-                    disabled={isResetting}
-                    variant="destructive"
-                    size="sm"
-                    className="mt-2 font-black rounded-lg sm:rounded-xl h-9 sm:h-10 px-4 sm:px-6"
-                  >
-                    {isResetting && (
-                      <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                    )}
-                    אפס סיסמה לשם משתמש
-                  </Button>
-                </div>
+            <div className="flex items-center justify-between gap-3 px-3.5 py-1.5 rounded-xl bg-destructive/5 border border-destructive/15 text-xs text-destructive">
+              <div className="flex items-center gap-2 font-medium">
+                <Lock className="w-3.5 h-3.5 shrink-0 text-destructive" />
+                <span className="font-bold">מצב התחזות פעיל:</span>
+                <span className="text-destructive/80 hidden sm:inline">התחברת כשוטר אחר. ניתן לאפס את הסיסמה למשתמש המקורי.</span>
               </div>
-            </motion.div>
+              <Button
+                onClick={handleResetImpersonatedPassword}
+                disabled={isResetting}
+                variant="destructive"
+                size="sm"
+                className="h-7 text-[11px] font-bold px-2.5 rounded-lg shrink-0"
+              >
+                {isResetting && <Loader2 className="w-3 h-3 ml-1 animate-spin" />}
+                איפוס סיסמה
+              </Button>
+            </div>
           )}
 
           {shouldShowAlert && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-            >
-              <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 flex items-start gap-3 sm:gap-4">
-                <div className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-amber-500/10 shrink-0">
-                  <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
-                </div>
-                <div className="space-y-1 sm:space-y-2 flex-1">
-                  <h4 className="font-black text-amber-700 text-base sm:text-lg">
-                    נדרשת החלפת סיסמה
-                  </h4>
-                  <p className="text-xs sm:text-sm text-amber-700/70 font-medium leading-relaxed">
-                    חלפו {daysSinceChange} יום מהחלפה אחרונה. מומלץ להחליף סיסמה
-                    כל מספר חודשים.
-                  </p>
-                  <Button
-                    onClick={() => handleConfirmCurrentPassword()}
-                    variant="outline"
-                    size="sm"
-                    className="mt-2 font-black border-amber-500/20 text-amber-700 rounded-lg sm:rounded-xl h-9 sm:h-10 px-4 sm:px-6 hover:bg-amber-500/10"
-                  >
-                    דלג הפעם
-                  </Button>
-                </div>
+            <div className="flex items-center justify-between gap-3 px-3.5 py-1.5 rounded-xl bg-amber-500/5 border border-amber-500/15 text-xs text-amber-700 dark:text-amber-400">
+              <div className="flex items-center gap-2 font-medium">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-600" />
+                <span className="font-bold">נדרשת החלפת סיסמה:</span>
+                <span className="text-amber-700/80 dark:text-amber-400/80 hidden sm:inline">חלפו {daysSinceChange} יום מהחלפה אחרונה.</span>
               </div>
-            </motion.div>
+              <Button
+                onClick={() => handleConfirmCurrentPassword()}
+                variant="outline"
+                size="sm"
+                className="h-7 text-[11px] font-bold px-2.5 rounded-lg border-amber-500/20 text-amber-700 dark:text-amber-400 shrink-0 hover:bg-amber-500/10"
+              >
+                דלג הפעם
+              </Button>
+            </div>
           )}
         </div>
       )}
