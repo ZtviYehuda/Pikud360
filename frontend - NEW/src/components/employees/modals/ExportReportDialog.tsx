@@ -169,14 +169,14 @@ export function ExportReportDialog({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className="sm:max-w-[580px] p-0 border border-border/70 bg-card rounded-2xl sm:rounded-3xl shadow-xl flex flex-col overflow-hidden !gap-0"
+          className="sm:max-w-[700px] p-0 border border-border/40 bg-background rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden !gap-0"
           dir="rtl"
         >
           <DialogDragHandle />
-          {/* Header - Standard Enterprise */}
-          <div className="px-5 sm:px-6 py-4 sm:py-5 border-b border-border/50 bg-muted/10 shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+          {/* Header */}
+          <div className="px-6 sm:px-8 py-5 border-b border-border/30 bg-background shrink-0">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
                 <FileSpreadsheet className="w-5 h-5 text-primary" />
               </div>
               <div className="space-y-0.5 text-right">
@@ -190,13 +190,13 @@ export function ExportReportDialog({
             </div>
           </div>
 
-          <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 overflow-y-auto custom-scrollbar flex-1 bg-card">
+          <div className="px-6 sm:px-8 py-6 space-y-6 overflow-y-auto custom-scrollbar flex-1 bg-background">
             {/* Section 1: Settings */}
-            <div className="space-y-2">
-              <span className="text-[11px] font-bold text-muted-foreground block px-0.5">
+            <div className="space-y-2.5">
+              <span className="text-[11px] font-bold text-muted-foreground block px-0.5 uppercase tracking-wider">
                 01. הגדרות וסינון
               </span>
-              <div className="flex flex-col sm:flex-row gap-2.5">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Tabs
                   value={mode}
                   onValueChange={(v: any) => {
@@ -204,16 +204,16 @@ export function ExportReportDialog({
                   }}
                   className="flex-1 pointer-events-auto"
                 >
-                  <TabsList className="bg-muted/40 border border-border/50 p-1 h-9 rounded-xl w-full grid grid-cols-2">
+                  <TabsList className="bg-muted/20 border border-border/20 p-1 h-10 rounded-xl w-full grid grid-cols-2">
                     <TabsTrigger
                       value="daily"
-                      className="font-semibold rounded-lg text-xs data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-2xs data-[state=active]:border data-[state=active]:border-border/60 transition-all cursor-pointer pointer-events-auto"
+                      className="font-bold rounded-lg text-xs data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs transition-all cursor-pointer pointer-events-auto"
                     >
                       יומי
                     </TabsTrigger>
                     <TabsTrigger
                       value="range"
-                      className="font-semibold rounded-lg text-xs data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-2xs data-[state=active]:border data-[state=active]:border-border/60 transition-all cursor-pointer pointer-events-auto"
+                      className="font-bold rounded-lg text-xs data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs transition-all cursor-pointer pointer-events-auto"
                     >
                       טווח
                     </TabsTrigger>
@@ -229,10 +229,10 @@ export function ExportReportDialog({
                     setFilterModalOpen(true);
                   }}
                   className={cn(
-                    "h-9 px-3.5 rounded-xl font-semibold border transition-all gap-1.5 text-xs shrink-0 w-full sm:w-auto cursor-pointer pointer-events-auto shadow-2xs",
+                    "h-10 px-4 rounded-xl font-bold border transition-all gap-2 text-xs shrink-0 w-full sm:w-auto cursor-pointer pointer-events-auto shadow-none",
                     Object.keys(activeFilters).length > 0
-                      ? "bg-primary/10 border-primary/30 text-primary font-bold"
-                      : "border-border/60 bg-card hover:bg-muted text-foreground",
+                      ? "bg-primary/10 border-primary/30 text-primary"
+                      : "border-border/40 bg-background hover:bg-muted/30 text-foreground",
                   )}
                 >
                   <Filter className="w-3.5 h-3.5" />
@@ -248,17 +248,17 @@ export function ExportReportDialog({
             {/* Section 2: Calendar */}
             <div className="space-y-2.5 pointer-events-auto">
               <div className="flex items-center justify-between px-0.5">
-                <span className="text-[11px] font-bold text-muted-foreground">
+                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                   02. בחירת מועד
                 </span>
                 {mode === "range" && dateRange?.from && (
-                  <span className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md">
+                  <span className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-full">
                     {format(dateRange.from, "dd/MM")} -{" "}
                     {dateRange.to ? format(dateRange.to, "dd/MM") : "..."}
                   </span>
                 )}
               </div>
-              <div className="bg-card border border-border/60 rounded-2xl p-3 sm:p-5 flex justify-center w-full mx-auto pointer-events-auto cursor-pointer relative shadow-2xs">
+              <div className="flex justify-center w-full py-2 pointer-events-auto">
                 <Calendar
                   mode={mode === "daily" ? "single" : "range"}
                   selected={(mode === "daily" ? dailyDate : dateRange) as any}
@@ -271,31 +271,31 @@ export function ExportReportDialog({
                   classNames={{
                     months:
                       "flex flex-col text-center w-full items-center",
-                    month: "space-y-3 w-full max-w-[280px] flex flex-col items-center",
+                    month: "space-y-3 w-full max-w-[340px] flex flex-col items-center",
                     caption:
                       "flex justify-center pt-1 pb-4 relative items-center w-full",
                     caption_label:
-                      "text-sm sm:text-base font-bold text-foreground",
-                    nav: "absolute top-0 left-0 right-0 flex items-center justify-between px-2 h-9",
+                      "text-base font-bold text-foreground tracking-tight",
+                    nav: "absolute top-0 left-0 right-0 flex items-center justify-between px-1 h-9",
                     nav_button:
-                      "h-8 w-8 bg-muted/40 hover:bg-muted text-foreground rounded-lg transition-all flex items-center justify-center border border-border/50 cursor-pointer pointer-events-auto",
+                      "h-8 w-8 hover:bg-muted/40 text-muted-foreground hover:text-foreground rounded-lg transition-colors flex items-center justify-center cursor-pointer pointer-events-auto",
                     nav_button_previous: "order-1",
                     nav_button_next: "order-2",
                     table: "w-full border-collapse",
-                    head_row: "grid grid-cols-7 gap-1 mb-2.5 w-full",
+                    head_row: "grid grid-cols-7 gap-1.5 mb-2.5 w-full",
                     head_cell:
-                      "text-muted-foreground font-semibold text-xs text-center py-1 flex items-center justify-center",
-                    row: "grid grid-cols-7 gap-1 mb-1.5 w-full",
+                      "text-muted-foreground/80 font-bold text-xs text-center py-1 flex items-center justify-center",
+                    row: "grid grid-cols-7 gap-1.5 mb-1.5 w-full",
                     cell: "flex items-center justify-center cursor-pointer pointer-events-auto",
-                    day: "h-9 w-9 font-medium rounded-xl hover:bg-muted flex items-center justify-center text-xs text-foreground transition-all border border-transparent cursor-pointer pointer-events-auto",
+                    day: "h-9 w-9 sm:h-10 sm:w-10 font-medium rounded-xl hover:bg-muted/50 flex items-center justify-center text-xs text-foreground transition-all cursor-pointer pointer-events-auto",
                     day_selected:
-                      "bg-primary text-primary-foreground font-bold hover:bg-primary hover:text-primary-foreground scale-105 border-primary/20 shadow-xs",
+                      "bg-primary text-primary-foreground font-bold hover:bg-primary hover:text-primary-foreground shadow-sm",
                     day_today:
-                      "bg-muted text-primary font-bold border border-primary/40",
-                    day_outside: "text-muted-foreground/30 opacity-40",
-                    day_disabled: "text-muted-foreground/30 opacity-30",
+                      "font-bold text-primary ring-1 ring-primary/40 rounded-xl",
+                    day_outside: "text-muted-foreground/30 opacity-30",
+                    day_disabled: "text-muted-foreground/30 opacity-20",
                     day_range_middle:
-                      "aria-selected:bg-primary/10 aria-selected:text-primary rounded-none border-y border-primary/20",
+                      "aria-selected:bg-primary/10 aria-selected:text-primary rounded-none",
                     day_range_start: "rounded-l-xl rounded-r-none bg-primary text-primary-foreground font-bold",
                     day_range_end: "rounded-r-xl rounded-l-none bg-primary text-primary-foreground font-bold",
                   }}
@@ -304,8 +304,8 @@ export function ExportReportDialog({
             </div>
 
             {/* Section 3: Actions */}
-            <div className="space-y-3 pt-1 pointer-events-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="space-y-3 pt-2 pointer-events-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Button
                   type="button"
                   onClick={(e) => {
@@ -313,7 +313,7 @@ export function ExportReportDialog({
                     e.stopPropagation();
                     handleDownload(false);
                   }}
-                  className="col-span-1 sm:col-span-2 h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-xs sm:text-sm gap-2 cursor-pointer pointer-events-auto shadow-xs transition-all"
+                  className="col-span-1 sm:col-span-2 h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-xs sm:text-sm gap-2 cursor-pointer pointer-events-auto shadow-sm transition-all"
                 >
                   <Download className="w-4 h-4" />
                   הורדת קובץ אקסל
@@ -327,7 +327,7 @@ export function ExportReportDialog({
                     e.stopPropagation();
                     handleDownload(true);
                   }}
-                  className="h-9 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 font-semibold text-xs gap-1.5 cursor-pointer pointer-events-auto transition-all shadow-2xs"
+                  className="h-10 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 font-bold text-xs gap-1.5 cursor-pointer pointer-events-auto transition-all"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5" />
                   <span>אקסל לוואטסאפ</span>
@@ -342,7 +342,7 @@ export function ExportReportDialog({
                       e.stopPropagation();
                       handleWhatsAppText();
                     }}
-                    className="h-9 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 font-semibold text-xs gap-1.5 cursor-pointer pointer-events-auto transition-all shadow-2xs"
+                    className="h-10 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 font-bold text-xs gap-1.5 cursor-pointer pointer-events-auto transition-all"
                   >
                     <WhatsAppIcon className="w-3.5 h-3.5" />
                     <span>סיכום טקסט</span>
@@ -352,13 +352,12 @@ export function ExportReportDialog({
                 )}
               </div>
 
-              {/* Alert */}
-              <div className="rounded-xl bg-muted/30 border border-border/50 p-2.5 sm:p-3 flex items-start gap-2.5">
-                <Info className="w-4 h-4 text-muted-foreground/70 mt-0.5 shrink-0" />
-                <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
-                  הנתונים משקפים את המצב הנוכחי במערכת. וודא שכל הדיווחים הושלמו
-                  לפני הייצוא.
-                </p>
+              {/* Minimal Note */}
+              <div className="flex items-center justify-center gap-2 pt-1 text-xs text-muted-foreground">
+                <Info className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
+                <span>
+                  הנתונים משקפים את המצב הנוכחי במערכת. מומלץ לוודא שכל הדיווחים הושלמו לפני הייצוא.
+                </span>
               </div>
             </div>
           </div>
