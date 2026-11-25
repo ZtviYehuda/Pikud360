@@ -1,14 +1,14 @@
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import { AppRouter } from "./router";
-import { AuthProvider } from "./context/AuthContext";
-import { ThemeProvider } from "./context/ThemeContext";
+import { AuthProvider } from "@/context/AuthContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import { Toaster } from "sonner";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
-import { DateProvider } from "./context/DateContext";
-import { FeedbackProvider } from "./context/FeedbackContext";
-import { EmployeeProvider } from "./context/EmployeeContext";
-import { ChatProvider } from "./context/ChatContext";
+import { DateProvider } from "@/context/DateContext";
+import { FeedbackProvider } from "@/context/FeedbackContext";
+import { EmployeeProvider } from "@/context/EmployeeContext";
+import { ChatProvider } from "@/context/ChatContext";
 import { OfflineIndicator } from "./components/common/OfflineIndicator";
 
 createRoot(document.getElementById("root")!).render(

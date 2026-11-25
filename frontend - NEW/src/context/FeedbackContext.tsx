@@ -6,7 +6,14 @@ interface FeedbackContextType {
   closeFeedback: () => void;
 }
 
-const FeedbackContext = createContext<FeedbackContextType | undefined>(undefined);
+const defaultFeedbackContext: FeedbackContextType = {
+  openFeedback: () => {
+    console.warn("FeedbackProvider not mounted in current hierarchy");
+  },
+  closeFeedback: () => {},
+};
+
+const FeedbackContext = createContext<FeedbackContextType>(defaultFeedbackContext);
 
 export function FeedbackProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -63,8 +70,5 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
 
 export function useFeedback() {
   const context = useContext(FeedbackContext);
-  if (context === undefined) {
-    throw new Error("useFeedback must be used within a FeedbackProvider");
-  }
-  return context;
+  return context || defaultFeedbackContext;
 }
