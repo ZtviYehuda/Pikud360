@@ -267,26 +267,21 @@ export function ExportReportDialog({
                   }
                   required={mode === "daily"}
                   locale={he}
-                  className="p-0 w-full flex justify-center pointer-events-auto cursor-pointer"
+                  className="p-0 w-full flex justify-center pointer-events-auto cursor-pointer [--cell-size:2.75rem] sm:[--cell-size:3.25rem]"
                   classNames={{
                     root: "w-full flex justify-center",
-                    months: "relative flex flex-col items-center w-full",
-                    month: "flex flex-col w-full max-w-[560px] gap-4 relative",
-                    month_caption:
-                      "flex items-center justify-center h-10 w-full relative px-12",
-                    caption_label:
-                      "text-base sm:text-lg font-bold text-foreground tracking-tight select-none",
-                    nav: "flex items-center justify-between w-full absolute top-0 inset-x-0 h-10 px-2 pointer-events-none z-10",
-                    button_previous:
-                      "pointer-events-auto h-9 w-9 p-0 rounded-xl hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-all flex items-center justify-center cursor-pointer border border-border/30 shadow-2xs",
-                    button_next:
-                      "pointer-events-auto h-9 w-9 p-0 rounded-xl hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-all flex items-center justify-center cursor-pointer border border-border/30 shadow-2xs",
+                    months: "w-full max-w-[500px] sm:max-w-[540px] relative flex flex-col items-center",
+                    month: "w-full flex flex-col gap-3.5 items-center",
+                    month_caption: "flex items-center justify-center relative w-full h-10 px-12 mb-1",
+                    caption_label: "text-base sm:text-lg font-bold text-foreground tracking-tight select-none",
+                    nav: "flex items-center justify-between w-full absolute top-0 inset-x-0 h-10 px-1 pointer-events-none",
+                    button_previous: "h-8 w-8 p-0 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground flex items-center justify-center pointer-events-auto transition-colors cursor-pointer",
+                    button_next: "h-8 w-8 p-0 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground flex items-center justify-center pointer-events-auto transition-colors cursor-pointer",
                     table: "w-full border-collapse",
-                    weekdays: "flex w-full justify-between mb-2 px-1",
-                    weekday:
-                      "text-muted-foreground/80 font-bold text-xs flex-1 text-center py-1 select-none",
-                    week: "flex w-full justify-between gap-1.5 mt-1.5 px-1",
-                    day: "relative flex-1 aspect-square p-0 flex items-center justify-center select-none",
+                    weekdays: "flex w-full mb-1",
+                    weekday: "text-muted-foreground/80 font-bold text-xs text-center flex-1 py-1 select-none",
+                    week: "flex w-full mt-1.5 justify-between gap-1",
+                    day: "flex-1 flex justify-center items-center",
                   }}
                 />
               </div>
